@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import FormularioLead from "../components/leads/FormularioLead";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -34,6 +35,8 @@ export default function Leads() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [busca, setBusca] = useState("");
   const [selectedLead, setSelectedLead] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingLead, setEditingLead] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -62,6 +65,53 @@ export default function Leads() {
   const getStatusColor = (status) => {
     const config = STATUS_CONFIG.find(s => s.value === status);
     return config ? config.color : "rgb(0, 0, 0)";
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.Cliente.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      setShowForm(false);
+      setEditingLead(null);
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Cliente.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      setShowForm(false);
+      setEditingLead(null);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Cliente.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      setSelectedLead(null);
+    }
+  });
+
+  const handleSave = (data) => {
+    if (editingLead) {
+      updateMutation.mutate({ id: editingLead.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = () => {
+    if (!selectedLead) return;
+    setEditingLead(selectedLead);
+    setShowForm(true);
+  };
+
+  const handleDelete = () => {
+    if (!selectedLead) return;
+    if (confirm(`Confirma a exclusão de ${selectedLead.nome}?`)) {
+      deleteMutation.mutate(selectedLead.id);
+    }
   };
 
   return (
@@ -189,12 +239,14 @@ export default function Leads() {
         {/* Botões de Ação */}
         <div className="flex gap-3 mt-4">
           <Button
+            onClick={() => { setEditingLead(null); setShowForm(true); }}
             className="bg-[#0078d7] hover:bg-[#006abc] text-white font-bold text-base px-8 py-6"
           >
             <Plus className="w-5 h-5 mr-2" />
             CRIAR LEAD
           </Button>
           <Button
+            onClick={handleEdit}
             className="bg-[#ff8c00] hover:bg-[#e67e00] text-white font-bold text-base px-8 py-6"
             disabled={!selectedLead}
           >
@@ -202,6 +254,7 @@ export default function Leads() {
             EDITAR
           </Button>
           <Button
+            onClick={handleDelete}
             className="bg-[#dc143c] hover:bg-[#b01030] text-white font-bold text-base px-8 py-6"
             disabled={!selectedLead}
           >
@@ -217,6 +270,14 @@ export default function Leads() {
           </Button>
         </div>
       </div>
+
+      <FormularioLead
+        open={showForm}
+        onClose={() => { setShowForm(false); setEditingLead(null); }}
+        lead={editingLead}
+        onSave={handleSave}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
     </div>
   );
 }

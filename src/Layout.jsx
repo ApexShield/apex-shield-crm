@@ -3,17 +3,14 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LayoutDashboard, Ticket, Users, Menu, X, 
-  LogOut, ChevronRight, Headphones
+  Users, Menu, X, LogOut, ChevronRight, Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
 const navigation = [
-  { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
-  { name: "Tickets", icon: Ticket, page: "Tickets" },
-  { name: "Clientes", icon: Users, page: "Clientes" }
+  { name: "Leads", icon: Users, page: "Leads" }
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -30,7 +27,6 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
@@ -43,21 +39,19 @@ export default function Layout({ children, currentPageName }) {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <aside className={`
         fixed top-0 left-0 z-50 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 ease-out
         lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Headphones className="w-5 h-5 text-white" />
+                <Briefcase className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800">CRM Atendimento</h1>
-                <p className="text-xs text-slate-500">Gestão de Tickets</p>
+                <h1 className="font-bold text-slate-800">CRM Leads</h1>
+                <p className="text-xs text-slate-500">Gestão de Leads</p>
               </div>
             </div>
             <Button 
@@ -70,7 +64,6 @@ export default function Layout({ children, currentPageName }) {
             </Button>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
             {navigation.map((item) => {
               const isActive = currentPageName === item.page;
@@ -101,7 +94,6 @@ export default function Layout({ children, currentPageName }) {
             })}
           </nav>
 
-          {/* User */}
           <div className="p-4 border-t border-slate-100">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-semibold">
@@ -126,9 +118,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="lg:pl-72">
-        {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3">
           <div className="flex items-center justify-between">
             <Button 
@@ -140,7 +130,7 @@ export default function Layout({ children, currentPageName }) {
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Headphones className="w-4 h-4 text-white" />
+                <Briefcase className="w-4 h-4 text-white" />
               </div>
               <span className="font-semibold text-slate-800">CRM</span>
             </div>
@@ -148,7 +138,6 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </header>
 
-        {/* Page content */}
         <main>
           {children}
         </main>

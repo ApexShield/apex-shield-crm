@@ -1,19 +1,13 @@
-import Dashboard from './pages/Dashboard';
-import Tickets from './pages/Tickets';
-import Clientes from './pages/Clientes';
-import TicketDetalhes from './pages/TicketDetalhes';
+import Leads from './pages/Leads';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Tickets": Tickets,
-    "Clientes": Clientes,
-    "TicketDetalhes": TicketDetalhes,
+    "Leads": Leads,
 }
 
 export const pagesConfig = {
-    mainPage: "Dashboard",
+    mainPage: "Leads",
     Pages: PAGES,
     Layout: __Layout,
 };

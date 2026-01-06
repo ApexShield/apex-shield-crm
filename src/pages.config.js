@@ -1,17 +1,17 @@
-import Leads from './pages/Leads';
 import BoasVindas from './pages/BoasVindas';
+import Leads from './pages/Leads';
 import Usuarios from './pages/Usuarios';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Leads": Leads,
     "BoasVindas": BoasVindas,
+    "Leads": Leads,
     "Usuarios": Usuarios,
 }
 
 export const pagesConfig = {
-    mainPage: "Leads",
+    mainPage: "BoasVindas",
     Pages: PAGES,
     Layout: __Layout,
 };

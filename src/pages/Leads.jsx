@@ -40,9 +40,22 @@ export default function Leads() {
 
   const queryClient = useQueryClient();
 
+  const { data: user } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => base44.auth.me()
+  });
+
   const { data: clientes = [], isLoading } = useQuery({
     queryKey: ["clientes"],
-    queryFn: () => base44.entities.Cliente.list("-created_date", 500)
+    queryFn: async () => {
+      const allClientes = await base44.entities.Cliente.list("-created_date", 500);
+      // Se não for admin, filtrar apenas os leads do usuário
+      if (user && user.role !== "admin") {
+        return allClientes.filter(c => c.created_by === user.email);
+      }
+      return allClientes;
+    },
+    enabled: !!user
   });
 
   // Filtrar dados
@@ -93,13 +106,21 @@ export default function Leads() {
     }
   });
 
-  const handleSave = (data) => {
+  const handleSave = async (data) => {
+    // Se for novo lead, calcular próximo código
+    if (!editingLead) {
+      const maxCodigo = clientes.reduce((max, c) => Math.max(max, c.codigo || 0), 0);
+      data.codigo = maxCodigo + 1;
+    }
+    
     if (editingLead) {
       updateMutation.mutate({ id: editingLead.id, data });
     } else {
       createMutation.mutate(data);
     }
   };
+
+  const nextCodigo = clientes.reduce((max, c) => Math.max(max, c.codigo || 0), 0) + 1;
 
   const handleEdit = () => {
     if (!selectedLead) return;
@@ -215,8 +236,28 @@ export default function Leads() {
                       <TableCell className="font-bold">
                         {format(new Date(cliente.created_date), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
-                      <TableCell className="font-bold">{cliente.telefone || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.email || "—"}</TableCell>
+                      <TableCell className="font-bold">
+                        {cliente.telefone ? (
+                          <a 
+                            href={`https://wa.me/55${cliente.telefone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline text-green-600"
+                          >
+                            {cliente.telefone}
+                          </a>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell className="font-bold">
+                        {cliente.email ? (
+                          <a 
+                            href={`mailto:${cliente.email}`}
+                            className="hover:underline text-blue-600"
+                          >
+                            {cliente.email}
+                          </a>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell className="font-bold">{cliente.empresa || "—"}</TableCell>
                       <TableCell className="font-bold">{cliente.cargo || "—"}</TableCell>
                       <TableCell className="font-bold">{cliente.fonte_prospeccao || "—"}</TableCell>
@@ -277,6 +318,7 @@ export default function Leads() {
         lead={editingLead}
         onSave={handleSave}
         isLoading={createMutation.isPending || updateMutation.isPending}
+        nextCodigo={nextCodigo}
       />
     </div>
   );

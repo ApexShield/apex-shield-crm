@@ -10,7 +10,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
 const navigation = [
-  { name: "Leads", icon: Users, page: "Leads" }
+  { name: "Leads", icon: Users, page: "Leads" },
+  { name: "Usuários", icon: Users, page: "Usuarios", adminOnly: true }
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -66,6 +67,9 @@ export default function Layout({ children, currentPageName }) {
 
           <nav className="flex-1 p-4 space-y-1">
             {navigation.map((item) => {
+              // Esconder itens admin-only se não for admin
+              if (item.adminOnly && user?.role !== "admin") return null;
+
               const isActive = currentPageName === item.page;
               return (
                 <Link

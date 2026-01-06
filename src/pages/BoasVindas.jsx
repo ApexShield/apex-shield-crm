@@ -53,16 +53,16 @@ export default function BoasVindas() {
         <div className="bg-purple-50 rounded-xl p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <UserPlus className="w-6 h-6 text-purple-600" />
-            Primeiro Acesso
+            Seu Acesso Está Pronto
           </h2>
           <p className="text-gray-700 leading-relaxed mb-4">
-            Como este é seu primeiro acesso, você já está autenticado e pronto para começar!
+            Seu acesso foi validado com sucesso via token no seu e-mail. 
+            Você está autenticado e pronto para começar a usar o sistema!
           </p>
           <div className="bg-white rounded-lg p-4 border-l-4 border-indigo-500">
             <p className="text-sm text-gray-600">
-              <strong>Importante:</strong> Seu acesso foi validado automaticamente via e-mail. 
-              Você pode visualizar apenas os leads cadastrados por você. 
-              Usuários administradores têm acesso a todos os dados do sistema.
+              <strong>Importante:</strong> Seus dados estão protegidos e você terá controle total sobre seus leads e clientes.
+              Mantenha sua senha segura e não compartilhe com terceiros.
             </p>
           </div>
         </div>

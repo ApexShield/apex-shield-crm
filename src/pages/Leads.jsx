@@ -150,6 +150,13 @@ export default function Leads() {
   const handleImport = async () => {
     if (!importFile) return;
     
+    // Validar tipo de arquivo
+    const fileName = importFile.name.toLowerCase();
+    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
+      alert("Formato não suportado. Use apenas arquivos .CSV ou .XLSX (Excel moderno)");
+      return;
+    }
+    
     setImporting(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: importFile });
@@ -413,15 +420,21 @@ export default function Leads() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Selecione o arquivo XLS/XLSX</Label>
+              <Label>Selecione o arquivo CSV ou XLSX</Label>
               <Input
                 type="file"
-                accept=".xls,.xlsx,.csv"
+                accept=".csv,.xlsx"
                 onChange={(e) => setImportFile(e.target.files?.[0])}
                 className="mt-2"
               />
+              <p className="text-xs text-red-600 font-bold mt-2">
+                ⚠️ IMPORTANTE: Use apenas arquivos .CSV ou .XLSX (Excel moderno)
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Arquivos .XLS (Excel antigo) não são suportados. Abra o arquivo no Excel e salve como .XLSX
+              </p>
               <p className="text-xs text-gray-500 mt-2">
-                O arquivo deve conter as colunas: nome, telefone, email, empresa, cargo, status, data_nascimento, profissao, estado_civil, fonte_prospeccao, renda, patrimonio
+                Colunas: nome, telefone, email, empresa, cargo, status, data_nascimento, profissao, estado_civil, fonte_prospeccao, renda, patrimonio
               </p>
             </div>
             <div className="flex gap-3">

@@ -90,20 +90,38 @@ export default function Leads() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Cliente.create(data),
+    mutationFn: async (data) => {
+      console.log("Criando cliente com dados:", data);
+      const result = await base44.entities.Cliente.create(data);
+      console.log("Cliente criado:", result);
+      return result;
+    },
     onSuccess: () => {
+      console.log("Create Success!");
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setShowForm(false);
       setEditingLead(null);
+    },
+    onError: (error) => {
+      console.error("Erro ao criar:", error);
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Cliente.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      console.log("Atualizando cliente:", id, data);
+      const result = await base44.entities.Cliente.update(id, data);
+      console.log("Cliente atualizado:", result);
+      return result;
+    },
     onSuccess: () => {
+      console.log("Update Success!");
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setShowForm(false);
       setEditingLead(null);
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar:", error);
     }
   });
 
@@ -116,16 +134,27 @@ export default function Leads() {
   });
 
   const handleSave = async (data) => {
+    console.log("Salvando dados:", data);
+    
     // Se for novo lead, calcular próximo código
     if (!editingLead) {
       const maxCodigo = clientes.reduce((max, c) => Math.max(max, c.codigo || 0), 0);
       data.codigo = maxCodigo + 1;
+      data.status = data.status || "AB Fone";
+      data.data_cadastro = data.data_cadastro || new Date().toISOString().split('T')[0];
     }
     
-    if (editingLead) {
-      updateMutation.mutate({ id: editingLead.id, data });
-    } else {
-      createMutation.mutate(data);
+    try {
+      if (editingLead) {
+        await updateMutation.mutateAsync({ id: editingLead.id, data });
+        alert("Cliente atualizado com sucesso!");
+      } else {
+        await createMutation.mutateAsync(data);
+        alert("Cliente criado com sucesso!");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao salvar: " + error.message);
     }
   };
 

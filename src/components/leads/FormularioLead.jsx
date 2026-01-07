@@ -119,8 +119,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     }
   }, [lead, open, nextCodigo]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log("FormData antes de salvar:", formData);
     
     const dataToSave = { ...formData };
     
@@ -144,7 +146,22 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
       return;
     }
     
-    onSave(dataToSave);
+    // Limpar campos vazios para evitar problemas
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === "" || dataToSave[key] === null || dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
+    });
+    
+    console.log("Dados a serem salvos (limpos):", dataToSave);
+    
+    try {
+      await onSave(dataToSave);
+      console.log("Salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro no handleSubmit:", error);
+      alert("Erro ao salvar: " + error.message);
+    }
   };
 
   const handleUpperCase = (field, value) => {

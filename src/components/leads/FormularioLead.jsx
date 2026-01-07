@@ -125,7 +125,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     const dataToSave = { ...formData };
     
     // Adicionar nova observação se houver
-    if (formData.novaObservacao.trim()) {
+    if (formData.novaObservacao && formData.novaObservacao.trim()) {
       dataToSave.observacoes = [
         ...(formData.observacoes || []),
         {
@@ -135,7 +135,15 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
       ];
     }
     
+    // Remover campos temporários
     delete dataToSave.novaObservacao;
+    
+    // Garantir que campos obrigatórios existam
+    if (!dataToSave.nome || dataToSave.nome.trim() === "") {
+      alert("Por favor, preencha o nome do cliente");
+      return;
+    }
+    
     onSave(dataToSave);
   };
 

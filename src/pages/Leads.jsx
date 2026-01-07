@@ -45,9 +45,6 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [importFile, setImportFile] = useState(null);
-  const [importing, setImporting] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -144,73 +141,6 @@ export default function Leads() {
     if (!selectedLead) return;
     if (confirm(`Confirma a exclusão de ${selectedLead.nome}?`)) {
       deleteMutation.mutate(selectedLead.id);
-    }
-  };
-
-  const handleImport = async () => {
-    if (!importFile) return;
-    
-    // Validar tipo de arquivo
-    const fileName = importFile.name.toLowerCase();
-    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
-      alert("Formato não suportado. Use apenas arquivos .CSV ou .XLSX (Excel moderno)");
-      return;
-    }
-    
-    setImporting(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: importFile });
-      
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: {
-          type: "object",
-          properties: {
-            clientes: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  nome: { type: "string" },
-                  telefone: { type: "string" },
-                  email: { type: "string" },
-                  empresa: { type: "string" },
-                  cargo: { type: "string" },
-                  status: { type: "string" },
-                  data_nascimento: { type: "string" },
-                  profissao: { type: "string" },
-                  estado_civil: { type: "string" },
-                  fonte_prospeccao: { type: "string" },
-                  renda: { type: "string" },
-                  patrimonio: { type: "string" }
-                }
-              }
-            }
-          }
-        }
-      });
-
-      if (result.status === "success" && result.output?.clientes) {
-        const maxCodigo = clientes.reduce((max, c) => Math.max(max, c.codigo || 0), 0);
-        const clientesParaImportar = result.output.clientes.map((c, idx) => ({
-          ...c,
-          codigo: maxCodigo + idx + 1,
-          status: c.status || "AB Fone",
-          data_cadastro: new Date().toISOString().split('T')[0]
-        }));
-
-        await base44.entities.Cliente.bulkCreate(clientesParaImportar);
-        queryClient.invalidateQueries({ queryKey: ["clientes"] });
-        setShowImportDialog(false);
-        setImportFile(null);
-        alert(`${clientesParaImportar.length} clientes importados com sucesso!`);
-      } else {
-        alert("Erro ao processar arquivo: " + (result.details || "Formato inválido"));
-      }
-    } catch (error) {
-      alert("Erro ao importar: " + error.message);
-    } finally {
-      setImporting(false);
     }
   };
 
@@ -394,13 +324,7 @@ export default function Leads() {
             <FileText className="w-5 h-5 mr-2" />
             ABRIR APÓLICE
           </Button>
-          <Button
-            onClick={() => setShowImportDialog(true)}
-            className="bg-[#16a085] hover:bg-[#138d75] text-white font-bold text-base px-8 py-6"
-          >
-            <Upload className="w-5 h-5 mr-2" />
-            IMPORTAR XLS
-          </Button>
+
         </div>
       </div>
 
@@ -413,49 +337,7 @@ export default function Leads() {
         nextCodigo={nextCodigo}
       />
 
-      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importar Clientes via Planilha</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Selecione o arquivo CSV ou XLSX</Label>
-              <Input
-                type="file"
-                accept=".csv,.xlsx"
-                onChange={(e) => setImportFile(e.target.files?.[0])}
-                className="mt-2"
-              />
-              <p className="text-xs text-red-600 font-bold mt-2">
-                ⚠️ IMPORTANTE: Use apenas arquivos .CSV ou .XLSX (Excel moderno)
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Arquivos .XLS (Excel antigo) não são suportados. Abra o arquivo no Excel e salve como .XLSX
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Colunas: nome, telefone, email, empresa, cargo, status, data_nascimento, profissao, estado_civil, fonte_prospeccao, renda, patrimonio
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleImport}
-                disabled={!importFile || importing}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                {importing ? "Importando..." : "Importar"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => { setShowImportDialog(false); setImportFile(null); }}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }

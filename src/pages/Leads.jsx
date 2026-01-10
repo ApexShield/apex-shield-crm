@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Search, Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
+import { Search, Plus, Edit, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import FormularioLead from "../components/leads/FormularioLead";
+import DocumentosDialog from "../components/leads/DocumentosDialog";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -45,6 +46,7 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
+  const [showDocumentos, setShowDocumentos] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -347,11 +349,12 @@ export default function Leads() {
             EXCLUIR
           </Button>
           <Button
+            onClick={() => setShowDocumentos(true)}
             className="bg-[#8e44ad] hover:bg-[#732d91] text-white font-bold text-base px-8 py-6"
             disabled={!selectedLead}
           >
             <FileText className="w-5 h-5 mr-2" />
-            ABRIR APÓLICE
+            LISTAR DOCUMENTOS
           </Button>
 
         </div>
@@ -366,7 +369,14 @@ export default function Leads() {
         nextCodigo={nextCodigo}
       />
 
-
+      {selectedLead && (
+        <DocumentosDialog
+          open={showDocumentos}
+          onClose={() => setShowDocumentos(false)}
+          cliente={selectedLead}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
+        />
+      )}
     </div>
   );
 }

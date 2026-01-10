@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 const formatPhone = (value) => {
-  const numbers = value.replace(/\D/g, "");
+  const numbers = value.replace(/\D/g, "").slice(0, 11);
   if (numbers.length <= 10) {
     return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1)$2-$3").replace(/-$/, "");
   }
@@ -34,6 +34,15 @@ const calculateAge = (birthDate) => {
   return age.toString();
 };
 
+const calculateIMC = (altura, peso) => {
+  if (!altura || !peso) return "";
+  const alturaM = parseFloat(altura) / 100;
+  const pesoNum = parseFloat(peso);
+  if (alturaM <= 0 || pesoNum <= 0) return "";
+  const imc = pesoNum / (alturaM * alturaM);
+  return imc.toFixed(2);
+};
+
 export default function FormularioLead({ open, onClose, lead, onSave, isLoading, nextCodigo }) {
   const [formData, setFormData] = useState({
     codigo: nextCodigo || "",
@@ -56,19 +65,19 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     estado_civil: "",
     altura: "",
     peso: "",
+    imc: "",
     fuma: "",
     anda_moto: "",
     fonte_prospeccao: "",
+    custo_mensal_fixo: "",
     renda: "",
     patrimonio: "",
     data_visita: "",
     observacoes: [],
     novaObservacao: "",
-    indicacao1_nome: "", indicacao1_profissao: "", indicacao1_telefone: "", indicacao1_conexao: "",
-    indicacao2_nome: "", indicacao2_profissao: "", indicacao2_telefone: "", indicacao2_conexao: "",
-    indicacao3_nome: "", indicacao3_profissao: "", indicacao3_telefone: "", indicacao3_conexao: "",
-    indicacao4_nome: "", indicacao4_profissao: "", indicacao4_telefone: "", indicacao4_conexao: "",
-    indicacao5_nome: "", indicacao5_profissao: "", indicacao5_telefone: "", indicacao5_conexao: ""
+    documentos: [],
+    num_indicacoes: "0",
+    indicacoes: []
   });
 
   useEffect(() => {
@@ -78,6 +87,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         ...lead,
         filhos_info: lead.filhos_info || [],
         observacoes: lead.observacoes || [],
+        documentos: lead.documentos || [],
+        indicacoes: lead.indicacoes || [],
         novaObservacao: ""
       });
     } else {
@@ -102,19 +113,19 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         estado_civil: "",
         altura: "",
         peso: "",
+        imc: "",
         fuma: "",
         anda_moto: "",
         fonte_prospeccao: "",
+        custo_mensal_fixo: "",
         renda: "",
         patrimonio: "",
         data_visita: "",
         observacoes: [],
         novaObservacao: "",
-        indicacao1_nome: "", indicacao1_profissao: "", indicacao1_telefone: "", indicacao1_conexao: "",
-        indicacao2_nome: "", indicacao2_profissao: "", indicacao2_telefone: "", indicacao2_conexao: "",
-        indicacao3_nome: "", indicacao3_profissao: "", indicacao3_telefone: "", indicacao3_conexao: "",
-        indicacao4_nome: "", indicacao4_profissao: "", indicacao4_telefone: "", indicacao4_conexao: "",
-        indicacao5_nome: "", indicacao5_profissao: "", indicacao5_telefone: "", indicacao5_conexao: ""
+        documentos: [],
+        num_indicacoes: "0",
+        indicacoes: []
       });
     }
   }, [lead, open, nextCodigo]);
@@ -176,6 +187,14 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     setFormData({ ...formData, filhos: quantidade, filhos_info: newFilhosInfo });
   };
 
+  const handleIndicacoesChange = (quantidade) => {
+    const num = parseInt(quantidade) || 0;
+    const newIndicacoes = Array(num).fill(null).map((_, i) => 
+      formData.indicacoes[i] || { nome: "", profissao: "", telefone: "", conexao: "" }
+    );
+    setFormData({ ...formData, num_indicacoes: quantidade, indicacoes: newIndicacoes });
+  };
+
   const handleDataNascimentoChange = (date) => {
     const idade = calculateAge(date);
     setFormData({ ...formData, data_nascimento: date, idade });
@@ -187,6 +206,17 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
   const handleCurrencyChange = (field, value) => {
     setFormData({ ...formData, [field]: formatCurrency(value) });
+  };
+
+  const handleAlturaOrPesoChange = (field, value) => {
+    const newData = { ...formData, [field]: value };
+    if (field === "altura" || field === "peso") {
+      newData.imc = calculateIMC(
+        field === "altura" ? value : formData.altura,
+        field === "peso" ? value : formData.peso
+      );
+    }
+    setFormData(newData);
   };
 
   const handleLimpar = () => {
@@ -421,9 +451,18 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   
                   <div>
-                    <Label className="text-xs">Renda Mensal Estimada:</Label>
+                    <Label className="text-xs">Custo Mensal Fixo Total:</Label>
                     <Input 
                       tabIndex={15}
+                      value={formData.custo_mensal_fixo} 
+                      onChange={(e) => handleCurrencyChange('custo_mensal_fixo', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Renda Mensal Estimada:</Label>
+                    <Input 
+                      tabIndex={16}
                       value={formData.renda} 
                       onChange={(e) => handleCurrencyChange('renda', e.target.value)}
                     />
@@ -432,7 +471,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   <div>
                     <Label className="text-xs">Patrimônio:</Label>
                     <Input 
-                      tabIndex={16}
+                      tabIndex={17}
                       value={formData.patrimonio} 
                       onChange={(e) => handleCurrencyChange('patrimonio', e.target.value)}
                     />
@@ -482,12 +521,29 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   
                   <div>
                     <Label className="text-xs">Altura (cm):</Label>
-                    <Input tabIndex={22} value={formData.altura} onChange={(e) => setFormData({...formData, altura: e.target.value})} />
+                    <Input 
+                      tabIndex={22} 
+                      value={formData.altura} 
+                      onChange={(e) => handleAlturaOrPesoChange('altura', e.target.value)}
+                    />
                   </div>
                   
                   <div>
                     <Label className="text-xs">Peso (kg):</Label>
-                    <Input tabIndex={23} value={formData.peso} onChange={(e) => setFormData({...formData, peso: e.target.value})} />
+                    <Input 
+                      tabIndex={23} 
+                      value={formData.peso} 
+                      onChange={(e) => handleAlturaOrPesoChange('peso', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">IMC:</Label>
+                    <Input 
+                      value={formData.imc} 
+                      disabled 
+                      className="bg-gray-100 font-bold"
+                    />
                   </div>
                 </div>
               </div>
@@ -533,38 +589,72 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
           <div className="mt-4 bg-yellow-100 p-3 rounded">
             <h3 className="font-bold text-sm mb-3">INDICAÇÕES</h3>
             
-            <div className="grid grid-cols-4 gap-2 text-xs font-bold mb-2">
-              <div>Nome:</div>
-              <div>Profissão:</div>
-              <div>Telefone:</div>
-              <div>Conexão:</div>
+            <div className="mb-3">
+              <Label className="text-xs">Quantidade de Indicações:</Label>
+              <Select value={formData.num_indicacoes} onValueChange={handleIndicacoesChange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {[1, 2, 3, 4, 5].map((num) => (
-              <div key={num} className="grid grid-cols-4 gap-2 mb-2">
-                <Input 
-                  className="h-8 text-xs"
-                  value={formData[`indicacao${num}_nome`]} 
-                  onChange={(e) => handleUpperCase(`indicacao${num}_nome`, e.target.value)}
-                />
-                <Input 
-                  className="h-8 text-xs"
-                  value={formData[`indicacao${num}_profissao`]} 
-                  onChange={(e) => handleUpperCase(`indicacao${num}_profissao`, e.target.value)}
-                />
-                <Input 
-                  className="h-8 text-xs"
-                  value={formData[`indicacao${num}_telefone`]} 
-                  onChange={(e) => handlePhoneChange(`indicacao${num}_telefone`, e.target.value)}
-                  maxLength={15}
-                />
-                <Input 
-                  className="h-8 text-xs"
-                  value={formData[`indicacao${num}_conexao`]} 
-                  onChange={(e) => handleUpperCase(`indicacao${num}_conexao`, e.target.value)}
-                />
-              </div>
-            ))}
+            {parseInt(formData.num_indicacoes) > 0 && (
+              <>
+                <div className="grid grid-cols-4 gap-2 text-xs font-bold mb-2">
+                  <div>Nome:</div>
+                  <div>Profissão:</div>
+                  <div>Telefone:</div>
+                  <div>Conexão:</div>
+                </div>
+
+                {formData.indicacoes.map((indicacao, idx) => (
+                  <div key={idx} className="grid grid-cols-4 gap-2 mb-2">
+                    <Input 
+                      className="h-8 text-xs"
+                      value={indicacao.nome} 
+                      onChange={(e) => {
+                        const newIndicacoes = [...formData.indicacoes];
+                        newIndicacoes[idx].nome = e.target.value.toUpperCase();
+                        setFormData({ ...formData, indicacoes: newIndicacoes });
+                      }}
+                    />
+                    <Input 
+                      className="h-8 text-xs"
+                      value={indicacao.profissao} 
+                      onChange={(e) => {
+                        const newIndicacoes = [...formData.indicacoes];
+                        newIndicacoes[idx].profissao = e.target.value.toUpperCase();
+                        setFormData({ ...formData, indicacoes: newIndicacoes });
+                      }}
+                    />
+                    <Input 
+                      className="h-8 text-xs"
+                      value={indicacao.telefone} 
+                      onChange={(e) => {
+                        const newIndicacoes = [...formData.indicacoes];
+                        newIndicacoes[idx].telefone = formatPhone(e.target.value);
+                        setFormData({ ...formData, indicacoes: newIndicacoes });
+                      }}
+                      maxLength={14}
+                    />
+                    <Input 
+                      className="h-8 text-xs"
+                      value={indicacao.conexao} 
+                      onChange={(e) => {
+                        const newIndicacoes = [...formData.indicacoes];
+                        newIndicacoes[idx].conexao = e.target.value.toUpperCase();
+                        setFormData({ ...formData, indicacoes: newIndicacoes });
+                      }}
+                    />
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           {/* BOTÕES */}

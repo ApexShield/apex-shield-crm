@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -24,6 +24,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import FormularioLead from "../components/leads/FormularioLead";
 import DocumentosDialog from "../components/leads/DocumentosDialog";
+import FunilVendas from "../components/leads/FunilVendas";
+import ApoliceDialog from "../components/leads/ApoliceDialog";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -47,6 +49,17 @@ export default function Leads() {
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
   const [showDocumentos, setShowDocumentos] = useState(false);
+  const [showApolice, setShowApolice] = useState(false);
+
+  // Listener para abrir apólice do formulário
+  useEffect(() => {
+    const handleOpenApolice = (e) => {
+      setSelectedLead(e.detail);
+      setShowApolice(true);
+    };
+    window.addEventListener('openApolice', handleOpenApolice);
+    return () => window.removeEventListener('openApolice', handleOpenApolice);
+  }, []);
 
   const queryClient = useQueryClient();
 
@@ -175,9 +188,25 @@ export default function Leads() {
     }
   };
 
+  const handleSaveApolice = async (data) => {
+    if (!selectedLead) return;
+    try {
+      await updateMutation.mutateAsync({ id: selectedLead.id, data });
+      alert("Dados da apólice salvos com sucesso!");
+      setShowApolice(false);
+    } catch (error) {
+      alert("Erro ao salvar apólice: " + error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f0f0f5] p-4">
       <div className="max-w-[1800px] mx-auto">
+        {/* Funil de Vendas */}
+        <div className="mb-4">
+          <FunilVendas clientes={clientes} />
+        </div>
+
         {/* Header com Status Buttons */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
           {/* Linha de Botões de Status */}
@@ -274,6 +303,10 @@ export default function Leads() {
                       key={cliente.id}
                       className="hover:bg-slate-50 cursor-pointer"
                       onClick={() => setSelectedLead(cliente)}
+                      onDoubleClick={() => {
+                        setEditingLead(cliente);
+                        setShowForm(true);
+                      }}
                       style={{ color: cor }}
                     >
                       <TableCell className="font-bold whitespace-nowrap">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
@@ -370,12 +403,21 @@ export default function Leads() {
       />
 
       {selectedLead && (
-        <DocumentosDialog
-          open={showDocumentos}
-          onClose={() => setShowDocumentos(false)}
-          cliente={selectedLead}
-          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
-        />
+        <>
+          <DocumentosDialog
+            open={showDocumentos}
+            onClose={() => setShowDocumentos(false)}
+            cliente={selectedLead}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
+          />
+          <ApoliceDialog
+            open={showApolice}
+            onClose={() => setShowApolice(false)}
+            cliente={selectedLead}
+            onSave={handleSaveApolice}
+            isLoading={updateMutation.isPending}
+          />
+        </>
       )}
     </div>
   );

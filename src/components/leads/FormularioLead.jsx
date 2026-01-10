@@ -668,6 +668,19 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               {isLoading && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
               SALVAR
             </Button>
+
+            {lead && (
+              <Button 
+                type="button"
+                onClick={() => {
+                  const event = new CustomEvent('openApolice', { detail: lead });
+                  window.dispatchEvent(event);
+                }}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 font-bold text-lg py-6"
+              >
+                DADOS DA APÓLICE
+              </Button>
+            )}
             
             <Button 
               type="button"

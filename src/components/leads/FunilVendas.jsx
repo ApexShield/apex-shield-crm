@@ -1,16 +1,16 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 const FUNIL_STAGES = [
-  { label: "Cotações", color: "#8e44ad", width: "100%" },
-  { label: "Propostas em andamento", color: "#e74c3c", width: "85%" },
-  { label: "Assinatura pendente", color: "#3498db", width: "70%" },
-  { label: "Propostas finalizadas", color: "#95c45d", width: "55%" },
-  { label: "Propostas transmitidas", color: "#f39c12", width: "40%" }
+  { label: "Cotações", color: "#8e44ad" },
+  { label: "Propostas em andamento", color: "#e74c3c" },
+  { label: "Assinatura pendente", color: "#3498db" },
+  { label: "Propostas finalizadas", color: "#95c45d" },
+  { label: "Propostas transmitidas", color: "#f39c12" }
 ];
 
 export default function FunilVendas({ clientes }) {
-  const contadores = useMemo(() => {
+  const data = useMemo(() => {
     const counts = {
       "Cotações": 0,
       "Propostas em andamento": 0,
@@ -43,38 +43,39 @@ export default function FunilVendas({ clientes }) {
       }
     });
 
-    return counts;
+    return FUNIL_STAGES.map(stage => ({
+      name: stage.label,
+      value: counts[stage.label],
+      color: stage.color
+    })).filter(item => item.value > 0);
   }, [clientes]);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Funil de venda</h2>
-      
-      <div className="space-y-2">
-        {FUNIL_STAGES.map((stage, index) => (
-          <motion.div
-            key={stage.label}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="flex flex-col items-center"
+    <div className="bg-white rounded-lg shadow-sm p-4">
+      <h3 className="text-sm font-bold text-gray-900 mb-2 text-center">Funil de venda</h3>
+      <ResponsiveContainer width="100%" height={250}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ value }) => value}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
           >
-            <div
-              className="text-white font-bold text-2xl py-6 rounded flex items-center justify-center transition-all hover:scale-105"
-              style={{ 
-                backgroundColor: stage.color,
-                width: stage.width,
-                minWidth: "120px"
-              }}
-            >
-              {contadores[stage.label]}
-            </div>
-            <p className="text-xs font-semibold text-gray-700 mt-2 text-center">
-              {stage.label}
-            </p>
-          </motion.div>
-        ))}
-      </div>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend 
+            wrapperStyle={{ fontSize: '10px' }}
+            iconSize={8}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 }

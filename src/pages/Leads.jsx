@@ -202,13 +202,9 @@ export default function Leads() {
   return (
     <div className="min-h-screen bg-[#f0f0f5] p-4">
       <div className="max-w-[1800px] mx-auto">
-        {/* Funil de Vendas */}
-        <div className="mb-4">
-          <FunilVendas clientes={clientes} />
-        </div>
-
-        {/* Header com Status Buttons */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+        {/* Header com Status Buttons e Funil */}
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1 bg-white rounded-lg shadow-sm p-4">
           {/* Linha de Botões de Status */}
           <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
             {STATUS_CONFIG.map((status, index) => (
@@ -269,6 +265,12 @@ export default function Leads() {
             >
               LIMPAR
             </Button>
+          </div>
+          </div>
+
+          {/* Funil de Vendas no lado direito */}
+          <div className="w-80 flex-shrink-0">
+            <FunilVendas clientes={clientes} />
           </div>
         </div>
 

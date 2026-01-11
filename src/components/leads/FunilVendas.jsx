@@ -1,53 +1,39 @@
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
-const FUNIL_STAGES = [
-  { label: "Cotações", color: "#8e44ad" },
-  { label: "Propostas em andamento", color: "#e74c3c" },
-  { label: "Assinatura pendente", color: "#3498db" },
-  { label: "Propostas finalizadas", color: "#95c45d" },
-  { label: "Propostas transmitidas", color: "#f39c12" }
-];
+const STATUS_COLORS = {
+  "Novo": "#800080",
+  "AB Fone": "#FF69B4",
+  "AB Visita": "#87CEEB",
+  "AB Fechamento": "#FFD700",
+  "Delay": "#00FFFF",
+  "Análise": "#A52A2A",
+  "Venda Feita": "#228B22",
+  "Entrega de Apólice": "#C8A2C8",
+  "Encerrado": "#696969"
+};
 
 export default function FunilVendas({ clientes }) {
   const data = useMemo(() => {
-    const counts = {
-      "Cotações": 0,
-      "Propostas em andamento": 0,
-      "Assinatura pendente": 0,
-      "Propostas finalizadas": 0,
-      "Propostas transmitidas": 0
-    };
+    const counts = {};
+    
+    Object.keys(STATUS_COLORS).forEach(status => {
+      counts[status] = 0;
+    });
 
     clientes.forEach(cliente => {
-      switch(cliente.status) {
-        case "Novo":
-        case "AB Fone":
-          counts["Cotações"]++;
-          break;
-        case "AB Visita":
-        case "AB Fechamento":
-        case "Delay":
-          counts["Propostas em andamento"]++;
-          break;
-        case "Análise":
-          counts["Assinatura pendente"]++;
-          break;
-        case "Venda Feita":
-          counts["Propostas finalizadas"]++;
-          break;
-        case "Entrega de Apólice":
-        case "Encerrado":
-          counts["Propostas transmitidas"]++;
-          break;
+      if (counts[cliente.status] !== undefined) {
+        counts[cliente.status]++;
       }
     });
 
-    return FUNIL_STAGES.map(stage => ({
-      name: stage.label,
-      value: counts[stage.label],
-      color: stage.color
-    })).filter(item => item.value > 0);
+    return Object.entries(counts)
+      .map(([name, value]) => ({
+        name,
+        value,
+        color: STATUS_COLORS[name]
+      }))
+      .filter(item => item.value > 0);
   }, [clientes]);
 
   return (

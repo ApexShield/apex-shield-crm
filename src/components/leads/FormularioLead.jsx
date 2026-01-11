@@ -59,6 +59,9 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     plano_saude: "",
     plano_saude_nome: "",
     valor_plano_saude: "",
+    seguro_vida: "",
+    seguro_vida_seguradora: "",
+    valor_seguro_vida: "",
     data_nascimento: "",
     idade: "",
     profissao: "",
@@ -107,6 +110,9 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         plano_saude: "",
         plano_saude_nome: "",
         valor_plano_saude: "",
+        seguro_vida: "",
+        seguro_vida_seguradora: "",
+        valor_seguro_vida: "",
         data_nascimento: "",
         idade: "",
         profissao: "",
@@ -345,18 +351,18 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   <div>
                     <Label className="text-xs">Fuma:</Label>
                     <Select value={formData.fuma} onValueChange={(v) => setFormData({...formData, fuma: v})}>
-                      <SelectTrigger tabIndex={24}><SelectValue /></SelectTrigger>
+                      <SelectTrigger tabIndex={28}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
                         <SelectItem value="NÃO">NÃO</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Anda de Moto:</Label>
                     <Select value={formData.anda_moto} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
-                      <SelectTrigger tabIndex={25}><SelectValue /></SelectTrigger>
+                      <SelectTrigger tabIndex={29}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
                         <SelectItem value="NÃO">NÃO</SelectItem>
@@ -438,8 +444,48 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value)}
                     />
                   </div>
-                </div>
-              </div>
+
+                  <div>
+                    <Label className="text-xs">Seguro de Vida:</Label>
+                    <Select value={formData.seguro_vida} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
+                      <SelectTrigger tabIndex={14}><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SIM">SIM</SelectItem>
+                        <SelectItem value="NÃO">NÃO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {formData.seguro_vida === "SIM" && (
+                    <div>
+                      <Label className="text-xs">Qual Seguradora:</Label>
+                      <Select value={formData.seguro_vida_seguradora} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
+                        <SelectTrigger tabIndex={15}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PRUDENTIAL">PRUDENTIAL</SelectItem>
+                          <SelectItem value="MONGERAL">MONGERAL</SelectItem>
+                          <SelectItem value="PORTO SEGURO">PORTO SEGURO</SelectItem>
+                          <SelectItem value="ITAÚ">ITAÚ</SelectItem>
+                          <SelectItem value="BRADESCO">BRADESCO</SelectItem>
+                          <SelectItem value="BANCO DO BRASIL">BANCO DO BRASIL</SelectItem>
+                          <SelectItem value="AZOS">AZOS</SelectItem>
+                          <SelectItem value="TOKIO MARINE">TOKIO MARINE</SelectItem>
+                          <SelectItem value="OUTROS">OUTROS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-xs">Valor do Seguro de Vida:</Label>
+                    <Input 
+                      tabIndex={16}
+                      value={formData.valor_seguro_vida} 
+                      onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value)}
+                    />
+                  </div>
+                  </div>
+                  </div>
 
               <div className="bg-green-200 p-3 rounded">
                 <h3 className="font-bold text-sm mb-3">DADOS COMERCIAIS</h3>
@@ -447,31 +493,31 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 <div className="space-y-2">
                   <div>
                     <Label className="text-xs">Fonte de Prospecção:</Label>
-                    <Input tabIndex={14} value={formData.fonte_prospeccao} onChange={(e) => handleUpperCase('fonte_prospeccao', e.target.value)} />
+                    <Input tabIndex={17} value={formData.fonte_prospeccao} onChange={(e) => handleUpperCase('fonte_prospeccao', e.target.value)} />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Custo Mensal Fixo Total:</Label>
                     <Input 
-                      tabIndex={15}
+                      tabIndex={18}
                       value={formData.custo_mensal_fixo} 
                       onChange={(e) => handleCurrencyChange('custo_mensal_fixo', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Renda Mensal Estimada:</Label>
                     <Input 
-                      tabIndex={16}
+                      tabIndex={19}
                       value={formData.renda} 
                       onChange={(e) => handleCurrencyChange('renda', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Patrimônio:</Label>
                     <Input 
-                      tabIndex={17}
+                      tabIndex={20}
                       value={formData.patrimonio} 
                       onChange={(e) => handleCurrencyChange('patrimonio', e.target.value)}
                     />
@@ -489,27 +535,27 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   <div>
                     <Label className="text-xs">Data de Nascimento:</Label>
                     <Input 
-                      tabIndex={18}
+                      tabIndex={21}
                       type="date" 
                       value={formData.data_nascimento} 
                       onChange={(e) => handleDataNascimentoChange(e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Idade:</Label>
-                    <Input tabIndex={19} value={formData.idade} disabled className="bg-gray-100" />
+                    <Input tabIndex={22} value={formData.idade} disabled className="bg-gray-100" />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Profissão:</Label>
-                    <Input tabIndex={20} value={formData.profissao} onChange={(e) => handleUpperCase('profissao', e.target.value)} />
+                    <Input tabIndex={23} value={formData.profissao} onChange={(e) => handleUpperCase('profissao', e.target.value)} />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Estado Civil:</Label>
-                    <Select value={formData.estado_civil} onValueChange={(v) => setFormData({...formData, estado_civil: v})}>
-                      <SelectTrigger tabIndex={21}><SelectValue /></SelectTrigger>
+                    <Select value={formData.estado_civil} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento})}>
+                      <SelectTrigger tabIndex={24}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SOLTEIRO">SOLTEIRO</SelectItem>
                         <SelectItem value="CASADO">CASADO</SelectItem>
@@ -518,20 +564,34 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.estado_civil === "CASADO" && (
+                    <div>
+                      <Label className="text-xs">Regime de Casamento:</Label>
+                      <Select value={formData.regime_casamento} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
+                        <SelectTrigger tabIndex={25}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="COMUNHÃO TOTAL">COMUNHÃO TOTAL</SelectItem>
+                          <SelectItem value="COMUNHÃO PARCIAL">COMUNHÃO PARCIAL</SelectItem>
+                          <SelectItem value="SEPARAÇÃO TOTAL">SEPARAÇÃO TOTAL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   
                   <div>
                     <Label className="text-xs">Altura (cm):</Label>
                     <Input 
-                      tabIndex={22} 
+                      tabIndex={26} 
                       value={formData.altura} 
                       onChange={(e) => handleAlturaOrPesoChange('altura', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label className="text-xs">Peso (kg):</Label>
                     <Input 
-                      tabIndex={23} 
+                      tabIndex={27} 
                       value={formData.peso} 
                       onChange={(e) => handleAlturaOrPesoChange('peso', e.target.value)}
                     />
@@ -553,7 +613,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 
                 <div>
                   <Label className="text-xs">Data de Visita:</Label>
-                  <Input tabIndex={26} type="date" value={formData.data_visita} onChange={(e) => setFormData({...formData, data_visita: e.target.value})} />
+                  <Input tabIndex={30} type="date" value={formData.data_visita} onChange={(e) => setFormData({...formData, data_visita: e.target.value})} />
                 </div>
               </div>
 
@@ -573,7 +633,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   )}
                   
                   <Textarea 
-                    tabIndex={27}
+                    tabIndex={31}
                     rows={3}
                     value={formData.novaObservacao} 
                     onChange={(e) => setFormData({...formData, novaObservacao: e.target.value.toUpperCase()})}
@@ -661,7 +721,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
           <div className="flex gap-3 mt-6">
             <Button 
               type="submit" 
-              tabIndex={28}
+              tabIndex={32}
               disabled={isLoading}
               className="flex-1 bg-green-600 hover:bg-green-700 font-bold text-lg py-6"
             >

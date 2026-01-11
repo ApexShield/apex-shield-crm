@@ -26,6 +26,7 @@ import FormularioLead from "../components/leads/FormularioLead";
 import DocumentosDialog from "../components/leads/DocumentosDialog";
 import FunilVendas from "../components/leads/FunilVendas";
 import ApoliceDialog from "../components/leads/ApoliceDialog";
+import Relatorios from "../components/leads/Relatorios";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -50,6 +51,7 @@ export default function Leads() {
   const [editingLead, setEditingLead] = useState(null);
   const [showDocumentos, setShowDocumentos] = useState(false);
   const [showApolice, setShowApolice] = useState(false);
+  const [showRelatorios, setShowRelatorios] = useState(false);
 
   // Listener para abrir apólice do formulário
   useEffect(() => {
@@ -148,15 +150,34 @@ export default function Leads() {
     }
   });
 
+  const gerarAlias = (email) => {
+    if (!email) return "USER";
+    const parts = email.split('@')[0].split(/[._-]/);
+    let alias = "";
+    parts.forEach(part => {
+      if (/\d/.test(part)) {
+        alias += part.match(/\d+/)[0];
+      } else {
+        alias += part.charAt(0).toUpperCase();
+      }
+    });
+    return alias.substring(0, 6);
+  };
+
   const handleSave = async (data) => {
     console.log("Salvando dados:", data);
     
-    // Se for novo lead, calcular próximo código
+    // Se for novo lead, calcular próximo código com alias
     if (!editingLead) {
-      const maxCodigo = clientes.reduce((max, c) => Math.max(max, c.codigo || 0), 0);
-      data.codigo = maxCodigo + 1;
+      const alias = gerarAlias(user?.email);
+      const userLeads = clientes.filter(c => c.created_by === user?.email);
+      const nextNum = userLeads.length + 1;
+      data.codigo = `${alias}COD${String(nextNum).padStart(2, '0')}`;
       data.status = data.status || "AB Fone";
       data.data_cadastro = data.data_cadastro || new Date().toISOString().split('T')[0];
+    } else if (data.status !== editingLead.status) {
+      // Rastrear mudança de status
+      data.status_anterior = editingLead.status;
     }
     
     try {
@@ -391,6 +412,14 @@ export default function Leads() {
             <FileText className="w-5 h-5 mr-2" />
             LISTAR DOCUMENTOS
           </Button>
+          <Button
+            onClick={() => setShowRelatorios(true)}
+            className="text-white font-bold text-base px-8 py-6"
+            style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
+          >
+            <FileText className="w-5 h-5 mr-2" />
+            RELATÓRIOS
+          </Button>
 
         </div>
       </div>
@@ -421,6 +450,12 @@ export default function Leads() {
           />
         </>
       )}
+
+      <Relatorios
+        open={showRelatorios}
+        onClose={() => setShowRelatorios(false)}
+        clientes={clientes}
+      />
     </div>
   );
 }

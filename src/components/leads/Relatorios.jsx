@@ -66,9 +66,7 @@ export default function Relatorios({ open, onClose, clientes }) {
       <div id="relatorio-container" style="padding: 40px; font-family: Arial, sans-serif; background: white; width: 794px;">
         <!-- Cabeçalho -->
         <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #0096D8;">
-          <div style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #0096D8, #AFCB3A); border-radius: 10px; margin-bottom: 15px;">
-            <h1 style="color: white; font-size: 32px; margin: 0;">APEX SHIELD</h1>
-          </div>
+          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/e5c35c2e9_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
           <p style="color: #666; margin: 5px 0;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
@@ -180,9 +178,7 @@ export default function Relatorios({ open, onClose, clientes }) {
       <div id="relatorio-container" style="padding: 40px; font-family: Arial, sans-serif; background: white; width: 794px;">
         <!-- Cabeçalho -->
         <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #AFCB3A;">
-          <div style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #AFCB3A, #0096D8); border-radius: 10px; margin-bottom: 15px;">
-            <h1 style="color: white; font-size: 32px; margin: 0;">APEX SHIELD</h1>
-          </div>
+          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/e5c35c2e9_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
           <p style="color: #666; margin: 5px 0;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 

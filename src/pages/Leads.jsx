@@ -292,8 +292,9 @@ export default function Leads() {
                 <TableRow className="border-white/10">
                   <TableHead className="font-bold text-white">Cód</TableHead>
                   <TableHead className="font-bold text-white min-w-[150px]">Nome</TableHead>
+                  <TableHead className="font-bold text-white">Data Contato</TableHead>
+                  <TableHead className="font-bold text-white">Data Visita</TableHead>
                   <TableHead className="font-bold text-white">Status</TableHead>
-                  <TableHead className="font-bold text-white">Data Criação</TableHead>
                   <TableHead className="font-bold text-white">Telefone</TableHead>
                   <TableHead className="font-bold text-white min-w-[200px]">E-mail</TableHead>
                   <TableHead className="font-bold text-white">Empresa</TableHead>
@@ -320,10 +321,13 @@ export default function Leads() {
                     >
                       <TableCell className="font-bold text-white">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
                       <TableCell className="font-bold text-white">{cliente.nome}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.status}</TableCell>
                       <TableCell className="font-bold text-white">
-                        {format(new Date(cliente.created_date), "dd/MM/yyyy", { locale: ptBR })}
+                        {cliente.data_contato ? format(new Date(cliente.data_contato), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
                       </TableCell>
+                      <TableCell className="font-bold text-white">
+                        {cliente.agendar_visita ? format(new Date(cliente.agendar_visita), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
+                      </TableCell>
+                      <TableCell className="font-bold text-white">{cliente.status}</TableCell>
                       <TableCell className="font-bold">
                         {cliente.telefone ? (
                           <a 

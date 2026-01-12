@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import AgendarVisitaDialog from "./AgendarVisitaDialog";
@@ -648,7 +649,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     </Button>
                     {formData.agendar_visita && (
                       <p className="text-sm text-blue-600 mt-1 font-bold">
-                        ✓ Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy 'Horário' HH:mm", { locale: { code: 'pt-BR' }})}
+                        ✓ Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy 'Horário' HH:mm")}
                       </p>
                     )}
                   </div>

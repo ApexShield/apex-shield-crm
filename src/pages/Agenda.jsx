@@ -41,9 +41,28 @@ export default function Agenda() {
 
   const queryClient = useQueryClient();
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => base44.auth.me()
+  });
+
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => base44.entities.User.list(),
+    enabled: user?.role === "admin"
+  });
+
   const { data: compromissos = [] } = useQuery({
-    queryKey: ["compromissos"],
-    queryFn: () => base44.entities.Compromisso.list()
+    queryKey: ["compromissos", selectedUserEmail || user?.email],
+    queryFn: async () => {
+      if (user?.role === "admin" && selectedUserEmail) {
+        return base44.entities.Compromisso.filter({ created_by: selectedUserEmail });
+      }
+      return base44.entities.Compromisso.list();
+    },
+    enabled: !!user
   });
 
   const { data: clientes = [] } = useQuery({
@@ -172,7 +191,7 @@ export default function Agenda() {
       <div className="max-w-[1800px] mx-auto">
         {/* Header Moderno */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
                 <CalendarDays className="w-7 h-7 text-white" />
@@ -182,7 +201,26 @@ export default function Agenda() {
                 <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
               </div>
             </div>
-            <Button 
+            <div className="flex items-center gap-3">
+              {user?.role === "admin" && (
+                <Select
+                  value={selectedUserEmail}
+                  onValueChange={setSelectedUserEmail}
+                >
+                  <SelectTrigger className="w-64 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="👤 Ver agenda de..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>📋 Minha Agenda</SelectItem>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.email}>
+                        {u.full_name || u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button 
               onClick={() => {
                 const now = new Date();
                 setSelectedSlot({ startTime: now, endTime: new Date(now.getTime() + 3600000) });
@@ -202,8 +240,9 @@ export default function Agenda() {
               <Plus className="w-5 h-5 mr-2" />
               Criar Compromisso
             </Button>
-          </div>
-        </div>
+            </div>
+            </div>
+            </div>
 
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
           {/* Header da Semana */}

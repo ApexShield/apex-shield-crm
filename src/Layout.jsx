@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
-  { name: "Usuários", icon: Users, page: "Usuarios", adminOnly: true }
+  { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true }
 ];
 
 export default function Layout({ children, currentPageName }) {

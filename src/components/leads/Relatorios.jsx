@@ -101,49 +101,102 @@ export default function Relatorios({ open, onClose, clientes }) {
     }).length;
 
     const html = `
-      <div id="relatorio-container" style="padding: 40px; font-family: Arial, sans-serif; background: white; width: 794px;">
+      <div id="relatorio-container" style="padding: 30px; font-family: Arial, sans-serif; background: white; width: 750px;">
         <!-- Cabeçalho -->
-        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #0096D8;">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
-          <p style="color: #666; margin: 5px 0;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+        <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #0096D8;">
+          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="width: 250px; height: auto; margin: 0 auto 10px auto; display: block;" />
+          <p style="color: #666; margin: 0; font-size: 12px;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
         <!-- Título -->
-        <h2 style="color: #0096D8; font-size: 28px; margin-bottom: 25px; text-align: center;">📊 RESUMO DO DIA</h2>
-        <p style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;"><strong>Data de referência:</strong> ${dataFormatada}</p>
-        <p style="text-align: center; color: #999; font-size: 14px; margin-bottom: 30px;">Período de análise: ${format(inicioDia, "dd/MM/yyyy HH:mm:ss")} até ${format(agora, "HH:mm:ss")}</p>
+        <h2 style="color: #0096D8; font-size: 24px; margin-bottom: 15px; text-align: center;">📊 RESUMO DO DIA</h2>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 5px;"><strong>Data de referência:</strong> ${dataFormatada}</p>
+        <p style="text-align: center; color: #999; font-size: 11px; margin-bottom: 20px;">${format(inicioDia, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })} até ${format(agora, "HH:mm:ss", { locale: ptBR })}</p>
 
-        <!-- Quantidade de Leads por Etapa -->
-        <div style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 10px;">
-          <h3 style="color: #0096D8; font-size: 20px; margin-bottom: 15px;">📈 Leads por Etapa</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            ${statusList.map((status, idx) => `
-              <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f8f9fa'};">
-                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${status}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-size: 18px; color: #0096D8;"><strong>${statusCount[status]}</strong></td>
-              </tr>
+        <!-- Análise de Movimentação -->
+        <div style="margin-bottom: 20px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #AFCB3A;">
+          <h3 style="color: #AFCB3A; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">📈 Análise de Movimentação</h3>
+          ${Object.keys(contagemStatus).length > 0 ? `
+            ${Object.entries(contagemStatus).map(([status, info]) => `
+              <div style="padding: 8px; background: white; margin-bottom: 5px; border-radius: 4px; border-left: 3px solid #0096D8; font-size: 13px;">
+                <strong style="color: #0096D8;">${status}</strong> ${statusCount[status] || 0} agora tem ${statusCount[status] || 0} total de <strong style="color: #AFCB3A;">${info.total} movimentações</strong>
+              </div>
             `).join('')}
+          ` : '<p style="text-align: center; color: #666; font-size: 12px; margin: 0;">Nenhuma movimentação registrada hoje</p>'}
+        </div>
+
+        <!-- Variações por Status -->
+        <div style="margin-bottom: 20px; background: #e7f3ff; padding: 15px; border-radius: 8px;">
+          <h3 style="color: #0096D8; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">🔄 Variações por Status</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background: #0096D8; color: white;">
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">De</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Para</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${mudancasDetalhadas.map((m, idx) => `
+                <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f0f8ff'};">
+                  <td style="padding: 6px; border: 1px solid #ddd;"><strong>${m.de}</strong></td>
+                  <td style="padding: 6px; border: 1px solid #ddd;"><strong>${m.para}</strong></td>
+                  <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${m.quantidade}</strong></td>
+                </tr>
+              `).join('')}
+              <tr style="background: #fff;">
+                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Qualquer Status</strong></td>
+                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Encerrado</strong></td>
+                <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${mudancasEncerrado}</strong></td>
+              </tr>
+              <tr style="background: #f0f8ff;">
+                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Fora do Fluxo</strong></td>
+                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Outros</strong></td>
+                <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${mudancasForaFluxo}</strong></td>
+              </tr>
+            </tbody>
           </table>
         </div>
 
-        <!-- HOT40 -->
+        <!-- Resumo de Totais por Status -->
+        <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h3 style="color: #0096D8; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">📋 Resumo de Totais por Status</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background: #0096D8; color: white;">
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Status</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${statusList.map((status, idx) => `
+                <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f8f9fa'};">
+                  <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">${status}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${statusCount[status]}</strong></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
         ${hot40.length > 0 ? `
-        <div style="margin-bottom: 30px; background: #fff3cd; padding: 20px; border-radius: 10px; border: 2px solid #AFCB3A;">
-          <h3 style="color: #AFCB3A; font-size: 20px; margin-bottom: 15px;">🔥 HOT40 - Visitas Agendadas para Hoje</h3>
-          <table style="width: 100%; border-collapse: collapse;">
+        <!-- HOT40 do Dia -->
+        <div style="margin-bottom: 20px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #AFCB3A;">
+          <h3 style="color: #AFCB3A; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">🔥 HOT40 - Contatos Agendados para Hoje</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
             <thead>
               <tr style="background: #AFCB3A; color: white;">
-                <th style="padding: 10px; border: 1px solid #ddd;">Nome</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Telefone</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Email</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">Nome</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">Telefone</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">Email</th>
               </tr>
             </thead>
             <tbody>
               ${hot40.map((lead, idx) => `
                 <tr style="background: ${idx % 2 === 0 ? '#fff' : '#fffbf0'};">
-                  <td style="padding: 8px; border: 1px solid #ddd;">${lead.nome}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${lead.telefone || '—'}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${lead.email || '—'}</td>
+                  <td style="padding: 5px; border: 1px solid #ddd; font-weight: bold;">${lead.nome}</td>
+                  <td style="padding: 5px; border: 1px solid #ddd;">${lead.telefone || '—'}</td>
+                  <td style="padding: 5px; border: 1px solid #ddd; font-size: 10px;">${lead.email || '—'}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -151,54 +204,9 @@ export default function Relatorios({ open, onClose, clientes }) {
         </div>
         ` : ''}
 
-        <!-- Análise de Movimentação -->
-        <div style="margin-bottom: 30px; background: #fff3cd; padding: 20px; border-radius: 10px; border: 2px solid #AFCB3A;">
-          <h3 style="color: #AFCB3A; font-size: 20px; margin-bottom: 15px;">📈 Análise de Movimentação</h3>
-          ${Object.keys(contagemStatus).length > 0 ? `
-            ${Object.entries(contagemStatus).map(([status, info]) => `
-              <div style="padding: 10px; background: white; margin-bottom: 10px; border-radius: 5px; border-left: 4px solid #0096D8;">
-                <strong style="color: #0096D8;">${status}</strong> agora tem <strong>${statusCount[status] || 0}</strong>, total de <strong style="color: #AFCB3A;">${info.total} movimentações</strong> hoje
-              </div>
-            `).join('')}
-          ` : '<p style="text-align: center; color: #666;">Nenhuma movimentação registrada hoje</p>'}
-        </div>
-
-        <!-- Mudanças de Status Detalhadas -->
-        <div style="margin-bottom: 30px; background: #e7f3ff; padding: 20px; border-radius: 10px;">
-          <h3 style="color: #0096D8; font-size: 20px; margin-bottom: 15px;">🔄 Variações por Status</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background: #0096D8; color: white;">
-                <th style="padding: 10px; border: 1px solid #ddd;">De</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Para</th>
-                <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${mudancasDetalhadas.map((m, idx) => `
-                <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f0f8ff'};">
-                  <td style="padding: 8px; border: 1px solid #ddd;"><strong>${m.de}</strong></td>
-                  <td style="padding: 8px; border: 1px solid #ddd;"><strong>${m.para}</strong></td>
-                  <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 16px; color: #0096D8;"><strong>${m.quantidade}</strong></td>
-                </tr>
-              `).join('')}
-              <tr style="background: #fff;">
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Qualquer Status</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Encerrado</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 16px; color: #0096D8;"><strong>${mudancasEncerrado}</strong></td>
-              </tr>
-              <tr style="background: #f0f8ff;">
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Fora do Fluxo</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Outros</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 16px; color: #0096D8;"><strong>${mudancasForaFluxo}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
         <!-- Rodapé -->
-        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #0096D8; color: #666;">
-          <p style="margin: 0; font-size: 14px;">© ${new Date().getFullYear()} Apex Shield - CRM para Corretores de Seguro de Vida</p>
+        <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #0096D8; color: #666;">
+          <p style="margin: 0; font-size: 11px;">© ${new Date().getFullYear()} Apex Shield - CRM para Corretores de Seguro de Vida</p>
         </div>
       </div>
     `;
@@ -236,51 +244,70 @@ export default function Relatorios({ open, onClose, clientes }) {
     const hot40 = clientes.filter(c => c.status === "AB Fone" && c.data_contato === hoje);
 
     const html = `
-      <div id="relatorio-container" style="padding: 40px; font-family: Arial, sans-serif; background: white; width: 794px;">
+      <div id="relatorio-container" style="padding: 30px; font-family: Arial, sans-serif; background: white; width: 750px;">
         <!-- Cabeçalho -->
-        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #AFCB3A;">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
-          <p style="color: #666; margin: 5px 0;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+        <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #AFCB3A;">
+          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="width: 250px; height: auto; margin: 0 auto 10px auto; display: block;" />
+          <p style="color: #666; margin: 0; font-size: 12px;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
         <!-- Título -->
-        <h2 style="color: #AFCB3A; font-size: 28px; margin-bottom: 25px; text-align: center;">🔥 RELATÓRIO HOT40</h2>
-        <p style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;"><strong>Leads AB FONE com Data de Contato: ${format(new Date(hoje), "dd/MM/yyyy")}</strong></p>
+        <h2 style="color: #AFCB3A; font-size: 24px; margin-bottom: 15px; text-align: center;">🔥 RELATÓRIO HOT40</h2>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 20px;"><strong>Leads AB FONE com Data de Contato: ${format(new Date(hoje), "dd/MM/yyyy", { locale: ptBR })}</strong></p>
 
         ${hot40.length === 0 ? `
           <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 10px;">
-            <p style="color: #666; font-size: 18px;">Nenhuma visita agendada para hoje.</p>
+            <p style="color: #666; font-size: 16px;">Nenhum lead AB FONE com contato agendado para esta data.</p>
           </div>
-        ` : hot40.map((lead, idx) => `
-          <div style="margin-bottom: 25px; padding: 20px; background: ${idx % 2 === 0 ? '#fffbf0' : '#fff'}; border-radius: 10px; border-left: 5px solid #AFCB3A;">
-            <h3 style="color: #0096D8; margin: 0 0 15px 0; font-size: 22px;">${idx + 1}. ${lead.nome}</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
-              <p style="margin: 5px 0;"><strong>📞 Celular:</strong> ${lead.telefone ? `<a href="https://wa.me/55${lead.telefone.replace(/\D/g, '')}" target="_blank" style="color: #25D366; text-decoration: none;">${lead.telefone}</a>` : '—'}</p>
-              <p style="margin: 5px 0;"><strong>📧 Email:</strong> ${lead.email ? `<a href="mailto:${lead.email}" style="color: #0096D8; text-decoration: none;">${lead.email}</a>` : '—'}</p>
-              <p style="margin: 5px 0;"><strong>🏢 Empresa:</strong> ${lead.empresa || '—'}</p>
-              <p style="margin: 5px 0;"><strong>💼 Cargo:</strong> ${lead.cargo || '—'}</p>
-              <p style="margin: 5px 0;"><strong>💍 Estado Civil:</strong> ${lead.estado_civil || '—'}</p>
-              <p style="margin: 5px 0;"><strong>👶 Filhos:</strong> ${lead.filhos || '—'}</p>
-              <p style="margin: 5px 0; grid-column: 1 / -1;"><strong>📅 Data de Contato:</strong> ${lead.data_contato ? format(new Date(lead.data_contato), "dd/MM/yyyy", { locale: ptBR }) : '—'}</p>
-              ${lead.agendar_visita ? `<p style="margin: 5px 0; grid-column: 1 / -1;"><strong>🗓️ Visita Agendada:</strong> ${format(new Date(lead.agendar_visita), "dd/MM/yyyy", { locale: ptBR })}</p>` : ''}
+        ` : `
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+              <tr style="background: #AFCB3A; color: white;">
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">📋 Nome</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">📞 Celular</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">📧 Email</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">🏢 Empresa</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">💼 Cargo</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">💍 Est. Civil</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">👶 Filhos</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${hot40.map((lead, idx) => `
+                <tr style="background: ${idx % 2 === 0 ? '#fff' : '#fffbf0'};">
+                  <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">${lead.nome}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd;">${lead.telefone ? `<a href="https://wa.me/55${lead.telefone.replace(/\D/g, '')}" style="color: #25D366; text-decoration: underline; font-weight: bold;">${lead.telefone}</a>` : '—'}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd; font-size: 10px;">${lead.email ? `<a href="mailto:${lead.email}" style="color: #0096D8; text-decoration: underline;">${lead.email}</a>` : '—'}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd;">${lead.empresa || '—'}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd;">${lead.cargo || '—'}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd;">${lead.estado_civil || '—'}</td>
+                  <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${lead.filhos || '0'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          ${hot40.some(l => l.observacoes && l.observacoes.length > 0) ? `
+            <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 5px; border: 1px solid #AFCB3A;">
+              <h4 style="color: #0096D8; margin: 0 0 10px 0; font-size: 14px;">📝 Observações Recentes</h4>
+              ${hot40.filter(l => l.observacoes && l.observacoes.length > 0).map((lead, idx) => `
+                <div style="margin-bottom: 15px; ${idx > 0 ? 'border-top: 1px solid #eee; padding-top: 10px;' : ''}">
+                  <strong style="color: #0096D8; font-size: 12px;">${lead.nome}:</strong>
+                  ${lead.observacoes.slice(-2).map(obs => `
+                    <div style="margin: 5px 0 5px 15px; padding: 6px; background: #f8f9fa; border-radius: 4px; font-size: 11px;">
+                      <div style="color: #666; font-size: 10px; margin-bottom: 2px;">${obs.data}</div>
+                      <div>${obs.texto}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              `).join('')}
             </div>
-            ${lead.observacoes && lead.observacoes.length > 0 ? `
-              <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 5px; border: 1px solid #ddd;">
-                <strong style="color: #0096D8;">📝 Observações:</strong>
-                ${lead.observacoes.slice(-3).map(obs => `
-                  <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 5px;">
-                    <div style="font-size: 12px; color: #666; margin-bottom: 3px;">${obs.data}</div>
-                    <div style="font-size: 13px;">${obs.texto}</div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
-          </div>
-        `).join('')}
+          ` : ''}
+        `}
 
         <!-- Rodapé -->
-        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #AFCB3A; color: #666;">
-          <p style="margin: 0; font-size: 14px;">© ${new Date().getFullYear()} Apex Shield - CRM para Corretores de Seguro de Vida</p>
+        <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #AFCB3A; color: #666;">
+          <p style="margin: 0; font-size: 11px;">© ${new Date().getFullYear()} Apex Shield - CRM para Corretores de Seguro de Vida</p>
         </div>
       </div>
     `;

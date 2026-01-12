@@ -90,7 +90,7 @@ export default function Leads() {
     return clientes
       .filter(c => !filtroStatus || c.status === filtroStatus)
       .filter(c => !busca || c.nome?.toLowerCase().includes(busca.toLowerCase()))
-      .filter(c => !filtroDataVisita || c.data_visita === filtroDataVisita)
+      .filter(c => !filtroDataVisita || c.data_contato === filtroDataVisita)
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   }, [clientes, filtroStatus, busca, filtroDataVisita]);
 
@@ -282,7 +282,7 @@ export default function Leads() {
             />
             <Input
               type="date"
-              placeholder="Filtrar por data da visita"
+              placeholder="Filtrar por data de contato"
               value={filtroDataVisita}
               onChange={(e) => setFiltroDataVisita(e.target.value)}
               className="max-w-xs"

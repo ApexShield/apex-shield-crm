@@ -2,16 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Search, Plus, Edit, Trash2, FileText } from "lucide-react";
+import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -110,37 +103,25 @@ export default function Leads() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      console.log("Criando cliente com dados:", data);
       const result = await base44.entities.Cliente.create(data);
-      console.log("Cliente criado:", result);
       return result;
     },
     onSuccess: () => {
-      console.log("Create Success!");
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setShowForm(false);
       setEditingLead(null);
-    },
-    onError: (error) => {
-      console.error("Erro ao criar:", error);
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      console.log("Atualizando cliente:", id, data);
       const result = await base44.entities.Cliente.update(id, data);
-      console.log("Cliente atualizado:", result);
       return result;
     },
     onSuccess: () => {
-      console.log("Update Success!");
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setShowForm(false);
       setEditingLead(null);
-    },
-    onError: (error) => {
-      console.error("Erro ao atualizar:", error);
     }
   });
 
@@ -167,8 +148,6 @@ export default function Leads() {
   };
 
   const handleSave = async (data) => {
-    console.log("Salvando dados:", data);
-    
     // Se for novo lead, calcular próximo código com alias
     if (!editingLead) {
       const alias = gerarAlias(user?.email);
@@ -197,7 +176,6 @@ export default function Leads() {
         alert("Cliente criado com sucesso!");
       }
     } catch (error) {
-      console.error("Erro ao salvar:", error);
       alert("Erro ao salvar: " + error.message);
     }
   };
@@ -229,111 +207,110 @@ export default function Leads() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f0f5] p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
       <div className="max-w-[1800px] mx-auto">
-        {/* Header com Status Buttons e Funil */}
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1 bg-white rounded-lg shadow-sm p-4">
-          {/* Linha de Botões de Status */}
-          <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-            {STATUS_CONFIG.map((status, index) => (
-              <motion.button
-                key={status.value}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setFiltroStatus(status.value)}
-                className={`px-3 py-2 rounded font-bold text-xs transition-all whitespace-nowrap flex-shrink-0 ${
-                  filtroStatus === status.value ? 'ring-2 ring-offset-2 ring-blue-500 underline' : ''
-                }`}
-                style={{
-                  backgroundColor: status.color,
-                  color: status.textColor
-                }}
-              >
-                {status.label}
-              </motion.button>
-            ))}
+        {/* Header Moderno */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-white">Dashboard de Leads</h1>
+              <p className="text-indigo-300">Gerencie seus clientes e oportunidades</p>
+            </div>
           </div>
+        </div>
 
-          {/* Linha de Contadores */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-            {STATUS_CONFIG.map((status) => (
-              <div
-                key={`count-${status.value}`}
-                className="text-center font-bold text-xs px-2 py-1 rounded border flex-shrink-0"
-                style={{
-                  backgroundColor: status.bgLight,
-                  color: status.color === "rgb(135, 206, 250)" || status.color === "rgb(255, 215, 0)" || status.color === "rgb(0, 255, 255)" || status.color === "rgb(200, 162, 200)" ? "#000" : status.color,
-                  minWidth: '40px'
-                }}
-              >
-                {contadores[status.value] || 0}
+        {/* Status Buttons e Funil */}
+        <div className="grid lg:grid-cols-3 gap-4 mb-6">
+          {/* Coluna de Status - 2 colunas */}
+          <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Filtrar por Status
+            </h3>
+            
+            {/* Grid de Botões de Status */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
+              {STATUS_CONFIG.map((status) => (
+                <motion.button
+                  key={status.value}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setFiltroStatus(status.value)}
+                  className={`px-3 py-3 rounded-lg font-bold text-xs transition-all ${
+                    filtroStatus === status.value ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''
+                  }`}
+                  style={{
+                    backgroundColor: status.color,
+                    color: status.textColor
+                  }}
+                >
+                  <div>{status.label}</div>
+                  <div className="text-lg mt-1">{contadores[status.value] || 0}</div>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Busca e Filtros */}
+            <div className="flex gap-2 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <Input
+                  placeholder="🔍 Buscar por nome..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                />
               </div>
-            ))}
+              <Input
+                type="date"
+                value={filtroDataVisita}
+                onChange={(e) => setFiltroDataVisita(e.target.value)}
+                className="w-auto bg-white/10 border-white/20 text-white"
+              />
+              <Button
+                onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
+                className="bg-red-500/80 hover:bg-red-600"
+              >
+                Limpar
+              </Button>
+            </div>
           </div>
 
-          {/* Barra de Busca e Filtros */}
-          <div className="flex gap-2 flex-wrap">
-            <Input
-              placeholder="Buscar por nome..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="max-w-md"
-            />
-            <Input
-              type="date"
-              placeholder="Filtrar por data de contato"
-              value={filtroDataVisita}
-              onChange={(e) => setFiltroDataVisita(e.target.value)}
-              className="max-w-xs"
-            />
-            <Button
-              onClick={() => { setBusca(""); setFiltroDataVisita(""); }}
-              variant="destructive"
-              className="bg-[#dc143c] hover:bg-[#b01030]"
-            >
-              LIMPAR
-            </Button>
-          </div>
-          </div>
-
-          {/* Funil de Vendas no lado direito */}
-          <div className="w-80 flex-shrink-0">
+          {/* Funil de Vendas */}
+          <div className="lg:col-span-1">
             <FunilVendas clientes={clientes} />
           </div>
         </div>
 
         {/* Tabela de Dados */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">
           <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
             <Table>
-              <TableHeader className="sticky top-0 bg-slate-100 z-10">
-                <TableRow>
-                  <TableHead className="font-bold whitespace-nowrap">Cód</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap min-w-[150px]">Nome</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Status</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Data Criação</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Telefone</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap min-w-[200px]">E-mail</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Empresa</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Cargo</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Fonte Prospecção</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Renda</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Idade</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Profissão</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Estado Civil</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Filhos</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Data Contato</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Agendar Visita</TableHead>
+              <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm z-10">
+                <TableRow className="border-white/10">
+                  <TableHead className="font-bold text-white">Cód</TableHead>
+                  <TableHead className="font-bold text-white min-w-[150px]">Nome</TableHead>
+                  <TableHead className="font-bold text-white">Status</TableHead>
+                  <TableHead className="font-bold text-white">Data Criação</TableHead>
+                  <TableHead className="font-bold text-white">Telefone</TableHead>
+                  <TableHead className="font-bold text-white min-w-[200px]">E-mail</TableHead>
+                  <TableHead className="font-bold text-white">Empresa</TableHead>
+                  <TableHead className="font-bold text-white">Cargo</TableHead>
+                  <TableHead className="font-bold text-white">Fonte</TableHead>
+                  <TableHead className="font-bold text-white">Renda</TableHead>
+                  <TableHead className="font-bold text-white">Idade</TableHead>
+                  <TableHead className="font-bold text-white">Profissão</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dadosFiltrados.map((cliente, index) => {
+                {dadosFiltrados.map((cliente) => {
                   const cor = getStatusColor(cliente.status);
                   return (
                     <TableRow
                       key={cliente.id}
-                      className="hover:bg-slate-50 cursor-pointer"
+                      className="hover:bg-white/10 cursor-pointer border-white/5 transition-colors"
                       onClick={() => setSelectedLead(cliente)}
                       onDoubleClick={() => {
                         setEditingLead(cliente);
@@ -341,10 +318,10 @@ export default function Leads() {
                       }}
                       style={{ color: cor }}
                     >
-                      <TableCell className="font-bold whitespace-nowrap">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
-                      <TableCell className="font-bold whitespace-nowrap">{cliente.nome}</TableCell>
-                      <TableCell className="font-bold whitespace-nowrap">{cliente.status}</TableCell>
-                      <TableCell className="font-bold">
+                      <TableCell className="font-bold text-white">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.nome}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.status}</TableCell>
+                      <TableCell className="font-bold text-white">
                         {format(new Date(cliente.created_date), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
                       <TableCell className="font-bold">
@@ -353,36 +330,28 @@ export default function Leads() {
                             href={`https://wa.me/55${cliente.telefone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:underline text-green-600"
+                            className="hover:underline text-green-400"
                           >
                             {cliente.telefone}
                           </a>
-                        ) : "—"}
+                        ) : <span className="text-white/50">—</span>}
                       </TableCell>
                       <TableCell className="font-bold">
                         {cliente.email ? (
                           <a 
                             href={`mailto:${cliente.email}`}
-                            className="hover:underline text-blue-600"
+                            className="hover:underline text-blue-400"
                           >
                             {cliente.email}
                           </a>
-                        ) : "—"}
+                        ) : <span className="text-white/50">—</span>}
                       </TableCell>
-                      <TableCell className="font-bold">{cliente.empresa || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.cargo || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.fonte_prospeccao || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.renda || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.idade || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.profissao || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.estado_civil || "—"}</TableCell>
-                      <TableCell className="font-bold">{cliente.filhos || "—"}</TableCell>
-                      <TableCell className="font-bold">
-                        {cliente.data_contato ? format(new Date(cliente.data_contato), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-                      </TableCell>
-                      <TableCell className="font-bold">
-                        {cliente.agendar_visita ? format(new Date(cliente.agendar_visita), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-                      </TableCell>
+                      <TableCell className="font-bold text-white">{cliente.empresa || "—"}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.cargo || "—"}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.fonte_prospeccao || "—"}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.renda || "—"}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.idade || "—"}</TableCell>
+                      <TableCell className="font-bold text-white">{cliente.profissao || "—"}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -392,55 +361,53 @@ export default function Leads() {
         </div>
 
         {/* Botões de Ação */}
-        <div className="flex gap-3 mt-4">
+        <div className="flex gap-3 flex-wrap">
           <Button
             onClick={() => { setEditingLead(null); setShowForm(true); }}
-            className="bg-[#0078d7] hover:bg-[#006abc] text-white font-bold text-base px-8 py-6"
+            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-6 py-6"
           >
             <Plus className="w-5 h-5 mr-2" />
-            CRIAR LEAD
+            Criar Lead
           </Button>
           <Button
             onClick={handleEdit}
-            className="bg-[#ff8c00] hover:bg-[#e67e00] text-white font-bold text-base px-8 py-6"
+            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-6 py-6"
             disabled={!selectedLead}
           >
             <Edit className="w-5 h-5 mr-2" />
-            EDITAR
+            Editar
           </Button>
           <Button
             onClick={handleDelete}
-            className="bg-[#dc143c] hover:bg-[#b01030] text-white font-bold text-base px-8 py-6"
+            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-6 py-6"
             disabled={!selectedLead}
           >
             <Trash2 className="w-5 h-5 mr-2" />
-            EXCLUIR
+            Excluir
           </Button>
           <Button
             onClick={() => setShowDocumentos(true)}
-            className="bg-[#8e44ad] hover:bg-[#732d91] text-white font-bold text-base px-8 py-6"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-6 py-6"
             disabled={!selectedLead}
           >
             <FileText className="w-5 h-5 mr-2" />
-            LISTAR DOCUMENTOS
+            Documentos
           </Button>
           <Button
             onClick={() => setShowRelatorios(true)}
-            className="text-white font-bold text-base px-8 py-6"
-            style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6 py-6"
           >
             <FileText className="w-5 h-5 mr-2" />
-            RELATÓRIOS
+            Relatórios
           </Button>
           <Button
             onClick={() => setShowImportExport(true)}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-base px-8 py-6"
+            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-6 py-6"
           >
-            <FileText className="w-5 h-5 mr-2" />
-            IMPORTAR/EXPORTAR
+            <Upload className="w-5 h-5 mr-2" />
+            Import/Export
           </Button>
-
-          </div>
+        </div>
       </div>
 
       <FormularioLead

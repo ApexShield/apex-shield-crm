@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UserPlus, Shield, User, Loader2, Edit2, Award, Calendar } from "lucide-react";
+import { UserPlus, Shield, User, Loader2, Edit2, Award, Calendar, Users, Crown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -100,19 +100,21 @@ export default function GestaoUsuarios() {
 
   if (!currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-indigo-400" />
       </div>
     );
   }
 
   if (currentUser.role !== "admin") {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Acesso Restrito</h1>
-          <p className="text-gray-600">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl shadow-2xl p-12 max-w-md text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-3">Acesso Restrito</h1>
+          <p className="text-indigo-200 text-lg">
             Apenas administradores podem acessar esta página.
           </p>
         </div>
@@ -120,113 +122,147 @@ export default function GestaoUsuarios() {
     );
   }
 
+  const userCount = usuarios.filter(u => u.role_type === "Usuario" || !u.role_type).length;
+  const vipCount = usuarios.filter(u => u.role_type === "UsuarioVIP").length;
+  const adminCount = usuarios.filter(u => u.role === "admin").length;
+
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
-              <p className="text-gray-600 mt-1">Administração - Gerenciamento completo de usuários e permissões</p>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black text-white">Gestão de Usuários</h1>
+                <p className="text-indigo-300 text-lg">Administração de acessos e permissões</p>
+              </div>
             </div>
             <Button
               onClick={() => setShowInviteDialog(true)}
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg"
             >
-              <UserPlus className="w-5 h-5 mr-2" />
+              <UserPlus className="w-6 h-6 mr-2" />
               Convidar Usuário
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
-              <div className="flex items-center gap-3">
-                <User className="w-8 h-8 text-blue-600" />
+          {/* Stats Cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+                  <Users className="w-7 h-7 text-white" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-600">Usuários</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {usuarios.filter(u => u.role_type === "Usuario" || !u.role_type).length}
-                  </p>
+                  <p className="text-indigo-300 text-sm font-medium">Total</p>
+                  <p className="text-3xl font-black text-white">{usuarios.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
-              <div className="flex items-center gap-3">
-                <Award className="w-8 h-8 text-purple-600" />
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                  <User className="w-7 h-7 text-white" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-600">Usuários VIP</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {usuarios.filter(u => u.role_type === "UsuarioVIP").length}
-                  </p>
+                  <p className="text-indigo-300 text-sm font-medium">Usuários</p>
+                  <p className="text-3xl font-black text-white">{userCount}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-500">
-              <div className="flex items-center gap-3">
-                <Shield className="w-8 h-8 text-indigo-600" />
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Award className="w-7 h-7 text-white" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-600">Administradores</p>
-                  <p className="text-2xl font-bold text-indigo-600">
-                    {usuarios.filter(u => u.role === "admin").length}
-                  </p>
+                  <p className="text-indigo-300 text-sm font-medium">VIP</p>
+                  <p className="text-3xl font-black text-white">{vipCount}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
+                  <Crown className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <p className="text-indigo-300 text-sm font-medium">Admins</p>
+                  <p className="text-3xl font-black text-white">{adminCount}</p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Tabela */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-bold">Nome</TableHead>
-                    <TableHead className="font-bold">Email</TableHead>
-                    <TableHead className="font-bold">Função Sistema</TableHead>
-                    <TableHead className="font-bold">Tipo de Usuário</TableHead>
-                    <TableHead className="font-bold">Google Calendar</TableHead>
-                    <TableHead className="font-bold">Data de Cadastro</TableHead>
-                    <TableHead className="font-bold">Ações</TableHead>
+                  <TableRow className="border-white/10">
+                    <TableHead className="font-bold text-white">Nome</TableHead>
+                    <TableHead className="font-bold text-white">Email</TableHead>
+                    <TableHead className="font-bold text-white">Função Sistema</TableHead>
+                    <TableHead className="font-bold text-white">Tipo de Usuário</TableHead>
+                    <TableHead className="font-bold text-white">Google Calendar</TableHead>
+                    <TableHead className="font-bold text-white">Data de Cadastro</TableHead>
+                    <TableHead className="font-bold text-white">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {usuarios.map((usuario) => (
-                    <TableRow key={usuario.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {usuario.role === "admin" ? (
-                            <Shield className="w-4 h-4 text-indigo-600" />
-                          ) : usuario.role_type === "UsuarioVIP" ? (
-                            <Award className="w-4 h-4 text-purple-600" />
-                          ) : (
-                            <User className="w-4 h-4 text-gray-400" />
-                          )}
+                    <TableRow key={usuario.id} className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-white">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            usuario.role === "admin" 
+                              ? "bg-gradient-to-br from-orange-500 to-red-600"
+                              : usuario.role_type === "UsuarioVIP"
+                              ? "bg-gradient-to-br from-purple-500 to-pink-600"
+                              : "bg-gradient-to-br from-blue-500 to-cyan-600"
+                          }`}>
+                            {usuario.role === "admin" ? (
+                              <Shield className="w-5 h-5 text-white" />
+                            ) : usuario.role_type === "UsuarioVIP" ? (
+                              <Award className="w-5 h-5 text-white" />
+                            ) : (
+                              <User className="w-5 h-5 text-white" />
+                            )}
+                          </div>
                           {usuario.full_name || "—"}
                         </div>
                       </TableCell>
-                      <TableCell>{usuario.email}</TableCell>
+                      <TableCell className="text-indigo-300">{usuario.email}</TableCell>
                       <TableCell>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${
                             usuario.role === "admin"
-                              ? "bg-indigo-100 text-indigo-700"
-                              : "bg-gray-100 text-gray-700"
+                              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+                              : "bg-white/10 text-white"
                           }`}
                         >
-                          {usuario.role === "admin" ? "ADMINISTRADOR" : "USUÁRIO"}
+                          {usuario.role === "admin" ? "ADMIN" : "USER"}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${
                             usuario.role_type === "UsuarioVIP"
-                              ? "bg-purple-100 text-purple-700"
-                              : "bg-blue-100 text-blue-700"
+                              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                              : "bg-white/10 text-white"
                           }`}
                         >
                           {usuario.role_type === "UsuarioVIP" ? "VIP" : "PADRÃO"}
@@ -234,26 +270,25 @@ export default function GestaoUsuarios() {
                       </TableCell>
                       <TableCell>
                         {usuario.google_calendar_connected ? (
-                          <span className="flex items-center gap-1 text-green-600 text-xs">
-                            <Calendar className="w-3 h-3" />
+                          <span className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                            <Calendar className="w-4 h-4" />
                             Conectado
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-xs">Não conectado</span>
+                          <span className="text-white/30 text-sm">Não conectado</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-white">
                         {format(new Date(usuario.created_date), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
                       <TableCell>
                         <Button
                           size="sm"
-                          variant="outline"
                           onClick={() => handleEditRole(usuario)}
-                          className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                          className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
                         >
                           <Edit2 className="w-3 h-3 mr-1" />
-                          Alterar Tipo
+                          Editar
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -267,25 +302,26 @@ export default function GestaoUsuarios() {
 
       {/* Dialog Convidar Usuário */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent>
+        <DialogContent className="bg-slate-900 border-white/20">
           <DialogHeader>
-            <DialogTitle>Convidar Novo Usuário</DialogTitle>
+            <DialogTitle className="text-white text-xl">Convidar Novo Usuário</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleInvite} className="space-y-4">
             <div>
-              <Label>Email</Label>
+              <Label className="text-white">Email</Label>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="usuario@exemplo.com"
+                className="bg-white/10 border-white/20 text-white"
                 required
               />
             </div>
             <div>
-              <Label>Função no Sistema</Label>
+              <Label className="text-white">Função no Sistema</Label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -293,7 +329,7 @@ export default function GestaoUsuarios() {
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-indigo-300 mt-2">
                 Usuários veem apenas seus próprios leads. Administradores veem todos os dados.
               </p>
             </div>
@@ -301,7 +337,7 @@ export default function GestaoUsuarios() {
               <Button
                 type="submit"
                 disabled={inviteMutation.isPending}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
               >
                 {inviteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Enviar Convite
@@ -310,7 +346,7 @@ export default function GestaoUsuarios() {
                 type="button"
                 variant="outline"
                 onClick={() => setShowInviteDialog(false)}
-                className="flex-1"
+                className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
                 Cancelar
               </Button>
@@ -321,56 +357,58 @@ export default function GestaoUsuarios() {
 
       {/* Dialog Alterar Tipo de Usuário */}
       <Dialog open={showEditRoleDialog} onOpenChange={setShowEditRoleDialog}>
-        <DialogContent>
+        <DialogContent className="bg-slate-900 border-white/20">
           <DialogHeader>
-            <DialogTitle>Alterar Tipo de Usuário</DialogTitle>
+            <DialogTitle className="text-white text-xl">Alterar Tipo de Usuário</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="font-semibold text-gray-900">{selectedUser?.full_name || selectedUser?.email}</p>
-              <p className="text-sm text-gray-600 mt-1">
-                Tipo atual: <span className="font-semibold">{selectedUser?.role_type === "UsuarioVIP" ? "Usuário VIP" : "Usuário Padrão"}</span>
+            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+              <p className="font-semibold text-white text-lg">{selectedUser?.full_name || selectedUser?.email}</p>
+              <p className="text-indigo-300 mt-1">
+                Tipo atual: <span className="font-semibold text-white">{selectedUser?.role_type === "UsuarioVIP" ? "VIP" : "Padrão"}</span>
               </p>
             </div>
 
             <div>
-              <Label>Novo Tipo de Usuário</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col gap-2 border-2 hover:border-blue-500 hover:bg-blue-50"
+              <Label className="text-white font-bold mb-3 block">Selecione o Novo Tipo</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
                   onClick={() => handleUpdateRole("Usuario")}
                   disabled={updateRoleMutation.isPending}
+                  className="group bg-white/5 hover:bg-white/10 border-2 border-white/20 hover:border-blue-500 rounded-xl p-6 transition-all"
                 >
-                  <User className="w-6 h-6 text-blue-600" />
-                  <span className="font-semibold">Usuário</span>
-                  <span className="text-xs text-gray-500">Acesso padrão</span>
-                </Button>
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="font-bold text-white mb-1">Usuário</div>
+                  <div className="text-xs text-indigo-300">Acesso padrão</div>
+                </button>
 
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col gap-2 border-2 hover:border-purple-500 hover:bg-purple-50"
+                <button
                   onClick={() => handleUpdateRole("UsuarioVIP")}
                   disabled={updateRoleMutation.isPending}
+                  className="group bg-white/5 hover:bg-white/10 border-2 border-white/20 hover:border-purple-500 rounded-xl p-6 transition-all"
                 >
-                  <Award className="w-6 h-6 text-purple-600" />
-                  <span className="font-semibold">Usuário VIP</span>
-                  <span className="text-xs text-gray-500">Google Agenda</span>
-                </Button>
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Award className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="font-bold text-white mb-1">VIP</div>
+                  <div className="text-xs text-indigo-300">Acesso + Agenda</div>
+                </button>
               </div>
             </div>
 
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-              <p className="text-xs text-gray-700">
-                <strong>Usuário Padrão:</strong> Acesso a todas as funções do CRM.<br/>
-                <strong>Usuário VIP:</strong> Acesso completo + integração com Google Agenda.
+            <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-lg">
+              <p className="text-sm text-yellow-200">
+                <strong className="text-yellow-400">Usuário Padrão:</strong> Acesso completo ao CRM.<br/>
+                <strong className="text-yellow-400">Usuário VIP:</strong> Acesso completo + Integração com Google Agenda.
               </p>
             </div>
 
             <Button
               variant="outline"
               onClick={() => setShowEditRoleDialog(false)}
-              className="w-full"
+              className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
               Cancelar
             </Button>

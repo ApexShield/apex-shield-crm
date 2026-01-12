@@ -10,8 +10,9 @@ import { ptBR } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
 
 export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSave }) {
-  const [etapa, setEtapa] = useState(1); // 1: tipo, 2: horário, 3: endereço
+  const [etapa, setEtapa] = useState(1); // 1: tipo, 1.5: subtipo (para Fechamento/Entrega), 2: horário, 3: endereço
   const [tipoVisita, setTipoVisita] = useState("");
+  const [subTipo, setSubTipo] = useState(""); // F, F2, F3, F4, F5 ou null
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -23,6 +24,16 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
   const handleTipoVisita = (tipo) => {
     setTipoVisita(tipo);
+    // Se for Fechamento ou Entrega de Apólice, vai para subtipo (etapa 1.5)
+    if (tipo === "Fechamento" || tipo === "Entrega de Apólice") {
+      setEtapa(1.5);
+    } else {
+      setEtapa(2);
+    }
+  };
+
+  const handleSubTipo = (sub) => {
+    setSubTipo(sub);
     setEtapa(2);
   };
 
@@ -73,7 +84,18 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     try {
       const dataHoraInicio = new Date(`${data}T${horario}:00`);
       const dataHoraFim = new Date(dataHoraInicio.getTime() + 60 * 60 * 1000); // +1 hora
-      const titulo = `${tipoVisita} - ${cliente.nome}`;
+      
+      // Montar título baseado no tipo e subtipo
+      let prefixo = "";
+      if (tipoVisita === "Fechamento") {
+        prefixo = subTipo; // F, F2, F3, F4 ou F5
+      } else if (tipoVisita === "Entrega de Apólice") {
+        prefixo = "ENT APOLICE";
+      } else {
+        prefixo = tipoVisita; // AB Visita
+      }
+      
+      const titulo = `${prefixo} - ${cliente.nome}`;
       
       // Criar compromisso na agenda
       const descricaoCompleta = modalidade === "online" 
@@ -117,6 +139,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const resetForm = () => {
     setEtapa(1);
     setTipoVisita("");
+    setSubTipo("");
     setData("");
     setHorario("");
     setEndereco("");
@@ -176,11 +199,11 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               </Button>
 
               <Button
-                onClick={() => handleTipoVisita("AB Fechamento")}
+                onClick={() => handleTipoVisita("Fechamento")}
                 className="w-full py-6 text-base font-bold"
                 style={{ background: 'linear-gradient(135deg, #AFCB3A, #0096D8)' }}
               >
-                AB Fechamento
+                Fechamento
               </Button>
 
               <Button
@@ -188,6 +211,73 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                 className="w-full py-6 text-base font-bold bg-purple-600 hover:bg-purple-700"
               >
                 Entrega de Apólice
+              </Button>
+            </div>
+          )}
+
+          {/* ETAPA 1.5: Subtipo (Fechamento ou Entrega de Apólice) */}
+          {etapa === 1.5 && (
+            <div className="space-y-3">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-700">
+                  <strong>Tipo:</strong> {tipoVisita}
+                </p>
+              </div>
+
+              <Label className="text-base font-bold">
+                {tipoVisita === "Fechamento" ? "Selecione a fase do fechamento:" : "Confirmação:"}
+              </Label>
+              
+              {tipoVisita === "Fechamento" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => handleSubTipo("F")}
+                    className="py-6 text-base font-bold bg-green-600 hover:bg-green-700"
+                  >
+                    F
+                  </Button>
+                  <Button
+                    onClick={() => handleSubTipo("F2")}
+                    className="py-6 text-base font-bold bg-green-600 hover:bg-green-700"
+                  >
+                    F2
+                  </Button>
+                  <Button
+                    onClick={() => handleSubTipo("F3")}
+                    className="py-6 text-base font-bold bg-green-600 hover:bg-green-700"
+                  >
+                    F3
+                  </Button>
+                  <Button
+                    onClick={() => handleSubTipo("F4")}
+                    className="py-6 text-base font-bold bg-green-600 hover:bg-green-700"
+                  >
+                    F4
+                  </Button>
+                  <Button
+                    onClick={() => handleSubTipo("F5")}
+                    className="py-6 text-base font-bold bg-green-600 hover:bg-green-700"
+                  >
+                    F5
+                  </Button>
+                </div>
+              )}
+
+              {tipoVisita === "Entrega de Apólice" && (
+                <Button
+                  onClick={() => handleSubTipo("ENT")}
+                  className="w-full py-6 text-base font-bold bg-purple-600 hover:bg-purple-700"
+                >
+                  Confirmar Entrega de Apólice
+                </Button>
+              )}
+
+              <Button
+                onClick={() => setEtapa(1)}
+                variant="outline"
+                className="w-full"
+              >
+                Voltar
               </Button>
             </div>
           )}
@@ -235,7 +325,14 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
               <div className="flex gap-3">
                 <Button
-                  onClick={() => setEtapa(1)}
+                  onClick={() => {
+                    // Voltar para etapa 1.5 se tiver subtipo, senão etapa 1
+                    if (tipoVisita === "Fechamento" || tipoVisita === "Entrega de Apólice") {
+                      setEtapa(1.5);
+                    } else {
+                      setEtapa(1);
+                    }
+                  }}
                   variant="outline"
                   className="flex-1"
                 >

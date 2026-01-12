@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import AgendarVisitaDialog from "./AgendarVisitaDialog";
 
 const formatPhone = (value) => {
   const numbers = value.replace(/\D/g, "").slice(0, 11);
@@ -44,6 +47,13 @@ const calculateIMC = (altura, peso) => {
 };
 
 export default function FormularioLead({ open, onClose, lead, onSave, isLoading, nextCodigo }) {
+  const [showAgendarVisita, setShowAgendarVisita] = useState(false);
+
+  const { data: user } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => base44.auth.me()
+  });
+
   const [formData, setFormData] = useState({
     codigo: nextCodigo || "",
     status: "AB Fone",
@@ -625,14 +635,20 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   
                   <div>
                     <Label className="text-xs">Agendar Visita:</Label>
-                    <Input 
-                      type="date" 
-                      value={formData.agendar_visita} 
-                      onChange={(e) => setFormData({...formData, agendar_visita: e.target.value})} 
-                    />
+                    <Button
+                      type="button"
+                      onClick={() => setShowAgendarVisita(true)}
+                      className="w-full justify-start bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                      style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {formData.agendar_visita ? 
+                        `Agendado: ${formData.agendar_visita}` : 
+                        'Agendar Visita no Google Agenda'}
+                    </Button>
                     {formData.agendar_visita && (
                       <p className="text-xs text-blue-600 mt-1 font-semibold">
-                        Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy")}
+                        ✓ Visita agendada para: {formData.agendar_visita}
                       </p>
                     )}
                   </div>
@@ -781,6 +797,19 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
             </Button>
           </div>
         </form>
+
+        <AgendarVisitaDialog
+          open={showAgendarVisita}
+          onClose={() => setShowAgendarVisita(false)}
+          cliente={formData}
+          user={user}
+          onSave={(agendamento) => {
+            setFormData({
+              ...formData,
+              agendar_visita: agendamento.dataHora
+            });
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -31,11 +31,10 @@ export default function Relatorios({ open, onClose, clientes }) {
   const gerarResumoDoDia = async () => {
     setGerando(true);
     
-    const dataFormatada = format(new Date(dataSelecionada), "dd/MM/yyyy", { locale: ptBR });
-    const inicioDia = new Date(dataSelecionada);
-    inicioDia.setHours(0, 0, 1, 0);
-    const fimDia = new Date(dataSelecionada);
-    fimDia.setHours(23, 59, 59, 999);
+    const dataReferencia = new Date(dataSelecionada + 'T12:00:00');
+    const dataFormatada = format(dataReferencia, "dd/MM/yyyy", { locale: ptBR });
+    const inicioDia = new Date(dataSelecionada + 'T00:00:01');
+    const fimDia = new Date(dataSelecionada + 'T23:59:59');
     
     // Contadores por status ATUAIS
     const statusCount = {};

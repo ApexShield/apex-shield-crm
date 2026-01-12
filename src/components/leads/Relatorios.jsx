@@ -213,7 +213,23 @@ export default function Relatorios({ open, onClose, clientes }) {
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      let position = 0;
+      const pageHeight = 295;
+      
+      if (imgHeight > pageHeight) {
+        let heightLeft = imgHeight;
+        while (heightLeft > 0) {
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+          if (heightLeft > 0) {
+            pdf.addPage();
+            position = -pageHeight * Math.ceil((imgHeight - heightLeft) / pageHeight);
+          }
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
+      
       pdf.save(`Apex_Shield_Resumo_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
     } finally {
       document.body.removeChild(container);
@@ -397,6 +413,7 @@ export default function Relatorios({ open, onClose, clientes }) {
                 type="date"
                 value={dataSelecionada}
                 onChange={(e) => setDataSelecionada(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
                 className="mt-2"
               />
             </div>

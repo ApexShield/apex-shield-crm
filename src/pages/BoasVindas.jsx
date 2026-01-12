@@ -113,12 +113,6 @@ export default function BoasVindas() {
       gradient: "from-pink-500 to-rose-500"
     },
     {
-      icon: Users,
-      title: "Gestão de Equipe",
-      description: "Controle de usuários com permissões (Admin/User/VIP)",
-      gradient: "from-orange-500 to-amber-500"
-    },
-    {
       icon: Zap,
       title: "Ações Rápidas",
       description: "Mude status, agende visitas e adicione observações em segundos",
@@ -152,7 +146,7 @@ export default function BoasVindas() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-              <div className="text-3xl font-bold text-white mb-1">16+</div>
+              <div className="text-3xl font-bold text-white mb-1">15+</div>
               <div className="text-indigo-200 text-sm">Funcionalidades</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">

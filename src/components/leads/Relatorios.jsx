@@ -114,70 +114,54 @@ export default function Relatorios({ open, onClose, clientes }) {
         <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 5px;"><strong>Data de referência:</strong> ${dataFormatada}</p>
         <p style="text-align: center; color: #999; font-size: 11px; margin-bottom: 20px;">${format(inicioDia, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })} até ${format(fimDia, "HH:mm:ss", { locale: ptBR })}</p>
 
-        <!-- Análise de Movimentação -->
-        <div style="margin-bottom: 20px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #AFCB3A;">
-          <h3 style="color: #AFCB3A; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">📈 Análise de Movimentação</h3>
+        <!-- Seção Combinada: Análise + Variações -->
+        <div style="margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 6px;">
+          <h3 style="color: #0096D8; font-size: 14px; margin: 0 0 8px 0; font-weight: bold;">📈 Análise de Movimentação</h3>
           ${Object.keys(contagemStatus).length > 0 ? `
             ${Object.entries(contagemStatus).map(([status, info]) => `
-              <div style="padding: 8px; background: white; margin-bottom: 5px; border-radius: 4px; border-left: 3px solid #0096D8; font-size: 13px;">
-                <strong style="color: #0096D8;">${status}</strong> ${statusCount[status] || 0} agora tem ${statusCount[status] || 0} total de <strong style="color: #AFCB3A;">${info.total} movimentações</strong>
+              <div style="padding: 5px; background: white; margin-bottom: 3px; border-radius: 3px; border-left: 3px solid #0096D8; font-size: 10px;">
+                <strong style="color: #0096D8;">${status}</strong> tem <strong>${statusCount[status] || 0}</strong>, total <strong style="color: #AFCB3A;">${info.total} movim.</strong>
               </div>
             `).join('')}
-          ` : '<p style="text-align: center; color: #666; font-size: 12px; margin: 0;">Nenhuma movimentação registrada hoje</p>'}
+          ` : '<p style="text-align: center; color: #666; font-size: 10px; margin: 0;">Nenhuma movimentação</p>'}
         </div>
 
-        <!-- Variações por Status -->
-        <div style="margin-bottom: 20px; background: #e7f3ff; padding: 15px; border-radius: 8px;">
-          <h3 style="color: #0096D8; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">🔄 Variações por Status</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <!-- Variações Resumidas -->
+        <div style="margin-bottom: 15px;">
+          <h3 style="color: #0096D8; font-size: 14px; margin: 0 0 8px 0; font-weight: bold;">🔄 Variações</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
             <thead>
               <tr style="background: #0096D8; color: white;">
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">De</th>
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Para</th>
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Total</th>
+                <th style="padding: 4px; border: 1px solid #ddd;">De</th>
+                <th style="padding: 4px; border: 1px solid #ddd;">Para</th>
+                <th style="padding: 4px; border: 1px solid #ddd;">Total</th>
               </tr>
             </thead>
             <tbody>
-              ${mudancasDetalhadas.map((m, idx) => `
+              ${mudancasDetalhadas.filter(m => m.quantidade > 0).map((m, idx) => `
                 <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f0f8ff'};">
-                  <td style="padding: 6px; border: 1px solid #ddd;"><strong>${m.de}</strong></td>
-                  <td style="padding: 6px; border: 1px solid #ddd;"><strong>${m.para}</strong></td>
-                  <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${m.quantidade}</strong></td>
+                  <td style="padding: 3px; border: 1px solid #ddd;">${m.de}</td>
+                  <td style="padding: 3px; border: 1px solid #ddd;">${m.para}</td>
+                  <td style="padding: 3px; border: 1px solid #ddd; text-align: center;"><strong>${m.quantidade}</strong></td>
                 </tr>
               `).join('')}
-              <tr style="background: #fff;">
-                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Qualquer Status</strong></td>
-                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Encerrado</strong></td>
-                <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${mudancasEncerrado}</strong></td>
-              </tr>
-              <tr style="background: #f0f8ff;">
-                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Fora do Fluxo</strong></td>
-                <td style="padding: 6px; border: 1px solid #ddd;"><strong>Outros</strong></td>
-                <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${mudancasForaFluxo}</strong></td>
-              </tr>
+              ${mudancasEncerrado > 0 ? `<tr style="background: #fff;"><td style="padding: 3px; border: 1px solid #ddd;">Qualquer</td><td style="padding: 3px; border: 1px solid #ddd;">Encerrado</td><td style="padding: 3px; border: 1px solid #ddd; text-align: center;"><strong>${mudancasEncerrado}</strong></td></tr>` : ''}
+              ${mudancasForaFluxo > 0 ? `<tr style="background: #f0f8ff;"><td style="padding: 3px; border: 1px solid #ddd;">Fora Fluxo</td><td style="padding: 3px; border: 1px solid #ddd;">Outros</td><td style="padding: 3px; border: 1px solid #ddd; text-align: center;"><strong>${mudancasForaFluxo}</strong></td></tr>` : ''}
             </tbody>
           </table>
         </div>
 
-        <!-- Resumo de Totais por Status -->
-        <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
-          <h3 style="color: #0096D8; font-size: 16px; margin: 0 0 10px 0; font-weight: bold;">📋 Resumo de Totais por Status</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead>
-              <tr style="background: #0096D8; color: white;">
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Status</th>
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Valor Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${statusList.map((status, idx) => `
-                <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f8f9fa'};">
-                  <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">${status}</td>
-                  <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 14px; color: #0096D8;"><strong>${statusCount[status]}</strong></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <!-- Totais por Status Compacto -->
+        <div style="margin-bottom: 15px;">
+          <h3 style="color: #0096D8; font-size: 14px; margin: 0 0 8px 0; font-weight: bold;">📋 Totais</h3>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; font-size: 9px;">
+            ${statusList.map(status => `
+              <div style="background: #e7f3ff; padding: 4px; border-radius: 3px; text-align: center; border: 1px solid #0096D8;">
+                <div style="font-weight: bold; color: #0096D8;">${status}</div>
+                <div style="font-size: 11px; font-weight: bold;">${statusCount[status]}</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
 
         ${hot40.length > 0 ? `

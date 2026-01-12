@@ -32,8 +32,11 @@ export default function Relatorios({ open, onClose, clientes }) {
     setGerando(true);
     
     const dataFormatada = format(new Date(dataSelecionada), "dd/MM/yyyy", { locale: ptBR });
+    const inicioDia = new Date(dataSelecionada);
+    inicioDia.setHours(0, 0, 1, 0);
+    const agora = new Date();
     
-    // Contadores por status
+    // Contadores por status ATUAIS
     const statusCount = {};
     const statusList = ["Novo", "AB Fone", "AB Visita", "AB Fechamento", "Delay", "Análise", "Venda Feita", "Entrega de Apólice", "Encerrado"];
     statusList.forEach(s => statusCount[s] = 0);
@@ -44,35 +47,71 @@ export default function Relatorios({ open, onClose, clientes }) {
       }
     });
     
-    // HOT40 - Leads com visita marcada para o dia
+    // ANÁLISE DE MOVIMENTAÇÃO - contar mudanças no histórico do dia
+    const mudancasHoje = [];
+    const contagemStatus = {};
+    
+    clientes.forEach(cliente => {
+      if (cliente.historico_status && Array.isArray(cliente.historico_status)) {
+        cliente.historico_status.forEach(mudanca => {
+          const dataMudanca = new Date(mudanca.timestamp || 0);
+          if (dataMudanca >= inicioDia && dataMudanca <= agora) {
+            mudancasHoje.push(mudanca);
+            
+            // Contar para o status de destino
+            const key = mudanca.para;
+            if (!contagemStatus[key]) {
+              contagemStatus[key] = { total: 0, mudancas: [] };
+            }
+            contagemStatus[key].total++;
+            contagemStatus[key].mudancas.push(`${mudanca.de} → ${mudanca.para}`);
+          }
+        });
+      }
+    });
+    
+    // HOT40 - Leads com contato marcado para o dia
     const hot40 = clientes.filter(c => 
-      c.status === "AB Fone" && c.data_visita === dataSelecionada
+      c.status === "AB Fone" && c.data_contato === dataSelecionada
     );
     
-    // Mudanças de status (simulação - na prática precisaria de histórico)
-    const mudancas = [
-      { de: "Novo", para: "AB Fone", quantidade: 0 },
-      { de: "AB Fone", para: "AB Visita", quantidade: 0 },
-      { de: "AB Visita", para: "AB Fechamento", quantidade: 0 },
-      { de: "AB Fechamento", para: "Delay", quantidade: 0 },
-      { de: "AB Fechamento", para: "Análise", quantidade: 0 },
-      { de: "Análise", para: "Venda Feita", quantidade: 0 },
-      { de: "Venda Feita", para: "Entrega de Apólice", quantidade: 0 },
-      { de: "Qualquer", para: "Encerrado", quantidade: 0 },
-      { de: "Fora do fluxo", para: "Outros", quantidade: 0 }
+    // Mudanças de status detalhadas
+    const mudancasFluxo = [
+      { de: "Novo", para: "AB Fone" },
+      { de: "AB Fone", para: "AB Visita" },
+      { de: "AB Visita", para: "AB Fechamento" },
+      { de: "AB Fechamento", para: "Delay" },
+      { de: "AB Fechamento", para: "Análise" },
+      { de: "Análise", para: "Venda Feita" },
+      { de: "Venda Feita", para: "Entrega de Apólice" },
     ];
+    
+    const mudancasDetalhadas = mudancasFluxo.map(fluxo => ({
+      ...fluxo,
+      quantidade: mudancasHoje.filter(m => m.de === fluxo.de && m.para === fluxo.para).length
+    }));
+    
+    // Mudanças para Encerrado (de qualquer status)
+    const mudancasEncerrado = mudancasHoje.filter(m => m.para === "Encerrado").length;
+    
+    // Mudanças fora do fluxo
+    const mudancasForaFluxo = mudancasHoje.filter(m => {
+      const noFluxo = mudancasFluxo.some(f => f.de === m.de && f.para === m.para);
+      return !noFluxo && m.para !== "Encerrado";
+    }).length;
 
     const html = `
       <div id="relatorio-container" style="padding: 40px; font-family: Arial, sans-serif; background: white; width: 794px;">
         <!-- Cabeçalho -->
         <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #0096D8;">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/e5c35c2e9_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
+          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
           <p style="color: #666; margin: 5px 0;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
         <!-- Título -->
         <h2 style="color: #0096D8; font-size: 28px; margin-bottom: 25px; text-align: center;">📊 RESUMO DO DIA</h2>
         <p style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;"><strong>Data de referência:</strong> ${dataFormatada}</p>
+        <p style="text-align: center; color: #999; font-size: 14px; margin-bottom: 30px;">Período de análise: ${format(inicioDia, "dd/MM/yyyy HH:mm:ss")} até ${format(agora, "HH:mm:ss")}</p>
 
         <!-- Quantidade de Leads por Etapa -->
         <div style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 10px;">
@@ -112,25 +151,47 @@ export default function Relatorios({ open, onClose, clientes }) {
         </div>
         ` : ''}
 
-        <!-- Mudanças de Status -->
+        <!-- Análise de Movimentação -->
+        <div style="margin-bottom: 30px; background: #fff3cd; padding: 20px; border-radius: 10px; border: 2px solid #AFCB3A;">
+          <h3 style="color: #AFCB3A; font-size: 20px; margin-bottom: 15px;">📈 Análise de Movimentação</h3>
+          ${Object.keys(contagemStatus).length > 0 ? `
+            ${Object.entries(contagemStatus).map(([status, info]) => `
+              <div style="padding: 10px; background: white; margin-bottom: 10px; border-radius: 5px; border-left: 4px solid #0096D8;">
+                <strong style="color: #0096D8;">${status}</strong> agora tem <strong>${statusCount[status] || 0}</strong>, total de <strong style="color: #AFCB3A;">${info.total} movimentações</strong> hoje
+              </div>
+            `).join('')}
+          ` : '<p style="text-align: center; color: #666;">Nenhuma movimentação registrada hoje</p>'}
+        </div>
+
+        <!-- Mudanças de Status Detalhadas -->
         <div style="margin-bottom: 30px; background: #e7f3ff; padding: 20px; border-radius: 10px;">
-          <h3 style="color: #0096D8; font-size: 20px; margin-bottom: 15px;">🔄 Mudanças de Status no Dia</h3>
+          <h3 style="color: #0096D8; font-size: 20px; margin-bottom: 15px;">🔄 Variações por Status</h3>
           <table style="width: 100%; border-collapse: collapse;">
             <thead>
               <tr style="background: #0096D8; color: white;">
                 <th style="padding: 10px; border: 1px solid #ddd;">De</th>
                 <th style="padding: 10px; border: 1px solid #ddd;">Para</th>
-                <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Quantidade</th>
+                <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Total</th>
               </tr>
             </thead>
             <tbody>
-              ${mudancas.map((m, idx) => `
+              ${mudancasDetalhadas.map((m, idx) => `
                 <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f0f8ff'};">
-                  <td style="padding: 8px; border: 1px solid #ddd;">${m.de}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${m.para}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${m.quantidade}</td>
+                  <td style="padding: 8px; border: 1px solid #ddd;"><strong>${m.de}</strong></td>
+                  <td style="padding: 8px; border: 1px solid #ddd;"><strong>${m.para}</strong></td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 16px; color: #0096D8;"><strong>${m.quantidade}</strong></td>
                 </tr>
               `).join('')}
+              <tr style="background: #fff;">
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Qualquer Status</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Encerrado</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 16px; color: #0096D8;"><strong>${mudancasEncerrado}</strong></td>
+              </tr>
+              <tr style="background: #f0f8ff;">
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Fora do Fluxo</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Outros</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 16px; color: #0096D8;"><strong>${mudancasForaFluxo}</strong></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -171,20 +232,20 @@ export default function Relatorios({ open, onClose, clientes }) {
   const gerarHOT40 = async () => {
     setGerando(true);
     
-    const hoje = new Date().toISOString().split('T')[0];
-    const hot40 = clientes.filter(c => c.data_visita === hoje);
+    const hoje = dataSelecionada || new Date().toISOString().split('T')[0];
+    const hot40 = clientes.filter(c => c.status === "AB Fone" && c.data_contato === hoje);
 
     const html = `
       <div id="relatorio-container" style="padding: 40px; font-family: Arial, sans-serif; background: white; width: 794px;">
         <!-- Cabeçalho -->
         <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #AFCB3A;">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/e5c35c2e9_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
+          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="max-width: 300px; margin-bottom: 15px;" />
           <p style="color: #666; margin: 5px 0;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
         <!-- Título -->
         <h2 style="color: #AFCB3A; font-size: 28px; margin-bottom: 25px; text-align: center;">🔥 RELATÓRIO HOT40</h2>
-        <p style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;"><strong>Visitas Agendadas para Hoje</strong></p>
+        <p style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;"><strong>Leads AB FONE com Data de Contato: ${format(new Date(hoje), "dd/MM/yyyy")}</strong></p>
 
         ${hot40.length === 0 ? `
           <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 10px;">
@@ -194,13 +255,14 @@ export default function Relatorios({ open, onClose, clientes }) {
           <div style="margin-bottom: 25px; padding: 20px; background: ${idx % 2 === 0 ? '#fffbf0' : '#fff'}; border-radius: 10px; border-left: 5px solid #AFCB3A;">
             <h3 style="color: #0096D8; margin: 0 0 15px 0; font-size: 22px;">${idx + 1}. ${lead.nome}</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
-              <p style="margin: 5px 0;"><strong>📞 Telefone:</strong> ${lead.telefone || '—'}</p>
-              <p style="margin: 5px 0;"><strong>📧 Email:</strong> ${lead.email || '—'}</p>
+              <p style="margin: 5px 0;"><strong>📞 Celular:</strong> ${lead.telefone ? `<a href="https://wa.me/55${lead.telefone.replace(/\D/g, '')}" target="_blank" style="color: #25D366; text-decoration: none;">${lead.telefone}</a>` : '—'}</p>
+              <p style="margin: 5px 0;"><strong>📧 Email:</strong> ${lead.email ? `<a href="mailto:${lead.email}" style="color: #0096D8; text-decoration: none;">${lead.email}</a>` : '—'}</p>
               <p style="margin: 5px 0;"><strong>🏢 Empresa:</strong> ${lead.empresa || '—'}</p>
               <p style="margin: 5px 0;"><strong>💼 Cargo:</strong> ${lead.cargo || '—'}</p>
               <p style="margin: 5px 0;"><strong>💍 Estado Civil:</strong> ${lead.estado_civil || '—'}</p>
               <p style="margin: 5px 0;"><strong>👶 Filhos:</strong> ${lead.filhos || '—'}</p>
-              <p style="margin: 5px 0; grid-column: 1 / -1;"><strong>📅 Data da Visita:</strong> ${lead.data_visita ? format(new Date(lead.data_visita), "dd/MM/yyyy", { locale: ptBR }) : '—'}</p>
+              <p style="margin: 5px 0; grid-column: 1 / -1;"><strong>📅 Data de Contato:</strong> ${lead.data_contato ? format(new Date(lead.data_contato), "dd/MM/yyyy", { locale: ptBR }) : '—'}</p>
+              ${lead.agendar_visita ? `<p style="margin: 5px 0; grid-column: 1 / -1;"><strong>🗓️ Visita Agendada:</strong> ${format(new Date(lead.agendar_visita), "dd/MM/yyyy", { locale: ptBR })}</p>` : ''}
             </div>
             ${lead.observacoes && lead.observacoes.length > 0 ? `
               <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 5px; border: 1px solid #ddd;">
@@ -312,22 +374,20 @@ export default function Relatorios({ open, onClose, clientes }) {
               </h3>
               <p className="text-sm text-gray-600">
                 {tipoRelatorio === 'resumo' 
-                  ? 'Relatório completo com quantidade de leads por etapa, HOT40 e mudanças de status.'
-                  : 'Lista de clientes com visitas agendadas para hoje com informações completas.'}
+                  ? 'Relatório completo com análise de movimentação, quantidade de leads por etapa e variações detalhadas de status.'
+                  : 'Leads no status AB FONE com data de contato marcada para o dia selecionado.'}
               </p>
             </div>
 
-            {tipoRelatorio === 'resumo' && (
-              <div>
-                <Label>Selecione a data de referência:</Label>
-                <Input
-                  type="date"
-                  value={dataSelecionada}
-                  onChange={(e) => setDataSelecionada(e.target.value)}
-                  className="mt-2"
-                />
-              </div>
-            )}
+            <div>
+              <Label>Selecione a data {tipoRelatorio === 'resumo' ? 'de referência' : 'do contato'}:</Label>
+              <Input
+                type="date"
+                value={dataSelecionada}
+                onChange={(e) => setDataSelecionada(e.target.value)}
+                className="mt-2"
+              />
+            </div>
 
             <div className="flex gap-3">
               <Button

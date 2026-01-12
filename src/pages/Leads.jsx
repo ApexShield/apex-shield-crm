@@ -27,6 +27,7 @@ import DocumentosDialog from "../components/leads/DocumentosDialog";
 import FunilVendas from "../components/leads/FunilVendas";
 import ApoliceDialog from "../components/leads/ApoliceDialog";
 import Relatorios from "../components/leads/Relatorios";
+import ImportExportLeads from "../components/leads/ImportExportLeads";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -52,6 +53,7 @@ export default function Leads() {
   const [showDocumentos, setShowDocumentos] = useState(false);
   const [showApolice, setShowApolice] = useState(false);
   const [showRelatorios, setShowRelatorios] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
 
   // Listener para abrir apólice do formulário
   useEffect(() => {
@@ -430,8 +432,15 @@ export default function Leads() {
             <FileText className="w-5 h-5 mr-2" />
             RELATÓRIOS
           </Button>
+          <Button
+            onClick={() => setShowImportExport(true)}
+            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-base px-8 py-6"
+          >
+            <FileText className="w-5 h-5 mr-2" />
+            IMPORTAR/EXPORTAR
+          </Button>
 
-        </div>
+          </div>
       </div>
 
       <FormularioLead
@@ -465,6 +474,13 @@ export default function Leads() {
         open={showRelatorios}
         onClose={() => setShowRelatorios(false)}
         clientes={clientes}
+      />
+
+      <ImportExportLeads
+        open={showImportExport}
+        onClose={() => setShowImportExport(false)}
+        clientes={clientes}
+        onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
       />
     </div>
   );

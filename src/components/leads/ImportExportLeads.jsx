@@ -122,36 +122,45 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         agendar_visita: row['Agendar Visita'] || '',
         data_cadastro: row['Data Cadastro'] || new Date().toISOString().split('T')[0],
         num_indicacoes: row['Número Indicações'] || '0'
-      })).filter(lead => lead.nome); // Apenas leads com nome
+      })).filter(lead => lead.nome && lead.telefone); // Obrigatório: nome E telefone
 
       // Obter leads existentes e usuário atual
       const user = await base44.auth.me();
       const alias = gerarAlias(user?.email);
       const leadsExistentes = await base44.entities.Cliente.list();
 
-      // Importar em lote - SEM VALIDAÇÃO DE DUPLICADOS
+      // Gerar códigos para todos os leads
+      const userLeads = leadsExistentes.filter(l => l.created_by === user.email);
+      const leadsComCodigo = leadsToImport.map((lead, index) => ({
+        ...lead,
+        codigo: `${alias}COD${String(userLeads.length + index + 1).padStart(2, '0')}`
+      }));
+
+      // Importar em lote usando bulkCreate (evita rate limit)
       let sucessos = 0;
       let erros = 0;
       let duplicados = [];
       let outrosErros = [];
 
-      for (const lead of leadsToImport) {
-        try {
-          // Gerar código automático
-          const userLeads = leadsExistentes.filter(l => l.created_by === user.email);
-          const nextNum = userLeads.length + sucessos + 1;
-          lead.codigo = `${alias}COD${String(nextNum).padStart(2, '0')}`;
-          
-          await base44.entities.Cliente.create(lead);
-          sucessos++;
-        } catch (error) {
-          console.error(`Erro ao importar ${lead.nome}:`, error);
-          outrosErros.push({ 
-            nome: lead.nome, 
-            erro: error.message || 'Erro desconhecido',
-            telefone: lead.telefone 
-          });
-          erros++;
+      try {
+        await base44.entities.Cliente.bulkCreate(leadsComCodigo);
+        sucessos = leadsComCodigo.length;
+      } catch (error) {
+        console.error('Erro no bulk create:', error);
+        // Se falhar o bulk, tentar um por um
+        for (const lead of leadsComCodigo) {
+          try {
+            await base44.entities.Cliente.create(lead);
+            sucessos++;
+          } catch (error) {
+            console.error(`Erro ao importar ${lead.nome}:`, error);
+            outrosErros.push({ 
+              nome: lead.nome, 
+              erro: error.message || 'Erro desconhecido',
+              telefone: lead.telefone 
+            });
+            erros++;
+          }
         }
       }
 
@@ -254,7 +263,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-gray-700">
-                  <strong>Importante:</strong> O arquivo deve ter as colunas: Nome (obrigatório), Status, Telefone, Email, Empresa, etc.
+                  <strong>Importante:</strong> O arquivo deve ter as colunas: <strong className="text-red-600">Nome e Telefone são obrigatórios</strong>. 
                   Use o botão "Exportar" acima para ver o formato correto das colunas.
                 </div>
               </div>

@@ -15,6 +15,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [modalidade, setModalidade] = useState(""); // online ou presencial
   const [validando, setValidando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -57,8 +58,13 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   };
 
   const handleSalvar = async () => {
-    if (!endereco) {
-      setErro("Por favor, informe o endereço");
+    if (!modalidade) {
+      setErro("Por favor, selecione se o compromisso será online ou presencial");
+      return;
+    }
+
+    if (modalidade === "presencial" && !endereco) {
+      setErro("Por favor, informe o endereço para compromisso presencial");
       return;
     }
 
@@ -70,16 +76,20 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       const titulo = `${tipoVisita} - ${cliente.nome}`;
       
       // Criar compromisso na agenda
+      const descricaoCompleta = modalidade === "online" 
+        ? `Modalidade: Online${cliente.email ? `\nEmail: ${cliente.email}` : ''}`
+        : `Modalidade: Presencial\nEndereço: ${endereco}${cliente.email ? `\nEmail: ${cliente.email}` : ''}`;
+
       await base44.entities.Compromisso.create({
         titulo: titulo,
-        descricao: `Endereço: ${endereco}${cliente.email ? `\nEmail: ${cliente.email}` : ''}`,
+        descricao: descricaoCompleta,
         data_inicio: dataHoraInicio.toISOString(),
         data_fim: dataHoraFim.toISOString(),
         cor: "#0891b2", // Azul Pavão - Agendado
         tipo: "agendado",
         cliente_id: cliente.id || "",
         cliente_nome: cliente.nome,
-        endereco: endereco,
+        endereco: modalidade === "presencial" ? endereco : "Online",
         status_origem: tipoVisita
       });
 
@@ -110,6 +120,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     setData("");
     setHorario("");
     setEndereco("");
+    setModalidade("");
     setErro("");
   };
 
@@ -248,7 +259,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             </div>
           )}
 
-          {/* ETAPA 3: Endereço */}
+          {/* ETAPA 3: Modalidade e Endereço */}
           {etapa === 3 && (
             <div className="space-y-4">
               <div className="bg-blue-50 p-3 rounded-lg text-sm space-y-1">
@@ -258,17 +269,49 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               </div>
 
               <div>
-                <Label className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  Endereço da Visita:
-                </Label>
-                <Input
-                  value={endereco}
-                  onChange={(e) => setEndereco(e.target.value)}
-                  placeholder="Rua, número, bairro, cidade"
-                  className="h-12"
-                />
+                <Label className="mb-2 font-semibold">Modalidade do Compromisso:</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    onClick={() => setModalidade("online")}
+                    variant={modalidade === "online" ? "default" : "outline"}
+                    className={`h-12 ${modalidade === "online" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                  >
+                    💻 Online
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setModalidade("presencial")}
+                    variant={modalidade === "presencial" ? "default" : "outline"}
+                    className={`h-12 ${modalidade === "presencial" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                  >
+                    📍 Presencial
+                  </Button>
+                </div>
               </div>
+
+              {modalidade === "presencial" && (
+                <div>
+                  <Label className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-4 h-4" />
+                    Endereço da Visita:
+                  </Label>
+                  <Input
+                    value={endereco}
+                    onChange={(e) => setEndereco(e.target.value)}
+                    placeholder="Rua, número, bairro, cidade"
+                    className="h-12"
+                  />
+                </div>
+              )}
+
+              {modalidade === "online" && (
+                <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                  <p className="text-blue-700">
+                    💻 Compromisso será realizado de forma online
+                  </p>
+                </div>
+              )}
 
               {cliente.email && (
                 <div className="bg-green-50 p-3 rounded-lg text-sm">
@@ -295,7 +338,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                 </Button>
                 <Button
                   onClick={handleSalvar}
-                  disabled={validando || !endereco}
+                  disabled={validando}
                   className="flex-1 bg-green-600 hover:bg-green-700 font-bold"
                 >
                   {validando ? (

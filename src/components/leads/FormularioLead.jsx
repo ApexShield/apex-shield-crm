@@ -647,8 +647,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                         'Agendar Visita no Google Agenda'}
                     </Button>
                     {formData.agendar_visita && (
-                      <p className="text-xs text-blue-600 mt-1 font-semibold">
-                        ✓ Visita agendada para: {formData.agendar_visita}
+                      <p className="text-sm text-blue-600 mt-1 font-bold">
+                        ✓ Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy 'Horário' HH:mm", { locale: { code: 'pt-BR' }})}
                       </p>
                     )}
                   </div>

@@ -246,7 +246,7 @@ export default function BoasVindas() {
         {/* CTA Final */}
         <div className="text-center">
           <Button
-            onClick={() => navigate(createPageUrl("Leads"))}
+            onClick={() => base44.auth.redirectToLogin(createPageUrl("Leads"))}
             size="lg"
             className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black px-16 py-8 text-2xl shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-2xl"
           >

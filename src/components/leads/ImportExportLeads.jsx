@@ -122,7 +122,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         agendar_visita: row['Agendar Visita'] || '',
         data_cadastro: row['Data Cadastro'] || new Date().toISOString().split('T')[0],
         num_indicacoes: row['Número Indicações'] || '0'
-      })).filter(lead => lead.nome && lead.telefone); // Obrigatório: nome E telefone
+      })).filter(lead => lead.nome); // Obrigatório: apenas nome
 
       // Obter leads existentes e usuário atual
       const user = await base44.auth.me();
@@ -263,7 +263,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-gray-700">
-                  <strong>Importante:</strong> O arquivo deve ter as colunas: <strong className="text-red-600">Nome e Telefone são obrigatórios</strong>. 
+                  <strong>Importante:</strong> O arquivo deve ter as colunas: <strong className="text-red-600">Nome é obrigatório</strong>. Outros campos como Telefone, Email, etc são opcionais.
                   Use o botão "Exportar" acima para ver o formato correto das colunas.
                 </div>
               </div>

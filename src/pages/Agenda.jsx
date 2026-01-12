@@ -13,7 +13,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, 
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const HOURS = Array.from({ length: 20 }, (_, i) => i + 4); // 04:00 às 23:00
 const COLORS = [
   { value: "#0891b2", label: "Azul Pavão - Agendado", tipo: "agendado" },
   { value: "#fbbf24", label: "Amarelo Banana - Delay", tipo: "delay" },
@@ -431,26 +431,124 @@ export default function Agenda() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <Label className="text-white">Início *</Label>
+                <Label className="text-white mb-2 block">Data do Compromisso *</Label>
                 <Input
-                  type="datetime-local"
-                  value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd'T'HH:mm") : ""}
-                  onChange={(e) => setFormData({ ...formData, data_inicio: new Date(e.target.value).toISOString() })}
-                  className="bg-white/10 border-white/20 text-white"
+                  type="date"
+                  value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd") : ""}
+                  onChange={(e) => {
+                    const newDate = new Date(e.target.value);
+                    const currentStart = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                    newDate.setHours(currentStart.getHours(), currentStart.getMinutes());
+                    const newEnd = new Date(newDate);
+                    newEnd.setHours(newEnd.getHours() + 1);
+                    setFormData({ 
+                      ...formData, 
+                      data_inicio: newDate.toISOString(),
+                      data_fim: newEnd.toISOString()
+                    });
+                  }}
+                  className="bg-white/10 border-white/20 text-white w-full"
                   required
                 />
               </div>
-              <div>
-                <Label className="text-white">Fim *</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.data_fim ? format(parseISO(formData.data_fim), "yyyy-MM-dd'T'HH:mm") : ""}
-                  onChange={(e) => setFormData({ ...formData, data_fim: new Date(e.target.value).toISOString() })}
-                  className="bg-white/10 border-white/20 text-white"
-                  required
-                />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-white mb-2 block">Horário Início *</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.data_inicio ? format(parseISO(formData.data_inicio), "HH") : ""}
+                      onValueChange={(hour) => {
+                        const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        date.setHours(parseInt(hour));
+                        const endDate = new Date(date);
+                        endDate.setHours(endDate.getHours() + 1);
+                        setFormData({ 
+                          ...formData, 
+                          data_inicio: date.toISOString(),
+                          data_fim: endDate.toISOString()
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
+                          <SelectItem key={h} value={String(h).padStart(2, '0')}>
+                            {String(h).padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={formData.data_inicio ? format(parseISO(formData.data_inicio), "mm") : ""}
+                      onValueChange={(minute) => {
+                        const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        date.setMinutes(parseInt(minute));
+                        const endDate = new Date(date);
+                        endDate.setHours(endDate.getHours() + 1);
+                        setFormData({ 
+                          ...formData, 
+                          data_inicio: date.toISOString(),
+                          data_fim: endDate.toISOString()
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                        <SelectValue placeholder="Min" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['00', '15', '30', '45'].map(m => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-white mb-2 block">Horário Fim *</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.data_fim ? format(parseISO(formData.data_fim), "HH") : ""}
+                      onValueChange={(hour) => {
+                        const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        date.setHours(parseInt(hour));
+                        setFormData({ ...formData, data_fim: date.toISOString() });
+                      }}
+                    >
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
+                          <SelectItem key={h} value={String(h).padStart(2, '0')}>
+                            {String(h).padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={formData.data_fim ? format(parseISO(formData.data_fim), "mm") : ""}
+                      onValueChange={(minute) => {
+                        const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        date.setMinutes(parseInt(minute));
+                        setFormData({ ...formData, data_fim: date.toISOString() });
+                      }}
+                    >
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                        <SelectValue placeholder="Min" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['00', '15', '30', '45'].map(m => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </div>
 

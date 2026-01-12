@@ -140,6 +140,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
       let sucessos = 0;
       let erros = 0;
       let duplicados = [];
+      let outrosErros = [];
 
       for (const lead of leadsToImport) {
         try {
@@ -166,6 +167,11 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
           sucessos++;
         } catch (error) {
           console.error(`Erro ao importar ${lead.nome}:`, error);
+          outrosErros.push({ 
+            nome: lead.nome, 
+            erro: error.message || 'Erro desconhecido',
+            telefone: lead.telefone 
+          });
           erros++;
         }
       }
@@ -182,7 +188,9 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         total: leadsToImport.length,
         sucessos,
         erros,
-        duplicados: duplicados.length
+        duplicados: duplicados.length,
+        duplicadosDetalhes: duplicados,
+        outrosErrosDetalhes: outrosErros
       });
 
       if (onImportSuccess) {
@@ -329,6 +337,50 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
                   )}
                   <p>📊 Total processado: <strong>{importResults.total}</strong></p>
                 </div>
+
+                {/* Detalhamento de Duplicados */}
+                {importResults.duplicadosDetalhes && importResults.duplicadosDetalhes.length > 0 && (
+                  <div className="mt-4 p-3 bg-orange-50 rounded border border-orange-200 max-h-40 overflow-y-auto">
+                    <h5 className="font-bold text-xs text-orange-700 mb-2">📋 Leads Duplicados (já existem no sistema):</h5>
+                    <div className="space-y-1 text-xs">
+                      {importResults.duplicadosDetalhes.map((d, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-1 bg-white rounded">
+                          <span className="text-orange-600">•</span>
+                          <div>
+                            <strong>{d.nome}</strong> - Tel: {d.telefone}
+                            <div className="text-orange-600 text-[10px]">💡 Solução: Verifique se este lead já existe no sistema antes de importar</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Detalhamento de Outros Erros */}
+                {importResults.outrosErrosDetalhes && importResults.outrosErrosDetalhes.length > 0 && (
+                  <div className="mt-4 p-3 bg-red-50 rounded border border-red-200 max-h-40 overflow-y-auto">
+                    <h5 className="font-bold text-xs text-red-700 mb-2">⚠️ Erros de Importação:</h5>
+                    <div className="space-y-2 text-xs">
+                      {importResults.outrosErrosDetalhes.map((e, idx) => (
+                        <div key={idx} className="p-2 bg-white rounded border border-red-100">
+                          <div className="font-bold text-red-700">{e.nome}</div>
+                          <div className="text-red-600 text-[10px] mt-1">❌ Erro: {e.erro}</div>
+                          <div className="text-blue-600 text-[10px] mt-1">
+                            💡 Solução: {
+                              e.erro.includes('required') || e.erro.includes('obrigatório') ? 
+                                'Verifique se todos os campos obrigatórios estão preenchidos (Nome é obrigatório)' :
+                              e.erro.includes('format') || e.erro.includes('formato') ?
+                                'Verifique se os dados estão no formato correto (datas, telefones, emails)' :
+                              e.erro.includes('permission') || e.erro.includes('permissão') ?
+                                'Verifique suas permissões de acesso' :
+                                'Verifique os dados deste lead e tente novamente manualmente'
+                            }
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

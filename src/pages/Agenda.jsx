@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Clock, CalendarDays, Trash2 } from "lucide-react";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { motion } from "framer-motion";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const COLORS = [
@@ -167,107 +168,152 @@ export default function Agenda() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4">
-      <div className="max-w-[1600px] mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-200">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
+      <div className="max-w-[1800px] mx-auto">
+        {/* Header Moderno */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-slate-800">Agenda</h1>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { locale: ptBR }))}
-                >
-                  Hoje
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                <span className="text-lg font-medium text-slate-700 ml-2">
-                  {format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}
-                </span>
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <CalendarDays className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-white">Agenda Profissional</h1>
+                <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
               </div>
             </div>
-            <Button onClick={() => {
-              const now = new Date();
-              setSelectedSlot({ startTime: now, endTime: new Date(now.getTime() + 3600000) });
-              setFormData({
-                titulo: "",
-                descricao: "",
-                data_inicio: now.toISOString(),
-                data_fim: new Date(now.getTime() + 3600000).toISOString(),
-                cor: "#0891b2",
-                tipo: "agendado"
-              });
-              setEditingEvent(null);
-              setShowDialog(true);
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
+            <Button 
+              onClick={() => {
+                const now = new Date();
+                setSelectedSlot({ startTime: now, endTime: new Date(now.getTime() + 3600000) });
+                setFormData({
+                  titulo: "",
+                  descricao: "",
+                  data_inicio: now.toISOString(),
+                  data_fim: new Date(now.getTime() + 3600000).toISOString(),
+                  cor: "#0891b2",
+                  tipo: "agendado"
+                });
+                setEditingEvent(null);
+                setShowDialog(true);
+              }}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
               Criar Compromisso
             </Button>
           </div>
+        </div>
+
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+          {/* Header da Semana */}
+          <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { locale: ptBR }))}
+                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white border-0 font-bold"
+              >
+                Hoje
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+            <span className="text-xl font-bold text-white">
+              {format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+          </div>
 
           <div className="flex">
-            {/* Sidebar com calendário */}
-            <div className="w-64 border-r border-slate-200 p-4">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  setSelectedDate(date);
-                  setCurrentWeekStart(startOfWeek(date, { locale: ptBR }));
-                }}
-                locale={ptBR}
-                className="rounded-md border"
-              />
+            {/* Sidebar com Mini Calendário */}
+            <div className="w-80 border-r border-white/10 p-6 bg-white/5">
+              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Mini Calendário
+              </h3>
+              <div className="bg-white rounded-xl p-2">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    setCurrentWeekStart(startOfWeek(date, { locale: ptBR }));
+                  }}
+                  locale={ptBR}
+                  className="rounded-md"
+                />
+              </div>
+
+              {/* Legenda de Cores */}
+              <div className="mt-6">
+                <h4 className="text-white font-bold mb-3 text-sm">Legenda</h4>
+                <div className="space-y-2">
+                  {COLORS.map((color) => (
+                    <div key={color.value} className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color.value }}
+                      />
+                      <span className="text-xs text-indigo-200">{color.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Grade de horários */}
+            {/* Grade de Horários */}
             <div className="flex-1 overflow-auto">
               <div className="min-w-[900px]">
-                {/* Cabeçalho dos dias */}
-                <div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                  <div className="p-2 text-center text-sm font-medium text-slate-500 border-r border-slate-200">
-                    <Clock className="w-4 h-4 mx-auto" />
+                {/* Cabeçalho dos Dias */}
+                <div className="grid grid-cols-8 border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-10">
+                  <div className="p-4 text-center border-r border-white/10">
+                    <Clock className="w-5 h-5 mx-auto text-indigo-400" />
                   </div>
                   {weekDays.map((day, i) => (
-                    <div
+                    <motion.div
                       key={i}
-                      className={`p-2 text-center border-r border-slate-200 ${
-                        isSameDay(day, new Date()) ? "bg-indigo-50" : ""
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className={`p-4 text-center border-r border-white/10 ${
+                        isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""
                       }`}
                     >
-                      <div className="text-xs font-medium text-slate-500 uppercase">
+                      <div className="text-xs font-bold text-indigo-300 uppercase mb-1">
                         {format(day, "EEE", { locale: ptBR })}
                       </div>
                       <div
-                        className={`text-2xl font-bold ${
-                          isSameDay(day, new Date()) ? "text-indigo-600" : "text-slate-800"
+                        className={`text-3xl font-black ${
+                          isSameDay(day, new Date()) 
+                            ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto" 
+                            : "text-white"
                         }`}
                       >
                         {format(day, "d")}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
-                {/* Grid de horários */}
+                {/* Grid de Horários */}
                 <div className="relative">
                   {HOURS.map((hour) => (
-                    <div key={hour} className="grid grid-cols-8 border-b border-slate-100">
-                      <div className="p-2 text-xs text-slate-500 text-right border-r border-slate-200">
+                    <div key={hour} className="grid grid-cols-8 border-b border-white/5">
+                      <div className="p-3 text-sm font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
                         {String(hour).padStart(2, "0")}:00
                       </div>
                       {weekDays.map((day, dayIndex) => {
@@ -275,16 +321,18 @@ export default function Agenda() {
                         return (
                           <div
                             key={dayIndex}
-                            className="min-h-[60px] border-r border-slate-200 hover:bg-slate-50 cursor-pointer relative p-1"
+                            className="min-h-[70px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-1 transition-colors"
                             onClick={() => handleSlotClick(day, hour)}
                           >
                             {events.map((event, eventIndex) => (
-                              <div
+                              <motion.div
                                 key={event.id}
-                                className="absolute left-1 right-1 rounded px-2 py-1 text-xs text-white font-medium shadow cursor-pointer hover:opacity-90 z-10"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="absolute left-1 right-1 rounded-lg px-3 py-2 text-xs text-white font-bold shadow-lg cursor-pointer hover:scale-105 transition-transform z-10"
                                 style={{
                                   backgroundColor: event.cor || "#3b82f6",
-                                  top: `${eventIndex * 24 + 4}px`
+                                  top: `${eventIndex * 28 + 4}px`
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -293,11 +341,11 @@ export default function Agenda() {
                               >
                                 <div className="truncate">{event.titulo}</div>
                                 {event.cliente_nome && (
-                                  <div className="text-[10px] opacity-90 truncate">
-                                    {event.cliente_nome}
+                                  <div className="text-[10px] opacity-90 truncate mt-0.5">
+                                    👤 {event.cliente_nome}
                                   </div>
                                 )}
-                              </div>
+                              </motion.div>
                             ))}
                           </div>
                         );
@@ -311,26 +359,27 @@ export default function Agenda() {
         </div>
       </div>
 
-      {/* Dialog de criação/edição */}
+      {/* Dialog de Criação/Edição */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg bg-slate-900 border-white/20">
           <DialogHeader>
-            <DialogTitle>
-              {editingEvent ? "Editar Compromisso" : "Novo Compromisso"}
+            <DialogTitle className="text-white text-xl">
+              {editingEvent ? "✏️ Editar Compromisso" : "➕ Novo Compromisso"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Título *</Label>
+              <Label className="text-white">Título *</Label>
               <Input
                 value={formData.titulo}
                 onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                className="bg-white/10 border-white/20 text-white"
                 required
               />
             </div>
 
             <div>
-              <Label>Tipo</Label>
+              <Label className="text-white">Tipo</Label>
               <Select 
                 value={formData.tipo} 
                 onValueChange={(value) => {
@@ -342,7 +391,7 @@ export default function Agenda() {
                   });
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -357,7 +406,7 @@ export default function Agenda() {
             </div>
 
             <div>
-              <Label>Cliente (opcional)</Label>
+              <Label className="text-white">Cliente (opcional)</Label>
               <Select
                 value={formData.cliente_id}
                 onValueChange={(value) => {
@@ -369,7 +418,7 @@ export default function Agenda() {
                   });
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Selecione um cliente" />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,67 +433,83 @@ export default function Agenda() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Início *</Label>
+                <Label className="text-white">Início *</Label>
                 <Input
                   type="datetime-local"
                   value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd'T'HH:mm") : ""}
                   onChange={(e) => setFormData({ ...formData, data_inicio: new Date(e.target.value).toISOString() })}
+                  className="bg-white/10 border-white/20 text-white"
                   required
                 />
               </div>
               <div>
-                <Label>Fim *</Label>
+                <Label className="text-white">Fim *</Label>
                 <Input
                   type="datetime-local"
                   value={formData.data_fim ? format(parseISO(formData.data_fim), "yyyy-MM-dd'T'HH:mm") : ""}
                   onChange={(e) => setFormData({ ...formData, data_fim: new Date(e.target.value).toISOString() })}
+                  className="bg-white/10 border-white/20 text-white"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <Label>Cor</Label>
-              <div className="space-y-2 mt-2">
+              <Label className="text-white mb-2 block">Cor do Compromisso</Label>
+              <div className="grid grid-cols-2 gap-2">
                 {COLORS.map((color) => (
                   <button
                     key={color.value}
                     type="button"
-                    className={`w-full flex items-center gap-3 p-2 rounded-lg border-2 hover:bg-slate-50 transition ${
-                      formData.cor === color.value ? "border-slate-800 bg-slate-50" : "border-slate-200"
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 hover:scale-105 transition-transform ${
+                      formData.cor === color.value ? "border-white bg-white/10" : "border-white/20 bg-white/5"
                     }`}
                     onClick={() => setFormData({ ...formData, cor: color.value, tipo: color.tipo })}
                   >
                     <div 
-                      className="w-6 h-6 rounded-full flex-shrink-0"
+                      className="w-6 h-6 rounded-full flex-shrink-0 shadow-lg"
                       style={{ backgroundColor: color.value }}
                     />
-                    <span className="text-sm text-left">{color.label}</span>
+                    <span className="text-xs text-left text-white font-medium">{color.label.split(' - ')[0]}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <Label>Descrição</Label>
+              <Label className="text-white">Descrição</Label>
               <Textarea
                 value={formData.descricao}
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                 rows={3}
+                className="bg-white/10 border-white/20 text-white"
               />
             </div>
 
             <div className="flex justify-between pt-4">
               {editingEvent && (
-                <Button type="button" variant="destructive" onClick={handleDelete}>
+                <Button 
+                  type="button" 
+                  onClick={handleDelete}
+                  className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
                   Deletar
                 </Button>
               )}
               <div className="flex gap-2 ml-auto">
-                <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowDialog(false)}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="submit"
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                >
                   {editingEvent ? "Salvar" : "Criar"}
                 </Button>
               </div>

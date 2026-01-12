@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Calendar, Download } from "lucide-react";
+import { FileText, Calendar, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import html2canvas from "html2canvas";
@@ -364,7 +364,7 @@ export default function Relatorios({ open, onClose, clientes }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <FileText className="w-6 h-6" style={{ color: '#0096D8' }} />
@@ -373,64 +373,82 @@ export default function Relatorios({ open, onClose, clientes }) {
         </DialogHeader>
 
         {!tipoRelatorio ? (
-          <div className="space-y-4">
-            <p className="text-gray-600">Selecione o tipo de relatório que deseja gerar:</p>
+          <div className="space-y-4 p-4">
+            <p className="text-gray-600 text-center text-lg mb-6">Selecione o tipo de relatório que deseja gerar:</p>
             
-            <Button
-              onClick={() => setTipoRelatorio('resumo')}
-              className="w-full py-8 text-lg font-bold flex items-center justify-center gap-3"
-              style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
-            >
-              <Calendar className="w-6 h-6" />
-              Resumo do Dia
-            </Button>
+            <div className="grid grid-cols-2 gap-6">
+              <Button
+                onClick={() => setTipoRelatorio('resumo')}
+                className="py-12 text-lg font-bold flex flex-col items-center justify-center gap-4 hover:scale-105 transition-transform"
+                style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
+              >
+                <Calendar className="w-12 h-12" />
+                <div>
+                  <div className="text-xl">Resumo do Dia</div>
+                  <div className="text-xs font-normal opacity-90 mt-1">Análise completa de movimentação</div>
+                </div>
+              </Button>
 
-            <Button
-              onClick={() => setTipoRelatorio('hot40')}
-              className="w-full py-8 text-lg font-bold flex items-center justify-center gap-3"
-              style={{ background: 'linear-gradient(135deg, #AFCB3A, #0096D8)' }}
-            >
-              <Download className="w-6 h-6" />
-              HOT40 - Visitas de Hoje
-            </Button>
+              <Button
+                onClick={() => setTipoRelatorio('hot40')}
+                className="py-12 text-lg font-bold flex flex-col items-center justify-center gap-4 hover:scale-105 transition-transform"
+                style={{ background: 'linear-gradient(135deg, #AFCB3A, #0096D8)' }}
+              >
+                <Download className="w-12 h-12" />
+                <div>
+                  <div className="text-xl">HOT40</div>
+                  <div className="text-xs font-normal opacity-90 mt-1">Contatos agendados para hoje</div>
+                </div>
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg border-l-4" style={{ borderLeftColor: '#0096D8' }}>
-              <h3 className="font-bold text-lg mb-2">
+          <div className="space-y-6 p-4">
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg border-l-4" style={{ borderLeftColor: '#0096D8' }}>
+              <h3 className="font-bold text-2xl mb-3 flex items-center gap-2">
                 {tipoRelatorio === 'resumo' ? '📊 Resumo do Dia' : '🔥 HOT40'}
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-base text-gray-700 leading-relaxed">
                 {tipoRelatorio === 'resumo' 
                   ? 'Relatório completo com análise de movimentação, quantidade de leads por etapa e variações detalhadas de status.'
                   : 'Leads no status AB FONE com data de contato marcada para o dia selecionado.'}
               </p>
             </div>
 
-            <div>
-              <Label>Selecione a data {tipoRelatorio === 'resumo' ? 'de referência' : 'do contato'}:</Label>
+            <div className="bg-white p-6 rounded-lg border-2 border-blue-200">
+              <Label className="text-base font-bold">Selecione a data {tipoRelatorio === 'resumo' ? 'de referência' : 'do contato'}:</Label>
               <Input
                 type="date"
                 value={dataSelecionada}
                 onChange={(e) => setDataSelecionada(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
-                className="mt-2"
+                className="mt-3 h-12 text-base"
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <Button
                 onClick={handleGerar}
                 disabled={gerando}
-                className="flex-1 py-6 font-bold"
+                className="py-8 font-bold text-lg"
                 style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
               >
-                {gerando ? 'Gerando...' : 'Gerar PDF'}
+                {gerando ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 mr-2" />
+                    Gerar PDF
+                  </>
+                )}
               </Button>
               <Button
                 onClick={() => setTipoRelatorio(null)}
                 variant="outline"
-                className="flex-1 py-6 font-bold"
+                className="py-8 font-bold text-lg"
               >
                 Voltar
               </Button>

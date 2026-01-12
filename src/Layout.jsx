@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
+  { name: "Agenda", icon: CalendarIcon, page: "Agenda" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true }
 ];
 

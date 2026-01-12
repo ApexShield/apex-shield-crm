@@ -128,15 +128,8 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
       const user = await base44.auth.me();
       const alias = gerarAlias(user?.email);
       const leadsExistentes = await base44.entities.Cliente.list();
-      
-      // Mapear celulares existentes
-      const celularesExistentes = new Set(
-        leadsExistentes
-          .map(l => l.telefone?.replace(/\D/g, ''))
-          .filter(Boolean)
-      );
 
-      // Importar em lote
+      // Importar em lote - SEM VALIDAÇÃO DE DUPLICADOS
       let sucessos = 0;
       let erros = 0;
       let duplicados = [];
@@ -144,26 +137,12 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
 
       for (const lead of leadsToImport) {
         try {
-          // Verificar duplicidade por celular
-          const celularLimpo = lead.telefone?.replace(/\D/g, '');
-          if (celularLimpo && celularesExistentes.has(celularLimpo)) {
-            duplicados.push({ nome: lead.nome, telefone: lead.telefone });
-            erros++;
-            continue;
-          }
-
           // Gerar código automático
           const userLeads = leadsExistentes.filter(l => l.created_by === user.email);
           const nextNum = userLeads.length + sucessos + 1;
           lead.codigo = `${alias}COD${String(nextNum).padStart(2, '0')}`;
           
           await base44.entities.Cliente.create(lead);
-          
-          // Adicionar à lista de celulares existentes
-          if (celularLimpo) {
-            celularesExistentes.add(celularLimpo);
-          }
-          
           sucessos++;
         } catch (error) {
           console.error(`Erro ao importar ${lead.nome}:`, error);
@@ -174,14 +153,6 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
           });
           erros++;
         }
-      }
-
-      // Mostrar alertas de duplicados
-      if (duplicados.length > 0) {
-        const msgDuplicados = duplicados
-          .map(d => `• ${d.nome} (${d.telefone})`)
-          .join('\n');
-        alert(`⚠️ LEADS NÃO IMPORTADOS - Celular já cadastrado:\n\n${msgDuplicados}\n\nTotal: ${duplicados.length} lead(s)`);
       }
 
       setImportResults({

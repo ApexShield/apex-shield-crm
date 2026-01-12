@@ -176,8 +176,14 @@ export default function Leads() {
       data.status = data.status || "AB Fone";
       data.data_cadastro = data.data_cadastro || new Date().toISOString().split('T')[0];
     } else if (data.status !== editingLead.status) {
-      // Rastrear mudança de status
-      data.status_anterior = editingLead.status;
+      // Rastrear mudança de status com histórico
+      const mudanca = {
+        de: editingLead.status,
+        para: data.status,
+        data: format(new Date(), "dd/MM/yyyy HH:mm"),
+        timestamp: Date.now()
+      };
+      data.historico_status = [...(editingLead.historico_status || []), mudanca];
     }
     
     try {
@@ -315,7 +321,8 @@ export default function Leads() {
                   <TableHead className="font-bold whitespace-nowrap">Profissão</TableHead>
                   <TableHead className="font-bold whitespace-nowrap">Estado Civil</TableHead>
                   <TableHead className="font-bold whitespace-nowrap">Filhos</TableHead>
-                  <TableHead className="font-bold whitespace-nowrap">Data Visita</TableHead>
+                  <TableHead className="font-bold whitespace-nowrap">Data Contato</TableHead>
+                  <TableHead className="font-bold whitespace-nowrap">Agendar Visita</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -369,7 +376,10 @@ export default function Leads() {
                       <TableCell className="font-bold">{cliente.estado_civil || "—"}</TableCell>
                       <TableCell className="font-bold">{cliente.filhos || "—"}</TableCell>
                       <TableCell className="font-bold">
-                        {cliente.data_visita ? format(new Date(cliente.data_visita), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                        {cliente.data_contato ? format(new Date(cliente.data_contato), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                      </TableCell>
+                      <TableCell className="font-bold">
+                        {cliente.agendar_visita ? format(new Date(cliente.agendar_visita), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                       </TableCell>
                     </TableRow>
                   );

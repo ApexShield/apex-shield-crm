@@ -75,7 +75,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     custo_mensal_fixo: "",
     renda: "",
     patrimonio: "",
-    data_visita: "",
+    data_contato: "",
+    agendar_visita: "",
     observacoes: [],
     novaObservacao: "",
     documentos: [],
@@ -126,7 +127,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         custo_mensal_fixo: "",
         renda: "",
         patrimonio: "",
-        data_visita: "",
+        data_contato: "",
+        agendar_visita: "",
         observacoes: [],
         novaObservacao: "",
         documentos: [],
@@ -239,6 +241,17 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
   const numFilhos = parseInt(formData.filhos) || 0;
 
+  // Auto-focus no nome quando abrir o formulário
+  useEffect(() => {
+    if (open && !lead) {
+      const timer = setTimeout(() => {
+        const nomeInput = document.querySelector('input[tabindex="4"]');
+        if (nomeInput) nomeInput.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open, lead]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
@@ -284,7 +297,12 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   
                   <div>
                     <Label className="text-xs">Nome Completo:</Label>
-                    <Input tabIndex={4} value={formData.nome} onChange={(e) => handleUpperCase('nome', e.target.value)} />
+                    <Input 
+                      tabIndex={4} 
+                      autoFocus={!lead}
+                      value={formData.nome} 
+                      onChange={(e) => handleUpperCase('nome', e.target.value)} 
+                    />
                   </div>
                   
                   <div>
@@ -599,9 +617,25 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               <div className="bg-red-200 p-3 rounded">
                 <h3 className="font-bold text-sm mb-3">AGENDAMENTO</h3>
                 
-                <div>
-                  <Label className="text-xs">Data de Visita:</Label>
-                  <Input tabIndex={29} type="date" value={formData.data_visita} onChange={(e) => setFormData({...formData, data_visita: e.target.value})} />
+                <div className="space-y-2">
+                  <div>
+                    <Label className="text-xs">Data de Contato:</Label>
+                    <Input tabIndex={29} type="date" value={formData.data_contato} onChange={(e) => setFormData({...formData, data_contato: e.target.value})} />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Agendar Visita:</Label>
+                    <Input 
+                      type="date" 
+                      value={formData.agendar_visita} 
+                      onChange={(e) => setFormData({...formData, agendar_visita: e.target.value})} 
+                    />
+                    {formData.agendar_visita && (
+                      <p className="text-xs text-blue-600 mt-1 font-semibold">
+                        Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 

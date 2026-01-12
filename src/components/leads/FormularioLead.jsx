@@ -804,10 +804,22 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
           cliente={formData}
           user={user}
           onSave={(agendamento) => {
+            // Atualiza o campo no formulário do lead
             setFormData({
               ...formData,
               agendar_visita: agendamento.dataHora
             });
+            
+            // Se estiver editando um lead existente, sincronizar
+            if (lead?.id) {
+              base44.entities.Cliente.update(lead.id, {
+                agendar_visita: agendamento.dataHora
+              }).then(() => {
+                console.log("Lead atualizado com agendamento");
+              }).catch(err => {
+                console.error("Erro ao atualizar lead:", err);
+              });
+            }
           }}
         />
       </DialogContent>

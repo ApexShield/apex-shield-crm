@@ -14,12 +14,12 @@ import { ptBR } from "date-fns/locale";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const COLORS = [
-  { value: "#3b82f6", label: "Azul" },
-  { value: "#ef4444", label: "Vermelho" },
-  { value: "#10b981", label: "Verde" },
-  { value: "#f59e0b", label: "Laranja" },
-  { value: "#8b5cf6", label: "Roxo" },
-  { value: "#ec4899", label: "Rosa" }
+  { value: "#0891b2", label: "Azul Pavão - Agendado", tipo: "agendado" },
+  { value: "#fbbf24", label: "Amarelo Banana - Delay", tipo: "delay" },
+  { value: "#8b5cf6", label: "Mirtilo - Reunião Realizada", tipo: "reuniao_realizada" },
+  { value: "#10b981", label: "Manjericão - Venda Feita", tipo: "venda_feita" },
+  { value: "#f97316", label: "Tangerina - Compromisso Pessoal", tipo: "pessoal" },
+  { value: "#ec4899", label: "Flamingo - Compromisso da Avanti", tipo: "avanti" }
 ];
 
 export default function Agenda() {
@@ -34,8 +34,8 @@ export default function Agenda() {
     descricao: "",
     data_inicio: "",
     data_fim: "",
-    cor: "#3b82f6",
-    tipo: "outro"
+    cor: "#0891b2",
+    tipo: "agendado"
   });
 
   const queryClient = useQueryClient();
@@ -103,8 +103,8 @@ export default function Agenda() {
       descricao: "",
       data_inicio: startTime.toISOString(),
       data_fim: endTime.toISOString(),
-      cor: "#3b82f6",
-      tipo: "outro"
+      cor: "#0891b2",
+      tipo: "agendado"
     });
     setEditingEvent(null);
     setShowDialog(true);
@@ -117,10 +117,11 @@ export default function Agenda() {
       descricao: event.descricao || "",
       data_inicio: event.data_inicio,
       data_fim: event.data_fim,
-      cor: event.cor || "#3b82f6",
-      tipo: event.tipo || "outro",
+      cor: event.cor || "#0891b2",
+      tipo: event.tipo || "agendado",
       cliente_id: event.cliente_id || "",
-      cliente_nome: event.cliente_nome || ""
+      cliente_nome: event.cliente_nome || "",
+      endereco: event.endereco || ""
     });
     setShowDialog(true);
   };
@@ -146,8 +147,8 @@ export default function Agenda() {
       descricao: "",
       data_inicio: "",
       data_fim: "",
-      cor: "#3b82f6",
-      tipo: "outro"
+      cor: "#0891b2",
+      tipo: "agendado"
     });
     setEditingEvent(null);
     setSelectedSlot(null);
@@ -207,8 +208,8 @@ export default function Agenda() {
                 descricao: "",
                 data_inicio: now.toISOString(),
                 data_fim: new Date(now.getTime() + 3600000).toISOString(),
-                cor: "#3b82f6",
-                tipo: "outro"
+                cor: "#0891b2",
+                tipo: "agendado"
               });
               setEditingEvent(null);
               setShowDialog(true);
@@ -330,15 +331,27 @@ export default function Agenda() {
 
             <div>
               <Label>Tipo</Label>
-              <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+              <Select 
+                value={formData.tipo} 
+                onValueChange={(value) => {
+                  const selectedColor = COLORS.find(c => c.tipo === value);
+                  setFormData({ 
+                    ...formData, 
+                    tipo: value,
+                    cor: selectedColor ? selectedColor.value : formData.cor
+                  });
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="visita">Visita</SelectItem>
-                  <SelectItem value="contato">Contato</SelectItem>
-                  <SelectItem value="reuniao">Reunião</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
+                  <SelectItem value="agendado">Agendado</SelectItem>
+                  <SelectItem value="delay">Delay</SelectItem>
+                  <SelectItem value="reuniao_realizada">Reunião Realizada</SelectItem>
+                  <SelectItem value="venda_feita">Venda Feita</SelectItem>
+                  <SelectItem value="pessoal">Compromisso Pessoal</SelectItem>
+                  <SelectItem value="avanti">Compromisso da Avanti</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -392,17 +405,22 @@ export default function Agenda() {
 
             <div>
               <Label>Cor</Label>
-              <div className="flex gap-2 mt-2">
+              <div className="space-y-2 mt-2">
                 {COLORS.map((color) => (
                   <button
                     key={color.value}
                     type="button"
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      formData.cor === color.value ? "border-slate-800 scale-110" : "border-transparent"
+                    className={`w-full flex items-center gap-3 p-2 rounded-lg border-2 hover:bg-slate-50 transition ${
+                      formData.cor === color.value ? "border-slate-800 bg-slate-50" : "border-slate-200"
                     }`}
-                    style={{ backgroundColor: color.value }}
-                    onClick={() => setFormData({ ...formData, cor: color.value })}
-                  />
+                    onClick={() => setFormData({ ...formData, cor: color.value, tipo: color.tipo })}
+                  >
+                    <div 
+                      className="w-6 h-6 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color.value }}
+                    />
+                    <span className="text-sm text-left">{color.label}</span>
+                  </button>
                 ))}
               </div>
             </div>

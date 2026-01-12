@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Clock, MapPin, Loader2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { base44 } from "@/api/base44Client";
 
 export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSave }) {
   const [etapa, setEtapa] = useState(1); // 1: tipo, 2: horário, 3: endereço
@@ -64,26 +65,39 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     setValidando(true);
 
     try {
-      const dataHora = `${data}T${horario}:00`;
-      const titulo = `${tipoVisita === "AB Visita" ? "AB" : tipoVisita} + ${cliente.nome}`;
+      const dataHoraInicio = new Date(`${data}T${horario}:00`);
+      const dataHoraFim = new Date(dataHoraInicio.getTime() + 60 * 60 * 1000); // +1 hora
+      const titulo = `${tipoVisita} - ${cliente.nome}`;
       
+      // Criar compromisso na agenda
+      await base44.entities.Compromisso.create({
+        titulo: titulo,
+        descricao: `Endereço: ${endereco}${cliente.email ? `\nEmail: ${cliente.email}` : ''}`,
+        data_inicio: dataHoraInicio.toISOString(),
+        data_fim: dataHoraFim.toISOString(),
+        cor: "#0891b2", // Azul Pavão - Agendado
+        tipo: "agendado",
+        cliente_id: cliente.id || "",
+        cliente_nome: cliente.nome,
+        endereco: endereco,
+        status_origem: tipoVisita
+      });
+
       const agendamento = {
         tipo: tipoVisita,
         data: data,
         horario: horario,
-        dataHora: dataHora,
+        dataHora: dataHoraInicio.toISOString(),
         endereco: endereco,
         titulo: titulo,
         convidados: cliente.email ? [cliente.email] : []
       };
 
-      // Em produção, criar evento no Google Calendar aqui
-      // await criarEventoGoogleCalendar(agendamento);
-
       onSave(agendamento);
       resetForm();
       onClose();
     } catch (error) {
+      console.error("Erro ao criar agendamento:", error);
       setErro("Erro ao criar agendamento. Tente novamente.");
     } finally {
       setValidando(false);

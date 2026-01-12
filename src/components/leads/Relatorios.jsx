@@ -34,7 +34,8 @@ export default function Relatorios({ open, onClose, clientes }) {
     const dataFormatada = format(new Date(dataSelecionada), "dd/MM/yyyy", { locale: ptBR });
     const inicioDia = new Date(dataSelecionada);
     inicioDia.setHours(0, 0, 1, 0);
-    const agora = new Date();
+    const fimDia = new Date(dataSelecionada);
+    fimDia.setHours(23, 59, 59, 999);
     
     // Contadores por status ATUAIS
     const statusCount = {};
@@ -55,7 +56,7 @@ export default function Relatorios({ open, onClose, clientes }) {
       if (cliente.historico_status && Array.isArray(cliente.historico_status)) {
         cliente.historico_status.forEach(mudanca => {
           const dataMudanca = new Date(mudanca.timestamp || 0);
-          if (dataMudanca >= inicioDia && dataMudanca <= agora) {
+          if (dataMudanca >= inicioDia && dataMudanca <= fimDia) {
             mudancasHoje.push(mudanca);
             
             // Contar para o status de destino
@@ -104,14 +105,14 @@ export default function Relatorios({ open, onClose, clientes }) {
       <div id="relatorio-container" style="padding: 30px; font-family: Arial, sans-serif; background: white; width: 750px;">
         <!-- Cabeçalho -->
         <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #0096D8;">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="width: 250px; height: auto; margin: 0 auto 10px auto; display: block;" />
+          <h1 style="color: #0096D8; font-size: 28px; margin: 0 0 10px 0; font-weight: bold;">📊 APEX SHIELD</h1>
+          <h2 style="color: #666; font-size: 18px; margin: 0 0 5px 0;">Relatório do Dia</h2>
           <p style="color: #666; margin: 0; font-size: 12px;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
-        <!-- Título -->
-        <h2 style="color: #0096D8; font-size: 24px; margin-bottom: 15px; text-align: center;">📊 RESUMO DO DIA</h2>
+        <!-- Informações da Referência -->
         <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 5px;"><strong>Data de referência:</strong> ${dataFormatada}</p>
-        <p style="text-align: center; color: #999; font-size: 11px; margin-bottom: 20px;">${format(inicioDia, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })} até ${format(agora, "HH:mm:ss", { locale: ptBR })}</p>
+        <p style="text-align: center; color: #999; font-size: 11px; margin-bottom: 20px;">${format(inicioDia, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })} até ${format(fimDia, "HH:mm:ss", { locale: ptBR })}</p>
 
         <!-- Análise de Movimentação -->
         <div style="margin-bottom: 20px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #AFCB3A;">
@@ -242,18 +243,19 @@ export default function Relatorios({ open, onClose, clientes }) {
     
     const hoje = dataSelecionada || new Date().toISOString().split('T')[0];
     const hot40 = clientes.filter(c => c.status === "AB Fone" && c.data_contato === hoje);
+    const dataHojeParsed = new Date(hoje + 'T12:00:00');
 
     const html = `
       <div id="relatorio-container" style="padding: 30px; font-family: Arial, sans-serif; background: white; width: 750px;">
         <!-- Cabeçalho -->
         <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #AFCB3A;">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/92cb57a9d_Logo.png" alt="Apex Shield" style="width: 250px; height: auto; margin: 0 auto 10px auto; display: block;" />
+          <h1 style="color: #AFCB3A; font-size: 28px; margin: 0 0 10px 0; font-weight: bold;">🔥 APEX SHIELD</h1>
+          <h2 style="color: #666; font-size: 18px; margin: 0 0 5px 0;">Relatório HOT40</h2>
           <p style="color: #666; margin: 0; font-size: 12px;">Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
         <!-- Título -->
-        <h2 style="color: #AFCB3A; font-size: 24px; margin-bottom: 15px; text-align: center;">🔥 RELATÓRIO HOT40</h2>
-        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 20px;"><strong>Leads AB FONE com Data de Contato: ${format(new Date(hoje), "dd/MM/yyyy", { locale: ptBR })}</strong></p>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 20px;"><strong>Leads AB FONE com Data de Contato: ${format(dataHojeParsed, "dd/MM/yyyy", { locale: ptBR })}</strong></p>
 
         ${hot40.length === 0 ? `
           <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 10px;">

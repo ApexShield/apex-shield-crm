@@ -51,7 +51,7 @@ export default function Layout({ children, currentPageName }) {
                 <Briefcase className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800">CRM Leads</h1>
+                <h1 className="font-bold text-slate-800">APEX SHIELD CRM</h1>
                 <p className="text-xs text-slate-500">Gestão de Leads</p>
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <Briefcase className="w-4 h-4 text-white" />
               </div>
-              <span className="font-semibold text-slate-800">CRM</span>
+              <span className="font-semibold text-slate-800">APEX SHIELD CRM</span>
             </div>
             <div className="w-10" />
           </div>

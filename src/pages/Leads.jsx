@@ -39,6 +39,7 @@ const STATUS_CONFIG = [
 export default function Leads() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [busca, setBusca] = useState("");
+  const [buscaEmpresa, setBuscaEmpresa] = useState("");
   const [filtroDataVisita, setFiltroDataVisita] = useState("");
   const [selectedLead, setSelectedLead] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -83,9 +84,10 @@ export default function Leads() {
     return clientes
       .filter(c => !filtroStatus || c.status === filtroStatus)
       .filter(c => !busca || c.nome?.toLowerCase().includes(busca.toLowerCase()))
+      .filter(c => !buscaEmpresa || c.empresa?.toLowerCase().includes(buscaEmpresa.toLowerCase()))
       .filter(c => !filtroDataVisita || c.data_contato === filtroDataVisita)
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-  }, [clientes, filtroStatus, busca, filtroDataVisita]);
+  }, [clientes, filtroStatus, busca, buscaEmpresa, filtroDataVisita]);
 
   // Calcular contadores
   const contadores = useMemo(() => {
@@ -263,6 +265,14 @@ export default function Leads() {
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 />
               </div>
+              <div className="flex-1 min-w-[200px]">
+                <Input
+                  placeholder="🏢 Buscar por empresa..."
+                  value={buscaEmpresa}
+                  onChange={(e) => setBuscaEmpresa(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                />
+              </div>
               <Input
                 type="date"
                 value={filtroDataVisita}
@@ -270,7 +280,7 @@ export default function Leads() {
                 className="w-auto bg-white/10 border-white/20 text-white"
               />
               <Button
-                onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
+                onClick={() => { setBusca(""); setBuscaEmpresa(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
                 className="bg-red-500/80 hover:bg-red-600"
               >
                 Limpar

@@ -688,7 +688,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* COLUNA 3 */}

@@ -64,6 +64,11 @@ export default function Aniversariantes() {
     }
   }, [aniversariantesHoje.length]);
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => base44.auth.me()
+  });
+
   const handleSendMessage = async (cliente) => {
     const mensagem = `Olá, ${cliente.nome}! 🎉✨
 
@@ -74,7 +79,8 @@ Que este novo ciclo seja iluminado por momentos felizes ao lado de quem você am
 Parabéns pelo seu dia! 🎂🎈
 
 Com carinho,
-Equipe Apex Shield`;
+Equipe Apex Shield
+${currentUser?.email || ''}`;
     
     if (cliente.telefone) {
       const telefone = cliente.telefone.replace(/\D/g, '');

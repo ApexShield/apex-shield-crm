@@ -66,13 +66,35 @@ export default function Leads() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["clientes", user?.email, user?.role],
+  const { data: allClientes = [], isLoading } = useQuery({
+    queryKey: ["clientes"],
     queryFn: async () => {
       return await base44.entities.Cliente.list("-created_date", 500);
     },
     enabled: !!user
   });
+
+  // Filtrar leads baseado em hierarquia e permissões
+  const clientes = useMemo(() => {
+    if (!user || !allClientes.length) return [];
+    
+    // Admin e Líder de Agência veem todos
+    if (user.role === "admin" || user.tipo_hierarquia === "Líder de Agência") {
+      return allClientes;
+    }
+    
+    // Líder de Unidade vê seus leads + leads de sua equipe
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      return allClientes.filter(c => 
+        c.created_by === user.email || 
+        c.created_by_user_condition?.lider_email === user.email ||
+        c.created_by_user_condition?.lider_id === user.id
+      );
+    }
+    
+    // Usuário padrão vê apenas seus próprios leads
+    return allClientes.filter(c => c.created_by === user.email);
+  }, [allClientes, user]);
 
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {

@@ -96,9 +96,9 @@ export default function Organograma() {
   }, [visibleUsers]);
 
   const usersWithoutHierarchy = React.useMemo(() => {
+    // Mostrar todos os usuários sem hierarquia definida (incluindo admins para o admin ver)
     return visibleUsers.filter(u => 
-      u.role !== "admin" && 
-      (!u.tipo_hierarquia || u.tipo_hierarquia === "Sem Hierarquia")
+      !u.tipo_hierarquia || u.tipo_hierarquia === "Sem Hierarquia"
     );
   }, [visibleUsers]);
 

@@ -13,6 +13,7 @@ import confetti from "canvas-confetti";
 export default function Aniversariantes() {
   const [filter, setFilter] = useState("hoje");
   const [showPopup, setShowPopup] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -63,11 +64,40 @@ export default function Aniversariantes() {
     }
   }, [aniversariantesHoje.length]);
 
-  const handleSendMessage = (cliente) => {
-    const mensagem = `Parabéns, ${cliente.nome}! Desejamos muitas felicidades! 🎂🎉`;
+  const handleSendMessage = async (cliente) => {
+    const mensagem = `Olá, ${cliente.nome}! 🎉✨
+
+Hoje é um dia muito especial e nós não poderíamos deixar passar em branco! Queremos te desejar um feliz aniversário repleto de alegrias, saúde e realizações.
+
+Que este novo ciclo seja iluminado por momentos felizes ao lado de quem você ama. Agradecemos por fazer parte da nossa história e por confiar em nós.
+
+Parabéns pelo seu dia! 🎂🎈
+
+Com carinho,
+Equipe Apex Shield`;
+    
     if (cliente.telefone) {
       const telefone = cliente.telefone.replace(/\D/g, '');
       window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank');
+      
+      // Atualizar cliente com status de mensagem enviada
+      try {
+        const observacoes = cliente.observacoes || [];
+        observacoes.push({
+          data: new Date().toISOString(),
+          texto: `Parabéns enviados via WhatsApp`
+        });
+        
+        await base44.entities.Cliente.update(cliente.id, {
+          observacoes,
+          mensagem_aniversario_enviada: true,
+          data_ultima_mensagem: new Date().toISOString()
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+      }
     }
   };
 

@@ -11,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import AgendarVisitaDialog from "./AgendarVisitaDialog";
+import EnderecoComGoogleMaps from "../EnderecoComGoogleMaps";
 
 const formatPhone = (value) => {
   const numbers = value.replace(/\D/g, "").slice(0, 11);
@@ -88,6 +89,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     patrimonio: "",
     data_contato: "",
     agendar_visita: "",
+    endereco: "",
+    endereco_place_id: "",
+    endereco_lat: null,
+    endereco_lng: null,
     observacoes: [],
     novaObservacao: "",
     documentos: [],
@@ -140,6 +145,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         patrimonio: "",
         data_contato: "",
         agendar_visita: "",
+        endereco: "",
+        endereco_place_id: "",
+        endereco_lat: null,
+        endereco_lng: null,
         observacoes: [],
         novaObservacao: "",
         documentos: [],
@@ -424,6 +433,22 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   <div>
                     <Label className="text-xs">Cargo:</Label>
                     <Input tabIndex={9} value={formData.cargo} onChange={(e) => handleUpperCase('cargo', e.target.value)} />
+                  </div>
+                  
+                  <div>
+                    <EnderecoComGoogleMaps
+                      value={formData.endereco}
+                      onChange={(addressData) => {
+                        setFormData({
+                          ...formData,
+                          endereco: addressData.endereco,
+                          endereco_place_id: addressData.endereco_place_id,
+                          endereco_lat: addressData.endereco_lat,
+                          endereco_lng: addressData.endereco_lng
+                        });
+                      }}
+                      label="Endereço"
+                    />
                   </div>
                   
                   <div>

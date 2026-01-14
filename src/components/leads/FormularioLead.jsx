@@ -533,22 +533,6 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   
                   <div>
-                    <EnderecoComGoogleMaps
-                      value={formData.endereco}
-                      onChange={(addressData) => {
-                        setFormData({
-                          ...formData,
-                          endereco: addressData.endereco,
-                          endereco_place_id: addressData.endereco_place_id,
-                          endereco_lat: addressData.endereco_lat,
-                          endereco_lng: addressData.endereco_lng
-                        });
-                      }}
-                      label="Endereço"
-                    />
-                  </div>
-                  
-                  <div>
                     <Label className="text-xs">Plano de Saúde:</Label>
                     <Select value={formData.plano_saude} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
                       <SelectTrigger tabIndex={10}><SelectValue /></SelectTrigger>

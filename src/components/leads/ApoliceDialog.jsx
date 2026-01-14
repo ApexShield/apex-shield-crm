@@ -183,13 +183,17 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
       // 1. Upload do arquivo
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // 2. Extrair dados do arquivo
+      // 2. Extrair dados do arquivo com schema detalhado
       const schema = {
         type: "object",
         properties: {
-          produto: { type: "string" },
-          capital_morte: { type: "string" },
-          total_premio_iof: { type: "string" },
+          cpf: { type: "string", description: "CPF do segurado" },
+          plano: { type: "string", description: "Código do plano (ex: VS20, VT10, etc)" },
+          periodicidade_premio: { type: "string", description: "Periodicidade do(s) prêmio(s) - Mensal ou Anual" },
+          capital_segurado_morte: { type: "string", description: "Capital segurado para morte" },
+          premio_bruto_morte: { type: "string", description: "Prêmio bruto da cobertura de morte" },
+          total_premio_iof: { type: "string", description: "Total de prêmio(s) + IOF" },
+          
           beneficiarios: {
             type: "array",
             items: {
@@ -202,26 +206,19 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
               }
             }
           },
-          premio_morte: { type: "string" },
-          premio_morte_decrescente: { type: "string" },
-          premio_morte_acidental: { type: "string" },
-          premio_invalidez_acidental: { type: "string" },
-          premio_invalidez_majorada: { type: "string" },
-          premio_amparo_funeral: { type: "string" },
-          premio_cirurgias: { type: "string" },
-          premio_ipdf: { type: "string" },
-          premio_doencas_graves_mais: { type: "string" },
-          premio_doencas_graves_cirurgicos: { type: "string" },
-          premio_doencas_graves_cirurgicos_premium: { type: "string" },
-          premio_fratura_ossea: { type: "string" },
-          premio_dit: { type: "string" },
-          premio_dih: { type: "string" },
-          premio_temporaria_morte: { type: "string" },
-          premio_funeral_individual: { type: "string" },
-          premio_doencas_incapacitantes: { type: "string" },
-          morte_decrescente_capital: { type: "string" },
-          morte_acidental_capital: { type: "string" },
-          invalidez_acidental_capital: { type: "string" }
+          
+          coberturas: {
+            type: "array",
+            description: "Lista de coberturas contratadas",
+            items: {
+              type: "object",
+              properties: {
+                nome: { type: "string", description: "Nome da cobertura" },
+                capital_segurado: { type: "string", description: "Capital segurado (R$)" },
+                premio_bruto: { type: "string", description: "Prêmio Bruto (R$)" }
+              }
+            }
+          }
         }
       };
 
@@ -231,13 +228,119 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
       });
 
       if (result.status === "success" && result.output) {
+        const data = result.output;
+        
+        // Processar o campo Plano (ex: VS20, VT10, VS75)
+        let produtoFinal = "";
+        let tipoCobertura = "";
+        let periodoCobertura = "";
+        
+        if (data.plano) {
+          const planoUpper = data.plano.toUpperCase();
+          if (planoUpper.includes("VS")) {
+            produtoFinal = "Vida Singular";
+          } else if (planoUpper.includes("VT")) {
+            produtoFinal = "Vida Total";
+          }
+          
+          // Extrair número do plano
+          const numeroMatch = planoUpper.match(/\d+/);
+          if (numeroMatch) {
+            const numero = numeroMatch[0];
+            periodoCobertura = numero;
+            
+            // Se for 75, 65 ou 99 = Idade Alcançada, caso contrário = Fixado
+            if (numero === "75" || numero === "65" || numero === "99") {
+              tipoCobertura = "Idade Alcançada";
+            } else {
+              tipoCobertura = "Fixado";
+            }
+          }
+        }
+        
+        // Processar coberturas
+        const coberturasMap = {};
+        if (data.coberturas && Array.isArray(data.coberturas)) {
+          data.coberturas.forEach(cob => {
+            const nomeLower = (cob.nome || "").toLowerCase();
+            
+            if (nomeLower.includes("morte") && nomeLower.includes("decrescente")) {
+              coberturasMap.morte_decrescente_capital = cob.capital_segurado;
+              coberturasMap.premio_morte_decrescente = cob.premio_bruto;
+            } else if (nomeLower.includes("morte") && nomeLower.includes("acidental")) {
+              coberturasMap.morte_acidental_capital = cob.capital_segurado;
+              coberturasMap.premio_morte_acidental = cob.premio_bruto;
+            } else if (nomeLower.includes("invalidez") && nomeLower.includes("majorada")) {
+              coberturasMap.invalidez_acidental_majorada_capital = cob.capital_segurado;
+              coberturasMap.premio_invalidez_majorada = cob.premio_bruto;
+            } else if (nomeLower.includes("invalidez") && nomeLower.includes("acidental")) {
+              coberturasMap.invalidez_acidental_capital = cob.capital_segurado;
+              coberturasMap.premio_invalidez_acidental = cob.premio_bruto;
+            } else if (nomeLower.includes("amparo") && nomeLower.includes("funeral")) {
+              coberturasMap.amparo_funeral_capital = cob.capital_segurado;
+              coberturasMap.premio_amparo_funeral = cob.premio_bruto;
+            } else if (nomeLower.includes("cirurgia")) {
+              coberturasMap.cirurgias_capital = cob.capital_segurado;
+              coberturasMap.premio_cirurgias = cob.premio_bruto;
+            } else if (nomeLower.includes("ipdf")) {
+              coberturasMap.ipdf_capital = cob.capital_segurado;
+              coberturasMap.premio_ipdf = cob.premio_bruto;
+            } else if (nomeLower.includes("doenças graves") && nomeLower.includes("premium")) {
+              coberturasMap.doencas_graves_cirurgicos_premium_capital = cob.capital_segurado;
+              coberturasMap.premio_doencas_graves_cirurgicos_premium = cob.premio_bruto;
+            } else if (nomeLower.includes("doenças graves") && nomeLower.includes("cirúrgico")) {
+              coberturasMap.doencas_graves_cirurgicos_capital = cob.capital_segurado;
+              coberturasMap.premio_doencas_graves_cirurgicos = cob.premio_bruto;
+            } else if (nomeLower.includes("doenças graves")) {
+              coberturasMap.doencas_graves_mais_capital = cob.capital_segurado;
+              coberturasMap.premio_doencas_graves_mais = cob.premio_bruto;
+            } else if (nomeLower.includes("fratura") && nomeLower.includes("óssea")) {
+              coberturasMap.fratura_ossea_capital = cob.capital_segurado;
+              coberturasMap.premio_fratura_ossea = cob.premio_bruto;
+            } else if (nomeLower.includes("dit") || nomeLower.includes("incapacidade temporária")) {
+              coberturasMap.premio_dit = cob.premio_bruto;
+            } else if (nomeLower.includes("dih") || nomeLower.includes("internação hospitalar")) {
+              coberturasMap.dih_capital = cob.capital_segurado;
+              coberturasMap.premio_dih = cob.premio_bruto;
+            } else if (nomeLower.includes("temporária") && nomeLower.includes("morte")) {
+              coberturasMap.temporaria_morte_capital = cob.capital_segurado;
+              coberturasMap.premio_temporaria_morte = cob.premio_bruto;
+            } else if (nomeLower.includes("funeral") && nomeLower.includes("individual")) {
+              coberturasMap.funeral_individual_capital = cob.capital_segurado;
+              coberturasMap.premio_funeral_individual = cob.premio_bruto;
+            } else if (nomeLower.includes("doenças incapacitantes")) {
+              coberturasMap.doencas_incapacitantes_capital = cob.capital_segurado;
+              coberturasMap.premio_doencas_incapacitantes = cob.premio_bruto;
+            }
+          });
+        }
+        
         // Mesclar dados extraídos com dados atuais
         setFormData(prev => ({
           ...prev,
-          ...result.output,
-          beneficiarios: result.output.beneficiarios || prev.beneficiarios
+          produto: produtoFinal || prev.produto,
+          tipo_cobertura: tipoCobertura || prev.tipo_cobertura,
+          periodo_cobertura: periodoCobertura || prev.periodo_cobertura,
+          frequencia_pagamento: data.periodicidade_premio || prev.frequencia_pagamento,
+          capital_morte: data.capital_segurado_morte || prev.capital_morte,
+          premio_morte: data.premio_bruto_morte || prev.premio_morte,
+          total_premio_iof: data.total_premio_iof || prev.total_premio_iof,
+          beneficiarios: data.beneficiarios || prev.beneficiarios,
+          ...coberturasMap
         }));
-        toast.success("Dados extraídos e preenchidos automaticamente!");
+        
+        // Atualizar CPF do cliente se extraído
+        if (data.cpf && cliente?.id) {
+          try {
+            await base44.entities.Cliente.update(cliente.id, { cpf: data.cpf });
+            toast.success("Dados extraídos e CPF atualizado no cadastro!");
+          } catch (err) {
+            console.error("Erro ao atualizar CPF:", err);
+            toast.success("Dados extraídos! (CPF não pôde ser atualizado)");
+          }
+        } else {
+          toast.success("Dados extraídos e preenchidos automaticamente!");
+        }
       } else {
         toast.error("Erro ao extrair dados: " + (result.details || "Formato inválido"));
       }

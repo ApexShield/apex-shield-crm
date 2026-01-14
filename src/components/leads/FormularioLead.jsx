@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, User, Phone, Mail, Briefcase, Heart, DollarSign, Users, FileText, UserPlus, Save, XCircle, Eraser, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import AgendarVisitaDialog from "./AgendarVisitaDialog";
 import EnderecoComGoogleMaps from "../EnderecoComGoogleMaps";
 
@@ -360,17 +361,34 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   return (
     <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">CADASTRO DE LEAD - CRM</DialogTitle>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+              <User className="w-6 h-6 text-white" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-slate-800">CADASTRO DE LEAD - CRM</DialogTitle>
+          </motion.div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-3 gap-4">
             {/* COLUNA 1 */}
             <div className="space-y-4">
-              <div className="bg-orange-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">CADASTRO DE LEAD</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-gradient-to-br from-orange-400 to-orange-500 p-4 rounded-2xl shadow-lg border-2 border-orange-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <User className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">CADASTRO DE LEAD</h3>
+                </div>
                 
                 <div className="space-y-2">
                   <div>
@@ -467,8 +485,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 </div>
               </div>
 
-              <div className="bg-pink-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">DADOS DE SAÚDE</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-gradient-to-br from-pink-400 to-pink-500 p-4 rounded-2xl shadow-lg border-2 border-pink-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Heart className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">DADOS DE SAÚDE</h3>
+                </div>
                 
                 <div className="space-y-2">
                   <div>
@@ -498,8 +524,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
             {/* COLUNA 2 */}
             <div className="space-y-4">
-              <div className="bg-blue-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">INFORMAÇÕES DE CONTATO</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-gradient-to-br from-blue-400 to-blue-500 p-4 rounded-2xl shadow-lg border-2 border-blue-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Phone className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">INFORMAÇÕES DE CONTATO</h3>
+                </div>
                 
                 <div className="space-y-2">
                   <div>
@@ -610,8 +644,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   </div>
 
-              <div className="bg-green-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">DADOS COMERCIAIS</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-gradient-to-br from-green-400 to-green-500 p-4 rounded-2xl shadow-lg border-2 border-green-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <DollarSign className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">DADOS COMERCIAIS</h3>
+                </div>
                 
                 <div className="space-y-2">
                   <div>
@@ -651,8 +693,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
             {/* COLUNA 3 */}
             <div className="space-y-4">
-              <div className="bg-purple-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">DADOS PESSOAIS</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gradient-to-br from-purple-400 to-purple-500 p-4 rounded-2xl shadow-lg border-2 border-purple-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">DADOS PESSOAIS</h3>
+                </div>
                 
                 <div className="space-y-2">
                   <div>
@@ -731,8 +781,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 </div>
               </div>
 
-              <div className="bg-red-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">AGENDAMENTO</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+                className="bg-gradient-to-br from-red-400 to-red-500 p-4 rounded-2xl shadow-lg border-2 border-red-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Calendar className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">AGENDAMENTO</h3>
+                </div>
                 
                 <div className="space-y-2">
                   <div>
@@ -772,8 +830,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 </div>
               </div>
 
-              <div className="bg-cyan-200 p-3 rounded">
-                <h3 className="font-bold text-sm mb-3">OBSERVAÇÕES</h3>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-gradient-to-br from-cyan-400 to-cyan-500 p-4 rounded-2xl shadow-lg border-2 border-cyan-300"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">OBSERVAÇÕES</h3>
+                </div>
                 
                 <div className="space-y-2">
                   {formData.observacoes && formData.observacoes.length > 0 && (
@@ -801,8 +867,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
           </div>
 
           {/* INDICAÇÕES */}
-          <div className="mt-4 bg-yellow-100 p-3 rounded">
-            <h3 className="font-bold text-sm mb-3">INDICAÇÕES</h3>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mt-4 bg-gradient-to-br from-yellow-400 to-yellow-500 p-4 rounded-2xl shadow-lg border-2 border-yellow-300"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <UserPlus className="w-5 h-5 text-white" />
+              <h3 className="font-black text-base text-white">INDICAÇÕES</h3>
+            </div>
             
             <div className="mb-3">
               <Label className="text-xs">Quantidade de Indicações:</Label>
@@ -873,46 +947,65 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
           </div>
 
           {/* BOTÕES */}
-          <div className="flex gap-3 mt-6">
-            <Button 
-              type="submit" 
-              tabIndex={31}
-              disabled={isLoading}
-              className="flex-1 bg-green-600 hover:bg-green-700 font-bold text-lg py-6"
-            >
-              {isLoading && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
-              SALVAR
-            </Button>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex gap-3 mt-6"
+          >
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+              <Button 
+                type="submit" 
+                tabIndex={31}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-black text-xl py-7 shadow-xl rounded-xl"
+              >
+                {isLoading ? (
+                  <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> SALVANDO...</>
+                ) : (
+                  <><Save className="w-6 h-6 mr-2" /> SALVAR</>
+                )}
+              </Button>
+            </motion.div>
 
             {lead && (
-              <Button 
-                type="button"
-                onClick={() => {
-                  const event = new CustomEvent('openApolice', { detail: lead });
-                  window.dispatchEvent(event);
-                }}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 font-bold text-lg py-6"
-              >
-                DADOS DA APÓLICE
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+                <Button 
+                  type="button"
+                  onClick={() => {
+                    const event = new CustomEvent('openApolice', { detail: lead });
+                    window.dispatchEvent(event);
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 font-black text-xl py-7 shadow-xl rounded-xl"
+                >
+                  <Sparkles className="w-6 h-6 mr-2" />
+                  APÓLICE
+                </Button>
+              </motion.div>
             )}
             
-            <Button 
-              type="button"
-              onClick={handleLimpar}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 font-bold text-lg py-6"
-            >
-              LIMPAR
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+              <Button 
+                type="button"
+                onClick={handleLimpar}
+                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 font-black text-xl py-7 shadow-xl rounded-xl"
+              >
+                <Eraser className="w-6 h-6 mr-2" />
+                LIMPAR
+              </Button>
+            </motion.div>
             
-            <Button 
-              type="button"
-              onClick={handleClose}
-              className="flex-1 bg-red-600 hover:bg-red-700 font-bold text-lg py-6"
-            >
-              CANCELAR
-            </Button>
-          </div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+              <Button 
+                type="button"
+                onClick={handleClose}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 font-black text-xl py-7 shadow-xl rounded-xl"
+              >
+                <XCircle className="w-6 h-6 mr-2" />
+                CANCELAR
+              </Button>
+            </motion.div>
+          </motion.div>
         </form>
 
         <AgendarVisitaDialog

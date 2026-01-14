@@ -483,7 +483,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
@@ -519,7 +519,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     </Select>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* COLUNA 2 */}
@@ -642,7 +642,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     />
                   </div>
                   </div>
-                  </div>
+              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
@@ -779,7 +779,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
@@ -828,7 +828,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
@@ -862,7 +862,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     placeholder="Nova observação..."
                   />
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
 
@@ -944,7 +944,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 ))}
               </>
             )}
-          </div>
+          </motion.div>
 
           {/* BOTÕES */}
           <motion.div 

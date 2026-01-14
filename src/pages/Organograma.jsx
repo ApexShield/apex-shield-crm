@@ -48,6 +48,28 @@ export default function Organograma() {
     }
   });
 
+  // Verificar se tem acesso (admin ou líder de agência)
+  const hasEditAccess = currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência";
+  
+  // Filtrar usuários que o usuário comum pode ver
+  const visibleUsers = React.useMemo(() => {
+    if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {
+      // Admin e Líder de Agência veem todos
+      return users;
+    }
+    
+    // Usuário comum vê apenas sua hierarquia
+    const result = users.filter(u => {
+      if (u.id === currentUser?.id) return true; // Ele mesmo
+      if (u.lider_id === currentUser?.id) return true; // Seus subordinados diretos
+      if (u.lider_email === currentUser?.email) return true; // Seus subordinados por email
+      if (currentUser?.lider_id && u.id === currentUser.lider_id) return true; // Seu líder
+      return false;
+    });
+    
+    return result.length > 0 ? result : [currentUser]; // Se não está vinculado, mostra só ele
+  }, [users, currentUser]);
+
   // Organizar usuários por hierarquia (usando visibleUsers)
   const organizedUsers = React.useMemo(() => {
     // Filtrar admins da hierarquia
@@ -143,28 +165,6 @@ export default function Organograma() {
     }
     return [];
   }, [selectedHierarchy, users]);
-
-  // Verificar se tem acesso (admin ou líder de agência)
-  const hasEditAccess = currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência";
-  
-  // Filtrar usuários que o usuário comum pode ver
-  const visibleUsers = React.useMemo(() => {
-    if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {
-      // Admin e Líder de Agência veem todos
-      return users;
-    }
-    
-    // Usuário comum vê apenas sua hierarquia
-    const result = users.filter(u => {
-      if (u.id === currentUser?.id) return true; // Ele mesmo
-      if (u.lider_id === currentUser?.id) return true; // Seus subordinados diretos
-      if (u.lider_email === currentUser?.email) return true; // Seus subordinados por email
-      if (currentUser?.lider_id && u.id === currentUser.lider_id) return true; // Seu líder
-      return false;
-    });
-    
-    return result.length > 0 ? result : [currentUser]; // Se não está vinculado, mostra só ele
-  }, [users, currentUser]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">

@@ -200,9 +200,9 @@ export default function GestaoUsuarios() {
     return matchSearch && matchRole;
   });
 
-  const userCount = usuarios.filter(u => u.role_type === "Usuario" || !u.role_type).length;
+  const userCount = usuarios.filter(u => (u.role_type === "Usuario" || !u.role_type) && u.role !== "admin").length;
   const vipCount = usuarios.filter(u => u.role_type === "UsuarioVIP").length;
-  const adminCount = usuarios.filter(u => u.role === "admin").length;
+  const adminCount = usuarios.filter(u => u?.role === "admin").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">

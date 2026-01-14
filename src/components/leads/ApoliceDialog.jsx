@@ -297,9 +297,9 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
             } else if (nomeLower.includes("fratura") && nomeLower.includes("óssea")) {
               coberturasMap.fratura_ossea_capital = cob.capital_segurado;
               coberturasMap.premio_fratura_ossea = cob.premio_bruto;
-            } else if (nomeLower.includes("dit") || nomeLower.includes("incapacidade temporária")) {
+            } else if (nomeLower.includes("dit") || (nomeLower.includes("diária") && nomeLower.includes("incapacidade"))) {
               coberturasMap.premio_dit = cob.premio_bruto;
-            } else if (nomeLower.includes("dih") || nomeLower.includes("internação hospitalar")) {
+            } else if (nomeLower.includes("dih") || (nomeLower.includes("diária") && nomeLower.includes("internação")) || nomeLower.includes("internação hospitalar")) {
               coberturasMap.dih_capital = cob.capital_segurado;
               coberturasMap.premio_dih = cob.premio_bruto;
             } else if (nomeLower.includes("temporária") && nomeLower.includes("morte")) {
@@ -332,7 +332,11 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
         // Atualizar CPF do cliente se extraído
         if (data.cpf && cliente?.id) {
           try {
-            await base44.entities.Cliente.update(cliente.id, { cpf: data.cpf });
+            // Formatar CPF
+            const cpfNumeros = data.cpf.replace(/\D/g, "").slice(0, 11);
+            const cpfFormatado = cpfNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, "$1.$2.$3-$4").replace(/-$/, "");
+            
+            await base44.entities.Cliente.update(cliente.id, { cpf: cpfFormatado });
             toast.success("Dados extraídos e CPF atualizado no cadastro!");
           } catch (err) {
             console.error("Erro ao atualizar CPF:", err);
@@ -366,6 +370,25 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
       periodo_cobertura: "",
       frequencia_pagamento: "",
       plano_singular: "",
+      total_premio_iof: "",
+      beneficiarios: [],
+      premio_morte: "",
+      premio_morte_decrescente: "",
+      premio_morte_acidental: "",
+      premio_invalidez_acidental: "",
+      premio_invalidez_majorada: "",
+      premio_amparo_funeral: "",
+      premio_cirurgias: "",
+      premio_ipdf: "",
+      premio_doencas_graves_mais: "",
+      premio_doencas_graves_cirurgicos: "",
+      premio_doencas_graves_cirurgicos_premium: "",
+      premio_fratura_ossea: "",
+      premio_dit: "",
+      premio_dih: "",
+      premio_temporaria_morte: "",
+      premio_funeral_individual: "",
+      premio_doencas_incapacitantes: "",
       morte_decrescente_capital: "",
       morte_decrescente_periodo: "",
       morte_acidental_capital: "",

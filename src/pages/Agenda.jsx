@@ -49,11 +49,35 @@ export default function Agenda() {
 
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
 
-  const { data: users = [] } = useQuery({
+  const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: user?.role === "admin"
+    enabled: user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência"
   });
+
+  // Filtrar usuários que podem ser visualizados baseado na hierarquia
+  const users = useMemo(() => {
+    if (!user || !allUsers.length) return [];
+    
+    // Admin vê todos os usuários
+    if (user.role === "admin") {
+      return allUsers;
+    }
+    
+    // Líder de Agência vê todos os usuários
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      return allUsers;
+    }
+    
+    // Líder de Unidade vê apenas seus subordinados
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      return allUsers.filter(u => 
+        u.lider_email === user.email || u.lider_id === user.id
+      );
+    }
+    
+    return [];
+  }, [allUsers, user]);
 
   const { data: allCompromissos = [] } = useQuery({
     queryKey: ["compromissos", selectedUserEmail || user?.email],
@@ -240,7 +264,7 @@ export default function Agenda() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {user?.role === "admin" && (
+              {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && users.length > 0 && (
                 <Select
                   value={selectedUserEmail}
                   onValueChange={setSelectedUserEmail}

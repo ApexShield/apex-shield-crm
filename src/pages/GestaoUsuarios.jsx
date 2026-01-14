@@ -99,7 +99,33 @@ export default function GestaoUsuarios() {
 
   const updateHierarchyMutation = useMutation({
     mutationFn: async ({ userId, data }) => {
+      const user = usuarios.find(u => u.id === userId);
+      const oldHierarchy = user?.tipo_hierarquia;
+      const newHierarchy = data.tipo_hierarquia;
+      
+      // Atualizar apenas o usuário selecionado
       await base44.entities.User.update(userId, data);
+      
+      // Se mudou de Líder de Unidade para Líder de Agência, limpar o lider_id
+      if (oldHierarchy === "Líder de Unidade" && newHierarchy === "Líder de Agência") {
+        await base44.entities.User.update(userId, { 
+          ...data,
+          lider_id: null,
+          lider_email: null
+        });
+      }
+      
+      // Se mudou de Líder de Agência para outra coisa, atualizar subordinados
+      if (oldHierarchy === "Líder de Agência" && newHierarchy !== "Líder de Agência") {
+        // Encontrar Líderes de Unidade que reportavam a este usuário
+        const subordinados = usuarios.filter(u => u.lider_id === userId);
+        for (const sub of subordinados) {
+          await base44.entities.User.update(sub.id, {
+            lider_id: null,
+            lider_email: null
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });

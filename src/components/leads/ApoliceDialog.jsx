@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 const formatCurrency = (value) => {
   const numbers = value.replace(/\D/g, "");
@@ -14,6 +16,8 @@ const formatCurrency = (value) => {
 };
 
 export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoading }) {
+  const [uploadingFile, setUploadingFile] = useState(false);
+  
   const [formData, setFormData] = useState({
     produto: "",
     capital_morte: "",
@@ -21,6 +25,29 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
     periodo_cobertura: "",
     frequencia_pagamento: "",
     plano_singular: "",
+    
+    // Prêmio e Beneficiários
+    total_premio_iof: "",
+    beneficiarios: [],
+    
+    // Prêmios das coberturas
+    premio_morte: "",
+    premio_morte_decrescente: "",
+    premio_morte_acidental: "",
+    premio_invalidez_acidental: "",
+    premio_invalidez_majorada: "",
+    premio_amparo_funeral: "",
+    premio_cirurgias: "",
+    premio_ipdf: "",
+    premio_doencas_graves_mais: "",
+    premio_doencas_graves_cirurgicos: "",
+    premio_doencas_graves_cirurgicos_premium: "",
+    premio_fratura_ossea: "",
+    premio_dit: "",
+    premio_dih: "",
+    premio_temporaria_morte: "",
+    premio_funeral_individual: "",
+    premio_doencas_incapacitantes: "",
     
     // Coberturas
     morte_decrescente_capital: "",
@@ -58,7 +85,27 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
     
     doencas_incapacitantes_cobertura: "",
     doencas_incapacitantes_renda: "",
-    doencas_incapacitantes_capital: ""
+    doencas_incapacitantes_capital: "",
+    
+    total_premio_iof: "",
+    beneficiarios: [],
+    premio_morte: "",
+    premio_morte_decrescente: "",
+    premio_morte_acidental: "",
+    premio_invalidez_acidental: "",
+    premio_invalidez_majorada: "",
+    premio_amparo_funeral: "",
+    premio_cirurgias: "",
+    premio_ipdf: "",
+    premio_doencas_graves_mais: "",
+    premio_doencas_graves_cirurgicos: "",
+    premio_doencas_graves_cirurgicos_premium: "",
+    premio_fratura_ossea: "",
+    premio_dit: "",
+    premio_dih: "",
+    premio_temporaria_morte: "",
+    premio_funeral_individual: "",
+    premio_doencas_incapacitantes: ""
   });
 
   useEffect(() => {
@@ -105,6 +152,102 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
 
   const handleCurrencyChange = (field, value) => {
     setFormData({ ...formData, [field]: formatCurrency(value) });
+  };
+
+  const addBeneficiario = () => {
+    setFormData({
+      ...formData,
+      beneficiarios: [...(formData.beneficiarios || []), { nome: "", parentesco: "", data_nascimento: "", distribuicao: "" }]
+    });
+  };
+
+  const removeBeneficiario = (index) => {
+    const newBeneficiarios = formData.beneficiarios.filter((_, i) => i !== index);
+    setFormData({ ...formData, beneficiarios: newBeneficiarios });
+  };
+
+  const updateBeneficiario = (index, field, value) => {
+    const newBeneficiarios = [...formData.beneficiarios];
+    newBeneficiarios[index][field] = value;
+    setFormData({ ...formData, beneficiarios: newBeneficiarios });
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    toast.info("Processando arquivo...");
+
+    try {
+      // 1. Upload do arquivo
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      // 2. Extrair dados do arquivo
+      const schema = {
+        type: "object",
+        properties: {
+          produto: { type: "string" },
+          capital_morte: { type: "string" },
+          total_premio_iof: { type: "string" },
+          beneficiarios: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                nome: { type: "string" },
+                parentesco: { type: "string" },
+                data_nascimento: { type: "string" },
+                distribuicao: { type: "string" }
+              }
+            }
+          },
+          premio_morte: { type: "string" },
+          premio_morte_decrescente: { type: "string" },
+          premio_morte_acidental: { type: "string" },
+          premio_invalidez_acidental: { type: "string" },
+          premio_invalidez_majorada: { type: "string" },
+          premio_amparo_funeral: { type: "string" },
+          premio_cirurgias: { type: "string" },
+          premio_ipdf: { type: "string" },
+          premio_doencas_graves_mais: { type: "string" },
+          premio_doencas_graves_cirurgicos: { type: "string" },
+          premio_doencas_graves_cirurgicos_premium: { type: "string" },
+          premio_fratura_ossea: { type: "string" },
+          premio_dit: { type: "string" },
+          premio_dih: { type: "string" },
+          premio_temporaria_morte: { type: "string" },
+          premio_funeral_individual: { type: "string" },
+          premio_doencas_incapacitantes: { type: "string" },
+          morte_decrescente_capital: { type: "string" },
+          morte_acidental_capital: { type: "string" },
+          invalidez_acidental_capital: { type: "string" }
+        }
+      };
+
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: schema
+      });
+
+      if (result.status === "success" && result.output) {
+        // Mesclar dados extraídos com dados atuais
+        setFormData(prev => ({
+          ...prev,
+          ...result.output,
+          beneficiarios: result.output.beneficiarios || prev.beneficiarios
+        }));
+        toast.success("Dados extraídos e preenchidos automaticamente!");
+      } else {
+        toast.error("Erro ao extrair dados: " + (result.details || "Formato inválido"));
+      }
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      toast.error("Erro ao processar arquivo: " + error.message);
+    } finally {
+      setUploadingFile(false);
+      event.target.value = "";
+    }
   };
 
   const handleSubmit = (e) => {
@@ -271,14 +414,119 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
 
           <Separator />
 
+          {/* BENEFICIÁRIOS */}
+          <div className="bg-indigo-100 p-4 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm">BENEFICIÁRIOS</h3>
+              <Button type="button" onClick={addBeneficiario} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                + Adicionar Beneficiário
+              </Button>
+            </div>
+
+            {formData.beneficiarios && formData.beneficiarios.length > 0 ? (
+              <div className="space-y-3">
+                {formData.beneficiarios.map((beneficiario, index) => (
+                  <div key={index} className="bg-white p-3 rounded-lg shadow-sm space-y-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm">Beneficiário {index + 1}</span>
+                      <Button
+                        type="button"
+                        onClick={() => removeBeneficiario(index)}
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="col-span-2">
+                        <Label className="text-xs">Nome Civil ou Social Completo:</Label>
+                        <Input
+                          value={beneficiario.nome}
+                          onChange={(e) => updateBeneficiario(index, "nome", e.target.value.toUpperCase())}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Parentesco:</Label>
+                        <Select
+                          value={beneficiario.parentesco}
+                          onValueChange={(v) => updateBeneficiario(index, "parentesco", v)}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cônjuge">Cônjuge</SelectItem>
+                            <SelectItem value="Filho(a)">Filho(a)</SelectItem>
+                            <SelectItem value="Pai">Pai</SelectItem>
+                            <SelectItem value="Mãe">Mãe</SelectItem>
+                            <SelectItem value="Irmão(ã)">Irmão(ã)</SelectItem>
+                            <SelectItem value="Sobrinho(a)">Sobrinho(a)</SelectItem>
+                            <SelectItem value="Outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Data de Nascimento:</Label>
+                        <Input
+                          type="date"
+                          value={beneficiario.data_nascimento}
+                          onChange={(e) => updateBeneficiario(index, "data_nascimento", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Distribuição % (*):</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={beneficiario.distribuicao}
+                          onChange={(e) => updateBeneficiario(index, "distribuicao", e.target.value)}
+                          placeholder="%"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">Nenhum beneficiário cadastrado</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* PRÊMIO TOTAL */}
+          <div className="bg-emerald-100 p-4 rounded-lg">
+            <h3 className="font-bold text-sm mb-3">VALORES</h3>
+            <div>
+              <Label className="text-xs font-bold">Total de prêmio(s) do(s) seguro(s) contratado(s) + IOF:</Label>
+              <Input
+                value={formData.total_premio_iof}
+                onChange={(e) => handleCurrencyChange('total_premio_iof', e.target.value)}
+                className="font-bold text-lg"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
           {/* COBERTURAS */}
           <div className="space-y-4">
-            <h3 className="font-bold text-lg">COBERTURAS</h3>
+            <h3 className="font-bold text-lg">COBERTURAS E PRÊMIOS</h3>
+
+            {/* Cobertura de Morte Principal */}
+            <div className="bg-blue-100 p-3 rounded space-y-2">
+              <h4 className="font-bold text-sm">Cobertura de Morte Principal</h4>
+              <div>
+                <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                <Input value={formData.premio_morte} onChange={(e) => handleCurrencyChange('premio_morte', e.target.value)} />
+              </div>
+            </div>
 
             {/* Morte com Capital Decrescente */}
             <div className="bg-purple-50 p-3 rounded space-y-2">
               <h4 className="font-bold text-sm">Morte com Capital Decrescente</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Capital Segurado:</Label>
                   <Input value={formData.morte_decrescente_capital} onChange={(e) => handleCurrencyChange('morte_decrescente_capital', e.target.value)} />
@@ -296,34 +544,62 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_morte_decrescente} onChange={(e) => handleCurrencyChange('premio_morte_decrescente', e.target.value)} />
+                </div>
               </div>
             </div>
 
             {/* Morte Acidental */}
-            <div className="bg-red-50 p-3 rounded">
-              <h4 className="font-bold text-sm mb-2">Morte Acidental</h4>
-              <Label className="text-xs">Capital Segurado:</Label>
-              <Input value={formData.morte_acidental_capital} onChange={(e) => handleCurrencyChange('morte_acidental_capital', e.target.value)} />
+            <div className="bg-red-50 p-3 rounded space-y-2">
+              <h4 className="font-bold text-sm">Morte Acidental</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.morte_acidental_capital} onChange={(e) => handleCurrencyChange('morte_acidental_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_morte_acidental} onChange={(e) => handleCurrencyChange('premio_morte_acidental', e.target.value)} />
+                </div>
+              </div>
             </div>
 
             {/* Invalidez Acidental */}
-            <div className="bg-orange-50 p-3 rounded">
-              <h4 className="font-bold text-sm mb-2">Invalidez Acidental</h4>
-              <Label className="text-xs">Capital Segurado:</Label>
-              <Input value={formData.invalidez_acidental_capital} onChange={(e) => handleCurrencyChange('invalidez_acidental_capital', e.target.value)} />
+            <div className="bg-orange-50 p-3 rounded space-y-2">
+              <h4 className="font-bold text-sm">Invalidez Acidental</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.invalidez_acidental_capital} onChange={(e) => handleCurrencyChange('invalidez_acidental_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_invalidez_acidental} onChange={(e) => handleCurrencyChange('premio_invalidez_acidental', e.target.value)} />
+                </div>
+              </div>
             </div>
 
             {/* Invalidez Acidental Majorada */}
-            <div className="bg-yellow-50 p-3 rounded">
-              <h4 className="font-bold text-sm mb-2">Invalidez Acidental Majorada</h4>
-              <Label className="text-xs">Capital Segurado:</Label>
-              <Input value={formData.invalidez_acidental_majorada_capital} onChange={(e) => handleCurrencyChange('invalidez_acidental_majorada_capital', e.target.value)} />
+            <div className="bg-yellow-50 p-3 rounded space-y-2">
+              <h4 className="font-bold text-sm">Invalidez Acidental Majorada</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.invalidez_acidental_majorada_capital} onChange={(e) => handleCurrencyChange('invalidez_acidental_majorada_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_invalidez_majorada} onChange={(e) => handleCurrencyChange('premio_invalidez_majorada', e.target.value)} />
+                </div>
+              </div>
             </div>
 
             {/* Amparo Funeral */}
             <div className="bg-green-50 p-3 rounded space-y-2">
               <h4 className="font-bold text-sm">Amparo Funeral</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Cobertura:</Label>
                   <Select value={formData.amparo_funeral_cobertura} onValueChange={(v) => setFormData({...formData, amparo_funeral_cobertura: v})}>
@@ -348,52 +624,92 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_amparo_funeral} onChange={(e) => handleCurrencyChange('premio_amparo_funeral', e.target.value)} />
+                </div>
               </div>
             </div>
 
             {/* Cirurgias, IPDF, Doenças Graves */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-blue-50 p-3 rounded">
-                <h4 className="font-bold text-sm mb-2">Cirurgias</h4>
-                <Label className="text-xs">Capital Segurado:</Label>
-                <Input value={formData.cirurgias_capital} onChange={(e) => handleCurrencyChange('cirurgias_capital', e.target.value)} />
+              <div className="bg-blue-50 p-3 rounded space-y-2">
+                <h4 className="font-bold text-sm">Cirurgias</h4>
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.cirurgias_capital} onChange={(e) => handleCurrencyChange('cirurgias_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_cirurgias} onChange={(e) => handleCurrencyChange('premio_cirurgias', e.target.value)} />
+                </div>
               </div>
 
-              <div className="bg-indigo-50 p-3 rounded">
-                <h4 className="font-bold text-sm mb-2">IPDF</h4>
-                <Label className="text-xs">Capital Segurado:</Label>
-                <Input value={formData.ipdf_capital} onChange={(e) => handleCurrencyChange('ipdf_capital', e.target.value)} />
+              <div className="bg-indigo-50 p-3 rounded space-y-2">
+                <h4 className="font-bold text-sm">IPDF</h4>
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.ipdf_capital} onChange={(e) => handleCurrencyChange('ipdf_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_ipdf} onChange={(e) => handleCurrencyChange('premio_ipdf', e.target.value)} />
+                </div>
               </div>
 
-              <div className="bg-pink-50 p-3 rounded">
-                <h4 className="font-bold text-sm mb-2">Doenças Graves Mais Proteção</h4>
-                <Label className="text-xs">Capital Segurado:</Label>
-                <Input value={formData.doencas_graves_mais_capital} onChange={(e) => handleCurrencyChange('doencas_graves_mais_capital', e.target.value)} />
+              <div className="bg-pink-50 p-3 rounded space-y-2">
+                <h4 className="font-bold text-sm">Doenças Graves Mais Proteção</h4>
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.doencas_graves_mais_capital} onChange={(e) => handleCurrencyChange('doencas_graves_mais_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_doencas_graves_mais} onChange={(e) => handleCurrencyChange('premio_doencas_graves_mais', e.target.value)} />
+                </div>
               </div>
 
-              <div className="bg-rose-50 p-3 rounded">
-                <h4 className="font-bold text-sm mb-2">Doenças Graves Proc. Cirúrgicos</h4>
-                <Label className="text-xs">Capital Segurado:</Label>
-                <Input value={formData.doencas_graves_cirurgicos_capital} onChange={(e) => handleCurrencyChange('doencas_graves_cirurgicos_capital', e.target.value)} />
+              <div className="bg-rose-50 p-3 rounded space-y-2">
+                <h4 className="font-bold text-sm">Doenças Graves Proc. Cirúrgicos</h4>
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.doencas_graves_cirurgicos_capital} onChange={(e) => handleCurrencyChange('doencas_graves_cirurgicos_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_doencas_graves_cirurgicos} onChange={(e) => handleCurrencyChange('premio_doencas_graves_cirurgicos', e.target.value)} />
+                </div>
               </div>
 
-              <div className="bg-violet-50 p-3 rounded">
-                <h4 className="font-bold text-sm mb-2">Doenças Graves Proc. Cirúrgicos Premium</h4>
-                <Label className="text-xs">Capital Segurado:</Label>
-                <Input value={formData.doencas_graves_cirurgicos_premium_capital} onChange={(e) => handleCurrencyChange('doencas_graves_cirurgicos_premium_capital', e.target.value)} />
+              <div className="bg-violet-50 p-3 rounded space-y-2">
+                <h4 className="font-bold text-sm">Doenças Graves Proc. Cirúrgicos Premium</h4>
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.doencas_graves_cirurgicos_premium_capital} onChange={(e) => handleCurrencyChange('doencas_graves_cirurgicos_premium_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_doencas_graves_cirurgicos_premium} onChange={(e) => handleCurrencyChange('premio_doencas_graves_cirurgicos_premium', e.target.value)} />
+                </div>
               </div>
 
-              <div className="bg-amber-50 p-3 rounded">
-                <h4 className="font-bold text-sm mb-2">Fratura Óssea</h4>
-                <Label className="text-xs">Capital Segurado:</Label>
-                <Input value={formData.fratura_ossea_capital} onChange={(e) => handleCurrencyChange('fratura_ossea_capital', e.target.value)} />
+              <div className="bg-amber-50 p-3 rounded space-y-2">
+                <h4 className="font-bold text-sm">Fratura Óssea</h4>
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Input value={formData.fratura_ossea_capital} onChange={(e) => handleCurrencyChange('fratura_ossea_capital', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_fratura_ossea} onChange={(e) => handleCurrencyChange('premio_fratura_ossea', e.target.value)} />
+                </div>
               </div>
             </div>
 
             {/* Diária por Incapacidade Temporária */}
             <div className="bg-cyan-50 p-3 rounded space-y-2">
               <h4 className="font-bold text-sm">Diária por Incapacidade Temporária</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Cobertura:</Label>
                   <Select value={formData.dit_cobertura} onValueChange={(v) => setFormData({...formData, dit_cobertura: v})}>
@@ -422,34 +738,46 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                   <Label className="text-xs">Diária:</Label>
                   <Input value={formData.dit_diaria} onChange={(e) => handleCurrencyChange('dit_diaria', e.target.value)} />
                 </div>
+                <div className="col-span-3">
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_dit} onChange={(e) => handleCurrencyChange('premio_dit', e.target.value)} />
+                </div>
               </div>
             </div>
 
             {/* Diária por Internação Hospitalar */}
-            <div className="bg-teal-50 p-3 rounded">
-              <h4 className="font-bold text-sm mb-2">Diária por Internação Hospitalar</h4>
-              <Label className="text-xs">Capital Segurado:</Label>
-              <Select value={formData.dih_capital} onValueChange={(v) => setFormData({...formData, dih_capital: v})}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="R$ 200,00">R$ 200,00</SelectItem>
-                  <SelectItem value="R$ 250,00">R$ 250,00</SelectItem>
-                  <SelectItem value="R$ 300,00">R$ 300,00</SelectItem>
-                  <SelectItem value="R$ 350,00">R$ 350,00</SelectItem>
-                  <SelectItem value="R$ 450,00">R$ 450,00</SelectItem>
-                  <SelectItem value="R$ 550,00">R$ 550,00</SelectItem>
-                  <SelectItem value="R$ 750,00">R$ 750,00</SelectItem>
-                  <SelectItem value="R$ 1.000,00">R$ 1.000,00</SelectItem>
-                  <SelectItem value="R$ 2.000,00">R$ 2.000,00</SelectItem>
-                  <SelectItem value="R$ 3.000,00">R$ 3.000,00</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="bg-teal-50 p-3 rounded space-y-2">
+              <h4 className="font-bold text-sm">Diária por Internação Hospitalar</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Capital Segurado:</Label>
+                  <Select value={formData.dih_capital} onValueChange={(v) => setFormData({...formData, dih_capital: v})}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="R$ 200,00">R$ 200,00</SelectItem>
+                      <SelectItem value="R$ 250,00">R$ 250,00</SelectItem>
+                      <SelectItem value="R$ 300,00">R$ 300,00</SelectItem>
+                      <SelectItem value="R$ 350,00">R$ 350,00</SelectItem>
+                      <SelectItem value="R$ 450,00">R$ 450,00</SelectItem>
+                      <SelectItem value="R$ 550,00">R$ 550,00</SelectItem>
+                      <SelectItem value="R$ 750,00">R$ 750,00</SelectItem>
+                      <SelectItem value="R$ 1.000,00">R$ 1.000,00</SelectItem>
+                      <SelectItem value="R$ 2.000,00">R$ 2.000,00</SelectItem>
+                      <SelectItem value="R$ 3.000,00">R$ 3.000,00</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_dih} onChange={(e) => handleCurrencyChange('premio_dih', e.target.value)} />
+                </div>
+              </div>
             </div>
 
             {/* Temporária por Morte */}
             <div className="bg-lime-50 p-3 rounded space-y-2">
               <h4 className="font-bold text-sm">Temporária por Morte</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Capital Segurado:</Label>
                   <Input value={formData.temporaria_morte_capital} onChange={(e) => handleCurrencyChange('temporaria_morte_capital', e.target.value)} />
@@ -465,7 +793,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                   </Select>
                 </div>
                 {formData.temporaria_morte_vigencia && (
-                  <div className="col-span-2">
+                  <div>
                     <Label className="text-xs">{formData.temporaria_morte_vigencia === "Fixado" ? "Período:" : "Idade:"}</Label>
                     <Select value={formData.temporaria_morte_periodo} onValueChange={(v) => setFormData({...formData, temporaria_morte_periodo: v})}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -485,13 +813,17 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                     </Select>
                   </div>
                 )}
+                <div className="col-span-3">
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_temporaria_morte} onChange={(e) => handleCurrencyChange('premio_temporaria_morte', e.target.value)} />
+                </div>
               </div>
             </div>
 
             {/* Funeral Individual */}
             <div className="bg-slate-100 p-3 rounded space-y-2">
               <h4 className="font-bold text-sm">Funeral Individual</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Capital Segurado:</Label>
                   <Select value={formData.funeral_individual_capital} onValueChange={(v) => setFormData({...formData, funeral_individual_capital: v})}>
@@ -513,13 +845,17 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="col-span-3">
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_funeral_individual} onChange={(e) => handleCurrencyChange('premio_funeral_individual', e.target.value)} />
+                </div>
               </div>
             </div>
 
             {/* Doenças Incapacitantes */}
             <div className="bg-gray-100 p-3 rounded space-y-2">
               <h4 className="font-bold text-sm">Doenças Incapacitantes</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="text-xs">Cobertura:</Label>
                   <Select value={formData.doencas_incapacitantes_cobertura} onValueChange={(v) => setFormData({...formData, doencas_incapacitantes_cobertura: v})}>
@@ -534,9 +870,13 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                   <Label className="text-xs">Renda Mensal:</Label>
                   <Input value={formData.doencas_incapacitantes_renda} onChange={(e) => handleCurrencyChange('doencas_incapacitantes_renda', e.target.value)} />
                 </div>
-                <div className="col-span-2">
+                <div>
                   <Label className="text-xs">Capital Segurado:</Label>
                   <Input value={formData.doencas_incapacitantes_capital} onChange={(e) => handleCurrencyChange('doencas_incapacitantes_capital', e.target.value)} />
+                </div>
+                <div className="col-span-3">
+                  <Label className="text-xs">Prêmio Bruto Contratado:</Label>
+                  <Input value={formData.premio_doencas_incapacitantes} onChange={(e) => handleCurrencyChange('premio_doencas_incapacitantes', e.target.value)} />
                 </div>
               </div>
             </div>
@@ -560,6 +900,34 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
             >
               LIMPAR
             </Button>
+            
+            <div className="flex-1">
+              <input
+                type="file"
+                id="file-upload-apolice"
+                accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                onClick={() => document.getElementById('file-upload-apolice').click()}
+                disabled={uploadingFile}
+                className="w-full bg-blue-600 hover:bg-blue-700 font-bold"
+              >
+                {uploadingFile ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Importar Dados
+                  </>
+                )}
+              </Button>
+            </div>
             
             <Button 
               type="button"

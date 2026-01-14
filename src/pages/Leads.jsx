@@ -74,12 +74,17 @@ export default function Leads() {
     enabled: !!user
   });
 
-  // Filtrar leads baseado em hierarquia e permissões
+  // Filtrar leads baseado em permissões
   const clientes = useMemo(() => {
     if (!user || !allClientes.length) return [];
     
-    // Admin e Líder de Agência veem todos
-    if (user.role === "admin" || user.tipo_hierarquia === "Líder de Agência") {
+    // Admin vê todos os leads
+    if (user.role === "admin") {
+      return allClientes;
+    }
+    
+    // Líder de Agência vê todos
+    if (user.tipo_hierarquia === "Líder de Agência") {
       return allClientes;
     }
     
@@ -92,7 +97,7 @@ export default function Leads() {
       );
     }
     
-    // Usuário padrão vê apenas seus próprios leads
+    // Todos os outros usuários veem apenas seus próprios leads
     return allClientes.filter(c => c.created_by === user.email);
   }, [allClientes, user]);
 

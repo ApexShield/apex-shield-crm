@@ -81,26 +81,30 @@ export default function Organograma() {
     
     // Extrair informações do drop
     const destParts = destination.droppableId.split("-");
-    const destType = destParts[0]; // "lider-agencia", "lider-unidade", "corretor"
-    const destId = destParts[1];
+    const destType = destParts[0]; // "lider", "corretor"
+    const destSubType = destParts[1]; // "agencia", "unidade", "area"
+    const destId = destParts[2] || destParts[3];
 
     const user = users.find(u => u.id === draggableId);
     if (!user) return;
 
     let updateData = {};
 
-    if (destType === "lider-agencia" && user.tipo_hierarquia === "Líder de Unidade") {
-      // Líder de Unidade sendo movido para outro Líder de Agência
-      const liderAgencia = users.find(u => u.id === destId);
+    // Líder de Unidade movido para área de outro Líder de Agência
+    if (destSubType === "unidade" && destParts[2] === "area" && user.tipo_hierarquia === "Líder de Unidade") {
+      const liderAgenciaId = destParts[3];
+      const liderAgencia = users.find(u => u.id === liderAgenciaId);
       updateData = {
-        lider_id: destId,
+        lider_id: liderAgenciaId,
         lider_email: liderAgencia?.email
       };
-    } else if (destType === "lider-unidade" && user.tipo_hierarquia === "Corretor") {
-      // Corretor sendo movido para outro Líder de Unidade
-      const liderUnidade = users.find(u => u.id === destId);
+    } 
+    // Corretor movido para área de outro Líder de Unidade
+    else if (destSubType === "area" && user.tipo_hierarquia === "Corretor") {
+      const liderUnidadeId = destParts[2];
+      const liderUnidade = users.find(u => u.id === liderUnidadeId);
       updateData = {
-        lider_id: destId,
+        lider_id: liderUnidadeId,
         lider_email: liderUnidade?.email
       };
     }
@@ -225,81 +229,94 @@ export default function Organograma() {
 
                   {/* Líderes de Unidade */}
                   <div className="pl-12 space-y-4">
-                    {agencia.unidades.map((unidade, unidadeIdx) => (
-                      <div key={unidade.lider.id}>
-                        <Draggable draggableId={unidade.lider.id} index={unidadeIdx}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <Droppable droppableId={`lider-unidade-${unidade.lider.id}`} type="corretor">
-                                {(provided2, snapshot2) => (
-                                  <div
-                                    ref={provided2.innerRef}
-                                    {...provided2.droppableProps}
-                                    className={snapshot2.isDraggingOver ? 'bg-blue-500/20 rounded-xl' : ''}
-                                  >
-                                    <Card
-                                      className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Unidade"]} p-4 cursor-pointer hover:scale-105 transition-transform mb-3`}
-                                      onClick={() => handleEditHierarchy(unidade.lider)}
+                    <Droppable droppableId={`lider-unidade-area-${agencia.lider.id}`} type="lider-unidade">
+                      {(providedDrop) => (
+                        <div ref={providedDrop.innerRef} {...providedDrop.droppableProps}>
+                          {agencia.unidades.map((unidade, unidadeIdx) => (
+                            <div key={unidade.lider.id} className="mb-4">
+                              <Draggable draggableId={unidade.lider.id} index={unidadeIdx}>
+                                {(provided, snapshot) => (
+                                  <div>
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
                                     >
-                                      <div className="flex items-center gap-3">
-                                        <Shield className="w-6 h-6 text-white" />
-                                        <div className="flex-1">
-                                          <h4 className="font-bold text-white">{unidade.lider.full_name}</h4>
-                                          <p className="text-white/80 text-sm">{unidade.lider.email}</p>
-                                          <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
-                                            Líder de Unidade
-                                          </span>
+                                      <Card
+                                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Unidade"]} p-4 cursor-pointer hover:scale-105 transition-transform mb-3 ${
+                                          snapshot.isDragging ? 'shadow-2xl opacity-80' : ''
+                                        }`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditHierarchy(unidade.lider);
+                                        }}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <Shield className="w-6 h-6 text-white" />
+                                          <div className="flex-1">
+                                            <h4 className="font-bold text-white">{unidade.lider.full_name}</h4>
+                                            <p className="text-white/80 text-sm">{unidade.lider.email}</p>
+                                            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
+                                              Líder de Unidade
+                                            </span>
+                                          </div>
+                                          <MoveVertical className="w-4 h-4 text-white/50" />
                                         </div>
-                                        <MoveVertical className="w-4 h-4 text-white/50" />
-                                      </div>
-                                    </Card>
-                                    {provided2.placeholder}
+                                      </Card>
+                                    </div>
+
+                                    {/* Corretores */}
+                                    <div className="pl-12 space-y-2">
+                                      <Droppable droppableId={`corretor-area-${unidade.lider.id}`} type="corretor">
+                                        {(providedCorr) => (
+                                          <div ref={providedCorr.innerRef} {...providedCorr.droppableProps}>
+                                            {unidade.corretores.map((corretor, corretorIdx) => (
+                                              <Draggable key={corretor.id} draggableId={corretor.id} index={corretorIdx}>
+                                                {(providedCor, snapshotCor) => (
+                                                  <div
+                                                    ref={providedCor.innerRef}
+                                                    {...providedCor.draggableProps}
+                                                    {...providedCor.dragHandleProps}
+                                                  >
+                                                    <Card
+                                                      className={`bg-gradient-to-br ${HIERARCHY_COLORS["Corretor"]} p-3 cursor-pointer hover:scale-105 transition-transform ${
+                                                        snapshotCor.isDragging ? 'shadow-2xl opacity-80' : ''
+                                                      }`}
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditHierarchy(corretor);
+                                                      }}
+                                                    >
+                                                      <div className="flex items-center gap-3">
+                                                        <User className="w-5 h-5 text-white" />
+                                                        <div className="flex-1">
+                                                          <p className="font-semibold text-white text-sm">{corretor.full_name}</p>
+                                                          <p className="text-white/80 text-xs">{corretor.email}</p>
+                                                        </div>
+                                                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
+                                                          Corretor
+                                                        </span>
+                                                        <MoveVertical className="w-4 h-4 text-white/50" />
+                                                      </div>
+                                                    </Card>
+                                                  </div>
+                                                )}
+                                              </Draggable>
+                                            ))}
+                                            {providedCorr.placeholder}
+                                          </div>
+                                        )}
+                                      </Droppable>
+                                    </div>
                                   </div>
                                 )}
-                              </Droppable>
+                              </Draggable>
                             </div>
-                          )}
-                        </Draggable>
-
-                        {/* Corretores */}
-                        <div className="pl-12 space-y-2">
-                          {unidade.corretores.map((corretor, corretorIdx) => (
-                            <Draggable key={corretor.id} draggableId={corretor.id} index={corretorIdx}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                >
-                                  <Card
-                                    className={`bg-gradient-to-br ${HIERARCHY_COLORS["Corretor"]} p-3 cursor-pointer hover:scale-105 transition-transform ${
-                                      snapshot.isDragging ? 'shadow-2xl opacity-80' : ''
-                                    }`}
-                                    onClick={() => handleEditHierarchy(corretor)}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <User className="w-5 h-5 text-white" />
-                                      <div className="flex-1">
-                                        <p className="font-semibold text-white text-sm">{corretor.full_name}</p>
-                                        <p className="text-white/80 text-xs">{corretor.email}</p>
-                                      </div>
-                                      <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
-                                        Corretor
-                                      </span>
-                                      <MoveVertical className="w-4 h-4 text-white/50" />
-                                    </div>
-                                  </Card>
-                                </div>
-                              )}
-                            </Draggable>
                           ))}
+                          {providedDrop.placeholder}
                         </div>
-                      </div>
-                    ))}
+                      )}
+                    </Droppable>
                   </div>
                 </div>
               ))}

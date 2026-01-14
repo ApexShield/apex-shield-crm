@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UserPlus, Shield, User, Loader2, Edit2, Award, Calendar, Users, Crown } from "lucide-react";
+import { UserPlus, Shield, User, Loader2, Edit2, Award, Calendar, Users, Crown, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,6 +29,8 @@ export default function GestaoUsuarios() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
 
   const queryClient = useQueryClient();
 
@@ -122,6 +124,20 @@ export default function GestaoUsuarios() {
     );
   }
 
+  // Filtros
+  const filteredUsuarios = usuarios.filter(usuario => {
+    const matchSearch = !searchTerm || 
+      usuario.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchRole = filterRole === "all" ||
+      (filterRole === "admin" && usuario.role === "admin") ||
+      (filterRole === "vip" && usuario.role_type === "UsuarioVIP") ||
+      (filterRole === "user" && usuario.role !== "admin" && usuario.role_type !== "UsuarioVIP");
+    
+    return matchSearch && matchRole;
+  });
+
   const userCount = usuarios.filter(u => u.role_type === "Usuario" || !u.role_type).length;
   const vipCount = usuarios.filter(u => u.role_type === "UsuarioVIP").length;
   const adminCount = usuarios.filter(u => u.role === "admin").length;
@@ -202,6 +218,30 @@ export default function GestaoUsuarios() {
           </div>
         </div>
 
+        {/* Filtros */}
+        <div className="mb-6 grid sm:grid-cols-2 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
+            <Input
+              placeholder="Buscar por nome ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+            />
+          </div>
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="bg-white/10 border-white/20 text-white">
+              <SelectValue placeholder="Filtrar por tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="admin">Administradores</SelectItem>
+              <SelectItem value="vip">VIP</SelectItem>
+              <SelectItem value="user">Usuários Padrão</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Tabela */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
           {isLoading ? (
@@ -223,7 +263,7 @@ export default function GestaoUsuarios() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usuarios.map((usuario) => (
+                  {filteredUsuarios.map((usuario) => (
                     <TableRow key={usuario.id} className="border-white/5 hover:bg-white/5">
                       <TableCell className="font-medium text-white">
                         <div className="flex items-center gap-3">

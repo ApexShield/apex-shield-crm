@@ -37,7 +37,7 @@ export default function Organograma() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: currentUser?.role === "admin"
+    enabled: !!currentUser
   });
 
   const updateUserMutation = useMutation({
@@ -48,31 +48,34 @@ export default function Organograma() {
     }
   });
 
-  // Organizar usuários por hierarquia
+  // Organizar usuários por hierarquia (usando visibleUsers)
   const organizedUsers = React.useMemo(() => {
-    const lidersAgencia = users.filter(u => u.tipo_hierarquia === "Líder de Agência");
+    // Filtrar admins da hierarquia
+    const nonAdminUsers = visibleUsers.filter(u => u.role !== "admin");
+    
+    const lidersAgencia = nonAdminUsers.filter(u => u.tipo_hierarquia === "Líder de Agência");
     const result = [];
 
     lidersAgencia.forEach(liderAgencia => {
-      const lidersUnidade = users.filter(u => u.lider_id === liderAgencia.id);
+      const lidersUnidade = nonAdminUsers.filter(u => u.lider_id === liderAgencia.id);
       const structure = {
         lider: liderAgencia,
         unidades: lidersUnidade.map(liderUnidade => ({
           lider: liderUnidade,
-          corretores: users.filter(u => u.lider_id === liderUnidade.id)
+          corretores: nonAdminUsers.filter(u => u.lider_id === liderUnidade.id)
         }))
       };
       result.push(structure);
     });
 
     // Usuários sem hierarquia ou órfãos
-    const orphans = users.filter(u => 
+    const orphans = nonAdminUsers.filter(u => 
       u.tipo_hierarquia === "Sem Hierarquia" || 
       (u.tipo_hierarquia !== "Líder de Agência" && !u.lider_id)
     );
 
     return { structured: result, orphans };
-  }, [users]);
+  }, [visibleUsers]);
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -141,17 +144,27 @@ export default function Organograma() {
     return [];
   }, [selectedHierarchy, users]);
 
-  if (currentUser?.role !== "admin") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <Shield className="w-16 h-16 mx-auto mb-4 text-red-500" />
-          <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
-          <p className="text-gray-600">Apenas administradores podem acessar o organograma.</p>
-        </Card>
-      </div>
-    );
-  }
+  // Verificar se tem acesso (admin ou líder de agência)
+  const hasEditAccess = currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência";
+  
+  // Filtrar usuários que o usuário comum pode ver
+  const visibleUsers = React.useMemo(() => {
+    if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {
+      // Admin e Líder de Agência veem todos
+      return users;
+    }
+    
+    // Usuário comum vê apenas sua hierarquia
+    const result = users.filter(u => {
+      if (u.id === currentUser?.id) return true; // Ele mesmo
+      if (u.lider_id === currentUser?.id) return true; // Seus subordinados diretos
+      if (u.lider_email === currentUser?.email) return true; // Seus subordinados por email
+      if (currentUser?.lider_id && u.id === currentUser.lider_id) return true; // Seu líder
+      return false;
+    });
+    
+    return result.length > 0 ? result : [currentUser]; // Se não está vinculado, mostra só ele
+  }, [users, currentUser]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
@@ -205,8 +218,8 @@ export default function Organograma() {
                         className={`mb-6 ${snapshot.isDraggingOver ? 'bg-purple-500/20 rounded-xl' : ''}`}
                       >
                         <Card
-                          className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Agência"]} p-4 cursor-pointer hover:scale-105 transition-transform`}
-                          onClick={() => handleEditHierarchy(agencia.lider)}
+                          className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Agência"]} p-4 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
+                          onClick={() => hasEditAccess && handleEditHierarchy(agencia.lider)}
                         >
                           <div className="flex items-center gap-3">
                             <Building2 className="w-8 h-8 text-white" />
@@ -243,12 +256,12 @@ export default function Organograma() {
                                       {...provided.dragHandleProps}
                                     >
                                       <Card
-                                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Unidade"]} p-4 cursor-pointer hover:scale-105 transition-transform mb-3 ${
+                                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Unidade"]} p-4 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform mb-3 ${
                                           snapshot.isDragging ? 'shadow-2xl opacity-80' : ''
                                         }`}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleEditHierarchy(unidade.lider);
+                                          hasEditAccess && handleEditHierarchy(unidade.lider);
                                         }}
                                       >
                                         <div className="flex items-center gap-3">
@@ -279,12 +292,12 @@ export default function Organograma() {
                                                     {...providedCor.dragHandleProps}
                                                   >
                                                     <Card
-                                                      className={`bg-gradient-to-br ${HIERARCHY_COLORS["Corretor"]} p-3 cursor-pointer hover:scale-105 transition-transform ${
+                                                      className={`bg-gradient-to-br ${HIERARCHY_COLORS["Corretor"]} p-3 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform ${
                                                         snapshotCor.isDragging ? 'shadow-2xl opacity-80' : ''
                                                       }`}
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleEditHierarchy(corretor);
+                                                        hasEditAccess && handleEditHierarchy(corretor);
                                                       }}
                                                     >
                                                       <div className="flex items-center gap-3">
@@ -326,20 +339,23 @@ export default function Organograma() {
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
                   <h3 className="text-white font-bold mb-4 flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    Usuários Sem Hierarquia
+                    Usuários Sem Hierarquia Definida
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {organizedUsers.orphans.map(user => (
                       <Card
                         key={user.id}
-                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Sem Hierarquia"]} p-3 cursor-pointer hover:scale-105 transition-transform`}
-                        onClick={() => handleEditHierarchy(user)}
+                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Sem Hierarquia"]} p-3 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
+                        onClick={() => hasEditAccess && handleEditHierarchy(user)}
                       >
                         <div className="flex items-center gap-3">
                           <Users className="w-5 h-5 text-white" />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-white text-sm truncate">{user.full_name}</p>
                             <p className="text-white/80 text-xs truncate">{user.email}</p>
+                            {!user.tipo_hierarquia && (
+                              <p className="text-white/60 text-xs mt-1">Hierarquia ainda não definida</p>
+                            )}
                           </div>
                         </div>
                       </Card>

@@ -1,21 +1,21 @@
 import Agenda from './pages/Agenda';
+import Aniversariantes from './pages/Aniversariantes';
 import BoasVindas from './pages/BoasVindas';
+import GestaoCustos from './pages/GestaoCustos';
 import GestaoUsuarios from './pages/GestaoUsuarios';
 import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
-import Aniversariantes from './pages/Aniversariantes';
-import GestaoCustos from './pages/GestaoCustos';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Agenda": Agenda,
+    "Aniversariantes": Aniversariantes,
     "BoasVindas": BoasVindas,
+    "GestaoCustos": GestaoCustos,
     "GestaoUsuarios": GestaoUsuarios,
     "Leads": Leads,
     "Organograma": Organograma,
-    "Aniversariantes": Aniversariantes,
-    "GestaoCustos": GestaoCustos,
 }
 
 export const pagesConfig = {

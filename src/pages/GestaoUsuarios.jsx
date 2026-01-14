@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function GestaoUsuarios() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showEditRoleDialog, setShowEditRoleDialog] = useState(false);
+  const [showEditHierarchyDialog, setShowEditHierarchyDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
@@ -81,6 +82,36 @@ export default function GestaoUsuarios() {
     }
   });
 
+  const updateSystemRoleMutation = useMutation({
+    mutationFn: async ({ userId, systemRole }) => {
+      await base44.entities.User.update(userId, { role: systemRole });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      setShowEditHierarchyDialog(false);
+      setSelectedUser(null);
+      alert("Função do sistema atualizada com sucesso!");
+    },
+    onError: (error) => {
+      alert(`Erro ao atualizar: ${error.message}`);
+    }
+  });
+
+  const updateHierarchyMutation = useMutation({
+    mutationFn: async ({ userId, data }) => {
+      await base44.entities.User.update(userId, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      setShowEditHierarchyDialog(false);
+      setSelectedUser(null);
+      alert("Hierarquia atualizada com sucesso!");
+    },
+    onError: (error) => {
+      alert(`Erro ao atualizar: ${error.message}`);
+    }
+  });
+
   const handleInvite = (e) => {
     e.preventDefault();
     if (!email) {
@@ -93,6 +124,11 @@ export default function GestaoUsuarios() {
   const handleEditRole = (usuario) => {
     setSelectedUser(usuario);
     setShowEditRoleDialog(true);
+  };
+
+  const handleEditHierarchy = (usuario) => {
+    setSelectedUser(usuario);
+    setShowEditHierarchyDialog(true);
   };
 
   const handleUpdateRole = (roleType) => {
@@ -322,14 +358,24 @@ export default function GestaoUsuarios() {
                         {format(new Date(usuario.created_date), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          onClick={() => handleEditRole(usuario)}
-                          className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
-                        >
-                          <Edit2 className="w-3 h-3 mr-1" />
-                          Editar
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleEditRole(usuario)}
+                            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
+                          >
+                            <Edit2 className="w-3 h-3 mr-1" />
+                            Tipo
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleEditHierarchy(usuario)}
+                            className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+                          >
+                            <Edit2 className="w-3 h-3 mr-1" />
+                            Funções
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -392,6 +438,91 @@ export default function GestaoUsuarios() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Editar Funções e Hierarquia */}
+      <Dialog open={showEditHierarchyDialog} onOpenChange={setShowEditHierarchyDialog}>
+        <DialogContent className="bg-slate-900 border-white/20 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">Editar Funções do Usuário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+              <p className="font-semibold text-white text-lg">{selectedUser?.full_name || selectedUser?.email}</p>
+              <p className="text-indigo-300 mt-1 text-sm">{selectedUser?.email}</p>
+            </div>
+
+            {/* Função no Sistema */}
+            <div>
+              <Label className="text-white font-bold mb-3 block">Função no Sistema</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => updateSystemRoleMutation.mutate({ userId: selectedUser?.id, systemRole: "user" })}
+                  disabled={updateSystemRoleMutation.isPending}
+                  className={`group border-2 rounded-xl p-6 transition-all ${
+                    selectedUser?.role === "user" 
+                      ? "bg-blue-500/20 border-blue-500" 
+                      : "bg-white/5 hover:bg-white/10 border-white/20 hover:border-blue-500"
+                  }`}
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="font-bold text-white mb-1">Usuário</div>
+                  <div className="text-xs text-indigo-300">Acesso padrão ao sistema</div>
+                </button>
+
+                <button
+                  onClick={() => updateSystemRoleMutation.mutate({ userId: selectedUser?.id, systemRole: "admin" })}
+                  disabled={updateSystemRoleMutation.isPending}
+                  className={`group border-2 rounded-xl p-6 transition-all ${
+                    selectedUser?.role === "admin" 
+                      ? "bg-orange-500/20 border-orange-500" 
+                      : "bg-white/5 hover:bg-white/10 border-white/20 hover:border-orange-500"
+                  }`}
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Shield className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="font-bold text-white mb-1">Admin</div>
+                  <div className="text-xs text-indigo-300">Acesso total ao sistema</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Hierarquia Organizacional */}
+            <div>
+              <Label className="text-white font-bold mb-3 block">Hierarquia Organizacional</Label>
+              <Select 
+                value={selectedUser?.tipo_hierarquia || "Sem Hierarquia"}
+                onValueChange={(value) => {
+                  updateHierarchyMutation.mutate({
+                    userId: selectedUser?.id,
+                    data: { tipo_hierarquia: value }
+                  });
+                }}
+              >
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Líder de Agência">Líder de Agência</SelectItem>
+                  <SelectItem value="Líder de Unidade">Líder de Unidade</SelectItem>
+                  <SelectItem value="Corretor">Corretor</SelectItem>
+                  <SelectItem value="Sem Hierarquia">Sem Hierarquia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowEditHierarchyDialog(false)}
+              className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              Fechar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

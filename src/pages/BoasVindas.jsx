@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { motion } from "framer-motion";
 import { 
   Shield, 
   Target, 
@@ -22,7 +22,26 @@ import {
   Zap,
   CheckCircle2,
   TrendingUp,
-  Briefcase
+  Briefcase,
+  Sparkles,
+  Rocket,
+  Gift,
+  Network,
+  Star,
+  DollarSign,
+  LineChart,
+  UserCheck,
+  ShieldCheck,
+  Bell,
+  Mail,
+  Phone,
+  Globe,
+  Lock,
+  Layers,
+  Share2,
+  Cake,
+  Award,
+  LayoutDashboard
 } from "lucide-react";
 
 export default function BoasVindas() {
@@ -31,239 +50,475 @@ export default function BoasVindas() {
   const features = [
     {
       icon: Target,
-      title: "Funil de Vendas Completo",
-      description: "9 etapas personalizadas do primeiro contato até a entrega da apólice",
-      gradient: "from-blue-500 to-cyan-500"
+      title: "Funil de Vendas em 9 Etapas",
+      description: "Do primeiro contato até entrega da apólice com cores visuais distintas",
+      gradient: "from-blue-500 via-cyan-500 to-blue-600",
+      category: "Vendas"
     },
     {
-      icon: BarChart3,
-      title: "Dashboard Operacional",
-      description: "Visualização em tempo real do funil com gráficos e métricas",
-      gradient: "from-purple-500 to-pink-500"
+      icon: LayoutDashboard,
+      title: "Dashboard em Tempo Real",
+      description: "Gráficos, métricas e visão 360° do seu funil de vendas",
+      gradient: "from-purple-500 via-pink-500 to-purple-600",
+      category: "Gestão"
     },
     {
       icon: Calendar,
-      title: "Agenda Profissional",
-      description: "Sistema de calendário integrado para gerenciar visitas e compromissos",
-      gradient: "from-green-500 to-emerald-500"
+      title: "Agenda Semanal Profissional",
+      description: "Calendário completo com visualização por hora e cores personalizadas",
+      gradient: "from-green-500 via-emerald-500 to-green-600",
+      category: "Produtividade"
     },
     {
       icon: Clock,
       title: "Agendamento Inteligente",
-      description: "Agende visitas, fechamentos (F até F5) e entregas de apólice",
-      gradient: "from-orange-500 to-red-500"
+      description: "Visitas (F1-F5), fechamentos e entregas com modalidade online/presencial",
+      gradient: "from-orange-500 via-red-500 to-orange-600",
+      category: "Vendas"
     },
     {
-      icon: Palette,
-      title: "Sistema de Cores",
-      description: "Identifique status rapidamente com cores personalizadas (Azul Pavão, Amarelo Banana, etc)",
-      gradient: "from-indigo-500 to-purple-500"
+      icon: Cake,
+      title: "Aniversariantes Automático",
+      description: "Alerta de aniversários com envio de mensagem WhatsApp em 1 clique",
+      gradient: "from-pink-500 via-rose-500 to-pink-600",
+      category: "Relacionamento"
+    },
+    {
+      icon: DollarSign,
+      title: "Gestão Financeira Completa",
+      description: "Controle despesas e receitas com gráficos e categorização",
+      gradient: "from-emerald-500 via-green-600 to-emerald-600",
+      category: "Finanças"
+    },
+    {
+      icon: Network,
+      title: "Organograma e Hierarquia",
+      description: "Estrutura por agências, líderes de unidade e corretores com permissões",
+      gradient: "from-indigo-500 via-purple-500 to-indigo-600",
+      category: "Gestão"
+    },
+    {
+      icon: Users,
+      title: "Gestão de Equipe Avançada",
+      description: "Convide usuários, defina permissões (Admin/VIP/Padrão) e hierarquia",
+      gradient: "from-blue-600 via-indigo-600 to-blue-700",
+      category: "Gestão"
+    },
+    {
+      icon: Shield,
+      title: "Gestão de Apólices Detalhada",
+      description: "Produtos, coberturas, beneficiários e valores com importação automática",
+      gradient: "from-cyan-500 via-blue-500 to-cyan-600",
+      category: "Vendas"
     },
     {
       icon: FileText,
-      title: "Histórico Detalhado",
-      description: "Observações com data/hora, mudanças de status e todo o histórico do lead",
-      gradient: "from-teal-500 to-cyan-500"
+      title: "Histórico Completo e Automático",
+      description: "Todas mudanças de status, observações com data/hora e timeline",
+      gradient: "from-teal-500 via-cyan-500 to-teal-600",
+      category: "Gestão"
     },
     {
       icon: Upload,
-      title: "Import/Export Excel",
-      description: "Importe centenas de leads via planilha e exporte dados a qualquer momento",
-      gradient: "from-green-600 to-lime-500"
+      title: "Import/Export Excel Massivo",
+      description: "Importe centenas de leads e exporte relatórios em segundos",
+      gradient: "from-green-600 via-lime-500 to-green-700",
+      category: "Produtividade"
     },
     {
       icon: FolderOpen,
       title: "Gestão de Documentos",
-      description: "Anexe e organize documentos de cada cliente",
-      gradient: "from-yellow-500 to-orange-500"
-    },
-    {
-      icon: Shield,
-      title: "Gestão de Apólices",
-      description: "Controle completo de coberturas, valores e produtos contratados",
-      gradient: "from-blue-600 to-indigo-600"
+      description: "Upload e organização de documentos por cliente com preview",
+      gradient: "from-yellow-500 via-orange-500 to-yellow-600",
+      category: "Gestão"
     },
     {
       icon: FileSpreadsheet,
-      title: "Relatórios em PDF",
-      description: "Gere relatórios diários e HOT40 para acompanhamento",
-      gradient: "from-red-500 to-pink-500"
+      title: "Relatórios Profissionais em PDF",
+      description: "Relatórios diários, HOT40 e customizados com design profissional",
+      gradient: "from-red-500 via-pink-500 to-red-600",
+      category: "Gestão"
     },
     {
       icon: MessageCircle,
-      title: "WhatsApp & Email 1-Clique",
-      description: "Contato direto integrado ao cadastro para agilizar comunicação",
-      gradient: "from-green-500 to-teal-500"
+      title: "WhatsApp Integrado",
+      description: "Envio direto de mensagens com templates prontos em 1 clique",
+      gradient: "from-green-500 via-teal-500 to-green-600",
+      category: "Relacionamento"
+    },
+    {
+      icon: Mail,
+      title: "Email Profissional",
+      description: "Envio de emails diretamente do sistema com templates",
+      gradient: "from-blue-500 via-indigo-500 to-blue-600",
+      category: "Relacionamento"
     },
     {
       icon: UserPlus,
       title: "Sistema de Indicações",
-      description: "Registre e gerencie indicações de cada cliente",
-      gradient: "from-purple-500 to-indigo-500"
+      description: "Registre indicações de cada cliente com nome, conexão e follow-up",
+      gradient: "from-purple-500 via-indigo-500 to-purple-600",
+      category: "Vendas"
     },
     {
       icon: Activity,
-      title: "Perfil Completo do Lead",
-      description: "Dados pessoais, profissionais, saúde, IMC, seguros atuais e patrimônio",
-      gradient: "from-cyan-500 to-blue-500"
+      title: "Perfil 360° do Cliente",
+      description: "Dados pessoais, profissionais, saúde, IMC, seguros e patrimônio",
+      gradient: "from-cyan-500 via-blue-500 to-cyan-600",
+      category: "Vendas"
     },
     {
       icon: Filter,
-      title: "Filtros Avançados",
-      description: "Busque e filtre por status, nome, telefone e muito mais",
-      gradient: "from-pink-500 to-rose-500"
+      title: "Filtros Super Avançados",
+      description: "Busque por nome, status, telefone, data e múltiplos critérios",
+      gradient: "from-pink-500 via-rose-500 to-pink-600",
+      category: "Produtividade"
     },
     {
       icon: Zap,
-      title: "Ações Rápidas",
-      description: "Mude status, agende visitas e adicione observações em segundos",
-      gradient: "from-yellow-500 to-green-500"
+      title: "Ações Rápidas e Intuitivas",
+      description: "Mude status, agende, adicione observações em 2 cliques",
+      gradient: "from-yellow-500 via-amber-500 to-yellow-600",
+      category: "Produtividade"
+    },
+    {
+      icon: Palette,
+      title: "Sistema de Cores Inteligente",
+      description: "Identifique status visualmente: Azul Pavão, Verde Limão, Amarelo Banana",
+      gradient: "from-indigo-500 via-purple-500 to-indigo-600",
+      category: "Produtividade"
+    },
+    {
+      icon: Lock,
+      title: "Segurança e Permissões RLS",
+      description: "Cada usuário vê apenas seus leads e os de sua equipe conforme hierarquia",
+      gradient: "from-slate-600 via-slate-700 to-slate-800",
+      category: "Gestão"
+    },
+    {
+      icon: Bell,
+      title: "Notificações e Alertas",
+      description: "Nunca perca uma visita ou aniversário com sistema de alertas",
+      gradient: "from-red-500 via-orange-500 to-red-600",
+      category: "Produtividade"
+    },
+    {
+      icon: LineChart,
+      title: "Gráficos e Analytics",
+      description: "Acompanhe conversão, leads por etapa e performance da equipe",
+      gradient: "from-blue-600 via-purple-600 to-blue-700",
+      category: "Gestão"
+    },
+    {
+      icon: Award,
+      title: "Sistema VIP de Usuários",
+      description: "Usuários VIP com funcionalidades exclusivas de agendamento",
+      gradient: "from-amber-500 via-yellow-500 to-amber-600",
+      category: "Gestão"
     }
   ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40" />
-        
-        <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl mb-6 shadow-2xl">
-              <Briefcase className="w-12 h-12 text-white" />
-            </div>
-            <h1 className="text-5xl sm:text-6xl font-black text-white mb-4 tracking-tight">
-              APEX SHIELD CRM
-            </h1>
-            <p className="text-xl sm:text-2xl text-indigo-200 font-semibold mb-2">
-              A Plataforma Definitiva para Corretores de Seguro de Vida
-            </p>
-            <p className="text-indigo-300 text-lg max-w-3xl mx-auto">
-              Sistema completo, profissional e 100% gratuito com tudo que você precisa para vender mais com método, organização e eficiência
-            </p>
-          </div>
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-              <div className="text-3xl font-bold text-white mb-1">15+</div>
-              <div className="text-indigo-200 text-sm">Funcionalidades</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-              <div className="text-3xl font-bold text-white mb-1">9</div>
-              <div className="text-indigo-200 text-sm">Etapas do Funil</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-              <div className="text-3xl font-bold text-white mb-1">100%</div>
-              <div className="text-indigo-200 text-sm">Gratuito</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-              <div className="text-3xl font-bold text-white mb-1">∞</div>
-              <div className="text-indigo-200 text-sm">Leads</div>
-            </div>
-          </div>
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            rotate: [90, 0, 90]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-cyan-500/10 to-pink-500/10 rounded-full blur-3xl"
+        />
+      </div>
+
+      {/* Hero Section */}
+      <div className="relative">
+        <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-10"
+          >
+            <motion.div 
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-3xl mb-6 shadow-2xl shadow-blue-500/50"
+            >
+              <Sparkles className="w-14 h-14 text-white" />
+            </motion.div>
+            
+            <motion.h1 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-6xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4 tracking-tight"
+            >
+              APEX SHIELD CRM
+            </motion.h1>
+            
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="space-y-2"
+            >
+              <p className="text-2xl sm:text-3xl text-cyan-300 font-bold flex items-center justify-center gap-2">
+                <Rocket className="w-8 h-8 text-yellow-400" />
+                O CRM Mais Completo para Corretores
+                <Star className="w-8 h-8 text-yellow-400" />
+              </p>
+              <p className="text-cyan-200 text-xl max-w-4xl mx-auto leading-relaxed">
+                24 funcionalidades poderosas · Totalmente gratuito · Sem limites de leads
+              </p>
+            </motion.div>
+          </motion.div>
+
+          {/* Stats Animados */}
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-12"
+          >
+            {[
+              { num: "24+", label: "Funcionalidades", icon: Zap, color: "from-yellow-400 to-orange-500" },
+              { num: "9", label: "Etapas Funil", icon: Target, color: "from-blue-400 to-cyan-500" },
+              { num: "100%", label: "Gratuito", icon: Gift, color: "from-green-400 to-emerald-500" },
+              { num: "∞", label: "Leads Ilimitados", icon: TrendingUp, color: "from-purple-400 to-pink-500" }
+            ].map((stat, idx) => (
+              <motion.div
+                key={idx}
+                variants={item}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all shadow-xl hover:shadow-2xl cursor-pointer"
+              >
+                <stat.icon className={`w-8 h-8 mb-3 bg-gradient-to-br ${stat.color} bg-clip-text text-transparent group-hover:scale-110 transition-transform`} />
+                <div className={`text-4xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-1`}>
+                  {stat.num}
+                </div>
+                <div className="text-cyan-200 text-sm font-semibold">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </div>
 
       {/* Features Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-white text-center mb-4">
-          Tudo que você precisa em um só lugar
-        </h2>
-        <p className="text-indigo-300 text-center mb-12 text-lg">
-          Ferramentas profissionais para gerenciar todo o ciclo de vendas
-        </p>
+      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10"
+        >
+          <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 mb-3">
+            Tudo que você precisa em um só lugar
+          </h2>
+          <p className="text-cyan-200 text-xl font-semibold">
+            24 Ferramentas Profissionais · Zero Complicação · Máxima Produtividade
+          </p>
+        </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"
+        >
           {features.map((feature, idx) => {
             const Icon = feature.icon;
             return (
-              <div 
+              <motion.div 
                 key={idx}
-                className="group bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/30 transition-all duration-300 hover:scale-105 hover:bg-white/10"
+                variants={item}
+                whileHover={{ 
+                  scale: 1.05, 
+                  y: -8,
+                  transition: { duration: 0.2 }
+                }}
+                className="group relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-white/50 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-2xl"
               >
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} mb-4 shadow-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
+                {/* Glow effect on hover */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                
+                <div className="relative z-10">
+                  <motion.div 
+                    whileHover={{ rotate: 360, scale: 1.2 }}
+                    transition={{ duration: 0.6 }}
+                    className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-4 shadow-lg group-hover:shadow-2xl`}
+                  >
+                    <Icon className="w-7 h-7 text-white" />
+                  </motion.div>
+                  
+                  <div className="inline-block mb-2">
+                    <span className="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full border border-cyan-400/30">
+                      {feature.category}
+                    </span>
+                  </div>
+                  
+                  <h3 className="font-black text-white mb-2 text-lg group-hover:text-cyan-300 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-cyan-100/80 text-sm leading-relaxed group-hover:text-white transition-colors">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="font-bold text-white mb-2 text-lg">{feature.title}</h3>
-                <p className="text-indigo-200 text-sm leading-relaxed">{feature.description}</p>
-              </div>
+
+                {/* Corner accent */}
+                <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${feature.gradient} opacity-20 blur-2xl group-hover:opacity-40 transition-opacity`} />
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Key Benefits */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 sm:p-12 mb-16 shadow-2xl">
-          <h2 className="text-3xl font-bold text-white text-center mb-8">
-            Por que escolher o Apex Shield?
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold text-white mb-1">Organização Total</h4>
-                <p className="text-indigo-100 text-sm">Todos os leads organizados por etapa do funil</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold text-white mb-1">Produtividade Máxima</h4>
-                <p className="text-indigo-100 text-sm">Agenda integrada e ações rápidas</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold text-white mb-1">Histórico Completo</h4>
-                <p className="text-indigo-100 text-sm">Nunca perca informações importantes</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold text-white mb-1">Comunicação Ágil</h4>
-                <p className="text-indigo-100 text-sm">WhatsApp e email integrados</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold text-white mb-1">Gestão Visual</h4>
-                <p className="text-indigo-100 text-sm">Cores e gráficos para decisões rápidas</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-300 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-semibold text-white mb-1">Escalável</h4>
-                <p className="text-indigo-100 text-sm">Gerenciamento de equipe e permissões</p>
-              </div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative bg-gradient-to-br from-cyan-500/20 via-blue-500/20 to-purple-500/20 backdrop-blur-xl rounded-3xl p-10 sm:p-14 mb-16 shadow-2xl border border-white/30 overflow-hidden"
+        >
+          {/* Animated background orbs */}
+          <motion.div 
+            animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
+            transition={{ duration: 10, repeat: Infinity }}
+            className="absolute top-0 left-0 w-64 h-64 bg-cyan-400/20 rounded-full blur-3xl"
+          />
+          <motion.div 
+            animate={{ x: [0, -100, 0], y: [0, -50, 0] }}
+            transition={{ duration: 12, repeat: Infinity }}
+            className="absolute bottom-0 right-0 w-64 h-64 bg-purple-400/20 rounded-full blur-3xl"
+          />
+
+          <div className="relative z-10">
+            <h2 className="text-4xl sm:text-5xl font-black text-center mb-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300">
+              Por que escolher o Apex Shield?
+            </h2>
+            <p className="text-center text-cyan-200 mb-10 text-lg">
+              O CRM que vai revolucionar sua forma de vender seguros
+            </p>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { icon: ShieldCheck, title: "Organização Total", desc: "Funil visual com 9 etapas e cores inteligentes", color: "from-blue-400 to-cyan-400" },
+                { icon: Rocket, title: "Produtividade 10x", desc: "Ações em 2 cliques e automações poderosas", color: "from-purple-400 to-pink-400" },
+                { icon: Globe, title: "Histórico Completo", desc: "Timeline automático de todas as interações", color: "from-green-400 to-emerald-400" },
+                { icon: Phone, title: "Comunicação Integrada", desc: "WhatsApp, Email e telefone em 1 clique", color: "from-orange-400 to-red-400" },
+                { icon: BarChart3, title: "Analytics Avançado", desc: "Gráficos, métricas e relatórios em tempo real", color: "from-cyan-400 to-blue-400" },
+                { icon: Users, title: "Gestão de Equipe", desc: "Hierarquia, permissões e controle total", color: "from-indigo-400 to-purple-400" },
+                { icon: Layers, title: "Tudo Integrado", desc: "Agenda, leads, documentos e apólices unificados", color: "from-teal-400 to-cyan-400" },
+                { icon: Award, title: "Profissional", desc: "Interface moderna e experiência premium", color: "from-yellow-400 to-orange-400" },
+                { icon: Sparkles, title: "100% Gratuito", desc: "Todas as funcionalidades sem custo algum", color: "from-pink-400 to-rose-400" }
+              ].map((benefit, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="group flex items-start gap-4 bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10 hover:border-white/30 transition-all cursor-pointer"
+                >
+                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${benefit.color} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+                    <benefit.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white mb-1 text-lg group-hover:text-cyan-300 transition-colors">
+                      {benefit.title}
+                    </h4>
+                    <p className="text-cyan-100/80 text-sm leading-relaxed">
+                      {benefit.desc}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* CTA Final */}
-        <div className="text-center">
-          <Button
-            onClick={() => navigate(createPageUrl("Leads"))}
-            size="lg"
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black px-16 py-8 text-2xl shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 rounded-2xl"
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <TrendingUp className="w-8 h-8 mr-3" />
-            COMEÇAR AGORA
-          </Button>
-          <p className="text-white text-xl mt-6 font-bold">
-            Tudo que você precisa para vender Seguro de Vida
-          </p>
-          <p className="text-indigo-300 text-lg mt-2">
-            Com método, clareza e ritmo profissional
-          </p>
-          <p className="text-indigo-400 text-sm mt-6 italic">
-            ✨ 100% Gratuito • Sem Limites • Sem Complicação
-          </p>
-        </div>
+            <Button
+              onClick={() => navigate(createPageUrl("Leads"))}
+              size="lg"
+              className="relative bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:from-cyan-400 hover:via-blue-400 hover:to-purple-500 text-white font-black px-20 py-10 text-3xl shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 rounded-3xl group overflow-hidden"
+            >
+              <motion.div
+                animate={{ x: [-1000, 1000] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
+              />
+              <Rocket className="w-10 h-10 mr-4 group-hover:rotate-12 transition-transform" />
+              COMEÇAR AGORA
+              <Sparkles className="w-10 h-10 ml-4 group-hover:scale-125 transition-transform" />
+            </Button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 space-y-3"
+          >
+            <p className="text-white text-2xl font-black flex items-center justify-center gap-2">
+              <Star className="w-7 h-7 text-yellow-400" />
+              Transforme sua operação de vendas hoje mesmo
+              <Star className="w-7 h-7 text-yellow-400" />
+            </p>
+            <p className="text-cyan-200 text-xl font-semibold">
+              24 Ferramentas Poderosas · Sistema Profissional · Totalmente Gratuito
+            </p>
+            <div className="flex items-center justify-center gap-6 mt-6 flex-wrap">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                <Gift className="w-5 h-5 text-green-400" />
+                <span className="text-cyan-100 font-semibold">100% Gratuito</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+                <span className="text-cyan-100 font-semibold">Leads Ilimitados</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                <Zap className="w-5 h-5 text-yellow-400" />
+                <span className="text-cyan-100 font-semibold">Setup em Minutos</span>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

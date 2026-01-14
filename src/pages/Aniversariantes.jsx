@@ -15,10 +15,42 @@ export default function Aniversariantes() {
   const [showPopup, setShowPopup] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: clientes = [] } = useQuery({
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],
     queryFn: () => base44.entities.Cliente.list()
   });
+
+  // Filtrar clientes baseado em hierarquia e permissões
+  const clientes = React.useMemo(() => {
+    if (!user || !allClientes.length) return [];
+    
+    // Admin vê todos os leads
+    if (user.role === "admin") {
+      return allClientes;
+    }
+    
+    // Líder de Agência vê todos
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      return allClientes;
+    }
+    
+    // Líder de Unidade vê seus leads + leads de sua equipe
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      return allClientes.filter(c => 
+        c.created_by === user.email || 
+        c.created_by_user_condition?.lider_email === user.email ||
+        c.created_by_user_condition?.lider_id === user.id
+      );
+    }
+    
+    // Todos os outros usuários veem apenas seus próprios leads
+    return allClientes.filter(c => c.created_by === user.email);
+  }, [allClientes, user]);
 
   // Verificar se há data de nascimento e calcular aniversariantes
   const aniversariantes = React.useMemo(() => {

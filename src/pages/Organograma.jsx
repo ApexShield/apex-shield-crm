@@ -59,9 +59,13 @@ export default function Organograma() {
   });
 
   const hasEditAccess = currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência";
+  const hasViewAccess = hasEditAccess || currentUser?.tipo_hierarquia === "Líder de Unidade";
   
   const visibleUsers = React.useMemo(() => {
     if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {
+      return users;
+    }
+    if (currentUser?.tipo_hierarquia === "Líder de Unidade") {
       return users;
     }
     const result = users.filter(u => {
@@ -165,7 +169,17 @@ export default function Organograma() {
           </div>
         </div>
 
-        {isLoading ? (
+        {!hasViewAccess ? (
+          <div className="text-center py-12">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-8 max-w-md mx-auto">
+              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">Acesso Negado</h2>
+              <p className="text-gray-300">
+                Você não tem permissão para visualizar o organograma.
+              </p>
+            </div>
+          </div>
+        ) : isLoading ? (
           <div className="text-white text-center py-12">Carregando organograma...</div>
         ) : (
           <div className="space-y-8">

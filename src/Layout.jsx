@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
   { name: "Agenda", icon: CalendarIcon, page: "Agenda" },
+  { name: "Aniversariantes", icon: Users, page: "Aniversariantes" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
   { name: "Organograma", icon: Users, page: "Organograma", adminOnly: true }
 ];

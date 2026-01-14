@@ -67,14 +67,9 @@ export default function Leads() {
   });
 
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["clientes"],
+    queryKey: ["clientes", user?.email, user?.role],
     queryFn: async () => {
-      const allClientes = await base44.entities.Cliente.list("-created_date", 500);
-      // Se não for admin, filtrar apenas os leads do usuário
-      if (user && user.role !== "admin") {
-        return allClientes.filter(c => c.created_by === user.email);
-      }
-      return allClientes;
+      return await base44.entities.Cliente.list("-created_date", 500);
     },
     enabled: !!user
   });

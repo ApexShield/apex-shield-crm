@@ -18,16 +18,18 @@ export default function Organograma() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => base44.auth.me()
   });
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
     enabled: !!currentUser
   });
+
+  const isLoading = isLoadingUser || isLoadingUsers;
 
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
@@ -58,8 +60,8 @@ export default function Organograma() {
     }
   });
 
-  const hasEditAccess = currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência";
-  const hasViewAccess = hasEditAccess || currentUser?.tipo_hierarquia === "Líder de Unidade";
+  const hasEditAccess = currentUser ? (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência") : false;
+  const hasViewAccess = currentUser ? (hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade") : false;
   
   const visibleUsers = React.useMemo(() => {
     if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {

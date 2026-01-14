@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -6,27 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Users, Building2, User, Shield, MoveVertical } from "lucide-react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-
-const HIERARCHY_COLORS = {
-  "Líder de Agência": "from-purple-600 to-purple-800",
-  "Líder de Unidade": "from-blue-600 to-blue-800",
-  "Corretor": "from-green-600 to-green-800",
-  "Sem Hierarquia": "from-gray-500 to-gray-700"
-};
-
-const HIERARCHY_ICONS = {
-  "Líder de Agência": Building2,
-  "Líder de Unidade": Shield,
-  "Corretor": User,
-  "Sem Hierarquia": Users
-};
+import { Input } from "@/components/ui/input";
+import { Users, Building2, User, Shield, Trash2, AlertCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Organograma() {
   const [editingUser, setEditingUser] = useState(null);
   const [selectedHierarchy, setSelectedHierarchy] = useState("");
   const [selectedLeader, setSelectedLeader] = useState("");
+  const [nomeAgencia, setNomeAgencia] = useState("");
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -45,123 +34,106 @@ export default function Organograma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setEditingUser(null);
+      setSelectedHierarchy("");
+      setSelectedLeader("");
+      setNomeAgencia("");
     }
   });
 
-  // Verificar se tem acesso (admin ou líder de agência)
+  const resetAllHierarchiesMutation = useMutation({
+    mutationFn: async () => {
+      const nonAdminUsers = users.filter(u => u.role !== "admin");
+      for (const user of nonAdminUsers) {
+        await base44.entities.User.update(user.id, {
+          tipo_hierarquia: "Sem Hierarquia",
+          lider_id: null,
+          lider_email: null,
+          nome_agencia: null
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setShowResetDialog(false);
+    }
+  });
+
   const hasEditAccess = currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência";
   
-  // Filtrar usuários que o usuário comum pode ver
   const visibleUsers = React.useMemo(() => {
     if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {
-      // Admin e Líder de Agência veem todos
       return users;
     }
-    
-    // Usuário comum vê apenas sua hierarquia
     const result = users.filter(u => {
-      if (u.id === currentUser?.id) return true; // Ele mesmo
-      if (u.lider_id === currentUser?.id) return true; // Seus subordinados diretos
-      if (u.lider_email === currentUser?.email) return true; // Seus subordinados por email
-      if (currentUser?.lider_id && u.id === currentUser.lider_id) return true; // Seu líder
+      if (u.id === currentUser?.id) return true;
+      if (u.lider_id === currentUser?.id) return true;
+      if (u.lider_email === currentUser?.email) return true;
+      if (currentUser?.lider_id && u.id === currentUser.lider_id) return true;
       return false;
     });
-    
-    return result.length > 0 ? result : [currentUser]; // Se não está vinculado, mostra só ele
+    return result.length > 0 ? result : [currentUser];
   }, [users, currentUser]);
 
-  // Organizar usuários por hierarquia (usando visibleUsers)
-  const organizedUsers = React.useMemo(() => {
-    // Filtrar admins da hierarquia
+  const organizedAgencies = React.useMemo(() => {
     const nonAdminUsers = visibleUsers.filter(u => u.role !== "admin");
-    
     const lidersAgencia = nonAdminUsers.filter(u => u.tipo_hierarquia === "Líder de Agência");
-    const result = [];
+    
+    return lidersAgencia.map(liderAgencia => {
+      const lidersUnidade = nonAdminUsers.filter(u => u.lider_id === liderAgencia.id && u.tipo_hierarquia === "Líder de Unidade");
+      const corretoresDiretos = nonAdminUsers.filter(u => u.lider_id === liderAgencia.id && u.tipo_hierarquia === "Corretor");
+      
+      const unidades = lidersUnidade.map(liderUnidade => ({
+        lider: liderUnidade,
+        corretores: nonAdminUsers.filter(u => u.lider_id === liderUnidade.id && u.tipo_hierarquia === "Corretor")
+      }));
 
-    lidersAgencia.forEach(liderAgencia => {
-      const lidersUnidade = nonAdminUsers.filter(u => u.lider_id === liderAgencia.id);
-      const structure = {
+      return {
         lider: liderAgencia,
-        unidades: lidersUnidade.map(liderUnidade => ({
-          lider: liderUnidade,
-          corretores: nonAdminUsers.filter(u => u.lider_id === liderUnidade.id)
-        }))
+        unidades,
+        corretoresDiretos
       };
-      result.push(structure);
     });
-
-    // Usuários sem hierarquia ou órfãos
-    const orphans = nonAdminUsers.filter(u => 
-      u.tipo_hierarquia === "Sem Hierarquia" || 
-      (u.tipo_hierarquia !== "Líder de Agência" && !u.lider_id)
-    );
-
-    return { structured: result, orphans };
   }, [visibleUsers]);
 
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-
-    const { source, destination, draggableId } = result;
-    
-    // Extrair informações do drop
-    const destParts = destination.droppableId.split("-");
-    const destType = destParts[0]; // "lider", "corretor"
-    const destSubType = destParts[1]; // "agencia", "unidade", "area"
-    const destId = destParts[2] || destParts[3];
-
-    const user = users.find(u => u.id === draggableId);
-    if (!user) return;
-
-    let updateData = {};
-
-    // Líder de Unidade movido para área de outro Líder de Agência
-    if (destSubType === "unidade" && destParts[2] === "area" && user.tipo_hierarquia === "Líder de Unidade") {
-      const liderAgenciaId = destParts[3];
-      const liderAgencia = users.find(u => u.id === liderAgenciaId);
-      updateData = {
-        lider_id: liderAgenciaId,
-        lider_email: liderAgencia?.email
-      };
-    } 
-    // Corretor movido para área de outro Líder de Unidade
-    else if (destSubType === "area" && user.tipo_hierarquia === "Corretor") {
-      const liderUnidadeId = destParts[2];
-      const liderUnidade = users.find(u => u.id === liderUnidadeId);
-      updateData = {
-        lider_id: liderUnidadeId,
-        lider_email: liderUnidade?.email
-      };
-    }
-
-    if (Object.keys(updateData).length > 0) {
-      updateUserMutation.mutate({ id: user.id, data: updateData });
-    }
-  };
+  const usersWithoutHierarchy = React.useMemo(() => {
+    return visibleUsers.filter(u => 
+      u.role !== "admin" && 
+      (!u.tipo_hierarquia || u.tipo_hierarquia === "Sem Hierarquia")
+    );
+  }, [visibleUsers]);
 
   const handleEditHierarchy = (userData) => {
     setEditingUser(userData);
     setSelectedHierarchy(userData.tipo_hierarquia || "Sem Hierarquia");
     setSelectedLeader(userData.lider_id || "");
+    setNomeAgencia(userData.nome_agencia || "");
   };
 
   const handleSaveHierarchy = () => {
     const leader = users.find(u => u.id === selectedLeader);
-    updateUserMutation.mutate({
-      id: editingUser.id,
-      data: {
-        tipo_hierarquia: selectedHierarchy,
-        lider_id: selectedLeader || null,
-        lider_email: leader?.email || null
-      }
-    });
+    const updateData = {
+      tipo_hierarquia: selectedHierarchy,
+      lider_id: selectedLeader || null,
+      lider_email: leader?.email || null
+    };
+
+    if (selectedHierarchy === "Líder de Agência") {
+      updateData.nome_agencia = nomeAgencia || null;
+    } else {
+      updateData.nome_agencia = null;
+    }
+
+    updateUserMutation.mutate({ id: editingUser.id, data: updateData });
   };
 
   const availableLeaders = React.useMemo(() => {
     if (selectedHierarchy === "Líder de Unidade") {
       return users.filter(u => u.tipo_hierarquia === "Líder de Agência");
     } else if (selectedHierarchy === "Corretor") {
-      return users.filter(u => u.tipo_hierarquia === "Líder de Unidade");
+      return users.filter(u => 
+        u.tipo_hierarquia === "Líder de Unidade" || 
+        u.tipo_hierarquia === "Líder de Agência"
+      );
     }
     return [];
   }, [selectedHierarchy, users]);
@@ -169,7 +141,6 @@ export default function Organograma() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
       <div className="max-w-[1800px] mx-auto">
-        {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -181,190 +152,149 @@ export default function Organograma() {
                 <p className="text-indigo-300">Gerencie a hierarquia e estrutura organizacional</p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Legenda */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-4 mb-6">
-          <div className="flex gap-4 flex-wrap">
-            {Object.entries(HIERARCHY_COLORS).map(([type, gradient]) => {
-              const Icon = HIERARCHY_ICONS[type];
-              return (
-                <div key={type} className="flex items-center gap-2">
-                  <div className={`w-8 h-8 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center`}>
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-white text-sm font-medium">{type}</span>
-                </div>
-              );
-            })}
+            {hasEditAccess && (
+              <Button 
+                onClick={() => setShowResetDialog(true)}
+                variant="destructive"
+                className="gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Resetar Todas Hierarquias
+              </Button>
+            )}
           </div>
         </div>
 
         {isLoading ? (
           <div className="text-white text-center py-12">Carregando organograma...</div>
         ) : (
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="space-y-8">
-              {/* Estruturas organizadas */}
-              {organizedUsers.structured.map((agencia, agenciaIdx) => (
-                <div key={agencia.lider.id} className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-                  {/* Líder de Agência */}
-                  <Droppable droppableId={`lider-agencia-${agencia.lider.id}`} type="lider-unidade">
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`mb-6 ${snapshot.isDraggingOver ? 'bg-purple-500/20 rounded-xl' : ''}`}
-                      >
+          <div className="space-y-8">
+            {/* Agências - Estrutura Piramidal */}
+            {organizedAgencies.map((agencia) => (
+              <div key={agencia.lider.id} className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+                {/* Topo da Pirâmide - Líder de Agência */}
+                <div className="flex flex-col items-center mb-8">
+                  <div className="text-center mb-4">
+                    <h2 className="text-2xl font-bold text-white mb-1">
+                      {agencia.lider.nome_agencia || "Agência Sem Nome"}
+                    </h2>
+                    <p className="text-indigo-300 text-sm">Estrutura Organizacional</p>
+                  </div>
+                  
+                  <Card
+                    className={`bg-gradient-to-br from-purple-600 to-purple-800 p-6 w-72 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-2xl`}
+                    onClick={() => hasEditAccess && handleEditHierarchy(agencia.lider)}
+                  >
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <Building2 className="w-10 h-10 text-white" />
+                      <div>
+                        <h3 className="font-bold text-white text-lg">{agencia.lider.full_name}</h3>
+                        <p className="text-white/80 text-sm">{agencia.lider.email}</p>
+                        <span className="inline-block text-xs bg-white/20 px-3 py-1 rounded-full text-white mt-2">
+                          Líder de Agência
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Nível 2 - Líderes de Unidade */}
+                {agencia.unidades.length > 0 && (
+                  <div className="flex justify-center gap-6 mb-6 flex-wrap">
+                    {agencia.unidades.map((unidade) => (
+                      <div key={unidade.lider.id} className="flex flex-col items-center">
                         <Card
-                          className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Agência"]} p-4 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
-                          onClick={() => hasEditAccess && handleEditHierarchy(agencia.lider)}
+                          className={`bg-gradient-to-br from-blue-600 to-blue-800 p-5 w-56 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-xl`}
+                          onClick={() => hasEditAccess && handleEditHierarchy(unidade.lider)}
                         >
-                          <div className="flex items-center gap-3">
-                            <Building2 className="w-8 h-8 text-white" />
-                            <div className="flex-1">
-                              <h3 className="font-bold text-white text-lg">{agencia.lider.full_name}</h3>
-                              <p className="text-white/80 text-sm">{agencia.lider.email}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
-                                  Líder de Agência
-                                </span>
-                              </div>
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <Shield className="w-8 h-8 text-white" />
+                            <div>
+                              <h4 className="font-bold text-white">{unidade.lider.full_name}</h4>
+                              <p className="text-white/80 text-xs">{unidade.lider.email}</p>
+                              <span className="inline-block text-xs bg-white/20 px-2 py-1 rounded-full text-white mt-1">
+                                Líder de Unidade
+                              </span>
                             </div>
-                            <MoveVertical className="w-5 h-5 text-white/50" />
                           </div>
                         </Card>
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
 
-                  {/* Líderes de Unidade */}
-                  <div className="pl-12 space-y-4">
-                    <Droppable droppableId={`lider-unidade-area-${agencia.lider.id}`} type="lider-unidade">
-                      {(providedDrop) => (
-                        <div ref={providedDrop.innerRef} {...providedDrop.droppableProps}>
-                          {agencia.unidades.map((unidade, unidadeIdx) => (
-                            <div key={unidade.lider.id} className="mb-4">
-                              <Draggable draggableId={unidade.lider.id} index={unidadeIdx}>
-                                {(provided, snapshot) => (
+                        {/* Corretores desta unidade */}
+                        {unidade.corretores.length > 0 && (
+                          <div className="flex gap-3 mt-4 flex-wrap justify-center max-w-md">
+                            {unidade.corretores.map((corretor) => (
+                              <Card
+                                key={corretor.id}
+                                className={`bg-gradient-to-br from-green-600 to-green-800 p-3 w-40 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-lg`}
+                                onClick={() => hasEditAccess && handleEditHierarchy(corretor)}
+                              >
+                                <div className="flex flex-col items-center gap-1 text-center">
+                                  <User className="w-6 h-6 text-white" />
                                   <div>
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                    >
-                                      <Card
-                                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Líder de Unidade"]} p-4 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform mb-3 ${
-                                          snapshot.isDragging ? 'shadow-2xl opacity-80' : ''
-                                        }`}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          hasEditAccess && handleEditHierarchy(unidade.lider);
-                                        }}
-                                      >
-                                        <div className="flex items-center gap-3">
-                                          <Shield className="w-6 h-6 text-white" />
-                                          <div className="flex-1">
-                                            <h4 className="font-bold text-white">{unidade.lider.full_name}</h4>
-                                            <p className="text-white/80 text-sm">{unidade.lider.email}</p>
-                                            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
-                                              Líder de Unidade
-                                            </span>
-                                          </div>
-                                          <MoveVertical className="w-4 h-4 text-white/50" />
-                                        </div>
-                                      </Card>
-                                    </div>
-
-                                    {/* Corretores */}
-                                    <div className="pl-12 space-y-2">
-                                      <Droppable droppableId={`corretor-area-${unidade.lider.id}`} type="corretor">
-                                        {(providedCorr) => (
-                                          <div ref={providedCorr.innerRef} {...providedCorr.droppableProps}>
-                                            {unidade.corretores.map((corretor, corretorIdx) => (
-                                              <Draggable key={corretor.id} draggableId={corretor.id} index={corretorIdx}>
-                                                {(providedCor, snapshotCor) => (
-                                                  <div
-                                                    ref={providedCor.innerRef}
-                                                    {...providedCor.draggableProps}
-                                                    {...providedCor.dragHandleProps}
-                                                  >
-                                                    <Card
-                                                      className={`bg-gradient-to-br ${HIERARCHY_COLORS["Corretor"]} p-3 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform ${
-                                                        snapshotCor.isDragging ? 'shadow-2xl opacity-80' : ''
-                                                      }`}
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        hasEditAccess && handleEditHierarchy(corretor);
-                                                      }}
-                                                    >
-                                                      <div className="flex items-center gap-3">
-                                                        <User className="w-5 h-5 text-white" />
-                                                        <div className="flex-1">
-                                                          <p className="font-semibold text-white text-sm">{corretor.full_name}</p>
-                                                          <p className="text-white/80 text-xs">{corretor.email}</p>
-                                                        </div>
-                                                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white">
-                                                          Corretor
-                                                        </span>
-                                                        <MoveVertical className="w-4 h-4 text-white/50" />
-                                                      </div>
-                                                    </Card>
-                                                  </div>
-                                                )}
-                                              </Draggable>
-                                            ))}
-                                            {providedCorr.placeholder}
-                                          </div>
-                                        )}
-                                      </Droppable>
-                                    </div>
+                                    <p className="font-semibold text-white text-xs">{corretor.full_name}</p>
+                                    <p className="text-white/70 text-[10px]">{corretor.email}</p>
                                   </div>
-                                )}
-                              </Draggable>
-                            </div>
-                          ))}
-                          {providedDrop.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                )}
 
-              {/* Usuários sem hierarquia */}
-              {organizedUsers.orphans.length > 0 && (
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-                  <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Usuários Sem Hierarquia Definida
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {organizedUsers.orphans.map(user => (
+                {/* Corretores diretos do Líder de Agência */}
+                {agencia.corretoresDiretos.length > 0 && (
+                  <div className="flex gap-3 justify-center flex-wrap mt-6">
+                    {agencia.corretoresDiretos.map((corretor) => (
                       <Card
-                        key={user.id}
-                        className={`bg-gradient-to-br ${HIERARCHY_COLORS["Sem Hierarquia"]} p-3 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
-                        onClick={() => hasEditAccess && handleEditHierarchy(user)}
+                        key={corretor.id}
+                        className={`bg-gradient-to-br from-green-600 to-green-800 p-3 w-40 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-lg`}
+                        onClick={() => hasEditAccess && handleEditHierarchy(corretor)}
                       >
-                        <div className="flex items-center gap-3">
-                          <Users className="w-5 h-5 text-white" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-white text-sm truncate">{user.full_name}</p>
-                            <p className="text-white/80 text-xs truncate">{user.email}</p>
-                            {!user.tipo_hierarquia && (
-                              <p className="text-white/60 text-xs mt-1">Hierarquia ainda não definida</p>
-                            )}
+                        <div className="flex flex-col items-center gap-1 text-center">
+                          <User className="w-6 h-6 text-white" />
+                          <div>
+                            <p className="font-semibold text-white text-xs">{corretor.full_name}</p>
+                            <p className="text-white/70 text-[10px]">{corretor.email}</p>
                           </div>
                         </div>
                       </Card>
                     ))}
                   </div>
+                )}
+              </div>
+            ))}
+
+            {/* Usuários sem hierarquia */}
+            {usersWithoutHierarchy.length > 0 && (
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-400" />
+                  Usuários Sem Hierarquia - Clique para Definir
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {usersWithoutHierarchy.map(user => (
+                    <Card
+                      key={user.id}
+                      className={`bg-gradient-to-br from-gray-500 to-gray-700 p-4 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
+                      onClick={() => hasEditAccess && handleEditHierarchy(user)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Users className="w-8 h-8 text-white" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-sm truncate">{user.full_name}</p>
+                          <p className="text-white/80 text-xs truncate">{user.email}</p>
+                          <p className="text-yellow-300 text-xs mt-1">Clique para definir</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-              )}
-            </div>
-          </DragDropContext>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Dialog de Edição */}
@@ -395,10 +325,22 @@ export default function Organograma() {
                   </Select>
                 </div>
 
+                {selectedHierarchy === "Líder de Agência" && (
+                  <div>
+                    <Label className="text-white">Nome da Agência</Label>
+                    <Input
+                      value={nomeAgencia}
+                      onChange={(e) => setNomeAgencia(e.target.value)}
+                      placeholder="Ex: Agência São Paulo"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                  </div>
+                )}
+
                 {(selectedHierarchy === "Líder de Unidade" || selectedHierarchy === "Corretor") && (
                   <div>
                     <Label className="text-white">
-                      {selectedHierarchy === "Líder de Unidade" ? "Líder de Agência" : "Líder de Unidade"}
+                      {selectedHierarchy === "Líder de Unidade" ? "Líder de Agência" : "Líder (Agência ou Unidade)"}
                     </Label>
                     <Select value={selectedLeader} onValueChange={setSelectedLeader}>
                       <SelectTrigger className="bg-white/10 border-white/20 text-white">
@@ -407,7 +349,7 @@ export default function Organograma() {
                       <SelectContent>
                         {availableLeaders.map(leader => (
                           <SelectItem key={leader.id} value={leader.id}>
-                            {leader.full_name} ({leader.email})
+                            {leader.full_name} - {leader.tipo_hierarquia}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -435,6 +377,30 @@ export default function Organograma() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Dialog de Reset */}
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent className="bg-slate-900 border-white/20">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Resetar Todas as Hierarquias?</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                Esta ação irá remover todas as hierarquias de todos os usuários (exceto admins).
+                Todos os usuários ficarão como "Sem Hierarquia". Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => resetAllHierarchiesMutation.mutate()}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Resetar Tudo
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

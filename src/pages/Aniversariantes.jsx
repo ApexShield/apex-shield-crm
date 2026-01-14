@@ -70,17 +70,16 @@ export default function Aniversariantes() {
   });
 
   const handleSendMessage = async (cliente) => {
-    const mensagem = `Olá, ${cliente.nome}! 🎉✨
+    const mensagem = `Olá, ${cliente.nome}! 🎂👏🏻🎇
 
 Hoje é um dia muito especial e nós não poderíamos deixar passar em branco! Queremos te desejar um feliz aniversário repleto de alegrias, saúde e realizações.
 
 Que este novo ciclo seja iluminado por momentos felizes ao lado de quem você ama. Agradecemos por fazer parte da nossa história e por confiar em nós.
 
-Parabéns pelo seu dia! 🎂🎈
+Parabéns pelo seu dia!
 
 Com carinho,
-Equipe Apex Shield
-${currentUser?.email || ''}`;
+${currentUser?.email || 'Equipe Apex Shield'}`;
     
     if (cliente.telefone) {
       const telefone = cliente.telefone.replace(/\D/g, '');

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, Trash2 } from "lucide-react";
+import { Loader2, Upload, Trash2, FileText, Shield, Users, DollarSign, Heart, Activity, Save, XCircle, Eraser, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const formatCurrency = (value) => {
   const numbers = value.replace(/\D/g, "");
@@ -420,15 +421,32 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">DADOS DA APÓLICE - {cliente?.nome}</DialogTitle>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
+          >
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <Shield className="w-7 h-7 text-white" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-slate-800">DADOS DA APÓLICE - {cliente?.nome}</DialogTitle>
+          </motion.div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Produto Principal */}
-          <div className="bg-blue-100 p-4 rounded-lg space-y-3">
-            <h3 className="font-bold text-sm">PRODUTO</h3>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-blue-400 to-blue-500 p-5 rounded-2xl shadow-lg border-2 border-blue-300 space-y-3"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-6 h-6 text-white" />
+              <h3 className="font-black text-lg text-white">PRODUTO</h3>
+            </div>
             
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -536,14 +554,22 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                 </div>
               </>
             )}
-          </div>
+          </motion.div>
 
           <Separator />
 
           {/* BENEFICIÁRIOS */}
-          <div className="bg-indigo-100 p-4 rounded-lg space-y-3">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-gradient-to-br from-indigo-400 to-indigo-500 p-5 rounded-2xl shadow-lg border-2 border-indigo-300 space-y-3"
+          >
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm">BENEFICIÁRIOS</h3>
+              <div className="flex items-center gap-2">
+                <Users className="w-6 h-6 text-white" />
+                <h3 className="font-black text-lg text-white">BENEFICIÁRIOS</h3>
+              </div>
               <Button type="button" onClick={addBeneficiario} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
                 + Adicionar Beneficiário
               </Button>
@@ -615,30 +641,46 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-4">Nenhum beneficiário cadastrado</p>
+              <p className="text-sm text-white/80 text-center py-4">Nenhum beneficiário cadastrado</p>
             )}
-          </div>
+          </motion.div>
 
           <Separator />
 
           {/* PRÊMIO TOTAL */}
-          <div className="bg-emerald-100 p-4 rounded-lg">
-            <h3 className="font-bold text-sm mb-3">VALORES</h3>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-br from-emerald-400 to-emerald-500 p-5 rounded-2xl shadow-lg border-2 border-emerald-300"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className="w-6 h-6 text-white" />
+              <h3 className="font-black text-lg text-white">VALORES</h3>
+            </div>
             <div>
               <Label className="text-xs font-bold">Total de prêmio(s) do(s) seguro(s) contratado(s) + IOF:</Label>
               <Input
                 value={formData.total_premio_iof}
                 onChange={(e) => handleCurrencyChange('total_premio_iof', e.target.value)}
-                className="font-bold text-lg"
+                className="font-bold text-lg bg-white"
               />
             </div>
-          </div>
+          </motion.div>
 
           <Separator />
 
           {/* COBERTURAS */}
           <div className="space-y-4">
-            <h3 className="font-bold text-lg">COBERTURAS E PRÊMIOS</h3>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.25 }}
+              className="flex items-center gap-2"
+            >
+              <Activity className="w-6 h-6 text-purple-600" />
+              <h3 className="font-black text-2xl text-slate-800">COBERTURAS E PRÊMIOS</h3>
+            </motion.div>
 
             {/* Cobertura de Morte Principal */}
             <div className="bg-blue-100 p-3 rounded space-y-2">
@@ -1009,25 +1051,38 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
           </div>
 
           {/* Botões */}
-          <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="flex-1 bg-green-600 hover:bg-green-700 font-bold"
-            >
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              SALVAR
-            </Button>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex gap-3 pt-4"
+          >
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-black text-lg py-6 shadow-xl rounded-xl"
+              >
+                {isLoading ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> SALVANDO...</>
+                ) : (
+                  <><Save className="w-5 h-5 mr-2" /> SALVAR</>
+                )}
+              </Button>
+            </motion.div>
             
-            <Button 
-              type="button"
-              onClick={handleLimpar}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 font-bold"
-            >
-              LIMPAR
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+              <Button 
+                type="button"
+                onClick={handleLimpar}
+                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 font-black text-lg py-6 shadow-xl rounded-xl"
+              >
+                <Eraser className="w-5 h-5 mr-2" />
+                LIMPAR
+              </Button>
+            </motion.div>
             
-            <div className="flex-1">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
               <input
                 type="file"
                 id="file-upload-apolice"
@@ -1039,30 +1094,33 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                 type="button"
                 onClick={() => document.getElementById('file-upload-apolice').click()}
                 disabled={uploadingFile}
-                className="w-full bg-blue-600 hover:bg-blue-700 font-bold"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 font-black text-lg py-6 shadow-xl rounded-xl"
               >
                 {uploadingFile ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                     Processando...
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Importar Dados
+                    <Upload className="w-5 h-5 mr-2" />
+                    IMPORTAR
                   </>
                 )}
               </Button>
-            </div>
+            </motion.div>
             
-            <Button 
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-red-600 hover:bg-red-700 font-bold"
-            >
-              CANCELAR
-            </Button>
-          </div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+              <Button 
+                type="button"
+                onClick={onClose}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 font-black text-lg py-6 shadow-xl rounded-xl"
+              >
+                <XCircle className="w-5 h-5 mr-2" />
+                CANCELAR
+              </Button>
+            </motion.div>
+          </motion.div>
         </form>
       </DialogContent>
     </Dialog>

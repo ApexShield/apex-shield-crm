@@ -21,6 +21,11 @@ const formatPhone = (value) => {
   return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1)$2-$3").replace(/-$/, "");
 };
 
+const formatCPF = (value) => {
+  const numbers = value.replace(/\D/g, "").slice(0, 11);
+  return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, "$1.$2.$3-$4").replace(/-$/, "");
+};
+
 const formatCurrency = (value) => {
   const numbers = value.replace(/\D/g, "");
   const amount = parseFloat(numbers) / 100;
@@ -50,6 +55,8 @@ const calculateIMC = (altura, peso) => {
 
 export default function FormularioLead({ open, onClose, lead, onSave, isLoading, nextCodigo }) {
   const [showAgendarVisita, setShowAgendarVisita] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
@@ -61,6 +68,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     status: "AB Fone",
     data_cadastro: new Date().toISOString().split('T')[0],
     nome: "",
+    cpf: "",
     regime_casamento: "",
     filhos: "",
     filhos_info: [],
@@ -117,6 +125,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         status: "AB Fone",
         data_cadastro: new Date().toISOString().split('T')[0],
         nome: "",
+        cpf: "",
         regime_casamento: "",
         filhos: "",
         filhos_info: [],
@@ -155,8 +164,28 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         num_indicacoes: "0",
         indicacoes: []
       });
+      setHasUnsavedChanges(false);
     }
   }, [lead, open, nextCodigo]);
+
+  // Detectar mudanças no formulário
+  useEffect(() => {
+    const formHasData = formData.nome || formData.telefone || formData.email || formData.cpf || formData.novaObservacao;
+    setHasUnsavedChanges(!!formHasData && open);
+  }, [formData, open]);
+
+  // Prevenir fechamento da guia do navegador
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -197,14 +226,70 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     try {
       await onSave(dataToSave);
       console.log("Salvo com sucesso!");
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error("Erro no handleSubmit:", error);
       alert("Erro ao salvar: " + error.message);
     }
   };
 
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedDialog(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    const dataToSave = { ...formData };
+    
+    if (formData.novaObservacao && formData.novaObservacao.trim()) {
+      dataToSave.observacoes = [
+        ...(formData.observacoes || []),
+        {
+          data: format(new Date(), "dd/MM/yyyy HH:mm"),
+          texto: formData.novaObservacao.toUpperCase()
+        }
+      ];
+    }
+    
+    delete dataToSave.novaObservacao;
+    
+    if (!dataToSave.nome || dataToSave.nome.trim() === "") {
+      alert("Por favor, preencha o nome do cliente");
+      return;
+    }
+    
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === "" || dataToSave[key] === null || dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
+    });
+    
+    try {
+      await onSave(dataToSave);
+      setHasUnsavedChanges(false);
+      setShowUnsavedDialog(false);
+      onClose();
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao salvar: " + error.message);
+    }
+  };
+
+  const handleDiscardAndClose = () => {
+    setHasUnsavedChanges(false);
+    setShowUnsavedDialog(false);
+    onClose();
+  };
+
   const handleUpperCase = (field, value) => {
     setFormData({ ...formData, [field]: value.toUpperCase() });
+  };
+
+  const handleCPFChange = (value) => {
+    setFormData({ ...formData, cpf: formatCPF(value) });
   };
 
   const handleFilhosChange = (quantidade) => {
@@ -273,7 +358,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   }, [open, lead]);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">CADASTRO DE LEAD - CRM</DialogTitle>
@@ -322,6 +408,17 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       autoFocus={!lead}
                       value={formData.nome} 
                       onChange={(e) => handleUpperCase('nome', e.target.value)} 
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">CPF:</Label>
+                    <Input 
+                      tabIndex={4.5}
+                      value={formData.cpf} 
+                      onChange={(e) => handleCPFChange(e.target.value)} 
+                      maxLength={14}
+                      placeholder="000.000.000-00"
                     />
                   </div>
                   
@@ -826,7 +923,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
             
             <Button 
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 bg-red-600 hover:bg-red-700 font-bold text-lg py-6"
             >
               CANCELAR
@@ -860,5 +957,35 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         />
       </DialogContent>
     </Dialog>
+
+    {/* Dialog de Confirmação de Dados Não Salvos */}
+    <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-orange-600">⚠️ Dados não salvos</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-gray-700">
+            Você tem alterações não salvas. Deseja salvar as informações antes de fechar?
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button
+            onClick={handleDiscardAndClose}
+            variant="outline"
+            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+          >
+            Descartar
+          </Button>
+          <Button
+            onClick={handleSaveAndClose}
+            className="flex-1 bg-green-600 hover:bg-green-700"
+          >
+            Salvar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

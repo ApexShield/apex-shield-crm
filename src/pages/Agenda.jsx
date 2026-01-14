@@ -55,7 +55,7 @@ export default function Agenda() {
     enabled: user?.role === "admin"
   });
 
-  const { data: compromissos = [] } = useQuery({
+  const { data: allCompromissos = [] } = useQuery({
     queryKey: ["compromissos", selectedUserEmail || user?.email],
     queryFn: async () => {
       if (user?.role === "admin" && selectedUserEmail) {
@@ -65,6 +65,33 @@ export default function Agenda() {
     },
     enabled: !!user
   });
+
+  // Filtrar compromissos baseado em hierarquia e permissões
+  const compromissos = useMemo(() => {
+    if (!user || !allCompromissos.length) return [];
+    
+    // Admin vê todos
+    if (user.role === "admin") {
+      return allCompromissos;
+    }
+    
+    // Líder de Agência vê todos
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      return allCompromissos;
+    }
+    
+    // Líder de Unidade vê seus compromissos + compromissos de sua equipe
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      return allCompromissos.filter(c => 
+        c.created_by === user.email || 
+        c.created_by_user_condition?.lider_email === user.email ||
+        c.created_by_user_condition?.lider_id === user.id
+      );
+    }
+    
+    // Todos os outros usuários veem apenas seus próprios compromissos
+    return allCompromissos.filter(c => c.created_by === user.email);
+  }, [allCompromissos, user]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],

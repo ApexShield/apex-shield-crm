@@ -661,21 +661,31 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   
                   <div>
                     <Label className="text-xs">Agendar Visita:</Label>
-                    <Button
-                      type="button"
-                      onClick={() => setShowAgendarVisita(true)}
-                      className="w-full justify-start bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-                      style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {formData.agendar_visita ? 
-                        `Agendado: ${formData.agendar_visita}` : 
-                        'Agendar Visita no Google Agenda'}
-                    </Button>
-                    {formData.agendar_visita && (
-                      <p className="text-sm text-blue-600 mt-1 font-bold">
-                        ✓ Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy 'Horário' HH:mm")}
-                      </p>
+                    {formData.agendar_visita ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-blue-600 font-bold">
+                          ✓ Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy 'Horário' HH:mm")}
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => setShowAgendarVisita(true)}
+                          className="w-full justify-start"
+                          variant="outline"
+                        >
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Reagendar Visita
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => setShowAgendarVisita(true)}
+                        className="w-full justify-start bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                        style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Agendar Visita no Google Agenda
+                      </Button>
                     )}
                   </div>
                 </div>

@@ -36,7 +36,8 @@ export default function Agenda() {
     data_inicio: "",
     data_fim: "",
     cor: "#0891b2",
-    tipo: "agendado"
+    tipo: "agendado",
+    modalidade: ""
   });
 
   const queryClient = useQueryClient();
@@ -124,7 +125,8 @@ export default function Agenda() {
       data_inicio: startTime.toISOString(),
       data_fim: endTime.toISOString(),
       cor: "#0891b2",
-      tipo: "agendado"
+      tipo: "agendado",
+      modalidade: ""
     });
     setEditingEvent(null);
     setShowDialog(true);
@@ -141,17 +143,25 @@ export default function Agenda() {
       tipo: event.tipo || "agendado",
       cliente_id: event.cliente_id || "",
       cliente_nome: event.cliente_nome || "",
-      endereco: event.endereco || ""
+      endereco: event.endereco || "",
+      modalidade: event.modalidade || ""
     });
     setShowDialog(true);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Se modalidade for online, adicionar (Zoom) ao título
+    const dataToSubmit = { ...formData };
+    if (formData.modalidade === "online" && formData.titulo && !formData.titulo.includes("(Zoom)")) {
+      dataToSubmit.titulo = `${formData.titulo} (Zoom)`;
+    }
+    
     if (editingEvent) {
-      updateMutation.mutate({ id: editingEvent.id, data: formData });
+      updateMutation.mutate({ id: editingEvent.id, data: dataToSubmit });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(dataToSubmit);
     }
   };
 
@@ -168,7 +178,8 @@ export default function Agenda() {
       data_inicio: "",
       data_fim: "",
       cor: "#0891b2",
-      tipo: "agendado"
+      tipo: "agendado",
+      modalidade: ""
     });
     setEditingEvent(null);
     setSelectedSlot(null);
@@ -230,7 +241,8 @@ export default function Agenda() {
                   data_inicio: now.toISOString(),
                   data_fim: new Date(now.getTime() + 3600000).toISOString(),
                   cor: "#0891b2",
-                  tipo: "agendado"
+                  tipo: "agendado",
+                  modalidade: ""
                 });
                 setEditingEvent(null);
                 setShowDialog(true);
@@ -440,6 +452,22 @@ export default function Agenda() {
                   <SelectItem value="venda_feita">Venda Feita</SelectItem>
                   <SelectItem value="pessoal">Compromisso Pessoal</SelectItem>
                   <SelectItem value="avanti">Compromisso da Avanti</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-white">Modalidade</Label>
+              <Select
+                value={formData.modalidade}
+                onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
+              >
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Selecione a modalidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="presencial">📍 Presencial</SelectItem>
+                  <SelectItem value="online">💻 Online</SelectItem>
                 </SelectContent>
               </Select>
             </div>

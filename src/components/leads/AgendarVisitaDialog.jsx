@@ -95,7 +95,9 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         prefixo = tipoVisita; // AB Visita
       }
       
-      const titulo = `${prefixo} - ${cliente.nome}`;
+      // Se for online, adicionar (Zoom) ao título
+      const tituloBase = `${prefixo} - ${cliente.nome}`;
+      const titulo = modalidade === "online" ? `${tituloBase} (Zoom)` : tituloBase;
       
       // Criar compromisso na agenda
       const descricaoCompleta = modalidade === "online" 
@@ -112,7 +114,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         cliente_id: cliente.id || "",
         cliente_nome: cliente.nome,
         endereco: modalidade === "presencial" ? endereco : "Online",
-        status_origem: tipoVisita
+        status_origem: tipoVisita,
+        modalidade: modalidade
       });
 
       const agendamento = {

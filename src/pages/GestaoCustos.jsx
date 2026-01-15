@@ -274,14 +274,22 @@ export default function GestaoCustos() {
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {currentUser?.role === "admin" && (
+              {(currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência" || currentUser?.tipo_hierarquia === "Líder de Unidade") && usuariosDisponiveis.length > 0 && (
                 <Select value={usuarioSelecionado} onValueChange={setUsuarioSelecionado}>
                   <SelectTrigger className="w-[250px] bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Todos os usuários" />
+                    <SelectValue placeholder={
+                      currentUser?.tipo_hierarquia === "Líder de Unidade" 
+                        ? "Minha equipe" 
+                        : "Todos"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Todos os usuários</SelectItem>
-                    {allUsers.map(user => (
+                    <SelectItem value={null}>
+                      {currentUser?.tipo_hierarquia === "Líder de Unidade" 
+                        ? "Toda minha equipe" 
+                        : "Todos os usuários"}
+                    </SelectItem>
+                    {usuariosDisponiveis.map(user => (
                       <SelectItem key={user.id} value={user.email}>
                         {user.full_name || user.email}
                       </SelectItem>

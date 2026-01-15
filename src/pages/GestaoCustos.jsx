@@ -14,11 +14,15 @@ import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 
 const CATEGORIAS_DESPESA = [
-  "Alimentação", "Transporte", "Marketing", "Escritório", "Tecnologia", "Pessoal", "Outros"
+  "Alimentação", "Transporte", "Marketing", "Escritório", "Tecnologia", "Pessoal", "AGUA", "ENERGIA", "INTERNET", "GAS", "EDUCAÇÃO", "Outros"
 ];
 
 const CATEGORIAS_RECEITA = [
   "Comissão", "Angariação", "Premiação", "Bônus", "Outros"
+];
+
+const TIPOS_PAGAMENTO = [
+  "CARTAO CREDITO", "CARTAO DEBITO", "PIX", "DINHEIRO"
 ];
 
 const COLORS_DESPESA = ["#ef4444", "#f97316", "#f59e0b", "#eab308", "#84cc16", "#22c55e", "#10b981"];
@@ -32,7 +36,9 @@ export default function GestaoCustos() {
     categoria: "",
     descricao: "",
     valor: "",
-    data: format(new Date(), "yyyy-MM-dd")
+    data: format(new Date(), "yyyy-MM-dd"),
+    tipo_pagamento: "",
+    parcelas: 1
   });
 
   const queryClient = useQueryClient();
@@ -114,16 +120,64 @@ export default function GestaoCustos() {
       categoria: "",
       descricao: "",
       valor: "",
-      data: format(new Date(), "yyyy-MM-dd")
+      data: format(new Date(), "yyyy-MM-dd"),
+      tipo_pagamento: "",
+      parcelas: 1
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    createMutation.mutate({
-      ...formData,
-      valor: parseFloat(formData.valor)
-    });
+    
+    const valorTotal = parseFloat(formData.valor);
+    
+    // Se for cartão de crédito parcelado, criar múltiplas transações
+    if (formData.tipo_pagamento === "CARTAO CREDITO" && formData.parcelas > 1) {
+      const valorParcela = valorTotal / formData.parcelas;
+      const dataBase = new Date(formData.data);
+      
+      // Criar a primeira transação e obter o ID
+      const primeiraTx = await base44.entities.Transacao.create({
+        tipo: formData.tipo,
+        categoria: formData.categoria,
+        descricao: `${formData.descricao} (1/${formData.parcelas})`,
+        valor: valorParcela,
+        data: formData.data,
+        tipo_pagamento: formData.tipo_pagamento,
+        parcelas: formData.parcelas,
+        numero_parcela: 1
+      });
+      
+      // Criar as demais parcelas
+      for (let i = 2; i <= formData.parcelas; i++) {
+        const dataParcela = new Date(dataBase);
+        dataParcela.setMonth(dataParcela.getMonth() + (i - 1));
+        
+        await base44.entities.Transacao.create({
+          tipo: formData.tipo,
+          categoria: formData.categoria,
+          descricao: `${formData.descricao} (${i}/${formData.parcelas})`,
+          valor: valorParcela,
+          data: format(dataParcela, "yyyy-MM-dd"),
+          tipo_pagamento: formData.tipo_pagamento,
+          parcelas: formData.parcelas,
+          numero_parcela: i,
+          transacao_origem_id: primeiraTx.id
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["transacoes"] });
+      setShowDialog(false);
+      resetForm();
+    } else {
+      // Transação única
+      createMutation.mutate({
+        ...formData,
+        valor: valorTotal,
+        parcelas: 1,
+        numero_parcela: 1
+      });
+    }
   };
 
   const formatCurrency = (value) => {
@@ -384,6 +438,39 @@ export default function GestaoCustos() {
                   required
                 />
               </div>
+
+              <div>
+                <Label className="text-white">Tipo de Pagamento</Label>
+                <Select value={formData.tipo_pagamento} onValueChange={(v) => setFormData({ ...formData, tipo_pagamento: v })}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_PAGAMENTO.map(tipo => (
+                      <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.tipo_pagamento === "CARTAO CREDITO" && (
+                <div>
+                  <Label className="text-white">Quantidade de Parcelas</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={formData.parcelas}
+                    onChange={(e) => setFormData({ ...formData, parcelas: parseInt(e.target.value) || 1 })}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                  {formData.parcelas > 1 && (
+                    <p className="text-xs text-blue-300 mt-1">
+                      Valor por parcela: {formatCurrency(parseFloat(formData.valor || 0) / formData.parcelas)}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button

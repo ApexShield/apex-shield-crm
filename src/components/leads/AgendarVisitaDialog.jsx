@@ -312,11 +312,35 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                   <Clock className="w-4 h-4" />
                   Horário:
                 </Label>
-                <Input
-                  type="time"
-                  value={horario}
-                  onChange={(e) => setHorario(e.target.value)}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={horario.split(':')[0] || ''} onValueChange={(h) => {
+                    const minutos = horario.split(':')[1] || '00';
+                    setHorario(`${h}:${minutos}`);
+                  }}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Hora" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={horario.split(':')[1] || ''} onValueChange={(m) => {
+                    const hora = horario.split(':')[0] || '00';
+                    setHorario(`${hora}:${m}`);
+                  }}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Min" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="00">00</SelectItem>
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="45">45</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {erro && (

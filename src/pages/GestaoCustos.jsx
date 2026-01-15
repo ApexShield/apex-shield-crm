@@ -52,7 +52,7 @@ export default function GestaoCustos() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: !!currentUser && currentUser.role === "admin"
+    enabled: !!currentUser && (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência" || currentUser.tipo_hierarquia === "Líder de Unidade")
   });
 
   const { data: allTransacoes = [] } = useQuery({
@@ -77,30 +77,55 @@ export default function GestaoCustos() {
     }
   });
 
-  // Filtrar transações baseado em hierarquia
+  // Filtrar usuários disponíveis para seleção baseado em hierarquia
+  const usuariosDisponiveis = React.useMemo(() => {
+    if (!currentUser || !allUsers.length) return [];
+    
+    // Admin vê todos os usuários
+    if (currentUser.role === "admin") {
+      return allUsers;
+    }
+    
+    // Líder de Agência vê todos os usuários (exceto outros admins)
+    if (currentUser.tipo_hierarquia === "Líder de Agência") {
+      return allUsers.filter(u => u.role !== "admin");
+    }
+    
+    // Líder de Unidade vê apenas sua equipe
+    if (currentUser.tipo_hierarquia === "Líder de Unidade") {
+      return allUsers.filter(u => 
+        u.lider_email === currentUser.email || 
+        u.lider_id === currentUser.id ||
+        u.email === currentUser.email
+      );
+    }
+    
+    return [];
+  }, [currentUser, allUsers]);
+
+  // Filtrar transações baseado em hierarquia e usuário selecionado
   const transacoes = React.useMemo(() => {
     if (!currentUser || !allTransacoes.length) return [];
     
-    // Admin vê baseado no filtro de usuário
+    // Se um usuário foi selecionado, mostrar apenas transações dele
+    if (usuarioSelecionado) {
+      return allTransacoes.filter(t => t.created_by === usuarioSelecionado);
+    }
+    
+    // Admin sem filtro vê todas
     if (currentUser.role === "admin") {
-      if (usuarioSelecionado) {
-        return allTransacoes.filter(t => t.created_by === usuarioSelecionado);
-      }
       return allTransacoes;
     }
     
-    // Líder de Agência vê todos
+    // Líder de Agência sem filtro vê todas
     if (currentUser.tipo_hierarquia === "Líder de Agência") {
       return allTransacoes;
     }
     
-    // Líder de Unidade vê suas transações + transações de sua equipe
+    // Líder de Unidade sem filtro vê suas transações + transações de sua equipe
     if (currentUser.tipo_hierarquia === "Líder de Unidade") {
       return allTransacoes.filter(t => {
-        // Suas próprias transações
         if (t.created_by === currentUser.email) return true;
-        
-        // Transações de membros da equipe
         const creator = allUsers.find(u => u.email === t.created_by);
         return creator && (creator.lider_email === currentUser.email || creator.lider_id === currentUser.id);
       });

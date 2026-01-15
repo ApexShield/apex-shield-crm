@@ -335,6 +335,7 @@ export default function Leads() {
                   <TableHead className="font-bold text-white">Renda</TableHead>
                   <TableHead className="font-bold text-white">Idade</TableHead>
                   <TableHead className="font-bold text-white">Profissão</TableHead>
+                  <TableHead className="font-bold text-white">Proprietário</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -388,6 +389,7 @@ export default function Leads() {
                       <TableCell className="font-bold text-white">{cliente.renda || "—"}</TableCell>
                       <TableCell className="font-bold text-white">{cliente.idade || "—"}</TableCell>
                       <TableCell className="font-bold text-white">{cliente.profissao || "—"}</TableCell>
+                      <TableCell className="font-bold text-white/70 text-xs">{cliente.created_by || "—"}</TableCell>
                     </TableRow>
                   );
                 })}

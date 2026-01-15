@@ -31,6 +31,7 @@ const COLORS_RECEITA = ["#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#d946ef"];
 export default function GestaoCustos() {
   const [showDialog, setShowDialog] = useState(false);
   const [mesAno, setMesAno] = useState(format(new Date(), "yyyy-MM"));
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState("");
   const [formData, setFormData] = useState({
     tipo: "Despesa",
     categoria: "",
@@ -43,9 +44,21 @@ export default function GestaoCustos() {
 
   const queryClient = useQueryClient();
 
-  const { data: transacoes = [] } = useQuery({
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!currentUser && currentUser.role === "admin"
+  });
+
+  const { data: allTransacoes = [] } = useQuery({
     queryKey: ["transacoes"],
-    queryFn: () => base44.entities.Transacao.list()
+    queryFn: () => base44.entities.Transacao.list(),
+    enabled: !!currentUser
   });
 
   const createMutation = useMutation({
@@ -63,6 +76,39 @@ export default function GestaoCustos() {
       queryClient.invalidateQueries({ queryKey: ["transacoes"] });
     }
   });
+
+  // Filtrar transações baseado em hierarquia
+  const transacoes = React.useMemo(() => {
+    if (!currentUser || !allTransacoes.length) return [];
+    
+    // Admin vê baseado no filtro de usuário
+    if (currentUser.role === "admin") {
+      if (usuarioSelecionado) {
+        return allTransacoes.filter(t => t.created_by === usuarioSelecionado);
+      }
+      return allTransacoes;
+    }
+    
+    // Líder de Agência vê todos
+    if (currentUser.tipo_hierarquia === "Líder de Agência") {
+      return allTransacoes;
+    }
+    
+    // Líder de Unidade vê suas transações + transações de sua equipe
+    if (currentUser.tipo_hierarquia === "Líder de Unidade") {
+      return allTransacoes.filter(t => {
+        // Suas próprias transações
+        if (t.created_by === currentUser.email) return true;
+        
+        // Transações de membros da equipe
+        const creator = allUsers.find(u => u.email === t.created_by);
+        return creator && (creator.lider_email === currentUser.email || creator.lider_id === currentUser.id);
+      });
+    }
+    
+    // Corretores veem apenas suas próprias transações
+    return allTransacoes.filter(t => t.created_by === currentUser.email);
+  }, [allTransacoes, currentUser, usuarioSelecionado, allUsers]);
 
   // Filtrar transações do mês selecionado
   const transacoesMes = React.useMemo(() => {
@@ -202,7 +248,22 @@ export default function GestaoCustos() {
                 <p className="text-blue-300">Controle suas receitas e despesas</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {currentUser?.role === "admin" && (
+                <Select value={usuarioSelecionado} onValueChange={setUsuarioSelecionado}>
+                  <SelectTrigger className="w-[250px] bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Todos os usuários" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Todos os usuários</SelectItem>
+                    {allUsers.map(user => (
+                      <SelectItem key={user.id} value={user.email}>
+                        {user.full_name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input
                 type="month"
                 value={mesAno}

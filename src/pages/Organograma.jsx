@@ -62,6 +62,14 @@ export default function Organograma() {
 
   const hasEditAccess = currentUser ? (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência") : false;
   const hasViewAccess = currentUser ? (hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade") : false;
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
+    );
+  }
   
   const visibleUsers = React.useMemo(() => {
     if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {

@@ -31,6 +31,14 @@ export default function Organograma() {
 
   const isLoading = isLoadingUser || isLoadingUsers;
 
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
+    );
+  }
+
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => {
@@ -60,29 +68,21 @@ export default function Organograma() {
     }
   });
 
-  const hasEditAccess = currentUser ? (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência") : false;
-  const hasViewAccess = currentUser ? (hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade") : false;
-
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
-        <div className="text-white text-xl">Carregando...</div>
-      </div>
-    );
-  }
+  const hasEditAccess = currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência";
+  const hasViewAccess = hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade";
   
   const visibleUsers = React.useMemo(() => {
-    if (currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") {
+    if (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência") {
       return users;
     }
-    if (currentUser?.tipo_hierarquia === "Líder de Unidade") {
+    if (currentUser.tipo_hierarquia === "Líder de Unidade") {
       return users;
     }
     const result = users.filter(u => {
-      if (u.id === currentUser?.id) return true;
-      if (u.lider_id === currentUser?.id) return true;
-      if (u.lider_email === currentUser?.email) return true;
-      if (currentUser?.lider_id && u.id === currentUser.lider_id) return true;
+      if (u.id === currentUser.id) return true;
+      if (u.lider_id === currentUser.id) return true;
+      if (u.lider_email === currentUser.email) return true;
+      if (currentUser.lider_id && u.id === currentUser.lider_id) return true;
       return false;
     });
     return result.length > 0 ? result : [currentUser];

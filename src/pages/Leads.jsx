@@ -66,6 +66,12 @@ export default function Leads() {
     queryFn: () => base44.auth.me()
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!user && (user.tipo_hierarquia === "Líder de Unidade" || user.tipo_hierarquia === "Líder de Agência")
+  });
+
   const { data: allClientes = [], isLoading } = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
@@ -88,18 +94,22 @@ export default function Leads() {
       return allClientes;
     }
     
-    // Líder de Unidade vê seus leads + leads de sua equipe
+    // Líder de Unidade vê seus leads + leads de seus subordinados
     if (user.tipo_hierarquia === "Líder de Unidade") {
+      // Encontrar todos os corretores subordinados
+      const subordinadosEmails = allUsers
+        .filter(u => u.lider_id === user.id || u.lider_email === user.email)
+        .map(u => u.email);
+      
       return allClientes.filter(c => 
         c.created_by === user.email || 
-        c.created_by_user_condition?.lider_email === user.email ||
-        c.created_by_user_condition?.lider_id === user.id
+        subordinadosEmails.includes(c.created_by)
       );
     }
     
     // Todos os outros usuários veem apenas seus próprios leads
     return allClientes.filter(c => c.created_by === user.email);
-  }, [allClientes, user]);
+  }, [allClientes, user, allUsers]);
 
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {

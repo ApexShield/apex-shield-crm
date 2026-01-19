@@ -69,7 +69,7 @@ export default function Agenda() {
       return allUsers;
     }
     
-    // Líder de Unidade vê apenas seus subordinados
+    // Líder de Unidade vê apenas seus subordinados diretos
     if (user.tipo_hierarquia === "Líder de Unidade") {
       return allUsers.filter(u => 
         u.lider_email === user.email || u.lider_id === user.id
@@ -104,18 +104,20 @@ export default function Agenda() {
       return allCompromissos;
     }
     
-    // Líder de Unidade vê seus compromissos + compromissos de sua equipe
+    // Líder de Unidade vê seus compromissos + compromissos de seus subordinados
     if (user.tipo_hierarquia === "Líder de Unidade") {
+      // Encontrar todos os emails dos subordinados
+      const subordinadosEmails = users.map(u => u.email);
+      
       return allCompromissos.filter(c => 
         c.created_by === user.email || 
-        c.created_by_user_condition?.lider_email === user.email ||
-        c.created_by_user_condition?.lider_id === user.id
+        subordinadosEmails.includes(c.created_by)
       );
     }
     
     // Todos os outros usuários veem apenas seus próprios compromissos
     return allCompromissos.filter(c => c.created_by === user.email);
-  }, [allCompromissos, user]);
+  }, [allCompromissos, user, users]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],

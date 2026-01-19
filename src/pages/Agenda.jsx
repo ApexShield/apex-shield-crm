@@ -106,8 +106,10 @@ export default function Agenda() {
     
     // Líder de Unidade vê seus compromissos + compromissos de seus subordinados
     if (user.tipo_hierarquia === "Líder de Unidade") {
-      // Encontrar todos os emails dos subordinados
-      const subordinadosEmails = users.map(u => u.email);
+      // Encontrar todos os emails dos subordinados diretamente de allUsers
+      const subordinadosEmails = allUsers
+        .filter(u => u.lider_email === user.email || u.lider_id === user.id)
+        .map(u => u.email);
       
       return allCompromissos.filter(c => 
         c.created_by === user.email || 
@@ -117,7 +119,7 @@ export default function Agenda() {
     
     // Todos os outros usuários veem apenas seus próprios compromissos
     return allCompromissos.filter(c => c.created_by === user.email);
-  }, [allCompromissos, user, users]);
+  }, [allCompromissos, user, allUsers]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],

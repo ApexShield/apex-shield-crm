@@ -29,6 +29,7 @@ export default function Agenda() {
   const [showDialog, setShowDialog] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
   
   const [formData, setFormData] = useState({
     titulo: "",
@@ -46,8 +47,6 @@ export default function Agenda() {
     queryKey: ["user"],
     queryFn: () => base44.auth.me()
   });
-
-  const [selectedUserEmail, setSelectedUserEmail] = useState("");
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],

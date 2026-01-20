@@ -2,490 +2,708 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Users, Building2, User, Shield, Trash2, AlertCircle } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Users, UserPlus, Plus, Edit, Trash2, Network } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Organograma() {
-  const [editingUser, setEditingUser] = useState(null);
-  const [selectedHierarchy, setSelectedHierarchy] = useState("");
-  const [selectedLeader, setSelectedLeader] = useState("");
-  const [nomeAgencia, setNomeAgencia] = useState("");
-  const [showResetDialog, setShowResetDialog] = useState(false);
   const queryClient = useQueryClient();
+  const [showAgenciaDialog, setShowAgenciaDialog] = useState(false);
+  const [showUnidadeDialog, setShowUnidadeDialog] = useState(false);
+  const [showUsuarioDialog, setShowUsuarioDialog] = useState(false);
+  const [editingAgencia, setEditingAgencia] = useState(null);
+  const [editingUnidade, setEditingUnidade] = useState(null);
+  const [selectedAgenciaForUnidade, setSelectedAgenciaForUnidade] = useState("");
 
-  const { data: currentUser, isLoading: isLoadingUser } = useQuery({
+  const [agenciaForm, setAgenciaForm] = useState({ nome: "", descricao: "" });
+  const [unidadeForm, setUnidadeForm] = useState({ nome: "", descricao: "", agencia_id: "" });
+  const [usuarioForm, setUsuarioForm] = useState({
+    email: "",
+    tipo: "",
+    agencia_id: "",
+    unidade_id: ""
+  });
+
+  const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => base44.auth.me()
   });
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
-    enabled: !!currentUser
+  const { data: agencias = [] } = useQuery({
+    queryKey: ["agencias"],
+    queryFn: () => base44.entities.Agencia.list()
   });
 
-  const updateUserMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
+  const { data: unidades = [] } = useQuery({
+    queryKey: ["unidades"],
+    queryFn: () => base44.entities.Unidade.list()
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => base44.entities.User.list()
+  });
+
+  // Filtrar agências visíveis
+  const minhasAgencias = React.useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === "admin") return agencias;
+    
+    return agencias.filter(a => 
+      a.lider_agencia_id === currentUser.id || 
+      a.lider_agencia_email === currentUser.email ||
+      a.id === currentUser.agencia_id
+    );
+  }, [agencias, currentUser]);
+
+  // Filtrar unidades visíveis
+  const minhasUnidades = React.useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === "admin") return unidades;
+    
+    const agenciaIds = minhasAgencias.map(a => a.id);
+    return unidades.filter(u => 
+      agenciaIds.includes(u.agencia_id) ||
+      u.lider_unidade_id === currentUser.id ||
+      u.lider_unidade_email === currentUser.email
+    );
+  }, [unidades, minhasAgencias, currentUser]);
+
+  // Filtrar usuários visíveis
+  const meusUsuarios = React.useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === "admin") return users;
+    
+    const agenciaIds = minhasAgencias.map(a => a.id);
+    const unidadeIds = minhasUnidades.map(u => u.id);
+    
+    return users.filter(u => 
+      agenciaIds.includes(u.agencia_id) ||
+      unidadeIds.includes(u.unidade_id) ||
+      u.lider_id === currentUser.id ||
+      u.lider_email === currentUser.email ||
+      u.id === currentUser.id
+    );
+  }, [users, minhasAgencias, minhasUnidades, currentUser]);
+
+  // Mutations
+  const createAgenciaMutation = useMutation({
+    mutationFn: async (data) => {
+      const agencia = await base44.entities.Agencia.create({
+        ...data,
+        lider_agencia_id: currentUser.id,
+        lider_agencia_email: currentUser.email,
+        lider_agencia_nome: currentUser.full_name
+      });
+      
+      // Atualizar o próprio usuário
+      await base44.auth.updateMe({
+        tipo_hierarquia: "Líder de Agência",
+        agencia_id: agencia.id,
+        agencia_nome: agencia.nome,
+        lider_id: null,
+        lider_email: null,
+        unidade_id: null
+      });
+      
+      return agencia;
+    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agencias"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setEditingUser(null);
-      setSelectedHierarchy("");
-      setSelectedLeader("");
-      setNomeAgencia("");
+      setShowAgenciaDialog(false);
+      setAgenciaForm({ nome: "", descricao: "" });
     }
   });
 
-  const resetAllHierarchiesMutation = useMutation({
-    mutationFn: async () => {
-      const nonAdminUsers = users.filter(u => u.role !== "admin");
-      for (const user of nonAdminUsers) {
-        await base44.entities.User.update(user.id, {
-          tipo_hierarquia: "Sem Hierarquia",
-          lider_id: null,
-          lider_email: null,
-          nome_agencia: null
-        });
+  const updateAgenciaMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Agencia.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agencias"] });
+      setShowAgenciaDialog(false);
+      setEditingAgencia(null);
+      setAgenciaForm({ nome: "", descricao: "" });
+    }
+  });
+
+  const deleteAgenciaMutation = useMutation({
+    mutationFn: (id) => base44.entities.Agencia.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agencias"] });
+    }
+  });
+
+  const createUnidadeMutation = useMutation({
+    mutationFn: async (data) => {
+      const agencia = agencias.find(a => a.id === data.agencia_id);
+      return base44.entities.Unidade.create({
+        ...data,
+        agencia_nome: agencia?.nome
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unidades"] });
+      setShowUnidadeDialog(false);
+      setUnidadeForm({ nome: "", descricao: "", agencia_id: "" });
+    }
+  });
+
+  const updateUnidadeMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Unidade.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unidades"] });
+      setShowUnidadeDialog(false);
+      setEditingUnidade(null);
+      setUnidadeForm({ nome: "", descricao: "", agencia_id: "" });
+    }
+  });
+
+  const deleteUnidadeMutation = useMutation({
+    mutationFn: (id) => base44.entities.Unidade.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unidades"] });
+    }
+  });
+
+  const inviteUsuarioMutation = useMutation({
+    mutationFn: async (data) => {
+      const role = data.tipo === "Líder de Agência" || data.tipo === "Líder de Unidade" ? "admin" : "user";
+      await base44.users.inviteUser(data.email, role);
+      
+      // Aguardar um pouco para o usuário ser criado
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const allUsers = await base44.entities.User.list();
+      const novoUsuario = allUsers.find(u => u.email === data.email);
+      
+      if (novoUsuario) {
+        const agencia = agencias.find(a => a.id === data.agencia_id);
+        const unidade = unidades.find(u => u.id === data.unidade_id);
+        
+        const updateData = {
+          tipo_hierarquia: data.tipo,
+          agencia_id: data.agencia_id || null,
+          agencia_nome: agencia?.nome || null,
+          unidade_id: data.unidade_id || null,
+          unidade_nome: unidade?.nome || null
+        };
+
+        if (data.tipo === "Líder de Unidade" && unidade) {
+          updateData.lider_id = agencia?.lider_agencia_id || null;
+          updateData.lider_email = agencia?.lider_agencia_email || null;
+          updateData.lider_nome = agencia?.lider_agencia_nome || null;
+          
+          // Atualizar unidade com o líder
+          await base44.entities.Unidade.update(unidade.id, {
+            lider_unidade_id: novoUsuario.id,
+            lider_unidade_email: novoUsuario.email,
+            lider_unidade_nome: novoUsuario.full_name
+          });
+        } else if (data.tipo === "Corretor" && data.unidade_id) {
+          updateData.lider_id = unidade?.lider_unidade_id || null;
+          updateData.lider_email = unidade?.lider_unidade_email || null;
+          updateData.lider_nome = unidade?.lider_unidade_nome || null;
+        } else if (data.tipo === "Corretor" && data.agencia_id) {
+          updateData.lider_id = agencia?.lider_agencia_id || null;
+          updateData.lider_email = agencia?.lider_agencia_email || null;
+          updateData.lider_nome = agencia?.lider_agencia_nome || null;
+        }
+
+        await base44.entities.User.update(novoUsuario.id, updateData);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setShowResetDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["unidades"] });
+      setShowUsuarioDialog(false);
+      setUsuarioForm({ email: "", tipo: "", agencia_id: "", unidade_id: "" });
     }
   });
 
-  const visibleUsers = React.useMemo(() => {
-    if (!currentUser) return [];
-    
-    // Admin vê todos
-    if (currentUser.role === "admin") {
-      return users;
-    }
-    
-    // Líder de Agência vê todos
-    if (currentUser.tipo_hierarquia === "Líder de Agência") {
-      return users;
-    }
-    
-    // Líder de Unidade vê: seu líder de agência + todos subordinados da agência
-    if (currentUser.tipo_hierarquia === "Líder de Unidade") {
-      return users.filter(u => {
-        // Ver a si mesmo
-        if (u.id === currentUser.id) return true;
-        
-        // Ver o Líder de Agência acima dele
-        if (currentUser.lider_id && u.id === currentUser.lider_id) return true;
-        if (currentUser.lider_email && u.email === currentUser.lider_email) return true;
-        
-        // Ver seus subordinados diretos (corretores)
-        if (u.lider_id === currentUser.id || u.lider_email === currentUser.email) return true;
-        
-        // Ver outros Líderes de Unidade da mesma agência
-        if (u.tipo_hierarquia === "Líder de Unidade" && currentUser.lider_id && u.lider_id === currentUser.lider_id) return true;
-        
-        // Ver corretores de outros Líderes de Unidade da mesma agência
-        const outrosLideresUnidade = users.filter(lu => 
-          lu.tipo_hierarquia === "Líder de Unidade" && 
-          currentUser.lider_id && 
-          lu.lider_id === currentUser.lider_id
-        );
-        const outrosLideresIds = outrosLideresUnidade.map(lu => lu.id);
-        if (outrosLideresIds.includes(u.lider_id)) return true;
-        
-        return false;
-      });
-    }
-    
-    // Corretor vê: sua hierarquia completa (seu líder + líder do líder + colegas)
-    if (currentUser.tipo_hierarquia === "Corretor") {
-      return users.filter(u => {
-        // Ver a si mesmo
-        if (u.id === currentUser.id) return true;
-        
-        // Ver seu líder direto (Líder de Unidade ou Líder de Agência)
-        if (currentUser.lider_id && u.id === currentUser.lider_id) return true;
-        if (currentUser.lider_email && u.email === currentUser.lider_email) return true;
-        
-        // Ver colegas corretores do mesmo líder
-        if (u.tipo_hierarquia === "Corretor" && currentUser.lider_id && u.lider_id === currentUser.lider_id) return true;
-        
-        // Se está vinculado a um Líder de Unidade, ver o Líder de Agência acima
-        const seuLider = users.find(l => l.id === currentUser.lider_id);
-        if (seuLider?.tipo_hierarquia === "Líder de Unidade" && seuLider.lider_id && u.id === seuLider.lider_id) return true;
-        
-        // Ver outros Líderes de Unidade da mesma agência
-        if (seuLider?.tipo_hierarquia === "Líder de Unidade" && u.tipo_hierarquia === "Líder de Unidade" && seuLider.lider_id && u.lider_id === seuLider.lider_id) return true;
-        
-        // Ver corretores de outros Líderes de Unidade da mesma agência
-        const lideresUnidadeMesmaAgencia = users.filter(lu => 
-          lu.tipo_hierarquia === "Líder de Unidade" && 
-          seuLider?.lider_id && 
-          lu.lider_id === seuLider.lider_id
-        );
-        const lideresUnidadeIds = lideresUnidadeMesmaAgencia.map(lu => lu.id);
-        if (u.tipo_hierarquia === "Corretor" && lideresUnidadeIds.includes(u.lider_id)) return true;
-        
-        return false;
-      });
-    }
-    
-    // Usuários sem hierarquia veem apenas a si mesmos
-    return [currentUser];
-  }, [users, currentUser]);
+  const handleCreateAgencia = () => {
+    setEditingAgencia(null);
+    setAgenciaForm({ nome: "", descricao: "" });
+    setShowAgenciaDialog(true);
+  };
 
-  const organizedAgencies = React.useMemo(() => {
-    const nonAdminUsers = visibleUsers.filter(u => u.role !== "admin");
-    const lidersAgencia = nonAdminUsers.filter(u => u.tipo_hierarquia === "Líder de Agência");
-    
-    return lidersAgencia.map(liderAgencia => {
-      const lidersUnidade = nonAdminUsers.filter(u => u.lider_id === liderAgencia.id && u.tipo_hierarquia === "Líder de Unidade");
-      const corretoresDiretos = nonAdminUsers.filter(u => u.lider_id === liderAgencia.id && u.tipo_hierarquia === "Corretor");
-      
-      const unidades = lidersUnidade.map(liderUnidade => ({
-        lider: liderUnidade,
-        corretores: nonAdminUsers.filter(u => u.lider_id === liderUnidade.id && u.tipo_hierarquia === "Corretor")
-      }));
+  const handleEditAgencia = (agencia) => {
+    setEditingAgencia(agencia);
+    setAgenciaForm({ nome: agencia.nome, descricao: agencia.descricao || "" });
+    setShowAgenciaDialog(true);
+  };
 
-      return {
-        lider: liderAgencia,
-        unidades,
-        corretoresDiretos
-      };
+  const handleCreateUnidade = (agenciaId = "") => {
+    setEditingUnidade(null);
+    setUnidadeForm({ nome: "", descricao: "", agencia_id: agenciaId });
+    setShowUnidadeDialog(true);
+  };
+
+  const handleEditUnidade = (unidade) => {
+    setEditingUnidade(unidade);
+    setUnidadeForm({ 
+      nome: unidade.nome, 
+      descricao: unidade.descricao || "", 
+      agencia_id: unidade.agencia_id 
     });
-  }, [visibleUsers]);
-
-  const usersWithoutHierarchy = React.useMemo(() => {
-    return visibleUsers.filter(u => 
-      !u.tipo_hierarquia || u.tipo_hierarquia === "Sem Hierarquia"
-    );
-  }, [visibleUsers]);
-
-  const availableLeaders = React.useMemo(() => {
-    if (selectedHierarchy === "Líder de Unidade") {
-      return users.filter(u => u.tipo_hierarquia === "Líder de Agência");
-    } else if (selectedHierarchy === "Corretor") {
-      return users.filter(u => 
-        u.tipo_hierarquia === "Líder de Unidade" || 
-        u.tipo_hierarquia === "Líder de Agência"
-      );
-    }
-    return [];
-  }, [selectedHierarchy, users]);
-
-  const isLoading = isLoadingUser || isLoadingUsers;
-
-  if (!currentUser || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
-        <div className="text-white text-xl">Carregando...</div>
-      </div>
-    );
-  }
-
-  const hasEditAccess = currentUser.tipo_hierarquia === "Líder de Agência" || currentUser.tipo_hierarquia === "Líder de Unidade";
-  const hasViewAccess = true; // Todos podem visualizar
-  const isAdmin = currentUser.role === "admin";
-
-  const handleEditHierarchy = (userData) => {
-    setEditingUser(userData);
-    setSelectedHierarchy(userData.tipo_hierarquia || "Sem Hierarquia");
-    setSelectedLeader(userData.lider_id || "");
-    setNomeAgencia(userData.nome_agencia || "");
+    setShowUnidadeDialog(true);
   };
 
-  const handleSaveHierarchy = () => {
-    const leader = users.find(u => u.id === selectedLeader);
-    const updateData = {
-      tipo_hierarquia: selectedHierarchy,
-      lider_id: selectedLeader || null,
-      lider_email: leader?.email || null
-    };
-
-    if (selectedHierarchy === "Líder de Agência") {
-      updateData.nome_agencia = nomeAgencia || null;
-    } else {
-      updateData.nome_agencia = null;
-    }
-
-    updateUserMutation.mutate({ id: editingUser.id, data: updateData });
-  };
+  const podeEditarHierarquia = currentUser?.role === "admin" || 
+    currentUser?.tipo_hierarquia === "Líder de Agência" || 
+    currentUser?.tipo_hierarquia === "Líder de Unidade";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <Users className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black text-white">Organograma da Equipe</h1>
-                <p className="text-indigo-300">Gerencie a hierarquia e estrutura organizacional</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <Network className="w-7 h-7 text-white" />
             </div>
-            {isAdmin && (
-              <Button 
-                onClick={() => setShowResetDialog(true)}
-                variant="destructive"
-                className="gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Resetar Todas Hierarquias
-              </Button>
-            )}
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800">Organograma</h1>
+              <p className="text-slate-600">Gerencie a estrutura organizacional</p>
+            </div>
           </div>
+          
+          {podeEditarHierarquia && (
+            <div className="flex gap-3">
+              {(currentUser?.role === "admin" || !currentUser?.agencia_id) && (
+                <Button onClick={handleCreateAgencia} className="bg-indigo-600 hover:bg-indigo-700">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Nova Agência
+                </Button>
+              )}
+              {currentUser?.tipo_hierarquia === "Líder de Agência" && (
+                <Button onClick={() => handleCreateUnidade(currentUser.agencia_id)} className="bg-purple-600 hover:bg-purple-700">
+                  <Users className="w-4 h-4 mr-2" />
+                  Nova Unidade
+                </Button>
+              )}
+              <Button onClick={() => setShowUsuarioDialog(true)} className="bg-green-600 hover:bg-green-700">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Convidar Usuário
+              </Button>
+            </div>
+          )}
         </div>
 
-        {!hasViewAccess ? (
-          <div className="text-center py-12">
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-8 max-w-md mx-auto">
-              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Acesso Negado</h2>
-              <p className="text-gray-300">
-                Você não tem permissão para visualizar o organograma.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* Agências - Estrutura Piramidal */}
-            {organizedAgencies.map((agencia) => (
-              <div key={agencia.lider.id} className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
-                {/* Topo da Pirâmide - Líder de Agência */}
-                <div className="flex flex-col items-center mb-8">
-                  <div className="text-center mb-4">
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                      {agencia.lider.nome_agencia || "Agência Sem Nome"}
-                    </h2>
-                    <p className="text-indigo-300 text-sm">Estrutura Organizacional</p>
-                  </div>
-                  
-                  <Card
-                    className={`bg-gradient-to-br from-purple-600 to-purple-800 p-6 w-72 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-2xl`}
-                    onClick={() => hasEditAccess && handleEditHierarchy(agencia.lider)}
-                  >
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <Building2 className="w-10 h-10 text-white" />
+        <div className="space-y-6">
+          {minhasAgencias.map(agencia => {
+            const unidadesDaAgencia = minhasUnidades.filter(u => u.agencia_id === agencia.id);
+            const usuariosDaAgencia = meusUsuarios.filter(u => u.agencia_id === agencia.id);
+            const liderAgencia = users.find(u => u.id === agencia.lider_agencia_id);
+
+            return (
+              <Card key={agencia.id} className="border-2 border-indigo-200">
+                <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-8 h-8 text-indigo-600" />
                       <div>
-                        <h3 className="font-bold text-white text-lg">{agencia.lider.full_name}</h3>
-                        <p className="text-white/80 text-sm">{agencia.lider.email}</p>
-                        <span className="inline-block text-xs bg-white/20 px-3 py-1 rounded-full text-white mt-2">
-                          Líder de Agência
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Nível 2 - Líderes de Unidade */}
-                {agencia.unidades.length > 0 && (
-                  <div className="flex justify-center gap-6 mb-6 flex-wrap">
-                    {agencia.unidades.map((unidade) => (
-                      <div key={unidade.lider.id} className="flex flex-col items-center">
-                        <Card
-                          className={`bg-gradient-to-br from-blue-600 to-blue-800 p-5 w-56 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-xl`}
-                          onClick={() => hasEditAccess && handleEditHierarchy(unidade.lider)}
-                        >
-                          <div className="flex flex-col items-center gap-2 text-center">
-                            <Shield className="w-8 h-8 text-white" />
-                            <div>
-                              <h4 className="font-bold text-white">{unidade.lider.full_name}</h4>
-                              <p className="text-white/80 text-xs">{unidade.lider.email}</p>
-                              <span className="inline-block text-xs bg-white/20 px-2 py-1 rounded-full text-white mt-1">
-                                Líder de Unidade
-                              </span>
-                            </div>
-                          </div>
-                        </Card>
-
-                        {/* Corretores desta unidade */}
-                        {unidade.corretores.length > 0 && (
-                          <div className="flex gap-3 mt-4 flex-wrap justify-center max-w-md">
-                            {unidade.corretores.map((corretor) => (
-                              <Card
-                                key={corretor.id}
-                                className={`bg-gradient-to-br from-green-600 to-green-800 p-3 w-40 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-lg`}
-                                onClick={() => hasEditAccess && handleEditHierarchy(corretor)}
-                              >
-                                <div className="flex flex-col items-center gap-1 text-center">
-                                  <User className="w-6 h-6 text-white" />
-                                  <div>
-                                    <p className="font-semibold text-white text-xs">{corretor.full_name}</p>
-                                    <p className="text-white/70 text-[10px]">{corretor.email}</p>
-                                  </div>
-                                </div>
-                              </Card>
-                            ))}
-                          </div>
+                        <CardTitle className="text-2xl text-indigo-900">{agencia.nome}</CardTitle>
+                        {agencia.descricao && (
+                          <p className="text-sm text-slate-600 mt-1">{agencia.descricao}</p>
+                        )}
+                        {liderAgencia && (
+                          <p className="text-sm text-indigo-600 mt-1 font-semibold">
+                            Líder: {liderAgencia.full_name || liderAgencia.email}
+                          </p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Corretores diretos do Líder de Agência */}
-                {agencia.corretoresDiretos.length > 0 && (
-                  <div className="flex gap-3 justify-center flex-wrap mt-6">
-                    {agencia.corretoresDiretos.map((corretor) => (
-                      <Card
-                        key={corretor.id}
-                        className={`bg-gradient-to-br from-green-600 to-green-800 p-3 w-40 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform shadow-lg`}
-                        onClick={() => hasEditAccess && handleEditHierarchy(corretor)}
-                      >
-                        <div className="flex flex-col items-center gap-1 text-center">
-                          <User className="w-6 h-6 text-white" />
-                          <div>
-                            <p className="font-semibold text-white text-xs">{corretor.full_name}</p>
-                            <p className="text-white/70 text-[10px]">{corretor.email}</p>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Usuários sem hierarquia */}
-            {usersWithoutHierarchy.length > 0 && (
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-                <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-400" />
-                  Usuários Sem Hierarquia - Clique para Definir
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {usersWithoutHierarchy.map(user => (
-                    <Card
-                      key={user.id}
-                      className={`bg-gradient-to-br from-gray-500 to-gray-700 p-4 ${hasEditAccess ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
-                      onClick={() => hasEditAccess && handleEditHierarchy(user)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Users className="w-8 h-8 text-white" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-white text-sm truncate">{user.full_name}</p>
-                          <p className="text-white/80 text-xs truncate">{user.email}</p>
-                          <p className="text-yellow-300 text-xs mt-1">Clique para definir</p>
-                        </div>
+                    </div>
+                    {podeEditarHierarquia && agencia.lider_agencia_id === currentUser?.id && (
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleCreateUnidade(agencia.id)}>
+                          <Plus className="w-4 h-4 mr-1" />
+                          Unidade
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEditAgencia(agencia)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm(`Deletar agência ${agencia.nome}?`)) {
+                              deleteAgenciaMutation.mutate(agencia.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Dialog de Edição */}
-        <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-          <DialogContent className="bg-slate-900 border-white/20">
-            <DialogHeader>
-              <DialogTitle className="text-white">Editar Hierarquia</DialogTitle>
-            </DialogHeader>
-            {editingUser && (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-white font-semibold">{editingUser.full_name}</p>
-                  <p className="text-gray-400 text-sm">{editingUser.email}</p>
-                </div>
-
-                <div>
-                  <Label className="text-white">Tipo Hierárquico</Label>
-                  <Select value={selectedHierarchy} onValueChange={setSelectedHierarchy}>
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Líder de Agência">Líder de Agência</SelectItem>
-                      <SelectItem value="Líder de Unidade">Líder de Unidade</SelectItem>
-                      <SelectItem value="Corretor">Corretor</SelectItem>
-                      <SelectItem value="Sem Hierarquia">Sem Hierarquia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedHierarchy === "Líder de Agência" && (
-                  <div>
-                    <Label className="text-white">Nome da Agência</Label>
-                    <Input
-                      value={nomeAgencia}
-                      onChange={(e) => setNomeAgencia(e.target.value)}
-                      placeholder="Ex: Agência São Paulo"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    />
+                    )}
                   </div>
-                )}
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {unidadesDaAgencia.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {unidadesDaAgencia.map(unidade => {
+                        const usuariosDaUnidade = usuariosDaAgencia.filter(u => u.unidade_id === unidade.id);
+                        const liderUnidade = users.find(u => u.id === unidade.lider_unidade_id);
 
-                {(selectedHierarchy === "Líder de Unidade" || selectedHierarchy === "Corretor") && (
-                  <div>
-                    <Label className="text-white">
-                      {selectedHierarchy === "Líder de Unidade" ? "Líder de Agência" : "Líder (Agência ou Unidade)"}
-                    </Label>
-                    <Select value={selectedLeader} onValueChange={setSelectedLeader}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue placeholder="Selecione o líder" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableLeaders.map(leader => (
-                          <SelectItem key={leader.id} value={leader.id}>
-                            {leader.full_name} - {leader.tipo_hierarquia}
-                          </SelectItem>
+                        return (
+                          <Card key={unidade.id} className="border border-purple-200 bg-purple-50/50">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-2">
+                                  <Users className="w-5 h-5 text-purple-600 mt-1" />
+                                  <div>
+                                    <CardTitle className="text-lg text-purple-900">{unidade.nome}</CardTitle>
+                                    {unidade.descricao && (
+                                      <p className="text-xs text-slate-600 mt-1">{unidade.descricao}</p>
+                                    )}
+                                    {liderUnidade && (
+                                      <p className="text-xs text-purple-700 mt-1 font-semibold">
+                                        Líder: {liderUnidade.full_name || liderUnidade.email}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                {podeEditarHierarquia && (
+                                  <div className="flex gap-1">
+                                    <Button size="sm" variant="ghost" onClick={() => handleEditUnidade(unidade)}>
+                                      <Edit className="w-3 h-3" />
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      className="text-red-600"
+                                      onClick={() => {
+                                        if (confirm(`Deletar unidade ${unidade.nome}?`)) {
+                                          deleteUnidadeMutation.mutate(unidade.id);
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2">
+                                {usuariosDaUnidade.length > 0 ? (
+                                  usuariosDaUnidade.map(usuario => (
+                                    <div key={usuario.id} className="flex items-center gap-2 text-sm bg-white p-2 rounded-lg">
+                                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
+                                        {usuario.full_name?.charAt(0) || usuario.email?.charAt(0)}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-slate-800">{usuario.full_name || usuario.email}</p>
+                                        <p className="text-xs text-slate-500">{usuario.tipo_hierarquia || "Corretor"}</p>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-xs text-slate-500 italic">Nenhum corretor</p>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-slate-500">
+                      <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Nenhuma unidade criada</p>
+                      {podeEditarHierarquia && (
+                        <Button 
+                          size="sm" 
+                          className="mt-4" 
+                          onClick={() => handleCreateUnidade(agencia.id)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Criar Primeira Unidade
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Corretores diretos da agência (sem unidade) */}
+                  {usuariosDaAgencia.filter(u => !u.unidade_id && u.tipo_hierarquia === "Corretor").length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-slate-200">
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3">Corretores Diretos</h4>
+                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                        {usuariosDaAgencia.filter(u => !u.unidade_id && u.tipo_hierarquia === "Corretor").map(usuario => (
+                          <div key={usuario.id} className="flex items-center gap-2 text-sm bg-slate-50 p-2 rounded-lg">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
+                              {usuario.full_name?.charAt(0) || usuario.email?.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-800">{usuario.full_name || usuario.email}</p>
+                              <p className="text-xs text-slate-500">Corretor</p>
+                            </div>
+                          </div>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => setEditingUser(null)}
-                    variant="outline"
-                    className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  >
-                    Cancelar
+          {minhasAgencias.length === 0 && (
+            <Card className="border-2 border-dashed border-slate-300">
+              <CardContent className="text-center py-12">
+                <Building2 className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">Nenhuma agência encontrada</h3>
+                <p className="text-slate-500 mb-4">Crie sua primeira agência para começar</p>
+                {podeEditarHierarquia && (
+                  <Button onClick={handleCreateAgencia} className="bg-indigo-600 hover:bg-indigo-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Agência
                   </Button>
-                  <Button
-                    onClick={handleSaveHierarchy}
-                    disabled={updateUserMutation.isPending}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                  >
-                    Salvar
-                  </Button>
-                </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Dialog Agência */}
+      <Dialog open={showAgenciaDialog} onOpenChange={setShowAgenciaDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingAgencia ? "Editar Agência" : "Nova Agência"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (editingAgencia) {
+              updateAgenciaMutation.mutate({ id: editingAgencia.id, data: agenciaForm });
+            } else {
+              createAgenciaMutation.mutate(agenciaForm);
+            }
+          }} className="space-y-4">
+            <div>
+              <Label>Nome da Agência *</Label>
+              <Input
+                value={agenciaForm.nome}
+                onChange={(e) => setAgenciaForm({ ...agenciaForm, nome: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>Descrição</Label>
+              <Textarea
+                value={agenciaForm.descricao}
+                onChange={(e) => setAgenciaForm({ ...agenciaForm, descricao: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowAgenciaDialog(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {editingAgencia ? "Salvar" : "Criar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Unidade */}
+      <Dialog open={showUnidadeDialog} onOpenChange={setShowUnidadeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingUnidade ? "Editar Unidade" : "Nova Unidade"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (editingUnidade) {
+              updateUnidadeMutation.mutate({ id: editingUnidade.id, data: unidadeForm });
+            } else {
+              createUnidadeMutation.mutate(unidadeForm);
+            }
+          }} className="space-y-4">
+            {currentUser?.role === "admin" && (
+              <div>
+                <Label>Agência *</Label>
+                <Select
+                  value={unidadeForm.agencia_id}
+                  onValueChange={(value) => setUnidadeForm({ ...unidadeForm, agencia_id: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a agência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minhasAgencias.map(agencia => (
+                      <SelectItem key={agencia.id} value={agencia.id}>
+                        {agencia.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Reset */}
-        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-          <AlertDialogContent className="bg-slate-900 border-white/20">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">Resetar Todas as Hierarquias?</AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-300">
-                Esta ação irá remover todas as hierarquias de todos os usuários (exceto admins).
-                Todos os usuários ficarão como "Sem Hierarquia". Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+            <div>
+              <Label>Nome da Unidade *</Label>
+              <Input
+                value={unidadeForm.nome}
+                onChange={(e) => setUnidadeForm({ ...unidadeForm, nome: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>Descrição</Label>
+              <Textarea
+                value={unidadeForm.descricao}
+                onChange={(e) => setUnidadeForm({ ...unidadeForm, descricao: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowUnidadeDialog(false)}>
                 Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => resetAllHierarchiesMutation.mutate()}
-                className="bg-red-600 hover:bg-red-700"
+              </Button>
+              <Button type="submit">
+                {editingUnidade ? "Salvar" : "Criar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Convidar Usuário */}
+      <Dialog open={showUsuarioDialog} onOpenChange={setShowUsuarioDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar Usuário</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            inviteUsuarioMutation.mutate(usuarioForm);
+          }} className="space-y-4">
+            <div>
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={usuarioForm.email}
+                onChange={(e) => setUsuarioForm({ ...usuarioForm, email: e.target.value })}
+                placeholder="usuario@exemplo.com"
+                required
+              />
+            </div>
+            <div>
+              <Label>Função *</Label>
+              <Select
+                value={usuarioForm.tipo}
+                onValueChange={(value) => setUsuarioForm({ ...usuarioForm, tipo: value })}
+                required
               >
-                Resetar Tudo
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currentUser?.role === "admin" && (
+                    <SelectItem value="Líder de Agência">Líder de Agência</SelectItem>
+                  )}
+                  {(currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") && (
+                    <SelectItem value="Líder de Unidade">Líder de Unidade</SelectItem>
+                  )}
+                  <SelectItem value="Corretor">Corretor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {usuarioForm.tipo && usuarioForm.tipo !== "Líder de Agência" && (
+              <div>
+                <Label>Agência *</Label>
+                <Select
+                  value={usuarioForm.agencia_id}
+                  onValueChange={(value) => {
+                    setUsuarioForm({ ...usuarioForm, agencia_id: value, unidade_id: "" });
+                    setSelectedAgenciaForUnidade(value);
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a agência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minhasAgencias.map(agencia => (
+                      <SelectItem key={agencia.id} value={agencia.id}>
+                        {agencia.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {usuarioForm.tipo === "Corretor" && usuarioForm.agencia_id && (
+              <div>
+                <Label>Unidade (Opcional)</Label>
+                <Select
+                  value={usuarioForm.unidade_id}
+                  onValueChange={(value) => setUsuarioForm({ ...usuarioForm, unidade_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a unidade ou deixe em branco" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Sem unidade (vínculo direto à agência)</SelectItem>
+                    {minhasUnidades
+                      .filter(u => u.agencia_id === usuarioForm.agencia_id)
+                      .map(unidade => (
+                        <SelectItem key={unidade.id} value={unidade.id}>
+                          {unidade.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {usuarioForm.tipo === "Líder de Unidade" && usuarioForm.agencia_id && (
+              <div>
+                <Label>Unidade *</Label>
+                <Select
+                  value={usuarioForm.unidade_id}
+                  onValueChange={(value) => setUsuarioForm({ ...usuarioForm, unidade_id: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minhasUnidades
+                      .filter(u => u.agencia_id === usuarioForm.agencia_id)
+                      .map(unidade => (
+                        <SelectItem key={unidade.id} value={unidade.id}>
+                          {unidade.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setShowUsuarioDialog(false);
+                  setUsuarioForm({ email: "", tipo: "", agencia_id: "", unidade_id: "" });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={inviteUsuarioMutation.isPending}>
+                {inviteUsuarioMutation.isPending ? "Enviando..." : "Convidar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

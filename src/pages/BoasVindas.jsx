@@ -1,7 +1,12 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Shield, 
   Target, 
@@ -46,6 +51,40 @@ import {
 
 export default function BoasVindas() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [selectedHierarchy, setSelectedHierarchy] = useState("");
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => base44.auth.me()
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data) => base44.auth.updateMe(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      setShowProfileDialog(false);
+      navigate(createPageUrl("Leads"));
+    }
+  });
+
+  const handleStartClick = () => {
+    // Verificar se usuário já tem hierarquia definida
+    if (currentUser?.tipo_hierarquia && currentUser.tipo_hierarquia !== "Sem Hierarquia") {
+      navigate(createPageUrl("Leads"));
+    } else {
+      setShowProfileDialog(true);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    if (selectedHierarchy) {
+      updateProfileMutation.mutate({
+        tipo_hierarquia: selectedHierarchy
+      });
+    }
+  };
 
   const features = [
     {
@@ -473,7 +512,7 @@ export default function BoasVindas() {
             whileTap={{ scale: 0.95 }}
           >
             <Button
-              onClick={() => navigate(createPageUrl("Leads"))}
+              onClick={handleStartClick}
               size="lg"
               className="relative bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:from-cyan-400 hover:via-blue-400 hover:to-purple-500 text-white font-black px-20 py-10 text-3xl shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 rounded-3xl group overflow-hidden"
             >
@@ -519,6 +558,93 @@ export default function BoasVindas() {
             </div>
           </motion.div>
         </motion.div>
+
+        {/* Dialog de Seleção de Perfil */}
+        <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+          <DialogContent className="bg-slate-900 border-white/20">
+            <DialogHeader>
+              <DialogTitle className="text-white text-2xl">Defina seu Perfil</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-gray-300">
+                Selecione o tipo de usuário que melhor descreve seu papel na equipe:
+              </p>
+
+              <div className="space-y-3">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => setSelectedHierarchy("Líder de Agência")}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedHierarchy === "Líder de Agência"
+                      ? "border-purple-500 bg-purple-500/20"
+                      : "border-white/20 bg-white/5 hover:border-white/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Building2 className="w-8 h-8 text-purple-400" />
+                    <div>
+                      <h3 className="text-white font-bold">Líder de Agência</h3>
+                      <p className="text-gray-400 text-sm">Gerencia uma agência completa e suas unidades</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => setSelectedHierarchy("Líder de Unidade")}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedHierarchy === "Líder de Unidade"
+                      ? "border-blue-500 bg-blue-500/20"
+                      : "border-white/20 bg-white/5 hover:border-white/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-8 h-8 text-blue-400" />
+                    <div>
+                      <h3 className="text-white font-bold">Líder de Unidade</h3>
+                      <p className="text-gray-400 text-sm">Gerencia uma unidade e seus corretores</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => setSelectedHierarchy("Corretor")}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedHierarchy === "Corretor"
+                      ? "border-green-500 bg-green-500/20"
+                      : "border-white/20 bg-white/5 hover:border-white/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <User className="w-8 h-8 text-green-400" />
+                    <div>
+                      <h3 className="text-white font-bold">Corretor</h3>
+                      <p className="text-gray-400 text-sm">Atua diretamente na venda de seguros</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => setShowProfileDialog(false)}
+                  variant="outline"
+                  className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={!selectedHierarchy || updateProfileMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                >
+                  {updateProfileMutation.isPending ? "Salvando..." : "Confirmar e Começar"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

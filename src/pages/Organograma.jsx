@@ -167,7 +167,7 @@ export default function Organograma() {
                 <p className="text-indigo-300">Gerencie a hierarquia e estrutura organizacional</p>
               </div>
             </div>
-            {hasEditAccess && (
+            {isAdmin && (
               <Button 
                 onClick={() => setShowResetDialog(true)}
                 variant="destructive"

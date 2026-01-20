@@ -58,6 +58,16 @@ export default function Organograma() {
     }
   });
 
+  const isLoading = isLoadingUser || isLoadingUsers;
+
+  if (!currentUser || isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
+    );
+  }
+
   const hasEditAccess = currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência";
   const hasViewAccess = hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade";
   
@@ -142,16 +152,6 @@ export default function Organograma() {
     return [];
   }, [selectedHierarchy, users]);
 
-  const isLoading = isLoadingUser || isLoadingUsers;
-
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
-        <div className="text-white text-xl">Carregando...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
       <div className="max-w-[1800px] mx-auto">
@@ -189,8 +189,6 @@ export default function Organograma() {
               </p>
             </div>
           </div>
-        ) : isLoading ? (
-          <div className="text-white text-center py-12">Carregando organograma...</div>
         ) : (
           <div className="space-y-8">
             {/* Agências - Estrutura Piramidal */}

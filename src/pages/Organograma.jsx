@@ -125,8 +125,9 @@ export default function Organograma() {
     );
   }
 
-  const hasEditAccess = currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência";
-  const hasViewAccess = hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade";
+  const hasEditAccess = currentUser.tipo_hierarquia === "Líder de Agência" || currentUser.tipo_hierarquia === "Líder de Unidade";
+  const hasViewAccess = true; // Todos podem visualizar
+  const isAdmin = currentUser.role === "admin";
 
   const handleEditHierarchy = (userData) => {
     setEditingUser(userData);

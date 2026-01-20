@@ -60,20 +60,81 @@ export default function Organograma() {
 
   const visibleUsers = React.useMemo(() => {
     if (!currentUser) return [];
-    if (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência") {
+    
+    // Admin vê todos
+    if (currentUser.role === "admin") {
       return users;
     }
+    
+    // Líder de Agência vê todos
+    if (currentUser.tipo_hierarquia === "Líder de Agência") {
+      return users;
+    }
+    
+    // Líder de Unidade vê: seu líder de agência + todos subordinados da agência
     if (currentUser.tipo_hierarquia === "Líder de Unidade") {
-      return users;
+      return users.filter(u => {
+        // Ver a si mesmo
+        if (u.id === currentUser.id) return true;
+        
+        // Ver o Líder de Agência acima dele
+        if (currentUser.lider_id && u.id === currentUser.lider_id) return true;
+        if (currentUser.lider_email && u.email === currentUser.lider_email) return true;
+        
+        // Ver seus subordinados diretos (corretores)
+        if (u.lider_id === currentUser.id || u.lider_email === currentUser.email) return true;
+        
+        // Ver outros Líderes de Unidade da mesma agência
+        if (u.tipo_hierarquia === "Líder de Unidade" && currentUser.lider_id && u.lider_id === currentUser.lider_id) return true;
+        
+        // Ver corretores de outros Líderes de Unidade da mesma agência
+        const outrosLideresUnidade = users.filter(lu => 
+          lu.tipo_hierarquia === "Líder de Unidade" && 
+          currentUser.lider_id && 
+          lu.lider_id === currentUser.lider_id
+        );
+        const outrosLideresIds = outrosLideresUnidade.map(lu => lu.id);
+        if (outrosLideresIds.includes(u.lider_id)) return true;
+        
+        return false;
+      });
     }
-    const result = users.filter(u => {
-      if (u.id === currentUser.id) return true;
-      if (u.lider_id === currentUser.id) return true;
-      if (u.lider_email === currentUser.email) return true;
-      if (currentUser.lider_id && u.id === currentUser.lider_id) return true;
-      return false;
-    });
-    return result.length > 0 ? result : [currentUser];
+    
+    // Corretor vê: sua hierarquia completa (seu líder + líder do líder + colegas)
+    if (currentUser.tipo_hierarquia === "Corretor") {
+      return users.filter(u => {
+        // Ver a si mesmo
+        if (u.id === currentUser.id) return true;
+        
+        // Ver seu líder direto (Líder de Unidade ou Líder de Agência)
+        if (currentUser.lider_id && u.id === currentUser.lider_id) return true;
+        if (currentUser.lider_email && u.email === currentUser.lider_email) return true;
+        
+        // Ver colegas corretores do mesmo líder
+        if (u.tipo_hierarquia === "Corretor" && currentUser.lider_id && u.lider_id === currentUser.lider_id) return true;
+        
+        // Se está vinculado a um Líder de Unidade, ver o Líder de Agência acima
+        const seuLider = users.find(l => l.id === currentUser.lider_id);
+        if (seuLider?.tipo_hierarquia === "Líder de Unidade" && seuLider.lider_id && u.id === seuLider.lider_id) return true;
+        
+        // Ver outros Líderes de Unidade da mesma agência
+        if (seuLider?.tipo_hierarquia === "Líder de Unidade" && u.tipo_hierarquia === "Líder de Unidade" && seuLider.lider_id && u.lider_id === seuLider.lider_id) return true;
+        
+        // Ver corretores de outros Líderes de Unidade da mesma agência
+        const lideresUnidadeMesmaAgencia = users.filter(lu => 
+          lu.tipo_hierarquia === "Líder de Unidade" && 
+          seuLider?.lider_id && 
+          lu.lider_id === seuLider.lider_id
+        );
+        const lideresUnidadeIds = lideresUnidadeMesmaAgencia.map(lu => lu.id);
+        if (u.tipo_hierarquia === "Corretor" && lideresUnidadeIds.includes(u.lider_id)) return true;
+        
+        return false;
+      });
+    }
+    
+    // Usuários sem hierarquia veem apenas a si mesmos
+    return [currentUser];
   }, [users, currentUser]);
 
   const organizedAgencies = React.useMemo(() => {

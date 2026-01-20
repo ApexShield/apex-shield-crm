@@ -58,20 +58,8 @@ export default function Organograma() {
     }
   });
 
-  const isLoading = isLoadingUser || isLoadingUsers;
-
-  if (!currentUser || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
-        <div className="text-white text-xl">Carregando...</div>
-      </div>
-    );
-  }
-
-  const hasEditAccess = currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência";
-  const hasViewAccess = hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade";
-  
   const visibleUsers = React.useMemo(() => {
+    if (!currentUser) return [];
     if (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência") {
       return users;
     }
@@ -110,11 +98,35 @@ export default function Organograma() {
   }, [visibleUsers]);
 
   const usersWithoutHierarchy = React.useMemo(() => {
-    // Mostrar todos os usuários sem hierarquia definida (incluindo admins para o admin ver)
     return visibleUsers.filter(u => 
       !u.tipo_hierarquia || u.tipo_hierarquia === "Sem Hierarquia"
     );
   }, [visibleUsers]);
+
+  const availableLeaders = React.useMemo(() => {
+    if (selectedHierarchy === "Líder de Unidade") {
+      return users.filter(u => u.tipo_hierarquia === "Líder de Agência");
+    } else if (selectedHierarchy === "Corretor") {
+      return users.filter(u => 
+        u.tipo_hierarquia === "Líder de Unidade" || 
+        u.tipo_hierarquia === "Líder de Agência"
+      );
+    }
+    return [];
+  }, [selectedHierarchy, users]);
+
+  const isLoading = isLoadingUser || isLoadingUsers;
+
+  if (!currentUser || isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando...</div>
+      </div>
+    );
+  }
+
+  const hasEditAccess = currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência";
+  const hasViewAccess = hasEditAccess || currentUser.tipo_hierarquia === "Líder de Unidade";
 
   const handleEditHierarchy = (userData) => {
     setEditingUser(userData);
@@ -139,18 +151,6 @@ export default function Organograma() {
 
     updateUserMutation.mutate({ id: editingUser.id, data: updateData });
   };
-
-  const availableLeaders = React.useMemo(() => {
-    if (selectedHierarchy === "Líder de Unidade") {
-      return users.filter(u => u.tipo_hierarquia === "Líder de Agência");
-    } else if (selectedHierarchy === "Corretor") {
-      return users.filter(u => 
-        u.tipo_hierarquia === "Líder de Unidade" || 
-        u.tipo_hierarquia === "Líder de Agência"
-      );
-    }
-    return [];
-  }, [selectedHierarchy, users]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">

@@ -89,9 +89,34 @@ export default function Leads() {
       return allClientes;
     }
     
-    // Líder de Agência vê todos
+    // Líder de Agência vê leads de todos da sua hierarquia
     if (user.tipo_hierarquia === "Líder de Agência") {
-      return allClientes;
+      // Encontrar todos os subordinados (Líderes de Unidade e Corretores vinculados à agência)
+      const subordinadosEmails = allUsers
+        .filter(u => {
+          // Líder de Unidade diretamente vinculado ao Líder de Agência
+          if (u.lider_id === user.id || u.lider_email === user.email) return true;
+          
+          // Corretores vinculados aos Líderes de Unidade da agência
+          const lideresUnidade = allUsers.filter(lu => 
+            lu.tipo_hierarquia === "Líder de Unidade" && 
+            (lu.lider_id === user.id || lu.lider_email === user.email)
+          );
+          const lideresUnidadeIds = lideresUnidade.map(lu => lu.id);
+          const lideresUnidadeEmails = lideresUnidade.map(lu => lu.email);
+          
+          if (lideresUnidadeIds.includes(u.lider_id) || lideresUnidadeEmails.includes(u.lider_email)) {
+            return true;
+          }
+          
+          return false;
+        })
+        .map(u => u.email);
+      
+      return allClientes.filter(c => 
+        c.created_by === user.email || 
+        subordinadosEmails.includes(c.created_by)
+      );
     }
     
     // Líder de Unidade vê seus leads + leads de seus subordinados

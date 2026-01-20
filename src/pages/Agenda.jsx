@@ -51,7 +51,7 @@ export default function Agenda() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência"
+    enabled: !!user && (user.role === "admin" || user.tipo_hierarquia === "Líder de Unidade" || user.tipo_hierarquia === "Líder de Agência")
   });
 
   // Filtrar usuários que podem ser visualizados baseado na hierarquia

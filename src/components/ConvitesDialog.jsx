@@ -32,6 +32,7 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
         const unidades = await base44.entities.Unidade.list();
         const agencia = agencias.find(a => a.id === convite.agencia_id);
         const unidade = unidades.find(u => u.id === convite.unidade_id);
+        const me = await base44.auth.me();
 
         // Preparar dados para atualização do usuário
         const updateData = {
@@ -50,7 +51,6 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
           
           // Atualizar unidade com o líder
           if (unidade) {
-            const me = await base44.auth.me();
             await base44.entities.Unidade.update(unidade.id, {
               lider_unidade_id: me.id,
               lider_unidade_email: me.email,
@@ -71,13 +71,27 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
 
         // Atualizar usuário atual
         await base44.auth.updateMe(updateData);
+        
+        // Se for Líder de Unidade ou Admin, atualizar role
+        if (convite.tipo_hierarquia === "Líder de Unidade" || convite.tipo_hierarquia === "Líder de Agência") {
+          const allUsers = await base44.entities.User.list();
+          const userToUpdate = allUsers.find(u => u.email === me.email);
+          if (userToUpdate && userToUpdate.role !== "admin") {
+            await base44.entities.User.update(userToUpdate.id, { role: "admin" });
+          }
+        }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, { aceitar }) => {
       queryClient.invalidateQueries({ queryKey: ["convites"] });
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["unidades"] });
+      
+      if (aceitar) {
+        alert("Convite aceito com sucesso! Sua hierarquia foi atualizada.");
+        window.location.reload();
+      }
     }
   });
 

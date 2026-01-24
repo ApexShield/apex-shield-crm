@@ -181,7 +181,7 @@ export default function Organograma() {
       const agencia = agencias.find(a => a.id === data.agencia_id);
       const unidade = unidades.find(u => u.id === data.unidade_id);
       
-      // Criar convite na base de dados
+      // Criar convite na base de dados primeiro
       const conviteData = {
         email_convidado: data.email,
         tipo_hierarquia: data.tipo,
@@ -197,9 +197,13 @@ export default function Organograma() {
       
       await base44.entities.ConviteHierarquia.create(conviteData);
       
-      // Enviar email de convite
-      const role = data.tipo === "Líder de Agência" || data.tipo === "Líder de Unidade" ? "admin" : "user";
-      await base44.users.inviteUser(data.email, role);
+      // Enviar email de convite (sempre como 'user' primeiro)
+      try {
+        await base44.users.inviteUser(data.email, "user");
+      } catch (error) {
+        // Se o usuário já existe, não precisa convidar novamente
+        console.log("Usuário já existe ou convite já enviado:", error);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -207,7 +211,7 @@ export default function Organograma() {
       queryClient.invalidateQueries({ queryKey: ["convites"] });
       setShowUsuarioDialog(false);
       setUsuarioForm({ email: "", tipo: "", agencia_id: "", unidade_id: "" });
-      alert("Convite enviado com sucesso! O usuário receberá um email e poderá aceitar o convite ao fazer login.");
+      alert("Convite enviado com sucesso! O usuário receberá um email e verá o convite ao fazer login.");
     }
   });
 

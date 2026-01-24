@@ -83,22 +83,47 @@ export default function Leads() {
     enabled: !!user
   });
 
-  // Usuários visíveis para filtro
+  // Usuários subordinados - baseado na nova hierarquia
   const usuariosVisiveis = useMemo(() => {
     if (!user || !allUsers.length) return [];
     
-    if (user.tipo_hierarquia === "Líder de Agência") {
-      // Líder de Agência vê todos da sua agência
-      return allUsers.filter(u => u.agencia_id === user.agencia_id && u.email !== user.email);
+    // Admin vê todos
+    if (user.role === "admin") {
+      return allUsers.filter(u => u.id !== user.id);
     }
     
+    // Líder de Agência vê todos da hierarquia
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      const subordinados = allUsers.filter(u => {
+        if (u.id === user.id) return false;
+        
+        // Líder de Unidade diretamente vinculado
+        if (u.lider_id === user.id || u.lider_email === user.email) return true;
+        
+        // Corretores vinculados aos Líderes de Unidade
+        const lideresUnidade = allUsers.filter(lu => 
+          lu.tipo_hierarquia === "Líder de Unidade" && 
+          (lu.lider_id === user.id || lu.lider_email === user.email)
+        );
+        const lideresUnidadeIds = lideresUnidade.map(lu => lu.id);
+        const lideresUnidadeEmails = lideresUnidade.map(lu => lu.email);
+        
+        if (lideresUnidadeIds.includes(u.lider_id) || lideresUnidadeEmails.includes(u.lider_email)) {
+          return true;
+        }
+        
+        return false;
+      });
+      
+      return subordinados;
+    }
+    
+    // Líder de Unidade vê seus subordinados diretos
     if (user.tipo_hierarquia === "Líder de Unidade") {
-      // Líder de Unidade vê apenas corretores da sua unidade
-      return allUsers.filter(u => 
-        u.unidade_id === user.unidade_id &&
-        u.tipo_hierarquia === "Corretor" &&
-        (u.lider_email === user.email || u.lider_id === user.id)
-      );
+      return allUsers.filter(u => {
+        if (u.id === user.id) return false;
+        return u.lider_email === user.email || u.lider_id === user.id;
+      });
     }
     
     return [];
@@ -114,20 +139,19 @@ export default function Leads() {
     if (user.role === "admin") {
       leadsFiltrados = allClientes;
     }
-    // Líder de Agência vê leads de todos da sua agência
-    else if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
-      const usuariosDaAgencia = allUsers.filter(u => u.agencia_id === user.agencia_id);
-      const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
-      leadsFiltrados = allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
-    }
-    // Líder de Unidade vê leads de sua unidade
-    else if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
-      const usuariosDaUnidade = allUsers.filter(u => 
-        u.unidade_id === user.unidade_id &&
-        (u.lider_email === user.email || u.lider_id === user.id || u.email === user.email)
+    // Líder de Agência vê leads de todos da hierarquia
+    else if (user.tipo_hierarquia === "Líder de Agência") {
+      const emailsSubordinados = usuariosVisiveis.map(u => u.email);
+      leadsFiltrados = allClientes.filter(c => 
+        c.created_by === user.email || emailsSubordinados.includes(c.created_by)
       );
-      const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
-      leadsFiltrados = allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
+    }
+    // Líder de Unidade vê leads seus e dos subordinados diretos
+    else if (user.tipo_hierarquia === "Líder de Unidade") {
+      const emailsSubordinados = usuariosVisiveis.map(u => u.email);
+      leadsFiltrados = allClientes.filter(c => 
+        c.created_by === user.email || emailsSubordinados.includes(c.created_by)
+      );
     }
     // Corretores veem apenas seus próprios leads
     else {
@@ -140,7 +164,7 @@ export default function Leads() {
     }
     
     return leadsFiltrados;
-  }, [allClientes, user, allUsers, usuarioFiltro]);
+  }, [allClientes, user, allUsers, usuarioFiltro, usuariosVisiveis]);
 
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {
@@ -292,22 +316,32 @@ export default function Leads() {
                 <p className="text-indigo-300">Gerencie seus clientes e oportunidades</p>
               </div>
             </div>
-            {(user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
-              <Select value={usuarioFiltro} onValueChange={setUsuarioFiltro}>
-                <SelectTrigger className="w-[280px] bg-gradient-to-r from-indigo-500 to-purple-600 border-2 border-white/30 text-white font-bold shadow-lg">
-                  <SelectValue placeholder="👥 Filtrar por usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos" className="font-bold">
-                    📊 Todos os usuários
-                  </SelectItem>
-                  {usuariosVisiveis.map(u => (
-                    <SelectItem key={u.id} value={u.email}>
-                      👤 {u.full_name || u.email}
+            {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
+              <div className="w-[280px]">
+                <Select value={usuarioFiltro} onValueChange={setUsuarioFiltro}>
+                  <SelectTrigger className="bg-gradient-to-r from-indigo-500 to-purple-600 border-2 border-white/30 text-white font-bold shadow-lg">
+                    <SelectValue placeholder="Filtrar por corretor" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gradient-to-br from-indigo-600 to-purple-700 border-indigo-400/50">
+                    <SelectItem value="todos" className="text-white hover:bg-white/20 font-bold">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Todos os corretores
+                      </div>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    {usuariosVisiveis.map(u => (
+                      <SelectItem key={u.id} value={u.email} className="text-white hover:bg-white/20">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-semibold">
+                            {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                          </div>
+                          <span className="font-medium">{u.full_name || u.email}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
         </div>

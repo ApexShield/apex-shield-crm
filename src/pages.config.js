@@ -5,6 +5,7 @@ import GestaoCustos from './pages/GestaoCustos';
 import GestaoUsuarios from './pages/GestaoUsuarios';
 import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
+import CalculadoraRapida from './pages/CalculadoraRapida';
 import __Layout from './Layout.jsx';
 
 
@@ -16,6 +17,7 @@ export const PAGES = {
     "GestaoUsuarios": GestaoUsuarios,
     "Leads": Leads,
     "Organograma": Organograma,
+    "CalculadoraRapida": CalculadoraRapida,
 }
 
 export const pagesConfig = {

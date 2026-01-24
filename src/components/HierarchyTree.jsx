@@ -23,7 +23,11 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
         const isExpanded = expandedAgencias[agencia.id];
 
         return (
-          <Card key={agencia.id} className="bg-white/5 border-white/10 p-4">
+          <Card key={agencia.id} className="bg-white/5 border-white/10 p-4 relative">
+            {/* Linha de conexão vertical */}
+            {isExpanded && unidadesDaAgencia.length > 0 && (
+              <div className="absolute left-8 top-20 bottom-0 w-1 bg-gradient-to-b from-purple-500/60 to-transparent" />
+            )}
             {/* Agência */}
             <div 
               className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-3 rounded-lg transition-all"
@@ -72,7 +76,14 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
                     const isUnidadeExpanded = expandedUnidades[unidade.id];
 
                     return (
-                      <Card key={unidade.id} className="bg-white/5 border-blue-500/30 p-3">
+                      <Card key={unidade.id} className="bg-white/5 border-blue-500/30 p-3 relative">
+                        {/* Linha horizontal de conexão */}
+                        <div className="absolute left-0 top-6 w-4 h-1 bg-purple-500/60 -ml-4" />
+                        
+                        {/* Linha vertical para corretores */}
+                        {isUnidadeExpanded && corretoresDaUnidade.length > 0 && (
+                          <div className="absolute left-6 top-20 bottom-0 w-1 bg-gradient-to-b from-blue-500/60 to-transparent" />
+                        )}
                         {/* Unidade */}
                         <div 
                           className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-all"
@@ -97,12 +108,28 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg">
-                              <span className="text-blue-300 font-semibold text-xs">👤 Líder de Unidade:</span>
-                              <span className="text-white font-bold text-xs">{liderUnidade?.full_name || unidade.lider_unidade_nome || "Sem líder"}</span>
-                            </div>
                           </div>
                         </div>
+
+                        {/* Líder da Unidade */}
+                        {liderUnidade && (
+                          <div className="ml-6 mt-3 mb-2">
+                            <div className="flex items-center gap-3 p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg relative">
+                              {/* Linha horizontal de conexão */}
+                              <div className="absolute left-0 top-5 w-4 h-1 bg-blue-500/60 -ml-4" />
+                              
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <User className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-blue-300 text-xs font-semibold">👤 Líder de Unidade:</span>
+                                  <span className="text-white text-sm font-bold">{liderUnidade.full_name || liderUnidade.email}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Corretores da Unidade */}
                         <AnimatePresence>
@@ -113,11 +140,14 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
                               exit={{ height: 0, opacity: 0 }}
                               className="ml-6 mt-2 space-y-2"
                             >
-                              {corretoresDaUnidade.map(corretor => (
+                              {corretoresDaUnidade.map((corretor, idx) => (
                                 <div 
                                   key={corretor.id}
-                                  className="flex items-center gap-3 p-2.5 bg-white/5 border border-green-500/20 rounded-lg hover:bg-white/10 hover:border-green-500/40 transition-all"
+                                  className="flex items-center gap-3 p-2.5 bg-white/5 border border-green-500/20 rounded-lg hover:bg-white/10 hover:border-green-500/40 transition-all relative"
                                 >
+                                  {/* Linha horizontal de conexão */}
+                                  <div className="absolute left-0 top-5 w-4 h-1 bg-blue-500/60 -ml-4" />
+                                  
                                   <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <User className="w-4 h-4 text-white" />
                                   </div>

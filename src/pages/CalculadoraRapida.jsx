@@ -422,7 +422,11 @@ export default function CalculadoraRapida() {
                 <Label className="text-white">Renda Mensal (R$)</Label>
                 <Input
                   value={formData.renda_mensal}
-                  onChange={(e) => setFormData({ ...formData, renda_mensal: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    const formatted = value ? `R$ ${parseInt(value).toLocaleString('pt-BR')}` : '';
+                    setFormData({ ...formData, renda_mensal: formatted });
+                  }}
                   className="bg-white/10 border-white/20 text-white"
                   placeholder="R$ 35.000"
                 />
@@ -431,7 +435,11 @@ export default function CalculadoraRapida() {
                 <Label className="text-white">Gastos Mensais (R$)</Label>
                 <Input
                   value={formData.gastos_mensais}
-                  onChange={(e) => setFormData({ ...formData, gastos_mensais: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    const formatted = value ? `R$ ${parseInt(value).toLocaleString('pt-BR')}` : '';
+                    setFormData({ ...formData, gastos_mensais: formatted });
+                  }}
                   className="bg-white/10 border-white/20 text-white"
                   placeholder="R$ 20.000"
                 />
@@ -443,7 +451,11 @@ export default function CalculadoraRapida() {
                 <Label className="text-white">Patrimônio Bruto (R$)</Label>
                 <Input
                   value={formData.patrimonio_bruto}
-                  onChange={(e) => setFormData({ ...formData, patrimonio_bruto: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    const formatted = value ? `R$ ${parseInt(value).toLocaleString('pt-BR')}` : '';
+                    setFormData({ ...formData, patrimonio_bruto: formatted });
+                  }}
                   className="bg-white/10 border-white/20 text-white"
                   placeholder="R$ 2.000.000"
                 />
@@ -452,7 +464,11 @@ export default function CalculadoraRapida() {
                 <Label className="text-white">Patrimônio Financeiro (R$)</Label>
                 <Input
                   value={formData.patrimonio_financeiro}
-                  onChange={(e) => setFormData({ ...formData, patrimonio_financeiro: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    const formatted = value ? `R$ ${parseInt(value).toLocaleString('pt-BR')}` : '';
+                    setFormData({ ...formData, patrimonio_financeiro: formatted });
+                  }}
                   className="bg-white/10 border-white/20 text-white"
                   placeholder="R$ 100.000"
                 />

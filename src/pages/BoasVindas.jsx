@@ -46,7 +46,9 @@ import {
   Share2,
   Cake,
   Award,
-  LayoutDashboard
+  LayoutDashboard,
+  Building,
+  User
 } from "lucide-react";
 
 export default function BoasVindas() {
@@ -581,7 +583,7 @@ export default function BoasVindas() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Building2 className="w-8 h-8 text-purple-400" />
+                    <Building className="w-8 h-8 text-purple-400" />
                     <div>
                       <h3 className="text-white font-bold">Líder de Agência</h3>
                       <p className="text-gray-400 text-sm">Gerencia uma agência completa e suas unidades</p>

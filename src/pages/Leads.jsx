@@ -390,23 +390,23 @@ export default function Leads() {
         {/* Tabela de Dados */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">
           <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
-            <Table className="table-fixed min-w-[1400px]">
+            <Table className="table-auto w-full">
               <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm z-10">
                 <TableRow className="border-white/10">
-                  <TableHead className="font-bold text-white w-[80px]">Cód</TableHead>
-                  <TableHead className="font-bold text-white w-[180px]">Nome</TableHead>
-                  <TableHead className="font-bold text-white w-[120px]">Data Contato</TableHead>
-                  <TableHead className="font-bold text-white w-[120px]">Data Visita</TableHead>
-                  <TableHead className="font-bold text-white w-[140px]">Status</TableHead>
-                  <TableHead className="font-bold text-white w-[150px]">Telefone</TableHead>
-                  <TableHead className="font-bold text-white w-[220px]">E-mail</TableHead>
-                  <TableHead className="font-bold text-white w-[150px]">Empresa</TableHead>
-                  <TableHead className="font-bold text-white w-[120px]">Cargo</TableHead>
-                  <TableHead className="font-bold text-white w-[120px]">Fonte</TableHead>
-                  <TableHead className="font-bold text-white w-[100px]">Renda</TableHead>
-                  <TableHead className="font-bold text-white w-[80px]">Idade</TableHead>
-                  <TableHead className="font-bold text-white w-[120px]">Profissão</TableHead>
-                  <TableHead className="font-bold text-white w-[200px]">Proprietário</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Cód</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Nome</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Data Contato</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Data Visita</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Status</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Telefone</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">E-mail</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Empresa</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Cargo</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Fonte</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Renda</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Idade</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Profissão</TableHead>
+                  <TableHead className="font-bold text-white whitespace-nowrap">Proprietário</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -423,15 +423,15 @@ export default function Leads() {
                       }}
                       style={{ color: cor }}
                     >
-                      <TableCell className="font-bold text-white">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.nome}</TableCell>
-                      <TableCell className="font-bold text-white">
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.nome}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">
                         {cliente.data_contato ? format(new Date(cliente.data_contato), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
                       </TableCell>
-                      <TableCell className="font-bold text-white">
+                      <TableCell className="font-bold text-white whitespace-nowrap">
                         {cliente.agendar_visita ? format(new Date(cliente.agendar_visita), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
                       </TableCell>
-                      <TableCell className="font-bold text-white">{cliente.status}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.status}</TableCell>
                       <TableCell className="font-bold whitespace-nowrap">
                         {cliente.telefone ? (
                           <a 
@@ -444,7 +444,7 @@ export default function Leads() {
                           </a>
                         ) : <span className="text-white/50">—</span>}
                       </TableCell>
-                      <TableCell className="font-bold">
+                      <TableCell className="font-bold whitespace-nowrap">
                         {cliente.email ? (
                           <a 
                             href={`mailto:${cliente.email}`}
@@ -454,13 +454,13 @@ export default function Leads() {
                           </a>
                         ) : <span className="text-white/50">—</span>}
                       </TableCell>
-                      <TableCell className="font-bold text-white">{cliente.empresa || "—"}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.cargo || "—"}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.fonte_prospeccao || "—"}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.renda || "—"}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.idade || "—"}</TableCell>
-                      <TableCell className="font-bold text-white">{cliente.profissao || "—"}</TableCell>
-                      <TableCell className="font-bold text-white/70 text-xs truncate" title={cliente.created_by || "—"}>{cliente.created_by || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.empresa || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.cargo || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.fonte_prospeccao || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.renda || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.idade || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.profissao || "—"}</TableCell>
+                      <TableCell className="font-bold text-white/70 text-xs whitespace-nowrap" title={cliente.created_by || "—"}>{cliente.created_by || "—"}</TableCell>
                     </TableRow>
                   );
                 })}

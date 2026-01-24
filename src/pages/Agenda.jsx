@@ -65,16 +65,16 @@ export default function Agenda() {
 
   // Usuários subordinados baseado na hierarquia
   const usuariosSubordinados = useMemo(() => {
-    if (!user) return [];
+    if (!user || !allUsers.length) return [];
     
     // Admin vê todos os usuários
     if (user.role === "admin") {
-      return allUsers;
+      return allUsers.filter(u => u.id !== user.id);
     }
     
     // Líder de Agência vê todos da sua hierarquia (incluindo líderes de unidade e corretores)
     if (user.tipo_hierarquia === "Líder de Agência") {
-      return allUsers.filter(u => {
+      const subordinados = allUsers.filter(u => {
         // Não incluir a si mesmo
         if (u.id === user.id) return false;
         
@@ -95,13 +95,23 @@ export default function Agenda() {
         
         return false;
       });
+      
+      console.log('Líder de Agência - subordinados:', subordinados);
+      return subordinados;
     } 
     
-    // Líder de Unidade vê apenas seus subordinados diretos (corretores)
+    // Líder de Unidade vê apenas seus subordinados diretos (corretores ligados diretamente a ele)
     if (user.tipo_hierarquia === "Líder de Unidade") {
-      return allUsers.filter(u => 
-        u.id !== user.id && (u.lider_email === user.email || u.lider_id === user.id)
-      );
+      const subordinados = allUsers.filter(u => {
+        // Não incluir a si mesmo
+        if (u.id === user.id) return false;
+        
+        // Corretores vinculados diretamente ao líder
+        return u.lider_email === user.email || u.lider_id === user.id;
+      });
+      
+      console.log('Líder de Unidade - subordinados:', subordinados);
+      return subordinados;
     }
     
     return [];

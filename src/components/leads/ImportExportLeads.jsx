@@ -13,6 +13,50 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
   const [selectedFile, setSelectedFile] = useState(null);
   const [importResults, setImportResults] = useState(null);
 
+  const handleDownloadTemplate = () => {
+    // Template com exemplo
+    const templateData = [
+      {
+        'Nome': 'João Silva',
+        'Status': 'AB Fone',
+        'Telefone': '(11) 98765-4321',
+        'Email': 'joao@email.com',
+        'Empresa': 'Empresa ABC',
+        'Cargo': 'Gerente',
+        'Fonte Prospecção': 'Indicação',
+        'Renda': 'R$ 10.000',
+        'Patrimônio': 'R$ 500.000',
+        'Idade': '35',
+        'Profissão': 'Empresário',
+        'Estado Civil': 'Casado(a)',
+        'Regime Casamento': 'Comunhão parcial',
+        'Filhos': '2',
+        'Data Nascimento': '1990-01-15',
+        'Altura': '175',
+        'Peso': '80',
+        'IMC': '26.1',
+        'Fuma': 'Não',
+        'Anda Moto': 'Não',
+        'Plano Saúde': 'Sim',
+        'Nome Plano Saúde': 'Unimed',
+        'Valor Plano Saúde': 'R$ 800',
+        'Seguro Vida': 'Não',
+        'Seguradora': '',
+        'Valor Seguro Vida': '',
+        'Custo Mensal Fixo': 'R$ 5.000',
+        'Data Contato': '2025-02-01',
+        'Agendar Visita': '',
+        'Data Cadastro': '2025-01-24',
+        'Número Indicações': '0'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, 'ApexShield_Template_Importacao.xlsx');
+  };
+
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -259,12 +303,32 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               Carregue múltiplos leads de uma vez através de um arquivo Excel.
             </p>
 
+            {/* Template de Importação */}
+            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border-2 border-indigo-200 mb-4">
+              <div className="flex items-start gap-3">
+                <FileSpreadsheet className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-bold text-indigo-900 mb-1">Template de Importação Desperte</h4>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Use nosso template padronizado para importar seus contatos de forma rápida e sem erros. Baixe, preencha com seus dados e faça o upload.
+                  </p>
+                  <Button
+                    onClick={handleDownloadTemplate}
+                    variant="outline"
+                    className="w-full bg-white border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar Template CSV
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-yellow-50 p-3 rounded border border-yellow-300 mb-4">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-gray-700">
                   <strong>Importante:</strong> O arquivo deve ter as colunas: <strong className="text-red-600">Nome é obrigatório</strong>. Outros campos como Telefone, Email, etc são opcionais.
-                  Use o botão "Exportar" acima para ver o formato correto das colunas.
                 </div>
               </div>
             </div>

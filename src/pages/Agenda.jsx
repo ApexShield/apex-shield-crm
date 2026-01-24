@@ -67,9 +67,17 @@ export default function Agenda() {
   const usuariosSubordinados = useMemo(() => {
     if (!user) return [];
     
-    // Líder de Agência vê todos da sua hierarquia
+    // Admin vê todos os usuários
+    if (user.role === "admin") {
+      return allUsers;
+    }
+    
+    // Líder de Agência vê todos da sua hierarquia (incluindo líderes de unidade e corretores)
     if (user.tipo_hierarquia === "Líder de Agência") {
       return allUsers.filter(u => {
+        // Não incluir a si mesmo
+        if (u.id === user.id) return false;
+        
         // Líder de Unidade diretamente vinculado
         if (u.lider_id === user.id || u.lider_email === user.email) return true;
         
@@ -89,9 +97,11 @@ export default function Agenda() {
       });
     } 
     
-    // Líder de Unidade vê apenas seus subordinados diretos
+    // Líder de Unidade vê apenas seus subordinados diretos (corretores)
     if (user.tipo_hierarquia === "Líder de Unidade") {
-      return allUsers.filter(u => u.lider_email === user.email || u.lider_id === user.id);
+      return allUsers.filter(u => 
+        u.id !== user.id && (u.lider_email === user.email || u.lider_id === user.id)
+      );
     }
     
     return [];
@@ -104,6 +114,11 @@ export default function Agenda() {
     // Se um usuário específico foi selecionado, mostrar apenas compromissos dele
     if (selectedUserEmail) {
       return allCompromissos.filter(c => c.created_by === selectedUserEmail);
+    }
+    
+    // Admin vê todos
+    if (user.role === "admin") {
+      return allCompromissos;
     }
     
     // Corretor vê apenas os próprios
@@ -274,7 +289,7 @@ export default function Agenda() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {(user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && usuariosSubordinados.length > 0 && (
+              {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && usuariosSubordinados.length > 0 && (
                 <Select
                   value={selectedUserEmail}
                   onValueChange={setSelectedUserEmail}

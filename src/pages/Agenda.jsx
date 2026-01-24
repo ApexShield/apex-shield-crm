@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Plus, Clock, CalendarDays, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Clock, CalendarDays, Trash2, Users } from "lucide-react";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
@@ -50,18 +50,22 @@ export default function Agenda() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
-    enabled: !!user && (user.role === "admin" || user.tipo_hierarquia === "Líder de Unidade" || user.tipo_hierarquia === "Líder de Agência")
+    queryFn: () => base44.entities.User.list()
   });
 
-  // Filtrar usuários que podem ser visualizados baseado na hierarquia
-  const users = useMemo(() => {
-    if (!user || !allUsers.length) return [];
-    
-    // Admin vê todos os usuários
-    if (user.role === "admin") {
-      return allUsers;
-    }
+  const { data: allCompromissos = [] } = useQuery({
+    queryKey: ["compromissos"],
+    queryFn: () => base44.entities.Compromisso.list()
+  });
+
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: () => base44.entities.Cliente.list()
+  });
+
+  // Usuários subordinados baseado na hierarquia
+  const usuariosSubordinados = useMemo(() => {
+    if (!user) return [];
     
     // Líder de Agência vê todos da sua hierarquia
     if (user.tipo_hierarquia === "Líder de Agência") {
@@ -69,7 +73,7 @@ export default function Agenda() {
         // Líder de Unidade diretamente vinculado
         if (u.lider_id === user.id || u.lider_email === user.email) return true;
         
-        // Corretores vinculados aos Líderes de Unidade da agência
+        // Corretores vinculados aos Líderes de Unidade
         const lideresUnidade = allUsers.filter(lu => 
           lu.tipo_hierarquia === "Líder de Unidade" && 
           (lu.lider_id === user.id || lu.lider_email === user.email)
@@ -83,66 +87,33 @@ export default function Agenda() {
         
         return false;
       });
-    }
+    } 
     
     // Líder de Unidade vê apenas seus subordinados diretos
     if (user.tipo_hierarquia === "Líder de Unidade") {
-      return allUsers.filter(u => 
-        u.lider_email === user.email || u.lider_id === user.id
-      );
+      return allUsers.filter(u => u.lider_email === user.email || u.lider_id === user.id);
     }
     
     return [];
   }, [allUsers, user]);
 
-  const { data: allCompromissos = [] } = useQuery({
-    queryKey: ["compromissos", selectedUserEmail || user?.email],
-    queryFn: async () => {
-      if (user?.role === "admin" && selectedUserEmail) {
-        return base44.entities.Compromisso.filter({ created_by: selectedUserEmail });
-      }
-      return base44.entities.Compromisso.list();
-    },
-    enabled: !!user
-  });
-
-  // Filtrar compromissos baseado em hierarquia e permissões
+  // Filtrar compromissos baseado em hierarquia e filtro de usuário
   const compromissos = useMemo(() => {
-    if (!user || !allCompromissos.length) return [];
+    if (!user) return [];
     
     // Se um usuário específico foi selecionado, mostrar apenas compromissos dele
     if (selectedUserEmail) {
       return allCompromissos.filter(c => c.created_by === selectedUserEmail);
     }
     
-    // Admin vê todos
-    if (user.role === "admin") {
-      return allCompromissos;
+    // Corretor vê apenas os próprios
+    if (user.tipo_hierarquia === "Corretor" || !user.tipo_hierarquia) {
+      return allCompromissos.filter(c => c.created_by === user.email);
     }
     
     // Líder de Agência vê todos da sua hierarquia
     if (user.tipo_hierarquia === "Líder de Agência") {
-      const subordinadosEmails = allUsers
-        .filter(u => {
-          // Líder de Unidade diretamente vinculado
-          if (u.lider_id === user.id || u.lider_email === user.email) return true;
-          
-          // Corretores vinculados aos Líderes de Unidade da agência
-          const lideresUnidade = allUsers.filter(lu => 
-            lu.tipo_hierarquia === "Líder de Unidade" && 
-            (lu.lider_id === user.id || lu.lider_email === user.email)
-          );
-          const lideresUnidadeIds = lideresUnidade.map(lu => lu.id);
-          const lideresUnidadeEmails = lideresUnidade.map(lu => lu.email);
-          
-          if (lideresUnidadeIds.includes(u.lider_id) || lideresUnidadeEmails.includes(u.lider_email)) {
-            return true;
-          }
-          
-          return false;
-        })
-        .map(u => u.email);
-      
+      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
       return allCompromissos.filter(c => 
         c.created_by === user.email || 
         subordinadosEmails.includes(c.created_by)
@@ -151,24 +122,15 @@ export default function Agenda() {
     
     // Líder de Unidade vê seus compromissos + compromissos de seus subordinados
     if (user.tipo_hierarquia === "Líder de Unidade") {
-      const subordinadosEmails = allUsers
-        .filter(u => u.lider_email === user.email || u.lider_id === user.id)
-        .map(u => u.email);
-      
+      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
       return allCompromissos.filter(c => 
         c.created_by === user.email || 
         subordinadosEmails.includes(c.created_by)
       );
     }
     
-    // Todos os outros usuários veem apenas seus próprios compromissos
     return allCompromissos.filter(c => c.created_by === user.email);
-  }, [allCompromissos, user, allUsers, selectedUserEmail]);
-
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: () => base44.entities.Cliente.list()
-  });
+  }, [allCompromissos, user, selectedUserEmail, usuariosSubordinados]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Compromisso.create(data),
@@ -312,7 +274,7 @@ export default function Agenda() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {(user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && users.length > 0 && (
+              {(user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && usuariosSubordinados.length > 0 && (
                 <Select
                   value={selectedUserEmail}
                   onValueChange={setSelectedUserEmail}
@@ -321,10 +283,20 @@ export default function Agenda() {
                     <SelectValue placeholder="👤 Filtrar por usuário" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null} className="font-bold">📋 Todos os agendamentos</SelectItem>
-                    {users.map((u) => (
+                    <SelectItem value={null} className="font-bold">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Todos os agendamentos
+                      </div>
+                    </SelectItem>
+                    {usuariosSubordinados.map((u) => (
                       <SelectItem key={u.id} value={u.email}>
-                        👤 {u.full_name || u.email}
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white text-[10px]">
+                            {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                          </div>
+                          {u.full_name || u.email}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

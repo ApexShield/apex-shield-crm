@@ -316,7 +316,7 @@ export default function Organograma() {
                           )}
                         </div>
                       </div>
-                      {podeEditarHierarquia && agencia.lider_agencia_id === currentUser?.id && (
+                      {podeEditarHierarquia && (agencia.lider_agencia_id === currentUser?.id || currentUser?.role === "admin") && (
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleCreateUnidade(agencia.id)} className="border-green-400/30 text-green-400 hover:bg-green-500/20">
                             <Plus className="w-4 h-4 mr-1" />

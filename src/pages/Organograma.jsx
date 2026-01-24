@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, UserPlus, Plus, Edit, Trash2, Network } from "lucide-react";
+import { Building, Users, UserPlus, Plus, Edit, Trash2, Network } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function Organograma() {
@@ -275,7 +275,7 @@ export default function Organograma() {
             <div className="flex gap-3">
               {(currentUser?.role === "admin" || !currentUser?.agencia_id) && (
                 <Button onClick={handleCreateAgencia} className="bg-indigo-600 hover:bg-indigo-700">
-                  <Building2 className="w-4 h-4 mr-2" />
+                  <Building className="w-4 h-4 mr-2" />
                   Nova Agência
                 </Button>
               )}
@@ -304,7 +304,7 @@ export default function Organograma() {
                 <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Building2 className="w-8 h-8 text-indigo-600" />
+                      <Building className="w-8 h-8 text-indigo-600" />
                       <div>
                         <CardTitle className="text-2xl text-indigo-900">{agencia.nome}</CardTitle>
                         {agencia.descricao && (
@@ -455,7 +455,7 @@ export default function Organograma() {
           {minhasAgencias.length === 0 && (
             <Card className="border-2 border-dashed border-slate-300">
               <CardContent className="text-center py-12">
-                <Building2 className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+                <Building className="w-16 h-16 mx-auto mb-4 text-slate-400" />
                 <h3 className="text-xl font-semibold text-slate-700 mb-2">Nenhuma agência encontrada</h3>
                 <p className="text-slate-500 mb-4">Crie sua primeira agência para começar</p>
                 {podeEditarHierarquia && (

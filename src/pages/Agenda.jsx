@@ -300,32 +300,34 @@ export default function Agenda() {
             </div>
             <div className="flex items-center gap-3">
               {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && usuariosSubordinados.length > 0 && (
-                <Select
-                  value={selectedUserEmail}
-                  onValueChange={setSelectedUserEmail}
-                >
-                  <SelectTrigger className="w-[280px] bg-gradient-to-r from-purple-500 to-pink-600 border-2 border-white/30 text-white font-bold shadow-lg">
-                    <SelectValue placeholder="👤 Filtrar por usuário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null} className="font-bold">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        Todos os agendamentos
-                      </div>
-                    </SelectItem>
-                    {usuariosSubordinados.map((u) => (
-                      <SelectItem key={u.id} value={u.email}>
+                <div className="w-[280px]">
+                  <Select
+                    value={selectedUserEmail}
+                    onValueChange={setSelectedUserEmail}
+                  >
+                    <SelectTrigger className="bg-gradient-to-r from-purple-500 to-pink-600 border-2 border-white/30 text-white font-bold shadow-lg">
+                      <SelectValue placeholder="Filtrar agendamentos" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gradient-to-br from-purple-600 to-indigo-700 border-purple-400/50">
+                      <SelectItem value={null} className="text-white hover:bg-white/20 font-bold">
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white text-[10px]">
-                            {u.full_name?.charAt(0) || u.email?.charAt(0)}
-                          </div>
-                          {u.full_name || u.email}
+                          <Users className="w-4 h-4" />
+                          Todos os agendamentos
                         </div>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {usuariosSubordinados.map((u) => (
+                        <SelectItem key={u.id} value={u.email} className="text-white hover:bg-white/20">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-semibold">
+                              {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                            </div>
+                            <span className="font-medium">{u.full_name || u.email}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
               <Button 
               onClick={() => {

@@ -141,14 +141,21 @@ export default function Organograma() {
   const createUnidadeMutation = useMutation({
     mutationFn: async (data) => {
       const agencia = agencias.find(a => a.id === data.agencia_id);
+      if (!agencia) {
+        throw new Error("Agência não encontrada");
+      }
       return base44.entities.Unidade.create({
-        ...data,
-        agencia_nome: agencia?.nome
+        nome: data.nome,
+        descricao: data.descricao || "",
+        agencia_id: data.agencia_id,
+        agencia_nome: agencia.nome,
+        ativo: true
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unidades"] });
       setShowUnidadeDialog(false);
+      setEditingUnidade(null);
       setUnidadeForm({ nome: "", descricao: "", agencia_id: "" });
     }
   });
@@ -526,7 +533,7 @@ export default function Organograma() {
               createUnidadeMutation.mutate(unidadeForm);
             }
           }} className="space-y-4">
-            {currentUser?.role === "admin" && (
+            {(!editingUnidade || currentUser?.role === "admin") && (
               <div>
                 <Label>Agência *</Label>
                 <Select
@@ -606,13 +613,15 @@ export default function Organograma() {
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  {currentUser?.role === "admin" && (
-                    <SelectItem value="Líder de Agência">Líder de Agência</SelectItem>
+                  {currentUser?.tipo_hierarquia === "Líder de Agência" && (
+                    <>
+                      <SelectItem value="Líder de Unidade">Líder de Unidade</SelectItem>
+                      <SelectItem value="Corretor">Corretor</SelectItem>
+                    </>
                   )}
-                  {(currentUser?.role === "admin" || currentUser?.tipo_hierarquia === "Líder de Agência") && (
-                    <SelectItem value="Líder de Unidade">Líder de Unidade</SelectItem>
+                  {currentUser?.tipo_hierarquia === "Líder de Unidade" && (
+                    <SelectItem value="Corretor">Corretor</SelectItem>
                   )}
-                  <SelectItem value="Corretor">Corretor</SelectItem>
                 </SelectContent>
               </Select>
             </div>

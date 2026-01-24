@@ -40,6 +40,7 @@ export default function Leads() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [busca, setBusca] = useState("");
   const [buscaEmpresa, setBuscaEmpresa] = useState("");
+  const [buscaTelefone, setBuscaTelefone] = useState("");
   const [filtroDataVisita, setFiltroDataVisita] = useState("");
   const [selectedLead, setSelectedLead] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -142,9 +143,15 @@ export default function Leads() {
       .filter(c => !filtroStatus || c.status === filtroStatus)
       .filter(c => !busca || c.nome?.toLowerCase().includes(busca.toLowerCase()))
       .filter(c => !buscaEmpresa || c.empresa?.toLowerCase().includes(buscaEmpresa.toLowerCase()))
-      .filter(c => !filtroDataVisita || c.data_contato === filtroDataVisita)
+      .filter(c => !buscaTelefone || c.telefone?.replace(/\D/g, '').includes(buscaTelefone.replace(/\D/g, '')))
+      .filter(c => {
+        if (!filtroDataVisita) return true;
+        // Comparar apenas a parte da data (YYYY-MM-DD)
+        const dataContato = c.data_contato ? c.data_contato.split('T')[0] : null;
+        return dataContato === filtroDataVisita;
+      })
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-  }, [clientes, filtroStatus, busca, buscaEmpresa, filtroDataVisita]);
+  }, [clientes, filtroStatus, busca, buscaEmpresa, buscaTelefone, filtroDataVisita]);
 
   // Calcular contadores
   const contadores = useMemo(() => {
@@ -330,6 +337,30 @@ export default function Leads() {
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 />
               </div>
+              <div className="flex-1 min-w-[200px]">
+                <Input
+                  placeholder="📱 Buscar por telefone..."
+                  value={buscaTelefone}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    // Formatar telefone: (XX)XXXXX-XXXX
+                    const numeros = valor.replace(/\D/g, '');
+                    let formatado = numeros;
+                    if (numeros.length > 0) {
+                      formatado = '(' + numeros.substring(0, 2);
+                      if (numeros.length > 2) {
+                        formatado += ')' + numeros.substring(2, 7);
+                      }
+                      if (numeros.length > 7) {
+                        formatado += '-' + numeros.substring(7, 11);
+                      }
+                    }
+                    setBuscaTelefone(formatado);
+                  }}
+                  maxLength={14}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                />
+              </div>
               <Input
                 type="date"
                 value={filtroDataVisita}
@@ -337,11 +368,16 @@ export default function Leads() {
                 className="w-auto bg-white/10 border-white/20 text-white"
               />
               <Button
-                onClick={() => { setBusca(""); setBuscaEmpresa(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
+                onClick={() => { setBusca(""); setBuscaEmpresa(""); setBuscaTelefone(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
                 className="bg-red-500/80 hover:bg-red-600"
               >
                 Limpar
               </Button>
+              {(busca || buscaEmpresa || buscaTelefone || filtroDataVisita || filtroStatus) && (
+                <div className="flex items-center bg-white/10 px-4 py-2 rounded-lg">
+                  <span className="text-white font-semibold">{dadosFiltrados.length} leads</span>
+                </div>
+              )}
             </div>
           </div>
 

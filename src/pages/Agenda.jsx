@@ -312,19 +312,19 @@ export default function Agenda() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && users.length > 0 && (
+              {(user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && users.length > 0 && (
                 <Select
                   value={selectedUserEmail}
                   onValueChange={setSelectedUserEmail}
                 >
-                  <SelectTrigger className="w-64 bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="👤 Ver agenda de..." />
+                  <SelectTrigger className="w-[280px] bg-gradient-to-r from-purple-500 to-pink-600 border-2 border-white/30 text-white font-bold shadow-lg">
+                    <SelectValue placeholder="👤 Filtrar por usuário" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>📋 Todos os Agendamentos</SelectItem>
+                    <SelectItem value={null} className="font-bold">📋 Todos os agendamentos</SelectItem>
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.email}>
-                        {u.full_name || u.email}
+                        👤 {u.full_name || u.email}
                       </SelectItem>
                     ))}
                   </SelectContent>

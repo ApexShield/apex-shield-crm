@@ -47,47 +47,10 @@ export default function Organograma() {
     queryFn: () => base44.entities.User.list()
   });
 
-  // Filtrar agências visíveis
-  const minhasAgencias = React.useMemo(() => {
-    if (!currentUser) return [];
-    if (currentUser.role === "admin") return agencias;
-    
-    return agencias.filter(a => 
-      a.lider_agencia_id === currentUser.id || 
-      a.lider_agencia_email === currentUser.email ||
-      a.id === currentUser.agencia_id
-    );
-  }, [agencias, currentUser]);
-
-  // Filtrar unidades visíveis
-  const minhasUnidades = React.useMemo(() => {
-    if (!currentUser) return [];
-    if (currentUser.role === "admin") return unidades;
-    
-    const agenciaIds = minhasAgencias.map(a => a.id);
-    return unidades.filter(u => 
-      agenciaIds.includes(u.agencia_id) ||
-      u.lider_unidade_id === currentUser.id ||
-      u.lider_unidade_email === currentUser.email
-    );
-  }, [unidades, minhasAgencias, currentUser]);
-
-  // Filtrar usuários visíveis
-  const meusUsuarios = React.useMemo(() => {
-    if (!currentUser) return [];
-    if (currentUser.role === "admin") return users;
-    
-    const agenciaIds = minhasAgencias.map(a => a.id);
-    const unidadeIds = minhasUnidades.map(u => u.id);
-    
-    return users.filter(u => 
-      agenciaIds.includes(u.agencia_id) ||
-      unidadeIds.includes(u.unidade_id) ||
-      u.lider_id === currentUser.id ||
-      u.lider_email === currentUser.email ||
-      u.id === currentUser.id
-    );
-  }, [users, minhasAgencias, minhasUnidades, currentUser]);
+  // Todos os usuários podem visualizar o organograma completo
+  const minhasAgencias = agencias;
+  const minhasUnidades = unidades;
+  const meusUsuarios = users;
 
   // Mutations
   const createAgenciaMutation = useMutation({
@@ -378,16 +341,7 @@ export default function Organograma() {
                                           {unidade.descricao && (
                                             <p className="text-xs text-slate-400 mt-1">{unidade.descricao}</p>
                                           )}
-                                          {liderUnidade && (
-                                            <div className="mt-2 inline-flex items-center gap-2 bg-purple-500/20 px-2 py-1 rounded-full border border-purple-400/30">
-                                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-purple-500/50">
-                                                {liderUnidade.full_name?.charAt(0) || liderUnidade.email?.charAt(0)}
-                                              </div>
-                                              <p className="text-xs text-purple-300 font-semibold">
-                                                {liderUnidade.full_name || liderUnidade.email}
-                                              </p>
-                                            </div>
-                                          )}
+
                                         </div>
                                       </div>
                                       {podeEditarHierarquia && (
@@ -412,33 +366,56 @@ export default function Organograma() {
                                     </div>
                                   </CardHeader>
                                   <CardContent className="relative">
-                                    {/* Linha conectando líder da unidade aos corretores */}
-                                    {usuariosDaUnidade.length > 0 && (
-                                      <div className="absolute left-1/2 top-0 w-1 h-4 bg-gradient-to-b from-green-400 to-transparent shadow-lg shadow-green-400/50"></div>
-                                    )}
-                                    
-                                    <div className="space-y-2 mt-2">
-                                      {usuariosDaUnidade.length > 0 ? (
-                                        usuariosDaUnidade.map(usuario => (
-                                          <div key={usuario.id} className="relative">
-                                            <div className="flex items-center gap-2 text-sm bg-slate-800/50 p-2 rounded-lg border border-green-400/20 backdrop-blur-sm">
-                                              <div className="relative">
-                                                <div className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-60"></div>
-                                                <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs shadow-lg shadow-blue-500/50">
-                                                  {usuario.full_name?.charAt(0) || usuario.email?.charAt(0)}
-                                                </div>
-                                              </div>
-                                              <div>
-                                                <p className="font-medium text-white">{usuario.full_name || usuario.email}</p>
-                                                <p className="text-xs text-cyan-400">{usuario.tipo_hierarquia || "Corretor"}</p>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        ))
-                                      ) : (
-                                        <p className="text-xs text-slate-500 italic text-center py-2">Nenhum corretor</p>
-                                      )}
-                                    </div>
+                                   {usuariosDaUnidade.length > 0 && (
+                                     <>
+                                       {/* Líder de Unidade */}
+                                       {liderUnidade && (
+                                         <div className="mb-4 pb-4 border-b border-purple-400/20 relative">
+                                           <div className="absolute left-1/2 top-0 w-1 h-4 bg-gradient-to-b from-green-400 to-transparent shadow-lg shadow-green-400/50"></div>
+                                           <div className="flex items-center gap-2 text-sm bg-purple-900/30 p-3 rounded-lg border border-purple-400/30 backdrop-blur-sm mt-4">
+                                             <div className="relative">
+                                               <div className="absolute inset-0 bg-purple-500 rounded-full blur-md opacity-60"></div>
+                                               <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg shadow-purple-500/50">
+                                                 {liderUnidade.full_name?.charAt(0) || liderUnidade.email?.charAt(0)}
+                                               </div>
+                                             </div>
+                                             <div>
+                                               <p className="font-semibold text-white">{liderUnidade.full_name || liderUnidade.email}</p>
+                                               <p className="text-xs text-purple-300">Líder de Unidade</p>
+                                             </div>
+                                           </div>
+                                         </div>
+                                       )}
+
+                                       {/* Corretores */}
+                                       <div className="space-y-2 relative">
+                                         <div className="absolute left-1/2 -top-4 w-1 h-4 bg-gradient-to-b from-green-400 to-transparent shadow-lg shadow-green-400/50"></div>
+                                         {usuariosDaUnidade.filter(u => u.id !== liderUnidade?.id).map(usuario => (
+                                           <div key={usuario.id} className="relative">
+                                             <div className="flex items-center gap-2 text-sm bg-slate-800/50 p-2 rounded-lg border border-green-400/20 backdrop-blur-sm">
+                                               <div className="relative">
+                                                 <div className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-60"></div>
+                                                 <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs shadow-lg shadow-blue-500/50">
+                                                   {usuario.full_name?.charAt(0) || usuario.email?.charAt(0)}
+                                                 </div>
+                                               </div>
+                                               <div>
+                                                 <p className="font-medium text-white">{usuario.full_name || usuario.email}</p>
+                                                 <p className="text-xs text-cyan-400">Corretor</p>
+                                               </div>
+                                             </div>
+                                           </div>
+                                         ))}
+                                         {usuariosDaUnidade.filter(u => u.id !== liderUnidade?.id).length === 0 && (
+                                           <p className="text-xs text-slate-500 italic text-center py-2">Nenhum corretor</p>
+                                         )}
+                                       </div>
+                                     </>
+                                   )}
+
+                                   {usuariosDaUnidade.length === 0 && (
+                                     <p className="text-xs text-slate-500 italic text-center py-2">Nenhum membro</p>
+                                   )}
                                   </CardContent>
                                 </Card>
                               </div>

@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Cake, Phone, Mail, Calendar, Gift, PartyPopper, Sparkles } from "lucide-react";
+import { Cake, Phone, Mail, Calendar, Gift, PartyPopper, Sparkles, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, parseISO, isSameDay, isWithinInterval, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +14,7 @@ import confetti from "canvas-confetti";
 export default function Aniversariantes() {
   const [filter, setFilter] = useState("hoje");
   const [showPopup, setShowPopup] = useState(false);
+  const [usuarioFiltro, setUsuarioFiltro] = useState("todos");
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
@@ -31,7 +33,31 @@ export default function Aniversariantes() {
     enabled: !!user
   });
 
-  // Filtrar clientes baseado em hierarquia e permissões
+  // Usuários visíveis para filtro
+  const usuariosVisiveis = React.useMemo(() => {
+    if (!user || !allUsers.length) return [];
+    
+    if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
+      // Líder de Agência vê todos corretores da sua agência
+      return allUsers.filter(u => 
+        u.agencia_id === user.agencia_id && 
+        u.tipo_hierarquia === "Corretor"
+      );
+    }
+    
+    if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
+      // Líder de Unidade vê apenas corretores da sua unidade
+      return allUsers.filter(u => 
+        u.unidade_id === user.unidade_id &&
+        u.tipo_hierarquia === "Corretor" &&
+        (u.lider_email === user.email || u.lider_id === user.id)
+      );
+    }
+    
+    return [];
+  }, [user, allUsers]);
+
+  // Filtrar clientes baseado em hierarquia e filtro de usuário
   const clientes = React.useMemo(() => {
     if (!user || !allClientes.length || !allUsers.length) return [];
     
@@ -41,36 +67,39 @@ export default function Aniversariantes() {
     );
     const emailsComHierarquia = usuariosComHierarquia.map(u => u.email);
     
+    let leadsFiltrados = [];
+    
     // Admin vê leads de usuários com hierarquia
     if (user.role === "admin") {
-      return allClientes.filter(c => emailsComHierarquia.includes(c.created_by));
+      leadsFiltrados = allClientes.filter(c => emailsComHierarquia.includes(c.created_by));
     }
-    
     // Líder de Agência vê leads de sua agência
-    if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
+    else if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
       const usuariosDaAgencia = usuariosComHierarquia.filter(u => u.agencia_id === user.agencia_id);
       const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
-      return allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
+      leadsFiltrados = allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
     }
-    
     // Líder de Unidade vê leads de sua unidade
-    if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
+    else if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
       const usuariosDaUnidade = usuariosComHierarquia.filter(u => 
         u.unidade_id === user.unidade_id &&
         (u.lider_email === user.email || u.lider_id === user.id || u.email === user.email)
       );
       const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
-      return allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
+      leadsFiltrados = allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
     }
-    
     // Corretor com hierarquia vê apenas seus próprios leads
-    if (user.tipo_hierarquia && user.tipo_hierarquia !== "Sem Hierarquia" && user.agencia_id) {
-      return allClientes.filter(c => c.created_by === user.email);
+    else if (user.tipo_hierarquia && user.tipo_hierarquia !== "Sem Hierarquia" && user.agencia_id) {
+      leadsFiltrados = allClientes.filter(c => c.created_by === user.email);
     }
     
-    // Usuários sem hierarquia não veem nenhum lead
-    return [];
-  }, [allClientes, user, allUsers]);
+    // Aplicar filtro de usuário selecionado
+    if (usuarioFiltro && usuarioFiltro !== "todos") {
+      leadsFiltrados = leadsFiltrados.filter(c => c.created_by === usuarioFiltro);
+    }
+    
+    return leadsFiltrados;
+  }, [allClientes, user, allUsers, usuarioFiltro]);
 
   // Verificar se há data de nascimento e calcular aniversariantes
   const aniversariantes = React.useMemo(() => {
@@ -122,7 +151,14 @@ export default function Aniversariantes() {
   });
 
   const handleSendMessage = async (cliente) => {
-    const mensagem = `Olá, ${cliente.nome}! 🎂👏🏻🎇
+    const nomeCorretor = prompt("Digite o nome da corretora que assina a mensagem:");
+    
+    if (!nomeCorretor) {
+      alert("É necessário informar o nome da corretora para enviar a mensagem.");
+      return;
+    }
+    
+    const mensagem = `Olá, ${cliente.nome}!
 
 Hoje é um dia muito especial e nós não poderíamos deixar passar em branco! Queremos te desejar um feliz aniversário repleto de alegrias, saúde e realizações.
 
@@ -131,7 +167,7 @@ Que este novo ciclo seja iluminado por momentos felizes ao lado de quem você am
 Parabéns pelo seu dia!
 
 Com carinho,
-${currentUser?.email || 'Equipe Apex Shield'}`;
+${nomeCorretor}`;
     
     if (cliente.telefone) {
       const telefone = cliente.telefone.replace(/\D/g, '');
@@ -142,7 +178,7 @@ ${currentUser?.email || 'Equipe Apex Shield'}`;
         const observacoes = cliente.observacoes || [];
         observacoes.push({
           data: new Date().toISOString(),
-          texto: `Parabéns enviados via WhatsApp`
+          texto: `Parabéns enviados via WhatsApp por ${nomeCorretor}`
         });
         
         await base44.entities.Cliente.update(cliente.id, {
@@ -163,14 +199,33 @@ ${currentUser?.email || 'Equipe Apex Shield'}`;
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <Cake className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+                <Cake className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black text-purple-900">Aniversariantes</h1>
+                <p className="text-purple-600 font-medium">Celebre com seus clientes!</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-black text-purple-900">🎉 Aniversariantes</h1>
-              <p className="text-purple-600 font-medium">Celebre com seus clientes!</p>
-            </div>
+            {(user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
+              <Select value={usuarioFiltro} onValueChange={setUsuarioFiltro}>
+                <SelectTrigger className="w-[280px] bg-gradient-to-r from-pink-500 to-purple-600 border-2 border-white/30 text-white font-bold shadow-lg">
+                  <SelectValue placeholder="👥 Filtrar por usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos" className="font-bold">
+                    📊 Todos os usuários
+                  </SelectItem>
+                  {usuariosVisiveis.map(u => (
+                    <SelectItem key={u.id} value={u.email}>
+                      👤 {u.full_name || u.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Filtros */}

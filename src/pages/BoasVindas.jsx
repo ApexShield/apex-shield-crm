@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ConvitesDialog from "../components/ConvitesDialog";
 import { 
   Shield, 
   Target, 
@@ -55,12 +56,29 @@ export default function BoasVindas() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [showConvitesDialog, setShowConvitesDialog] = useState(false);
   const [selectedHierarchy, setSelectedHierarchy] = useState("");
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => base44.auth.me()
   });
+
+  const { data: convitesPendentes = [] } = useQuery({
+    queryKey: ["convites", currentUser?.email],
+    queryFn: async () => {
+      const allConvites = await base44.entities.ConviteHierarquia.list();
+      return allConvites.filter(c => c.email_convidado === currentUser?.email && c.status === "pendente");
+    },
+    enabled: !!currentUser?.email
+  });
+
+  // Mostrar convites pendentes ao carregar
+  useEffect(() => {
+    if (convitesPendentes.length > 0 && !showProfileDialog) {
+      setShowConvitesDialog(true);
+    }
+  }, [convitesPendentes, showProfileDialog]);
 
   const updateProfileMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
@@ -647,6 +665,13 @@ export default function BoasVindas() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog de Convites */}
+        <ConvitesDialog
+          open={showConvitesDialog}
+          onClose={() => setShowConvitesDialog(false)}
+          userEmail={currentUser?.email}
+        />
       </div>
     </div>
   );

@@ -390,23 +390,23 @@ export default function Leads() {
         {/* Tabela de Dados */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">
           <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
-            <Table>
+            <Table className="table-fixed min-w-[1400px]">
               <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm z-10">
                 <TableRow className="border-white/10">
-                  <TableHead className="font-bold text-white">Cód</TableHead>
-                  <TableHead className="font-bold text-white min-w-[150px]">Nome</TableHead>
-                  <TableHead className="font-bold text-white">Data Contato</TableHead>
-                  <TableHead className="font-bold text-white">Data Visita</TableHead>
-                  <TableHead className="font-bold text-white">Status</TableHead>
-                  <TableHead className="font-bold text-white">Telefone</TableHead>
-                  <TableHead className="font-bold text-white min-w-[200px]">E-mail</TableHead>
-                  <TableHead className="font-bold text-white">Empresa</TableHead>
-                  <TableHead className="font-bold text-white">Cargo</TableHead>
-                  <TableHead className="font-bold text-white">Fonte</TableHead>
-                  <TableHead className="font-bold text-white">Renda</TableHead>
-                  <TableHead className="font-bold text-white">Idade</TableHead>
-                  <TableHead className="font-bold text-white">Profissão</TableHead>
-                  <TableHead className="font-bold text-white">Proprietário</TableHead>
+                  <TableHead className="font-bold text-white w-[80px]">Cód</TableHead>
+                  <TableHead className="font-bold text-white w-[180px]">Nome</TableHead>
+                  <TableHead className="font-bold text-white w-[120px]">Data Contato</TableHead>
+                  <TableHead className="font-bold text-white w-[120px]">Data Visita</TableHead>
+                  <TableHead className="font-bold text-white w-[140px]">Status</TableHead>
+                  <TableHead className="font-bold text-white w-[150px]">Telefone</TableHead>
+                  <TableHead className="font-bold text-white w-[220px]">E-mail</TableHead>
+                  <TableHead className="font-bold text-white w-[150px]">Empresa</TableHead>
+                  <TableHead className="font-bold text-white w-[120px]">Cargo</TableHead>
+                  <TableHead className="font-bold text-white w-[120px]">Fonte</TableHead>
+                  <TableHead className="font-bold text-white w-[100px]">Renda</TableHead>
+                  <TableHead className="font-bold text-white w-[80px]">Idade</TableHead>
+                  <TableHead className="font-bold text-white w-[120px]">Profissão</TableHead>
+                  <TableHead className="font-bold text-white w-[200px]">Proprietário</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -432,7 +432,7 @@ export default function Leads() {
                         {cliente.agendar_visita ? format(new Date(cliente.agendar_visita), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
                       </TableCell>
                       <TableCell className="font-bold text-white">{cliente.status}</TableCell>
-                      <TableCell className="font-bold">
+                      <TableCell className="font-bold whitespace-nowrap">
                         {cliente.telefone ? (
                           <a 
                             href={`https://wa.me/55${cliente.telefone.replace(/\D/g, '')}`}
@@ -460,7 +460,7 @@ export default function Leads() {
                       <TableCell className="font-bold text-white">{cliente.renda || "—"}</TableCell>
                       <TableCell className="font-bold text-white">{cliente.idade || "—"}</TableCell>
                       <TableCell className="font-bold text-white">{cliente.profissao || "—"}</TableCell>
-                      <TableCell className="font-bold text-white/70 text-xs">{cliente.created_by || "—"}</TableCell>
+                      <TableCell className="font-bold text-white/70 text-xs truncate" title={cliente.created_by || "—"}>{cliente.created_by || "—"}</TableCell>
                     </TableRow>
                   );
                 })}

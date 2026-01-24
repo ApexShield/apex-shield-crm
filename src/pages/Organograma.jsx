@@ -178,56 +178,36 @@ export default function Organograma() {
 
   const inviteUsuarioMutation = useMutation({
     mutationFn: async (data) => {
+      const agencia = agencias.find(a => a.id === data.agencia_id);
+      const unidade = unidades.find(u => u.id === data.unidade_id);
+      
+      // Criar convite na base de dados
+      const conviteData = {
+        email_convidado: data.email,
+        tipo_hierarquia: data.tipo,
+        agencia_id: data.agencia_id,
+        agencia_nome: agencia?.nome || "",
+        unidade_id: data.unidade_id || null,
+        unidade_nome: unidade?.nome || null,
+        lider_id: currentUser.id,
+        lider_email: currentUser.email,
+        lider_nome: currentUser.full_name,
+        status: "pendente"
+      };
+      
+      await base44.entities.ConviteHierarquia.create(conviteData);
+      
+      // Enviar email de convite
       const role = data.tipo === "Líder de Agência" || data.tipo === "Líder de Unidade" ? "admin" : "user";
       await base44.users.inviteUser(data.email, role);
-      
-      // Aguardar um pouco para o usuário ser criado
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const allUsers = await base44.entities.User.list();
-      const novoUsuario = allUsers.find(u => u.email === data.email);
-      
-      if (novoUsuario) {
-        const agencia = agencias.find(a => a.id === data.agencia_id);
-        const unidade = unidades.find(u => u.id === data.unidade_id);
-        
-        const updateData = {
-          tipo_hierarquia: data.tipo,
-          agencia_id: data.agencia_id || null,
-          agencia_nome: agencia?.nome || null,
-          unidade_id: data.unidade_id || null,
-          unidade_nome: unidade?.nome || null
-        };
-
-        if (data.tipo === "Líder de Unidade" && unidade) {
-          updateData.lider_id = agencia?.lider_agencia_id || null;
-          updateData.lider_email = agencia?.lider_agencia_email || null;
-          updateData.lider_nome = agencia?.lider_agencia_nome || null;
-          
-          // Atualizar unidade com o líder
-          await base44.entities.Unidade.update(unidade.id, {
-            lider_unidade_id: novoUsuario.id,
-            lider_unidade_email: novoUsuario.email,
-            lider_unidade_nome: novoUsuario.full_name
-          });
-        } else if (data.tipo === "Corretor" && data.unidade_id) {
-          updateData.lider_id = unidade?.lider_unidade_id || null;
-          updateData.lider_email = unidade?.lider_unidade_email || null;
-          updateData.lider_nome = unidade?.lider_unidade_nome || null;
-        } else if (data.tipo === "Corretor" && data.agencia_id) {
-          updateData.lider_id = agencia?.lider_agencia_id || null;
-          updateData.lider_email = agencia?.lider_agencia_email || null;
-          updateData.lider_nome = agencia?.lider_agencia_nome || null;
-        }
-
-        await base44.entities.User.update(novoUsuario.id, updateData);
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["unidades"] });
+      queryClient.invalidateQueries({ queryKey: ["convites"] });
       setShowUsuarioDialog(false);
       setUsuarioForm({ email: "", tipo: "", agencia_id: "", unidade_id: "" });
+      alert("Convite enviado com sucesso! O usuário receberá um email e poderá aceitar o convite ao fazer login.");
     }
   });
 

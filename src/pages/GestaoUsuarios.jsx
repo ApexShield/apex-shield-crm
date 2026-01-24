@@ -520,25 +520,78 @@ export default function GestaoUsuarios() {
             {/* Hierarquia Organizacional */}
             <div>
               <Label className="text-white font-bold mb-3 block">Hierarquia Organizacional</Label>
-              <Select 
-                value={selectedUser?.tipo_hierarquia || "Sem Hierarquia"}
-                onValueChange={(value) => {
-                  updateHierarchyMutation.mutate({
-                    userId: selectedUser?.id,
-                    data: { tipo_hierarquia: value }
-                  });
-                }}
-              >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Líder de Agência">Líder de Agência</SelectItem>
-                  <SelectItem value="Líder de Unidade">Líder de Unidade</SelectItem>
-                  <SelectItem value="Corretor">Corretor</SelectItem>
-                  <SelectItem value="Sem Hierarquia">Sem Hierarquia</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <button
+                  onClick={() => {
+                    updateHierarchyMutation.mutate({
+                      userId: selectedUser?.id,
+                      data: { tipo_hierarquia: "Líder de Agência" }
+                    });
+                  }}
+                  disabled={updateHierarchyMutation.isPending}
+                  className={`border-2 rounded-xl p-4 transition-all ${
+                    selectedUser?.tipo_hierarquia === "Líder de Agência"
+                      ? "bg-blue-500/20 border-blue-500"
+                      : "bg-white/5 hover:bg-white/10 border-white/20 hover:border-blue-500"
+                  }`}
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Crown className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="font-bold text-white text-sm mb-1">Líder de Agência</div>
+                  <div className="text-xs text-indigo-300">Acesso a toda hierarquia</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    updateHierarchyMutation.mutate({
+                      userId: selectedUser?.id,
+                      data: { tipo_hierarquia: "Líder de Unidade" }
+                    });
+                  }}
+                  disabled={updateHierarchyMutation.isPending}
+                  className={`border-2 rounded-xl p-4 transition-all ${
+                    selectedUser?.tipo_hierarquia === "Líder de Unidade"
+                      ? "bg-purple-500/20 border-purple-500"
+                      : "bg-white/5 hover:bg-white/10 border-white/20 hover:border-purple-500"
+                  }`}
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="font-bold text-white text-sm mb-1">Líder de Unidade</div>
+                  <div className="text-xs text-indigo-300">Acesso aos corretores</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    updateHierarchyMutation.mutate({
+                      userId: selectedUser?.id,
+                      data: { tipo_hierarquia: "Corretor" }
+                    });
+                  }}
+                  disabled={updateHierarchyMutation.isPending}
+                  className={`border-2 rounded-xl p-4 transition-all ${
+                    selectedUser?.tipo_hierarquia === "Corretor"
+                      ? "bg-cyan-500/20 border-cyan-500"
+                      : "bg-white/5 hover:bg-white/10 border-white/20 hover:border-cyan-500"
+                  }`}
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="font-bold text-white text-sm mb-1">Corretor</div>
+                  <div className="text-xs text-indigo-300">Acesso próprio</div>
+                </button>
+              </div>
+
+              <div className="bg-indigo-500/10 border border-indigo-500/30 p-4 rounded-lg">
+                <p className="text-sm text-indigo-200 leading-relaxed">
+                  <strong className="text-indigo-300">Líder de Agência:</strong> Vê leads e agenda de todos os corretores da hierarquia (diretos e indiretos).<br/>
+                  <strong className="text-indigo-300">Líder de Unidade:</strong> Vê leads e agenda dos corretores ligados diretamente.<br/>
+                  <strong className="text-indigo-300">Corretor:</strong> Vê apenas seus próprios leads e agenda.
+                </p>
+              </div>
             </div>
 
             <Button

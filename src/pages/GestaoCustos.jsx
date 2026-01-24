@@ -52,7 +52,7 @@ export default function GestaoCustos() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: !!currentUser && (currentUser.role === "admin" || currentUser.tipo_hierarquia === "Líder de Agência" || currentUser.tipo_hierarquia === "Líder de Unidade")
+    enabled: !!currentUser
   });
 
   const { data: allTransacoes = [] } = useQuery({
@@ -86,17 +86,16 @@ export default function GestaoCustos() {
       return allUsers;
     }
     
-    // Líder de Agência vê todos os usuários (exceto outros admins)
-    if (currentUser.tipo_hierarquia === "Líder de Agência") {
-      return allUsers.filter(u => u.role !== "admin");
+    // Líder de Agência vê usuários de sua agência
+    if (currentUser.tipo_hierarquia === "Líder de Agência" && currentUser.agencia_id) {
+      return allUsers.filter(u => u.agencia_id === currentUser.agencia_id);
     }
     
     // Líder de Unidade vê apenas sua equipe
-    if (currentUser.tipo_hierarquia === "Líder de Unidade") {
+    if (currentUser.tipo_hierarquia === "Líder de Unidade" && currentUser.unidade_id) {
       return allUsers.filter(u => 
-        u.lider_email === currentUser.email || 
-        u.lider_id === currentUser.id ||
-        u.email === currentUser.email
+        (u.lider_email === currentUser.email || u.lider_id === currentUser.id || u.email === currentUser.email) &&
+        u.unidade_id === currentUser.unidade_id
       );
     }
     
@@ -107,32 +106,46 @@ export default function GestaoCustos() {
   const transacoes = React.useMemo(() => {
     if (!currentUser || !allTransacoes.length) return [];
     
+    // Filtrar apenas usuários que fazem parte de uma hierarquia
+    const usuariosComHierarquia = allUsers.filter(u => 
+      u.tipo_hierarquia && u.tipo_hierarquia !== "Sem Hierarquia" && u.agencia_id
+    );
+    
     // Se um usuário foi selecionado, mostrar apenas transações dele
     if (usuarioSelecionado) {
       return allTransacoes.filter(t => t.created_by === usuarioSelecionado);
     }
     
-    // Admin sem filtro vê todas
+    // Admin sem filtro vê todas de usuários com hierarquia
     if (currentUser.role === "admin") {
-      return allTransacoes;
+      const emailsComHierarquia = usuariosComHierarquia.map(u => u.email);
+      return allTransacoes.filter(t => emailsComHierarquia.includes(t.created_by));
     }
     
-    // Líder de Agência sem filtro vê todas
-    if (currentUser.tipo_hierarquia === "Líder de Agência") {
-      return allTransacoes;
+    // Líder de Agência vê transações de sua agência
+    if (currentUser.tipo_hierarquia === "Líder de Agência" && currentUser.agencia_id) {
+      const usuariosDaAgencia = usuariosComHierarquia.filter(u => u.agencia_id === currentUser.agencia_id);
+      const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
+      return allTransacoes.filter(t => emailsDaAgencia.includes(t.created_by));
     }
     
-    // Líder de Unidade sem filtro vê suas transações + transações de sua equipe
-    if (currentUser.tipo_hierarquia === "Líder de Unidade") {
-      return allTransacoes.filter(t => {
-        if (t.created_by === currentUser.email) return true;
-        const creator = allUsers.find(u => u.email === t.created_by);
-        return creator && (creator.lider_email === currentUser.email || creator.lider_id === currentUser.id);
-      });
+    // Líder de Unidade vê transações de sua unidade
+    if (currentUser.tipo_hierarquia === "Líder de Unidade" && currentUser.unidade_id) {
+      const usuariosDaUnidade = usuariosComHierarquia.filter(u => 
+        u.unidade_id === currentUser.unidade_id &&
+        (u.lider_email === currentUser.email || u.lider_id === currentUser.id || u.email === currentUser.email)
+      );
+      const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
+      return allTransacoes.filter(t => emailsDaUnidade.includes(t.created_by));
     }
     
-    // Corretores veem apenas suas próprias transações
-    return allTransacoes.filter(t => t.created_by === currentUser.email);
+    // Corretor com hierarquia vê apenas suas próprias transações
+    if (currentUser.tipo_hierarquia && currentUser.tipo_hierarquia !== "Sem Hierarquia" && currentUser.agencia_id) {
+      return allTransacoes.filter(t => t.created_by === currentUser.email);
+    }
+    
+    // Usuários sem hierarquia não veem nenhuma transação
+    return [];
   }, [allTransacoes, currentUser, usuarioSelecionado, allUsers]);
 
   // Filtrar transações do mês selecionado

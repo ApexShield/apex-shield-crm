@@ -25,32 +25,52 @@ export default function Aniversariantes() {
     queryFn: () => base44.entities.Cliente.list()
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!user
+  });
+
   // Filtrar clientes baseado em hierarquia e permissões
   const clientes = React.useMemo(() => {
-    if (!user || !allClientes.length) return [];
+    if (!user || !allClientes.length || !allUsers.length) return [];
     
-    // Admin vê todos os leads
+    // Filtrar apenas usuários que fazem parte de uma hierarquia
+    const usuariosComHierarquia = allUsers.filter(u => 
+      u.tipo_hierarquia && u.tipo_hierarquia !== "Sem Hierarquia" && u.agencia_id
+    );
+    const emailsComHierarquia = usuariosComHierarquia.map(u => u.email);
+    
+    // Admin vê leads de usuários com hierarquia
     if (user.role === "admin") {
-      return allClientes;
+      return allClientes.filter(c => emailsComHierarquia.includes(c.created_by));
     }
     
-    // Líder de Agência vê todos
-    if (user.tipo_hierarquia === "Líder de Agência") {
-      return allClientes;
+    // Líder de Agência vê leads de sua agência
+    if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
+      const usuariosDaAgencia = usuariosComHierarquia.filter(u => u.agencia_id === user.agencia_id);
+      const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
+      return allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
     }
     
-    // Líder de Unidade vê seus leads + leads de sua equipe
-    if (user.tipo_hierarquia === "Líder de Unidade") {
-      return allClientes.filter(c => 
-        c.created_by === user.email || 
-        c.created_by_user_condition?.lider_email === user.email ||
-        c.created_by_user_condition?.lider_id === user.id
+    // Líder de Unidade vê leads de sua unidade
+    if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
+      const usuariosDaUnidade = usuariosComHierarquia.filter(u => 
+        u.unidade_id === user.unidade_id &&
+        (u.lider_email === user.email || u.lider_id === user.id || u.email === user.email)
       );
+      const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
+      return allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
     }
     
-    // Todos os outros usuários veem apenas seus próprios leads
-    return allClientes.filter(c => c.created_by === user.email);
-  }, [allClientes, user]);
+    // Corretor com hierarquia vê apenas seus próprios leads
+    if (user.tipo_hierarquia && user.tipo_hierarquia !== "Sem Hierarquia" && user.agencia_id) {
+      return allClientes.filter(c => c.created_by === user.email);
+    }
+    
+    // Usuários sem hierarquia não veem nenhum lead
+    return [];
+  }, [allClientes, user, allUsers]);
 
   // Verificar se há data de nascimento e calcular aniversariantes
   const aniversariantes = React.useMemo(() => {

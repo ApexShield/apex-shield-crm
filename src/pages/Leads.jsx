@@ -131,7 +131,7 @@ export default function Leads() {
 
   // Filtrar leads baseado em permissões e filtro de usuário
   const clientes = useMemo(() => {
-    if (!user || !allClientes.length || !allUsers.length) return [];
+    if (!user || !allClientes.length) return [];
     
     let leadsFiltrados = [];
     
@@ -139,21 +139,21 @@ export default function Leads() {
     if (user.role === "admin") {
       leadsFiltrados = allClientes;
     }
-    // Líder de Agência vê leads de todos da hierarquia
+    // Líder de Agência vê leads próprios + de todos da hierarquia
     else if (user.tipo_hierarquia === "Líder de Agência") {
       const emailsSubordinados = usuariosVisiveis.map(u => u.email);
       leadsFiltrados = allClientes.filter(c => 
         c.created_by === user.email || emailsSubordinados.includes(c.created_by)
       );
     }
-    // Líder de Unidade vê leads seus e dos subordinados diretos
+    // Líder de Unidade vê leads próprios + dos subordinados diretos
     else if (user.tipo_hierarquia === "Líder de Unidade") {
       const emailsSubordinados = usuariosVisiveis.map(u => u.email);
       leadsFiltrados = allClientes.filter(c => 
         c.created_by === user.email || emailsSubordinados.includes(c.created_by)
       );
     }
-    // Corretores veem apenas seus próprios leads
+    // Todos os outros usuários (Corretores e usuários sem tipo_hierarquia) veem apenas seus próprios leads
     else {
       leadsFiltrados = allClientes.filter(c => c.created_by === user.email);
     }
@@ -164,7 +164,7 @@ export default function Leads() {
     }
     
     return leadsFiltrados;
-  }, [allClientes, user, allUsers, usuarioFiltro, usuariosVisiveis]);
+  }, [allClientes, user, usuarioFiltro, usuariosVisiveis]);
 
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {

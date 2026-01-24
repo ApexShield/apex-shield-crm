@@ -159,9 +159,15 @@ export default function CalculadoraRapida() {
         data_nascimento: cliente.data_nascimento || "",
         estado_civil: cliente.estado_civil || "",
         profissao: cliente.profissao || "",
+        genero: cliente.genero || "",
         renda_mensal: cliente.renda || "",
+        gastos_mensais: cliente.custo_mensal_fixo || "",
+        patrimonio_bruto: cliente.patrimonio || "",
+        patrimonio_financeiro: "",
         altura: cliente.altura || "",
         peso: cliente.peso || "",
+        fumou_12_meses: cliente.fuma === "Sim",
+        condicao_saude: false,
         dependentes: cliente.filhos ? parseInt(cliente.filhos) : 0
       }));
     }
@@ -169,10 +175,23 @@ export default function CalculadoraRapida() {
 
   const calcularProtecao = () => {
     const idade = calcularIdade(formData.data_nascimento);
-    const renda = parseFloat(formData.renda_mensal?.replace(/\D/g, "") || "0");
-    const gastos = parseFloat(formData.gastos_mensais?.replace(/\D/g, "") || "0");
-    const patrimonioBruto = parseFloat(formData.patrimonio_bruto?.replace(/\D/g, "") || "0");
-    const patrimonioFinanceiro = parseFloat(formData.patrimonio_financeiro?.replace(/\D/g, "") || "0");
+    
+    // Parse correto de valores monetários removendo apenas símbolos, mantendo pontos e vírgulas
+    const parseValorMonetario = (valor) => {
+      if (!valor) return 0;
+      // Remove R$, espaços e pontos de milhar, depois substitui vírgula por ponto
+      const valorLimpo = valor.toString()
+        .replace(/R\$/g, '')
+        .replace(/\s/g, '')
+        .replace(/\./g, '')
+        .replace(/,/g, '.');
+      return parseFloat(valorLimpo) || 0;
+    };
+    
+    const renda = parseValorMonetario(formData.renda_mensal);
+    const gastos = parseValorMonetario(formData.gastos_mensais);
+    const patrimonioBruto = parseValorMonetario(formData.patrimonio_bruto);
+    const patrimonioFinanceiro = parseValorMonetario(formData.patrimonio_financeiro);
     const base = formData.parametros.calcular_sobre === "renda" ? renda : gastos;
     const anosProtecao = formData.parametros.idade_aposentadoria - idade;
 

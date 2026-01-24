@@ -2,9 +2,10 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -49,6 +50,7 @@ export default function Leads() {
   const [showApolice, setShowApolice] = useState(false);
   const [showRelatorios, setShowRelatorios] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
+  const [usuarioFiltro, setUsuarioFiltro] = useState("todos");
 
   // Listener para abrir apólice do formulário
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function Leads() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => base44.entities.User.list(),
-    enabled: !!user && (user.tipo_hierarquia === "Líder de Unidade" || user.tipo_hierarquia === "Líder de Agência")
+    enabled: !!user
   });
 
   const { data: allClientes = [], isLoading } = useQuery({
@@ -81,61 +83,64 @@ export default function Leads() {
     enabled: !!user
   });
 
-  // Filtrar leads baseado em permissões
+  // Usuários visíveis para filtro
+  const usuariosVisiveis = useMemo(() => {
+    if (!user || !allUsers.length) return [];
+    
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      // Líder de Agência vê todos da sua agência
+      return allUsers.filter(u => u.agencia_id === user.agencia_id && u.email !== user.email);
+    }
+    
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      // Líder de Unidade vê apenas corretores da sua unidade
+      return allUsers.filter(u => 
+        u.unidade_id === user.unidade_id &&
+        u.tipo_hierarquia === "Corretor" &&
+        (u.lider_email === user.email || u.lider_id === user.id)
+      );
+    }
+    
+    return [];
+  }, [user, allUsers]);
+
+  // Filtrar leads baseado em permissões e filtro de usuário
   const clientes = useMemo(() => {
-    if (!user || !allClientes.length) return [];
+    if (!user || !allClientes.length || !allUsers.length) return [];
+    
+    let leadsFiltrados = [];
     
     // Admin vê todos os leads
     if (user.role === "admin") {
-      return allClientes;
+      leadsFiltrados = allClientes;
     }
-    
-    // Líder de Agência vê leads de todos da sua hierarquia
-    if (user.tipo_hierarquia === "Líder de Agência") {
-      // Encontrar todos os subordinados (Líderes de Unidade e Corretores vinculados à agência)
-      const subordinadosEmails = allUsers
-        .filter(u => {
-          // Líder de Unidade diretamente vinculado ao Líder de Agência
-          if (u.lider_id === user.id || u.lider_email === user.email) return true;
-          
-          // Corretores vinculados aos Líderes de Unidade da agência
-          const lideresUnidade = allUsers.filter(lu => 
-            lu.tipo_hierarquia === "Líder de Unidade" && 
-            (lu.lider_id === user.id || lu.lider_email === user.email)
-          );
-          const lideresUnidadeIds = lideresUnidade.map(lu => lu.id);
-          const lideresUnidadeEmails = lideresUnidade.map(lu => lu.email);
-          
-          if (lideresUnidadeIds.includes(u.lider_id) || lideresUnidadeEmails.includes(u.lider_email)) {
-            return true;
-          }
-          
-          return false;
-        })
-        .map(u => u.email);
-      
-      return allClientes.filter(c => 
-        c.created_by === user.email || 
-        subordinadosEmails.includes(c.created_by)
+    // Líder de Agência vê leads de todos da sua agência
+    else if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
+      const usuariosDaAgencia = allUsers.filter(u => u.agencia_id === user.agencia_id);
+      const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
+      leadsFiltrados = allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
+    }
+    // Líder de Unidade vê leads de sua unidade
+    else if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
+      const usuariosDaUnidade = allUsers.filter(u => 
+        u.unidade_id === user.unidade_id &&
+        (u.lider_email === user.email || u.lider_id === user.id || u.email === user.email)
       );
+      const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
+      leadsFiltrados = allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
+    }
+    // Corretores veem apenas seus próprios leads
+    else {
+      leadsFiltrados = allClientes.filter(c => c.created_by === user.email);
     }
     
-    // Líder de Unidade vê seus leads + leads de seus subordinados
-    if (user.tipo_hierarquia === "Líder de Unidade") {
-      // Encontrar todos os corretores subordinados
-      const subordinadosEmails = allUsers
-        .filter(u => u.lider_id === user.id || u.lider_email === user.email)
-        .map(u => u.email);
-      
-      return allClientes.filter(c => 
-        c.created_by === user.email || 
-        subordinadosEmails.includes(c.created_by)
-      );
+    // Aplicar filtro de usuário selecionado
+    if (usuarioFiltro && usuarioFiltro !== "todos") {
+      leadsFiltrados = leadsFiltrados.filter(c => c.created_by === usuarioFiltro);
     }
     
-    // Todos os outros usuários veem apenas seus próprios leads
-    return allClientes.filter(c => c.created_by === user.email);
-  }, [allClientes, user, allUsers]);
+    return leadsFiltrados;
+  }, [allClientes, user, allUsers, usuarioFiltro]);
 
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {
@@ -277,14 +282,33 @@ export default function Leads() {
       <div className="max-w-[1800px] mx-auto">
         {/* Header Moderno */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-white">Dashboard de Leads</h1>
+                <p className="text-indigo-300">Gerencie seus clientes e oportunidades</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-black text-white">Dashboard de Leads</h1>
-              <p className="text-indigo-300">Gerencie seus clientes e oportunidades</p>
-            </div>
+            {(user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
+              <Select value={usuarioFiltro} onValueChange={setUsuarioFiltro}>
+                <SelectTrigger className="w-[280px] bg-gradient-to-r from-indigo-500 to-purple-600 border-2 border-white/30 text-white font-bold shadow-lg">
+                  <SelectValue placeholder="👥 Filtrar por usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos" className="font-bold">
+                    📊 Todos os usuários
+                  </SelectItem>
+                  {usuariosVisiveis.map(u => (
+                    <SelectItem key={u.id} value={u.email}>
+                      👤 {u.full_name || u.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 

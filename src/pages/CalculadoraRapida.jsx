@@ -19,7 +19,7 @@ export default function CalculadoraRapida() {
   const [generating, setGenerating] = useState(false);
   const [analiseGerada, setAnaliseGerada] = useState(null);
 
-  const [formData, setFormData] = useState({
+  const formDataInicial = {
     data_nascimento: "",
     dependentes: 0,
     estado_civil: "",
@@ -56,7 +56,41 @@ export default function CalculadoraRapida() {
       cartorio: 1.5,
       advogado: 6
     }
-  });
+  };
+
+  const [formData, setFormData] = useState(formDataInicial);
+
+  const arredondarValor = (valor) => {
+    if (valor >= 1000000) {
+      // Valores acima de 1 milhão: arredondar para o milhão mais próximo
+      return Math.ceil(valor / 1000000) * 1000000;
+    } else if (valor >= 100000) {
+      // Valores acima de 100 mil: arredondar para 100 mil
+      return Math.ceil(valor / 100000) * 100000;
+    } else if (valor >= 10000) {
+      // Valores acima de 10 mil: arredondar para 10 mil
+      return Math.ceil(valor / 10000) * 10000;
+    } else if (valor >= 1000) {
+      // Valores acima de 1 mil: arredondar para mil
+      return Math.ceil(valor / 1000) * 1000;
+    }
+    return Math.ceil(valor);
+  };
+
+  const formatarMoeda = (valor) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(valor);
+  };
+
+  const limparCalculadora = () => {
+    setFormData(formDataInicial);
+    setClienteSelecionado("");
+    setAnaliseGerada(null);
+  };
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -283,12 +317,12 @@ export default function CalculadoraRapida() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Seleção de Cliente */}
-            <div>
-              <Label className="text-white mb-2 block">Selecione um contato existente ou crie um novo</Label>
-              <p className="text-sm text-white/60 mb-3">Busque por nome, email ou telefone para encontrar um contato existente</p>
+            <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-4 rounded-xl border-2 border-indigo-400">
+              <Label className="text-white mb-2 block text-lg font-bold">Selecione um contato existente ou crie um novo</Label>
+              <p className="text-sm text-indigo-200 mb-3">Busque por nome, email ou telefone para encontrar um contato existente</p>
               <Select value={clienteSelecionado} onValueChange={handleClienteChange}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Selecione um cliente" />
+                <SelectTrigger className="bg-white border-2 border-indigo-400 text-gray-900 font-semibold h-12 text-base shadow-lg">
+                  <SelectValue placeholder="🔍 Selecione um cliente" />
                 </SelectTrigger>
                 <SelectContent>
                   {clientes.map(c => (
@@ -598,14 +632,23 @@ export default function CalculadoraRapida() {
               </AnimatePresence>
             </div>
 
-            {/* Botão Gerar */}
-            <Button
-              onClick={gerarApresentacao}
-              disabled={generating}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg"
-            >
-              {generating ? "Gerando Análise Completa..." : "Gerar Análise Completa"}
-            </Button>
+            {/* Botões de Ação */}
+            <div className="flex gap-3">
+              <Button
+                onClick={gerarApresentacao}
+                disabled={generating}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg"
+              >
+                {generating ? "Gerando Análise Completa..." : "Gerar Análise Completa"}
+              </Button>
+              <Button
+                onClick={limparCalculadora}
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-bold py-6 px-8"
+              >
+                Limpar
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -665,7 +708,7 @@ export default function CalculadoraRapida() {
                 <div className="text-center py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border-4 border-indigo-200 shadow-xl">
                   <h3 className="text-gray-600 text-2xl mb-4 font-semibold">Proteção Total Recomendada</h3>
                   <p className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
-                    R$ {analiseGerada.total.toLocaleString('pt-BR')}
+                    {formatarMoeda(analiseGerada.total)}
                   </p>
                   <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
                     Soma de todas as coberturas sugeridas para proteção completa da sua família e patrimônio
@@ -693,9 +736,9 @@ export default function CalculadoraRapida() {
                       <span className="text-3xl">💰</span> Situação Financeira
                     </h3>
                     <div className="space-y-2 text-gray-700">
-                      <p><strong>Renda:</strong> R$ {analiseGerada.renda.toLocaleString('pt-BR')}</p>
-                      <p><strong>Gastos:</strong> R$ {analiseGerada.gastos.toLocaleString('pt-BR')}</p>
-                      <p><strong>Patrimônio:</strong> R$ {analiseGerada.patrimonioBruto.toLocaleString('pt-BR')}</p>
+                      <p><strong>Renda:</strong> {formatarMoeda(analiseGerada.renda)}</p>
+                      <p><strong>Gastos:</strong> {formatarMoeda(analiseGerada.gastos)}</p>
+                      <p><strong>Patrimônio:</strong> {formatarMoeda(analiseGerada.patrimonioBruto)}</p>
                     </div>
                   </div>
                 </div>
@@ -737,7 +780,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-purple-600 mb-6">
-                      R$ {analiseGerada.sucessao.toLocaleString('pt-BR')}
+                      {formatarMoeda(analiseGerada.sucessao)}
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -775,13 +818,13 @@ export default function CalculadoraRapida() {
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
                               Apenas {((analiseGerada.patrimonioFinanceiro / analiseGerada.sucessao) * 100).toFixed(0)}% do necessário 
-                              (R$ {analiseGerada.patrimonioFinanceiro.toLocaleString('pt-BR')})
+                              ({formatarMoeda(analiseGerada.patrimonioFinanceiro)})
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              100% completo (R$ {analiseGerada.sucessao.toLocaleString('pt-BR')})
+                              100% completo ({formatarMoeda(analiseGerada.sucessao)})
                             </span>
                           </div>
                         </div>
@@ -791,13 +834,13 @@ export default function CalculadoraRapida() {
                           <div className="flex items-center gap-2 mb-2">
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
-                              R$ {analiseGerada.rendaPassivaSucessao.toLocaleString('pt-BR')}/mês - insuficiente
+                              {formatarMoeda(analiseGerada.rendaPassivaSucessao)}/mês - insuficiente
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              R$ {analiseGerada.rendaPassivaSucessaoIdeal.toLocaleString('pt-BR')}/mês - vida garantida
+                              {formatarMoeda(analiseGerada.rendaPassivaSucessaoIdeal)}/mês - vida garantida
                             </span>
                           </div>
                         </div>
@@ -819,7 +862,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-green-600 mb-6">
-                      R$ {analiseGerada.protecaoFamiliar.toLocaleString('pt-BR')}
+                      {formatarMoeda(analiseGerada.protecaoFamiliar)}
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -854,13 +897,13 @@ export default function CalculadoraRapida() {
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
                               Apenas {((analiseGerada.patrimonioFinanceiro / analiseGerada.protecaoFamiliar) * 100).toFixed(0)}% do necessário 
-                              (R$ {analiseGerada.patrimonioFinanceiro.toLocaleString('pt-BR')})
+                              ({formatarMoeda(analiseGerada.patrimonioFinanceiro)})
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              100% completo (R$ {analiseGerada.protecaoFamiliar.toLocaleString('pt-BR')})
+                              100% completo ({formatarMoeda(analiseGerada.protecaoFamiliar)})
                             </span>
                           </div>
                         </div>
@@ -870,13 +913,13 @@ export default function CalculadoraRapida() {
                           <div className="flex items-center gap-2 mb-2">
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
-                              R$ {analiseGerada.rendaPassivaFamiliar.toLocaleString('pt-BR')}/mês - insuficiente
+                              {formatarMoeda(analiseGerada.rendaPassivaFamiliar)}/mês - insuficiente
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              R$ {analiseGerada.rendaMensal80.toLocaleString('pt-BR')}/mês - vida garantida
+                              {formatarMoeda(analiseGerada.rendaMensal80)}/mês - vida garantida
                             </span>
                           </div>
                         </div>
@@ -898,7 +941,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-red-600 mb-6">
-                      R$ {analiseGerada.doencasGraves.toLocaleString('pt-BR')}
+                      {formatarMoeda(analiseGerada.doencasGraves)}
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -934,13 +977,13 @@ export default function CalculadoraRapida() {
                           <div className="flex items-center gap-2 mb-2">
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
-                              Consumo de R$ {(analiseGerada.gastos * formData.parametros.doencas_graves_meses).toLocaleString('pt-BR')} das reservas
+                              Consumo de {formatarMoeda(analiseGerada.gastos * formData.parametros.doencas_graves_meses)} das reservas
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              R$ {analiseGerada.doencasGraves.toLocaleString('pt-BR')} disponível imediatamente
+                              {formatarMoeda(analiseGerada.doencasGraves)} disponível imediatamente
                             </span>
                           </div>
                         </div>
@@ -978,7 +1021,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-orange-600 mb-6">
-                      R$ {analiseGerada.invalidezTotal.toLocaleString('pt-BR')}
+                      {formatarMoeda(analiseGerada.invalidezTotal)}
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -1004,7 +1047,7 @@ export default function CalculadoraRapida() {
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              R$ {analiseGerada.invalidezTotal.toLocaleString('pt-BR')} para todas as adaptações
+                              {formatarMoeda(analiseGerada.invalidezTotal)} para todas as adaptações
                             </span>
                           </div>
                         </div>
@@ -1042,7 +1085,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-blue-600 mb-6">
-                      R$ {analiseGerada.diariaIncapacidade.toLocaleString('pt-BR')}/dia
+                      {formatarMoeda(analiseGerada.diariaIncapacidade)}/dia
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -1065,7 +1108,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-pink-600 mb-6">
-                      R$ {analiseGerada.diariaInternacao.toLocaleString('pt-BR')}/dia
+                      {formatarMoeda(analiseGerada.diariaInternacao)}/dia
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -1083,13 +1126,13 @@ export default function CalculadoraRapida() {
                           <div className="flex items-center gap-2 mb-2">
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
-                              Perda de R$ {(analiseGerada.renda / 30).toLocaleString('pt-BR')}/dia
+                              Perda de {formatarMoeda(analiseGerada.renda / 30)}/dia
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500" />
                             <span className="text-green-700">
-                              R$ {analiseGerada.diariaInternacao.toLocaleString('pt-BR')}/dia garantidos
+                              {formatarMoeda(analiseGerada.diariaInternacao)}/dia garantidos
                             </span>
                           </div>
                         </div>
@@ -1127,7 +1170,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-teal-600 mb-6">
-                      R$ {analiseGerada.cirurgias.toLocaleString('pt-BR')}
+                      {formatarMoeda(analiseGerada.cirurgias)}
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -1151,7 +1194,7 @@ export default function CalculadoraRapida() {
                     </div>
                     
                     <p className="text-5xl font-black text-gray-600 mb-6">
-                      R$ {analiseGerada.assistenciaFuneral.toLocaleString('pt-BR')}
+                      {formatarMoeda(analiseGerada.assistenciaFuneral)}
                     </p>
                     
                     <p className="text-gray-700 text-lg mb-6 leading-relaxed">
@@ -1170,7 +1213,7 @@ export default function CalculadoraRapida() {
                           <div className="flex items-center gap-2 mb-2">
                             <XCircle className="w-5 h-5 text-red-500" />
                             <span className="text-red-700">
-                              Sua família paga R$ {analiseGerada.assistenciaFuneral.toLocaleString('pt-BR')}
+                              Sua família paga {formatarMoeda(analiseGerada.assistenciaFuneral)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">

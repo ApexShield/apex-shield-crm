@@ -40,10 +40,17 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
                 <Building className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold text-lg">{agencia.nome}</h3>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-purple-400 font-semibold">Líder de Agência:</span>
-                  <span className="text-white/80">{liderAgencia?.full_name || agencia.lider_agencia_email}</span>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-white font-bold text-lg">Agência: {agencia.nome}</h3>
+                  {unidadesDaAgencia.length > 0 && (
+                    <span className="text-xs bg-purple-500/30 text-purple-200 px-2 py-1 rounded-full">
+                      {unidadesDaAgencia.length} unidade{unidadesDaAgencia.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
+                  <span className="text-purple-300 font-semibold text-sm">👤 Líder de Agência:</span>
+                  <span className="text-white font-bold text-sm">{liderAgencia?.full_name || agencia.lider_agencia_nome || "Sem líder"}</span>
                 </div>
               </div>
             </div>
@@ -82,15 +89,19 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
                             <Users className="w-5 h-5 text-white" />
                           </div>
                           <div className="flex-1">
-                            <h4 className="text-white font-bold">{unidade.nome}</h4>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="text-blue-400 font-semibold">Líder de Unidade:</span>
-                              <span className="text-white/80">{liderUnidade?.full_name || unidade.lider_unidade_email || "Sem líder"}</span>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-white font-bold">Unidade: {unidade.nome}</h4>
+                              {corretoresDaUnidade.length > 0 && (
+                                <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-1 rounded-full">
+                                  {corretoresDaUnidade.length} corretor{corretoresDaUnidade.length !== 1 ? 'es' : ''}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg">
+                              <span className="text-blue-300 font-semibold text-xs">👤 Líder de Unidade:</span>
+                              <span className="text-white font-bold text-xs">{liderUnidade?.full_name || unidade.lider_unidade_nome || "Sem líder"}</span>
                             </div>
                           </div>
-                          <span className="text-xs text-white/60 bg-white/10 px-2 py-1 rounded-full">
-                            {corretoresDaUnidade.length} corretor{corretoresDaUnidade.length !== 1 ? 'es' : ''}
-                          </span>
                         </div>
 
                         {/* Corretores da Unidade */}
@@ -105,14 +116,16 @@ export default function HierarchyTree({ agencias, unidades, usuarios }) {
                               {corretoresDaUnidade.map(corretor => (
                                 <div 
                                   key={corretor.id}
-                                  className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-all"
+                                  className="flex items-center gap-3 p-2.5 bg-white/5 border border-green-500/20 rounded-lg hover:bg-white/10 hover:border-green-500/40 transition-all"
                                 >
-                                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <User className="w-4 h-4 text-white" />
                                   </div>
                                   <div className="flex-1">
-                                    <p className="text-white text-sm font-semibold">{corretor.full_name || corretor.email}</p>
-                                    <p className="text-green-400 text-xs">Corretor</p>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-green-300 text-xs font-semibold">👤 Corretor:</span>
+                                      <span className="text-white text-sm font-bold">{corretor.full_name || corretor.email}</span>
+                                    </div>
                                   </div>
                                 </div>
                               ))}

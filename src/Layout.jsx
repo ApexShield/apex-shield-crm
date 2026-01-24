@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import ConvitesDialog from "./components/ConvitesDialog";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
@@ -20,11 +21,28 @@ const navigation = [
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showConvitesDialog, setShowConvitesDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: () => base44.auth.me()
   });
+
+  const { data: convitesPendentes = [] } = useQuery({
+    queryKey: ["convites", user?.email],
+    queryFn: async () => {
+      const allConvites = await base44.entities.ConviteHierarquia.list();
+      return allConvites.filter(c => c.email_convidado === user?.email && c.status === "pendente");
+    },
+    enabled: !!user?.email
+  });
+
+  // Mostrar convites pendentes automaticamente
+  useEffect(() => {
+    if (convitesPendentes.length > 0) {
+      setShowConvitesDialog(true);
+    }
+  }, [convitesPendentes.length]);
 
   const handleLogout = () => {
     base44.auth.logout();
@@ -149,7 +167,14 @@ export default function Layout({ children, currentPageName }) {
         <main>
           {children}
         </main>
-      </div>
-    </div>
-  );
-}
+        </div>
+
+        {/* Dialog de Convites */}
+        <ConvitesDialog
+        open={showConvitesDialog}
+        onClose={() => setShowConvitesDialog(false)}
+        userEmail={user?.email}
+        />
+        </div>
+        );
+        }

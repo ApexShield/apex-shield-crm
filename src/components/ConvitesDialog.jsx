@@ -20,18 +20,12 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
 
   const responderConviteMutation = useMutation({
     mutationFn: async ({ convite, aceitar }) => {
-      // Atualizar status do convite
-      await base44.entities.ConviteHierarquia.update(convite.id, {
-        status: aceitar ? "aceito" : "recusado",
-        data_resposta: new Date().toISOString()
-      });
-
       if (aceitar) {
-        // Buscar agência e unidade
+        // Buscar dados atualizados
         const agencias = await base44.entities.Agencia.list();
         const unidades = await base44.entities.Unidade.list();
         const agencia = agencias.find(a => a.id === convite.agencia_id);
-        const unidade = unidades.find(u => u.id === convite.unidade_id);
+        const unidade = unidades ? unidades.find(u => u.id === convite.unidade_id) : null;
         const me = await base44.auth.me();
 
         // Preparar dados para atualização do usuário
@@ -39,15 +33,29 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
           tipo_hierarquia: convite.tipo_hierarquia,
           agencia_id: convite.agencia_id,
           agencia_nome: agencia?.nome || convite.agencia_nome,
-          unidade_id: convite.unidade_id || null,
-          unidade_nome: unidade?.nome || convite.unidade_nome || null
+          unidade_id: convite.unidade_id || "",
+          unidade_nome: unidade?.nome || convite.unidade_nome || ""
         };
 
         // Definir líder baseado no tipo de hierarquia
-        if (convite.tipo_hierarquia === "Líder de Unidade") {
-          updateData.lider_id = agencia?.lider_agencia_id || convite.lider_id;
-          updateData.lider_email = agencia?.lider_agencia_email || convite.lider_email;
-          updateData.lider_nome = agencia?.lider_agencia_nome || convite.lider_nome;
+        if (convite.tipo_hierarquia === "Líder de Agência") {
+          // Líder de Agência não tem líder acima
+          updateData.lider_id = "";
+          updateData.lider_email = "";
+          updateData.lider_nome = "";
+          
+          // Atualizar a agência com este líder
+          if (agencia) {
+            await base44.entities.Agencia.update(agencia.id, {
+              lider_agencia_id: me.id,
+              lider_agencia_email: me.email,
+              lider_agencia_nome: me.full_name
+            });
+          }
+        } else if (convite.tipo_hierarquia === "Líder de Unidade") {
+          updateData.lider_id = agencia?.lider_agencia_id || convite.lider_id || "";
+          updateData.lider_email = agencia?.lider_agencia_email || convite.lider_email || "";
+          updateData.lider_nome = agencia?.lider_agencia_nome || convite.lider_nome || "";
           
           // Atualizar unidade com o líder
           if (unidade) {
@@ -59,38 +67,36 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
           }
         } else if (convite.tipo_hierarquia === "Corretor") {
           if (convite.unidade_id && unidade) {
-            updateData.lider_id = unidade.lider_unidade_id;
-            updateData.lider_email = unidade.lider_unidade_email;
-            updateData.lider_nome = unidade.lider_unidade_nome;
+            updateData.lider_id = unidade.lider_unidade_id || "";
+            updateData.lider_email = unidade.lider_unidade_email || "";
+            updateData.lider_nome = unidade.lider_unidade_nome || "";
           } else {
-            updateData.lider_id = agencia?.lider_agencia_id || convite.lider_id;
-            updateData.lider_email = agencia?.lider_agencia_email || convite.lider_email;
-            updateData.lider_nome = agencia?.lider_agencia_nome || convite.lider_nome;
+            updateData.lider_id = agencia?.lider_agencia_id || convite.lider_id || "";
+            updateData.lider_email = agencia?.lider_agencia_email || convite.lider_email || "";
+            updateData.lider_nome = agencia?.lider_agencia_nome || convite.lider_nome || "";
           }
         }
 
-        // Atualizar usuário atual
+        // Atualizar usuário atual via updateMe
         await base44.auth.updateMe(updateData);
-        
-        // Se for Líder de Unidade ou Admin, atualizar role
-        if (convite.tipo_hierarquia === "Líder de Unidade" || convite.tipo_hierarquia === "Líder de Agência") {
-          const allUsers = await base44.entities.User.list();
-          const userToUpdate = allUsers.find(u => u.email === me.email);
-          if (userToUpdate && userToUpdate.role !== "admin") {
-            await base44.entities.User.update(userToUpdate.id, { role: "admin" });
-          }
-        }
       }
+      
+      // Atualizar status do convite
+      await base44.entities.ConviteHierarquia.update(convite.id, {
+        status: aceitar ? "aceito" : "recusado",
+        data_resposta: new Date().toISOString()
+      });
     },
     onSuccess: (_, { aceitar }) => {
       queryClient.invalidateQueries({ queryKey: ["convites"] });
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["unidades"] });
+      queryClient.invalidateQueries({ queryKey: ["agencias"] });
       
       if (aceitar) {
-        alert("Convite aceito com sucesso! Sua hierarquia foi atualizada.");
-        window.location.reload();
+        alert("Convite aceito com sucesso! Sua hierarquia foi atualizada. A página será recarregada.");
+        setTimeout(() => window.location.reload(), 1000);
       }
     }
   });

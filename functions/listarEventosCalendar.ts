@@ -42,18 +42,24 @@ Deno.serve(async (req) => {
     const data = await response.json();
 
     // Formatar eventos para o formato do CRM
-    const eventos = (data.items || []).map(event => ({
-      id: event.id,
-      titulo: event.summary || 'Sem título',
-      descricao: event.description || '',
-      data_inicio: event.start.dateTime || event.start.date,
-      data_fim: event.end.dateTime || event.end.date,
-      endereco: event.location || '',
-      cor: '#4285F4', // Cor padrão do Google Calendar (azul)
-      tipo: 'google_calendar',
-      origem: 'Google Calendar',
-      htmlLink: event.htmlLink
-    }));
+    const eventos = (data.items || []).map(event => {
+      const meetingLink = event.hangoutLink || event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri;
+      
+      return {
+        id: event.id,
+        titulo: event.summary || 'Sem título',
+        descricao: event.description || '',
+        data_inicio: event.start.dateTime || event.start.date,
+        data_fim: event.end.dateTime || event.end.date,
+        endereco: event.location || '',
+        meeting_link: meetingLink,
+        cor: '#4285F4',
+        tipo: 'google_calendar',
+        origem: 'Google Calendar',
+        htmlLink: event.htmlLink,
+        google_event_id: event.id
+      };
+    });
 
     return Response.json({ 
       success: true,

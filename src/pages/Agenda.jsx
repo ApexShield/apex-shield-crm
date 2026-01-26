@@ -38,8 +38,12 @@ export default function Agenda() {
     data_fim: "",
     cor: "#0891b2",
     tipo: "agendado",
-    modalidade: ""
+    modalidade: "",
+    meeting_link: ""
   });
+
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(true);
 
   const queryClient = useQueryClient();
 
@@ -47,6 +51,25 @@ export default function Agenda() {
     queryKey: ["user"],
     queryFn: () => base44.auth.me()
   });
+
+  // Verificar conexão com Google Calendar
+  React.useEffect(() => {
+    const verificarConexao = async () => {
+      try {
+        const response = await base44.functions.invoke('verificarConexaoCalendar');
+        setGoogleConnected(response.data?.connected || false);
+      } catch (error) {
+        console.error('Erro ao verificar conexão:', error);
+        setGoogleConnected(false);
+      } finally {
+        setCheckingConnection(false);
+      }
+    };
+    
+    if (user) {
+      verificarConexao();
+    }
+  }, [user]);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
@@ -272,7 +295,8 @@ export default function Agenda() {
       cliente_id: event.cliente_id || "",
       cliente_nome: event.cliente_nome || "",
       endereco: event.endereco || "",
-      modalidade: event.modalidade || ""
+      modalidade: event.modalidade || "",
+      meeting_link: event.meeting_link || ""
     });
     setShowDialog(true);
   };
@@ -307,10 +331,15 @@ export default function Agenda() {
       data_fim: "",
       cor: "#0891b2",
       tipo: "agendado",
-      modalidade: ""
+      modalidade: "",
+      meeting_link: ""
     });
     setEditingEvent(null);
     setSelectedSlot(null);
+  };
+
+  const handleConnectGoogleCalendar = () => {
+    window.open('https://www.base44.com/app/admin/integrations', '_blank');
   };
 
   const getEventsForSlot = (day, hour) => {
@@ -340,7 +369,21 @@ export default function Agenda() {
                 <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {!checkingConnection && !googleConnected && (
+                <Button
+                  onClick={handleConnectGoogleCalendar}
+                  className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 font-bold animate-pulse"
+                >
+                  🔗 Conectar Google Calendar
+                </Button>
+              )}
+              {!checkingConnection && googleConnected && (
+                <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 px-4 py-2 rounded-lg">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-green-100 text-sm font-medium">Google Calendar Conectado</span>
+                </div>
+              )}
               {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && usuariosSubordinados.length > 0 && (
                 <div className="w-[280px]">
                   <Select
@@ -544,6 +587,11 @@ export default function Agenda() {
                                 {event.cliente_nome && (
                                   <div className="text-[10px] opacity-90 truncate mt-0.5">
                                     👤 {event.cliente_nome}
+                                  </div>
+                                )}
+                                {event.meeting_link && (
+                                  <div className="text-[10px] opacity-90 truncate mt-0.5">
+                                    🔗 Link disponível
                                   </div>
                                 )}
                                 </motion.div>
@@ -789,6 +837,26 @@ export default function Agenda() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <Label className="text-white">Link da Reunião (opcional)</Label>
+              <Input
+                value={formData.meeting_link}
+                onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
+                placeholder="https://meet.google.com/... ou https://zoom.us/..."
+                className="bg-white/10 border-white/20 text-white"
+              />
+              {formData.meeting_link && (
+                <a 
+                  href={formData.meeting_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-300 hover:text-blue-200 mt-1 inline-block"
+                >
+                  🔗 Testar link da reunião
+                </a>
+              )}
             </div>
 
             <div>

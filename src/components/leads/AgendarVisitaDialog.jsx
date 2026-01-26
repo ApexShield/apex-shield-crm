@@ -105,10 +105,13 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         : `Modalidade: Presencial\nEndereço: ${endereco}\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`;
 
       // 1. Criar evento no Google Calendar
+      let googleEventId = null;
+      let meetingLink = null;
+      
       try {
         const attendees = cliente.email ? [{ email: cliente.email }] : [];
         
-        await base44.functions.invoke('criarEventoCalendar', {
+        const calendarResponse = await base44.functions.invoke('criarEventoCalendar', {
           summary: titulo,
           description: descricaoCompleta,
           startDateTime: dataHoraInicio.toISOString(),
@@ -116,6 +119,9 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           location: modalidade === "presencial" ? endereco : "Online",
           attendees: attendees
         });
+        
+        googleEventId = calendarResponse.data?.eventId;
+        meetingLink = calendarResponse.data?.meetingLink;
       } catch (calendarError) {
         console.error("Erro ao criar no Google Calendar:", calendarError);
         // Continua mesmo se falhar no Calendar
@@ -127,13 +133,15 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         descricao: descricaoCompleta,
         data_inicio: dataHoraInicio.toISOString(),
         data_fim: dataHoraFim.toISOString(),
-        cor: "#0891b2", // Azul Pavão - Agendado
+        cor: "#0891b2",
         tipo: "agendado",
         cliente_id: cliente.id || "",
         cliente_nome: cliente.nome,
         endereco: modalidade === "presencial" ? endereco : "Online",
         status_origem: tipoVisita,
-        modalidade: modalidade
+        modalidade: modalidade,
+        meeting_link: meetingLink,
+        google_event_id: googleEventId
       });
 
       const agendamento = {

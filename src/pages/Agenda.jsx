@@ -42,34 +42,12 @@ export default function Agenda() {
     meeting_link: ""
   });
 
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [checkingConnection, setCheckingConnection] = useState(true);
-
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: () => base44.auth.me()
   });
-
-  // Verificar conexão com Google Calendar
-  React.useEffect(() => {
-    const verificarConexao = async () => {
-      try {
-        const response = await base44.functions.invoke('verificarConexaoCalendar');
-        setGoogleConnected(response.data?.connected || false);
-      } catch (error) {
-        console.error('Erro ao verificar conexão:', error);
-        setGoogleConnected(false);
-      } finally {
-        setCheckingConnection(false);
-      }
-    };
-    
-    if (user) {
-      verificarConexao();
-    }
-  }, [user]);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["users"],
@@ -338,10 +316,6 @@ export default function Agenda() {
     setSelectedSlot(null);
   };
 
-  const handleConnectGoogleCalendar = () => {
-    window.open('https://www.base44.com/app/admin/integrations', '_blank');
-  };
-
   const getEventsForSlot = (day, hour) => {
     return weekCompromissos.filter(comp => {
       const compStart = parseISO(comp.data_inicio);
@@ -370,20 +344,6 @@ export default function Agenda() {
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {!checkingConnection && !googleConnected && (
-                <Button
-                  onClick={handleConnectGoogleCalendar}
-                  className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 font-bold animate-pulse"
-                >
-                  🔗 Conectar Google Calendar
-                </Button>
-              )}
-              {!checkingConnection && googleConnected && (
-                <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 px-4 py-2 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-green-100 text-sm font-medium">Google Calendar Conectado</span>
-                </div>
-              )}
               {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Unidade" || user?.tipo_hierarquia === "Líder de Agência") && usuariosSubordinados.length > 0 && (
                 <div className="w-[280px]">
                   <Select

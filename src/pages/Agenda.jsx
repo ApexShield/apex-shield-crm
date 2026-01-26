@@ -58,6 +58,27 @@ export default function Agenda() {
     queryFn: () => base44.entities.Compromisso.list()
   });
 
+  // Buscar eventos do Google Calendar
+  const { data: eventosGoogle = [] } = useQuery({
+    queryKey: ['google-calendar-events', currentWeekStart],
+    queryFn: async () => {
+      try {
+        const weekStart = startOfDay(currentWeekStart);
+        const weekEnd = endOfDay(addDays(currentWeekStart, 6));
+        
+        const response = await base44.functions.invoke('listarEventosCalendar', {
+          dataInicio: weekStart.toISOString(),
+          dataFim: weekEnd.toISOString()
+        });
+        
+        return response.data?.eventos || [];
+      } catch (error) {
+        console.error('Erro ao buscar eventos do Google Calendar:', error);
+        return [];
+      }
+    }
+  });
+
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
     queryFn: () => base44.entities.Cliente.list()
@@ -117,45 +138,66 @@ export default function Agenda() {
     return [];
   }, [allUsers, user]);
 
+  // Combinar compromissos internos + eventos do Google Calendar
+  const todosCompromissos = useMemo(() => {
+    return [...allCompromissos, ...eventosGoogle];
+  }, [allCompromissos, eventosGoogle]);
+
   // Filtrar compromissos baseado em hierarquia e filtro de usuário
   const compromissos = useMemo(() => {
     if (!user) return [];
     
-    // Se um usuário específico foi selecionado, mostrar apenas compromissos dele
+    const compromissosComGoogle = todosCompromissos.map(c => {
+      // Eventos do Google Calendar são visíveis para todos
+      if (c.tipo === 'google_calendar' || c.origem === 'Google Calendar') {
+        return { ...c, isGoogleEvent: true };
+      }
+      return c;
+    });
+
+    // Se um usuário específico foi selecionado, mostrar compromissos dele + Google Calendar
     if (selectedUserEmail) {
-      return allCompromissos.filter(c => c.created_by === selectedUserEmail);
+      return compromissosComGoogle.filter(c => 
+        c.isGoogleEvent || c.created_by === selectedUserEmail
+      );
     }
     
     // Admin vê todos
     if (user.role === "admin") {
-      return allCompromissos;
+      return compromissosComGoogle;
     }
     
-    // Corretor vê apenas os próprios
+    // Corretor vê apenas os próprios + Google Calendar
     if (user.tipo_hierarquia === "Corretor" || !user.tipo_hierarquia) {
-      return allCompromissos.filter(c => c.created_by === user.email);
+      return compromissosComGoogle.filter(c => 
+        c.isGoogleEvent || c.created_by === user.email
+      );
     }
     
-    // Líder de Agência vê todos da sua hierarquia
+    // Líder de Agência vê todos da sua hierarquia + Google Calendar
     if (user.tipo_hierarquia === "Líder de Agência") {
       const subordinadosEmails = usuariosSubordinados.map(u => u.email);
-      return allCompromissos.filter(c => 
+      return compromissosComGoogle.filter(c => 
+        c.isGoogleEvent ||
         c.created_by === user.email || 
         subordinadosEmails.includes(c.created_by)
       );
     }
     
-    // Líder de Unidade vê seus compromissos + compromissos de seus subordinados
+    // Líder de Unidade vê seus compromissos + subordinados + Google Calendar
     if (user.tipo_hierarquia === "Líder de Unidade") {
       const subordinadosEmails = usuariosSubordinados.map(u => u.email);
-      return allCompromissos.filter(c => 
+      return compromissosComGoogle.filter(c => 
+        c.isGoogleEvent ||
         c.created_by === user.email || 
         subordinadosEmails.includes(c.created_by)
       );
     }
     
-    return allCompromissos.filter(c => c.created_by === user.email);
-  }, [allCompromissos, user, selectedUserEmail, usuariosSubordinados]);
+    return compromissosComGoogle.filter(c => 
+      c.isGoogleEvent || c.created_by === user.email
+    );
+  }, [todosCompromissos, user, selectedUserEmail, usuariosSubordinados]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Compromisso.create(data),
@@ -485,16 +527,26 @@ export default function Agenda() {
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleEventClick(event);
+                                  // Se for evento do Google, abre link, senão abre dialog
+                                  if (event.isGoogleEvent && event.htmlLink) {
+                                    window.open(event.htmlLink, '_blank');
+                                  } else {
+                                    handleEventClick(event);
+                                  }
                                 }}
-                              >
-                                <div className="truncate">{event.titulo}</div>
+                                >
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="truncate flex-1">{event.titulo}</div>
+                                  {event.isGoogleEvent && (
+                                    <div className="text-[9px] bg-white/30 px-1 rounded">📅</div>
+                                  )}
+                                </div>
                                 {event.cliente_nome && (
                                   <div className="text-[10px] opacity-90 truncate mt-0.5">
                                     👤 {event.cliente_nome}
                                   </div>
                                 )}
-                              </motion.div>
+                                </motion.div>
                             ))}
                           </div>
                         );

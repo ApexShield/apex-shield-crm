@@ -99,11 +99,29 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       const tituloBase = `${prefixo} - ${cliente.nome}`;
       const titulo = modalidade === "online" ? `${tituloBase} (Zoom)` : tituloBase;
       
-      // Criar compromisso na agenda
+      // Criar descrição completa
       const descricaoCompleta = modalidade === "online" 
-        ? `Modalidade: Online${cliente.email ? `\nEmail: ${cliente.email}` : ''}`
-        : `Modalidade: Presencial\nEndereço: ${endereco}${cliente.email ? `\nEmail: ${cliente.email}` : ''}`;
+        ? `Modalidade: Online\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`
+        : `Modalidade: Presencial\nEndereço: ${endereco}\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`;
 
+      // 1. Criar evento no Google Calendar
+      try {
+        const attendees = cliente.email ? [{ email: cliente.email }] : [];
+        
+        await base44.functions.invoke('criarEventoCalendar', {
+          summary: titulo,
+          description: descricaoCompleta,
+          startDateTime: dataHoraInicio.toISOString(),
+          endDateTime: dataHoraFim.toISOString(),
+          location: modalidade === "presencial" ? endereco : "Online",
+          attendees: attendees
+        });
+      } catch (calendarError) {
+        console.error("Erro ao criar no Google Calendar:", calendarError);
+        // Continua mesmo se falhar no Calendar
+      }
+
+      // 2. Criar compromisso na agenda interna
       await base44.entities.Compromisso.create({
         titulo: titulo,
         descricao: descricaoCompleta,

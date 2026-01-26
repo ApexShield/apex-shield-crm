@@ -550,8 +550,14 @@ export default function Agenda() {
                                   </div>
                                 )}
                                 {event.meeting_link && (
-                                  <div className="text-[10px] opacity-90 truncate mt-0.5">
-                                    🔗 Link disponível
+                                  <div 
+                                    className="text-[10px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(event.meeting_link, '_blank');
+                                    }}
+                                  >
+                                    🎥 Entrar na reunião
                                   </div>
                                 )}
                                 </motion.div>
@@ -800,21 +806,29 @@ export default function Agenda() {
             </div>
 
             <div>
-              <Label className="text-white">Link da Reunião (opcional)</Label>
-              <Input
-                value={formData.meeting_link}
-                onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-                placeholder="https://meet.google.com/... ou https://zoom.us/..."
-                className="bg-white/10 border-white/20 text-white"
-              />
+              <Label className="text-white">Link da Reunião</Label>
+              <div className="relative">
+                <Input
+                  value={formData.meeting_link}
+                  onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
+                  placeholder="Link gerado automaticamente pelo Google Meet"
+                  className="bg-white/10 border-white/20 text-white"
+                  disabled={!editingEvent}
+                />
+                {!editingEvent && (
+                  <div className="text-xs text-green-300 mt-1">
+                    ✨ O link do Google Meet será gerado automaticamente ao salvar
+                  </div>
+                )}
+              </div>
               {formData.meeting_link && (
                 <a 
                   href={formData.meeting_link} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-300 hover:text-blue-200 mt-1 inline-block"
+                  className="text-xs text-blue-300 hover:text-blue-200 mt-2 inline-flex items-center gap-1"
                 >
-                  🔗 Testar link da reunião
+                  🎥 Abrir reunião no Google Meet
                 </a>
               )}
             </div>

@@ -80,31 +80,29 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     }
 
     setValidando(true);
+    setErro("");
 
     try {
       const dataHoraInicio = new Date(`${data}T${horario}:00`);
-      const dataHoraFim = new Date(dataHoraInicio.getTime() + 60 * 60 * 1000); // +1 hora
+      const dataHoraFim = new Date(dataHoraInicio.getTime() + 60 * 60 * 1000);
       
-      // Montar título baseado no tipo e subtipo
       let prefixo = "";
       if (tipoVisita === "Fechamento") {
-        prefixo = subTipo; // F, F2, F3, F4 ou F5
+        prefixo = subTipo;
       } else if (tipoVisita === "Entrega de Apólice") {
         prefixo = "ENT APOLICE";
       } else {
-        prefixo = tipoVisita; // AB Visita
+        prefixo = tipoVisita;
       }
       
-      // Se for online, adicionar (Zoom) ao título
       const tituloBase = `${prefixo} - ${cliente.nome}`;
-      const titulo = modalidade === "online" ? `${tituloBase} (Zoom)` : tituloBase;
+      const titulo = modalidade === "online" ? `${tituloBase} (Google Meet)` : tituloBase;
       
-      // Criar descrição completa
       const descricaoCompleta = modalidade === "online" 
         ? `Modalidade: Online\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`
         : `Modalidade: Presencial\nEndereço: ${endereco}\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`;
 
-      // 1. Criar evento no Google Calendar
+      // Criar evento no Google Calendar
       let googleEventId = null;
       let meetingLink = null;
       
@@ -120,14 +118,18 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           attendees: attendees
         });
         
-        googleEventId = calendarResponse.data?.eventId;
-        meetingLink = calendarResponse.data?.meetingLink;
+        if (calendarResponse.data?.success) {
+          googleEventId = calendarResponse.data.eventId;
+          meetingLink = calendarResponse.data.meetingLink;
+          console.log("✅ Evento criado no Google Calendar:", googleEventId);
+          console.log("🔗 Link da reunião:", meetingLink);
+        }
       } catch (calendarError) {
-        console.error("Erro ao criar no Google Calendar:", calendarError);
-        // Continua mesmo se falhar no Calendar
+        console.error("❌ Erro ao criar no Google Calendar:", calendarError);
+        setErro("Aviso: Agendamento criado, mas houve erro ao sincronizar com Google Calendar");
       }
 
-      // 2. Criar compromisso na agenda interna
+      // Criar compromisso na agenda interna
       await base44.entities.Compromisso.create({
         titulo: titulo,
         descricao: descricaoCompleta,
@@ -151,15 +153,20 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         dataHora: dataHoraInicio.toISOString(),
         endereco: endereco,
         titulo: titulo,
-        convidados: cliente.email ? [cliente.email] : []
+        convidados: cliente.email ? [cliente.email] : [],
+        meeting_link: meetingLink
       };
 
       onSave(agendamento);
       resetForm();
       onClose();
+      
+      if (meetingLink) {
+        alert(`✅ Agendamento criado com sucesso!\n\n🔗 Link da reunião Google Meet:\n${meetingLink}`);
+      }
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
-      setErro("Erro ao criar agendamento. Tente novamente.");
+      setErro(`Erro ao criar agendamento: ${error.message || 'Tente novamente'}`);
     } finally {
       setValidando(false);
     }

@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     // Obter token de acesso do Google Calendar
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
 
-    // Criar evento no Google Calendar
+    // Criar evento no Google Calendar com Google Meet
     const event = {
       summary: summary,
       description: description || '',
@@ -36,6 +36,12 @@ Deno.serve(async (req) => {
         timeZone: 'America/Sao_Paulo'
       },
       attendees: attendees || [],
+      conferenceData: {
+        createRequest: {
+          requestId: `meet-${Date.now()}`,
+          conferenceSolutionKey: { type: 'hangoutsMeet' }
+        }
+      },
       reminders: {
         useDefault: false,
         overrides: [
@@ -45,7 +51,7 @@ Deno.serve(async (req) => {
       }
     };
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -64,11 +70,13 @@ Deno.serve(async (req) => {
     }
 
     const eventData = await response.json();
+    const meetingLink = eventData.hangoutLink || eventData.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri;
 
     return Response.json({ 
       success: true,
       eventId: eventData.id,
       htmlLink: eventData.htmlLink,
+      meetingLink: meetingLink,
       message: 'Evento criado com sucesso no Google Calendar'
     });
 

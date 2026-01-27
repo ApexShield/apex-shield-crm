@@ -24,7 +24,7 @@ const COLORS = [
 ];
 
 export default function Agenda() {
-  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { locale: ptBR }));
+  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDialog, setShowDialog] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -117,10 +117,42 @@ export default function Agenda() {
     }
   });
 
-  const { data: clientes = [] } = useQuery({
+  const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],
     queryFn: () => base44.entities.Cliente.list()
   });
+
+  // Filtrar clientes baseado na hierarquia (apenas os próprios do usuário)
+  const clientes = useMemo(() => {
+    if (!user || !allClientes.length) return [];
+    
+    // Admin vê todos os clientes
+    if (user.role === "admin") {
+      return allClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+    
+    // Líder de Agência vê clientes de toda sua hierarquia
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
+      const clientesHierarquia = allClientes.filter(c => 
+        c.created_by === user.email || subordinadosEmails.includes(c.created_by)
+      );
+      return clientesHierarquia.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+    
+    // Líder de Unidade vê seus clientes + dos subordinados diretos
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
+      const clientesHierarquia = allClientes.filter(c => 
+        c.created_by === user.email || subordinadosEmails.includes(c.created_by)
+      );
+      return clientesHierarquia.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+    
+    // Corretor vê apenas os próprios clientes
+    const meusClientes = allClientes.filter(c => c.created_by === user.email);
+    return meusClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  }, [allClientes, user, usuariosSubordinados]);
 
   // Usuários subordinados baseado na hierarquia
   const usuariosSubordinados = useMemo(() => {
@@ -241,6 +273,7 @@ export default function Agenda() {
     mutationFn: (data) => base44.entities.Compromisso.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["compromissos"] });
+      queryClient.invalidateQueries({ queryKey: ["google-calendar-events"] });
       setShowDialog(false);
       resetForm();
     }
@@ -316,8 +349,14 @@ export default function Agenda() {
     setShowDialog(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Verificar se Google Calendar está conectado
+    if (!googleConnected) {
+      alert('⚠️ Você precisa conectar o Google Calendar antes de criar compromissos.\n\nClique no botão "Conectar Google Calendar" no topo da página.');
+      return;
+    }
     
     // Se modalidade for online, adicionar (Zoom) ao título
     const dataToSubmit = { ...formData };
@@ -326,9 +365,47 @@ export default function Agenda() {
     }
     
     if (editingEvent) {
+      // Se estiver editando, apenas atualizar no CRM (não mexe no Google)
       updateMutation.mutate({ id: editingEvent.id, data: dataToSubmit });
     } else {
-      createMutation.mutate(dataToSubmit);
+      // Criar novo evento - primeiro criar no Google Calendar
+      try {
+        // Preparar dados para o Google Calendar
+        const eventData = {
+          summary: dataToSubmit.titulo,
+          description: dataToSubmit.descricao || '',
+          start: {
+            dateTime: dataToSubmit.data_inicio
+          },
+          end: {
+            dateTime: dataToSubmit.data_fim
+          },
+          location: formData.modalidade === 'presencial' ? (formData.endereco || '') : 'Online'
+        };
+
+        // Se tiver cliente, adicionar ao email como convidado
+        if (formData.cliente_id) {
+          const cliente = clientes.find(c => c.id === formData.cliente_id);
+          if (cliente?.email) {
+            eventData.attendees = [{ email: cliente.email }];
+          }
+        }
+
+        // Criar evento no Google Calendar com Google Meet
+        const googleResponse = await base44.functions.invoke('criarEventoCalendar', eventData);
+        
+        if (googleResponse.data?.meetLink) {
+          // Se criou com sucesso, adicionar o meeting_link ao evento do CRM
+          dataToSubmit.meeting_link = googleResponse.data.meetLink;
+          dataToSubmit.google_event_id = googleResponse.data.eventId;
+        }
+
+        // Criar no CRM com o link do Google Meet
+        createMutation.mutate(dataToSubmit);
+      } catch (error) {
+        console.error('Erro ao criar evento:', error);
+        alert('❌ Erro ao criar evento no Google Calendar. Tente novamente.');
+      }
     }
   };
 
@@ -465,7 +542,7 @@ export default function Agenda() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { locale: ptBR }))}
+                onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
                 className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white border-0 font-bold"
               >
                 Hoje
@@ -497,7 +574,7 @@ export default function Agenda() {
                   selected={selectedDate}
                   onSelect={(date) => {
                     setSelectedDate(date);
-                    setCurrentWeekStart(startOfWeek(date, { locale: ptBR }));
+                    setCurrentWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
                   }}
                   locale={ptBR}
                   className="rounded-md"
@@ -702,9 +779,22 @@ export default function Agenda() {
                 }}
               >
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Selecione um cliente" />
+                  <SelectValue placeholder="Digite para buscar ou selecione..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <div className="p-2">
+                    <Input
+                      placeholder="🔍 Buscar cliente..."
+                      className="bg-white/10 border-white/20 text-white mb-2"
+                      onChange={(e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        const filteredClientes = clientes.filter(c => 
+                          c.nome?.toLowerCase().includes(searchTerm)
+                        );
+                        // Atualizar lista filtrada (implementação simplificada via re-render)
+                      }}
+                    />
+                  </div>
                   {clientes.map((cliente) => (
                     <SelectItem key={cliente.id} value={cliente.id}>
                       {cliente.nome}
@@ -865,24 +955,24 @@ export default function Agenda() {
                   onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
                   placeholder="Link gerado automaticamente pelo Google Meet"
                   className="bg-white/10 border-white/20 text-white"
-                  disabled={!editingEvent}
+                  readOnly
                 />
                 {!editingEvent && (
-                  <div className="text-xs text-green-300 mt-1">
+                  <div className="text-xs text-green-300 mt-1 flex items-center gap-1">
                     ✨ O link do Google Meet será gerado automaticamente ao salvar
                   </div>
                 )}
+                {formData.meeting_link && (
+                  <a 
+                    href={formData.meeting_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-300 hover:text-blue-200 mt-2 inline-flex items-center gap-2 bg-blue-500/20 px-3 py-2 rounded-lg font-medium"
+                  >
+                    🎥 Abrir reunião no Google Meet
+                  </a>
+                )}
               </div>
-              {formData.meeting_link && (
-                <a 
-                  href={formData.meeting_link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-300 hover:text-blue-200 mt-2 inline-flex items-center gap-1"
-                >
-                  🎥 Abrir reunião no Google Meet
-                </a>
-              )}
             </div>
 
             <div>

@@ -77,16 +77,26 @@ export default function Compromissos() {
   });
 
   const handleConnectGoogleCalendar = async () => {
+    setCheckingConnection(true);
     try {
       const response = await base44.functions.invoke('verificarConexaoCalendar');
-      if (!response.data?.connected) {
-        alert('⚠️ A integração com Google Calendar precisa ser configurada pelo administrador.\n\nAcesse: Dashboard → Integrações → Google Calendar');
-      } else {
-        alert('✅ Google Calendar já está conectado!');
+      
+      if (response.data?.connected) {
         setGoogleConnected(true);
+        queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+        alert('✅ Google Calendar conectado com sucesso!');
+      } else if (response.data?.needsAuth) {
+        if (confirm('📅 Para usar a integração com Google Calendar, você precisa autorizar o acesso.\n\n✅ Clique em OK para ir para a página de Integrações')) {
+          window.open('https://app.base44.com/dashboard/integrations', '_blank');
+        }
+      } else {
+        alert('⚠️ ' + (response.data?.message || 'Erro ao conectar com Google Calendar'));
       }
     } catch (error) {
-      alert('❌ Erro ao verificar conexão. Entre em contato com o administrador.');
+      console.error('Erro ao conectar:', error);
+      alert('❌ Erro ao conectar. Autorize a integração em:\nDashboard → Integrações → Google Calendar');
+    } finally {
+      setCheckingConnection(false);
     }
   };
 

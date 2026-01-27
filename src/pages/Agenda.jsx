@@ -126,38 +126,6 @@ export default function Agenda() {
     queryFn: () => base44.entities.Cliente.list()
   });
 
-  // Filtrar clientes baseado na hierarquia (apenas os próprios do usuário)
-  const clientes = useMemo(() => {
-    if (!user || !allClientes.length) return [];
-    
-    // Admin vê todos os clientes
-    if (user.role === "admin") {
-      return allClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    }
-    
-    // Líder de Agência vê clientes de toda sua hierarquia
-    if (user.tipo_hierarquia === "Líder de Agência") {
-      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
-      const clientesHierarquia = allClientes.filter(c => 
-        c.created_by === user.email || subordinadosEmails.includes(c.created_by)
-      );
-      return clientesHierarquia.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    }
-    
-    // Líder de Unidade vê seus clientes + dos subordinados diretos
-    if (user.tipo_hierarquia === "Líder de Unidade") {
-      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
-      const clientesHierarquia = allClientes.filter(c => 
-        c.created_by === user.email || subordinadosEmails.includes(c.created_by)
-      );
-      return clientesHierarquia.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    }
-    
-    // Corretor vê apenas os próprios clientes
-    const meusClientes = allClientes.filter(c => c.created_by === user.email);
-    return meusClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-  }, [allClientes, user, usuariosSubordinados]);
-
   // Usuários subordinados baseado na hierarquia
   const usuariosSubordinados = useMemo(() => {
     if (!user || !allUsers.length) return [];
@@ -211,6 +179,38 @@ export default function Agenda() {
     
     return [];
   }, [allUsers, user]);
+
+  // Filtrar clientes baseado na hierarquia (apenas os próprios do usuário)
+  const clientes = useMemo(() => {
+    if (!user || !allClientes.length) return [];
+    
+    // Admin vê todos os clientes
+    if (user.role === "admin") {
+      return allClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+    
+    // Líder de Agência vê clientes de toda sua hierarquia
+    if (user.tipo_hierarquia === "Líder de Agência") {
+      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
+      const clientesHierarquia = allClientes.filter(c => 
+        c.created_by === user.email || subordinadosEmails.includes(c.created_by)
+      );
+      return clientesHierarquia.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+    
+    // Líder de Unidade vê seus clientes + dos subordinados diretos
+    if (user.tipo_hierarquia === "Líder de Unidade") {
+      const subordinadosEmails = usuariosSubordinados.map(u => u.email);
+      const clientesHierarquia = allClientes.filter(c => 
+        c.created_by === user.email || subordinadosEmails.includes(c.created_by)
+      );
+      return clientesHierarquia.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+    
+    // Corretor vê apenas os próprios clientes
+    const meusClientes = allClientes.filter(c => c.created_by === user.email);
+    return meusClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  }, [allClientes, user, usuariosSubordinados]);
 
   // Combinar compromissos internos + eventos do Google Calendar
   const todosCompromissos = useMemo(() => {

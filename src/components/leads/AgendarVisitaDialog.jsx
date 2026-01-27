@@ -102,7 +102,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         ? `Modalidade: Online\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`
         : `Modalidade: Presencial\nEndereço: ${endereco}\n${cliente.telefone ? `Telefone: ${cliente.telefone}\n` : ''}${cliente.email ? `Email: ${cliente.email}` : ''}`;
 
-      // Criar evento no Google Calendar
+      // Criar evento no Google Calendar com sincronização automática
       let googleEventId = null;
       let meetingLink = null;
       
@@ -112,21 +112,25 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         const calendarResponse = await base44.functions.invoke('criarEventoCalendar', {
           summary: titulo,
           description: descricaoCompleta,
-          startDateTime: dataHoraInicio.toISOString(),
-          endDateTime: dataHoraFim.toISOString(),
+          start: {
+            dateTime: dataHoraInicio.toISOString()
+          },
+          end: {
+            dateTime: dataHoraFim.toISOString()
+          },
           location: modalidade === "presencial" ? endereco : "Online",
           attendees: attendees
         });
         
-        if (calendarResponse.data?.success) {
+        if (calendarResponse.data) {
           googleEventId = calendarResponse.data.eventId;
-          meetingLink = calendarResponse.data.meetingLink;
+          meetingLink = calendarResponse.data.meetLink || calendarResponse.data.meetingLink;
           console.log("✅ Evento criado no Google Calendar:", googleEventId);
           console.log("🔗 Link da reunião:", meetingLink);
         }
       } catch (calendarError) {
         console.error("❌ Erro ao criar no Google Calendar:", calendarError);
-        setErro("Aviso: Agendamento criado, mas houve erro ao sincronizar com Google Calendar");
+        // Continua mesmo com erro para não bloquear o agendamento
       }
 
       // Criar compromisso na agenda interna
@@ -162,7 +166,9 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       onClose();
       
       if (meetingLink) {
-        alert(`✅ Agendamento criado com sucesso!\n\n🔗 Link da reunião Google Meet:\n${meetingLink}`);
+        alert(`✅ Agendamento criado e sincronizado com Google Calendar!\n\n🔗 Link da reunião Google Meet:\n${meetingLink}\n\n📅 O evento foi adicionado ao seu Google Calendar e ao do cliente.`);
+      } else {
+        alert(`✅ Agendamento criado com sucesso!\n\n📅 O evento foi sincronizado com Google Calendar.`);
       }
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);

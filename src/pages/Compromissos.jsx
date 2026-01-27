@@ -24,11 +24,19 @@ import { motion } from "framer-motion";
 
 export default function Compromissos() {
   const [showDialog, setShowDialog] = useState(false);
+  const getDefaultDates = () => {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + 3600000); // +1 hora
+    return {
+      data_inicio: now.toISOString(),
+      data_fim: endTime.toISOString()
+    };
+  };
+
   const [formData, setFormData] = useState({
     titulo: "",
     descricao: "",
-    data_inicio: "",
-    data_fim: "",
+    ...getDefaultDates(),
     cor: "#0891b2",
     tipo: "agendado",
     modalidade: "",
@@ -127,8 +135,7 @@ export default function Compromissos() {
     setFormData({
       titulo: "",
       descricao: "",
-      data_inicio: "",
-      data_fim: "",
+      ...getDefaultDates(),
       cor: "#0891b2",
       tipo: "agendado",
       modalidade: "",
@@ -383,10 +390,10 @@ export default function Compromissos() {
                 <Label className="text-white mb-2 block">Data do Compromisso *</Label>
                 <Input
                   type="date"
-                  value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd") : ""}
+                  value={formData.data_inicio ? format(new Date(formData.data_inicio), "yyyy-MM-dd") : ""}
                   onChange={(e) => {
                     const newDate = new Date(e.target.value);
-                    const currentStart = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                    const currentStart = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
                     newDate.setHours(currentStart.getHours(), currentStart.getMinutes());
                     const newEnd = new Date(newDate);
                     newEnd.setHours(newEnd.getHours() + 1);
@@ -406,9 +413,9 @@ export default function Compromissos() {
                   <Label className="text-white mb-2 block">Horário Início *</Label>
                   <div className="flex gap-2">
                     <Select
-                      value={formData.data_inicio ? format(parseISO(formData.data_inicio), "HH") : ""}
+                      value={formData.data_inicio ? format(new Date(formData.data_inicio), "HH") : ""}
                       onValueChange={(hour) => {
-                        const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
                         date.setHours(parseInt(hour));
                         const endDate = new Date(date);
                         endDate.setHours(endDate.getHours() + 1);
@@ -431,9 +438,9 @@ export default function Compromissos() {
                       </SelectContent>
                     </Select>
                     <Select
-                      value={formData.data_inicio ? format(parseISO(formData.data_inicio), "mm") : ""}
+                      value={formData.data_inicio ? format(new Date(formData.data_inicio), "mm") : ""}
                       onValueChange={(minute) => {
-                        const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
                         date.setMinutes(parseInt(minute));
                         const endDate = new Date(date);
                         endDate.setHours(endDate.getHours() + 1);
@@ -459,9 +466,9 @@ export default function Compromissos() {
                   <Label className="text-white mb-2 block">Horário Fim *</Label>
                   <div className="flex gap-2">
                     <Select
-                      value={formData.data_fim ? format(parseISO(formData.data_fim), "HH") : ""}
+                      value={formData.data_fim ? format(new Date(formData.data_fim), "HH") : ""}
                       onValueChange={(hour) => {
-                        const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
                         date.setHours(parseInt(hour));
                         setFormData({ ...formData, data_fim: date.toISOString() });
                       }}
@@ -478,9 +485,9 @@ export default function Compromissos() {
                       </SelectContent>
                     </Select>
                     <Select
-                      value={formData.data_fim ? format(parseISO(formData.data_fim), "mm") : ""}
+                      value={formData.data_fim ? format(new Date(formData.data_fim), "mm") : ""}
                       onValueChange={(minute) => {
-                        const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
                         date.setMinutes(parseInt(minute));
                         setFormData({ ...formData, data_fim: date.toISOString() });
                       }}

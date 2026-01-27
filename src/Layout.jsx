@@ -13,6 +13,7 @@ import ConvitesDialog from "./components/ConvitesDialog";
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
   { name: "Agenda", icon: CalendarIcon, page: "Agenda" },
+  { name: "Compromissos", icon: CalendarIcon, page: "Compromissos" },
   { name: "Aniversariantes", icon: Users, page: "Aniversariantes" },
   { name: "Calculadora Rápida", icon: Briefcase, page: "CalculadoraRapida" },
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },

@@ -6,6 +6,7 @@ import GestaoCustos from './pages/GestaoCustos';
 import GestaoUsuarios from './pages/GestaoUsuarios';
 import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
+import Compromissos from './pages/Compromissos';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "GestaoUsuarios": GestaoUsuarios,
     "Leads": Leads,
     "Organograma": Organograma,
+    "Compromissos": Compromissos,
 }
 
 export const pagesConfig = {

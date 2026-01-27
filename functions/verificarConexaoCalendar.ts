@@ -10,42 +10,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Buscar autenticação do usuário
-    const authRecords = await base44.asServiceRole.entities.GoogleCalendarAuth.filter({ 
-      user_email: user.email 
-    });
-
-    if (authRecords.length === 0) {
-      return Response.json({ 
-        connected: false,
-        needsAuth: true,
-        message: 'Você precisa autorizar o Google Calendar'
-      });
-    }
-
-    const authData = authRecords[0];
+    // Verificar se há token de acesso
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
     
-    // Verificar se o token expirou
-    if (authData.expires_at && authData.expires_at < Date.now()) {
+    if (!accessToken) {
       return Response.json({ 
         connected: false,
-        needsAuth: true,
-        message: 'Token expirado. Autorize novamente.'
+        message: 'Google Calendar não está conectado'
       });
     }
 
     // Testar se o token é válido
     const testResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: {
-        'Authorization': `Bearer ${authData.access_token}`
+        'Authorization': `Bearer ${accessToken}`
       }
     });
 
     if (!testResponse.ok) {
       return Response.json({ 
         connected: false,
-        needsAuth: true,
-        message: 'Token inválido. Autorize novamente.'
+        message: 'Token inválido ou expirado'
       });
     }
 

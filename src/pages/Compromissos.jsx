@@ -79,31 +79,24 @@ export default function Compromissos() {
   const handleConnectGoogleCalendar = async () => {
     setCheckingConnection(true);
     try {
-      const response = await base44.functions.invoke('iniciarAuthGoogle');
+      const response = await base44.functions.invoke('verificarConexaoCalendar');
       
-      if (response.data?.authUrl) {
-        const authWindow = window.open(response.data.authUrl, 'Google Auth', 'width=600,height=700');
-        
-        const messageHandler = async (event) => {
-          if (event.data.type === 'google-auth-success') {
-            window.removeEventListener('message', messageHandler);
-            
-            const verifyResponse = await base44.functions.invoke('verificarConexaoCalendar');
-            if (verifyResponse.data?.connected) {
-              setGoogleConnected(true);
-              queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-              alert('✅ Google Calendar conectado com sucesso!');
-            }
-          }
-        };
-        
-        window.addEventListener('message', messageHandler);
+      if (response.data?.connected) {
+        setGoogleConnected(true);
+        queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+        alert('✅ Google Calendar conectado com sucesso!');
       } else {
-        alert('❌ Erro ao iniciar autenticação');
+        alert('⚠️ Google Calendar não está conectado. A integração já foi autorizada pelo administrador e está pronta para uso.');
+        // Recarregar para verificar novamente
+        const recheckResponse = await base44.functions.invoke('verificarConexaoCalendar');
+        if (recheckResponse.data?.connected) {
+          setGoogleConnected(true);
+          queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+        }
       }
     } catch (error) {
       console.error('Erro ao conectar:', error);
-      alert('❌ Erro ao conectar com Google Calendar');
+      alert('❌ Erro ao verificar conexão com Google Calendar');
     } finally {
       setCheckingConnection(false);
     }

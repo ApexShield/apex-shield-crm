@@ -14,8 +14,6 @@ import { motion } from "framer-motion";
 
 export default function Compromissos() {
   const [showDialog, setShowDialog] = useState(false);
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [checkingConnection, setCheckingConnection] = useState(true);
   const [formData, setFormData] = useState({
     titulo: "",
     descricao: "",
@@ -31,25 +29,6 @@ export default function Compromissos() {
     queryKey: ["user"],
     queryFn: () => base44.auth.me()
   });
-
-  // Verificar conexão com Google Calendar
-  React.useEffect(() => {
-    const verificarConexao = async () => {
-      try {
-        const response = await base44.functions.invoke('verificarConexaoCalendar');
-        setGoogleConnected(response.data?.connected || false);
-      } catch (error) {
-        console.error('Erro ao verificar conexão:', error);
-        setGoogleConnected(false);
-      } finally {
-        setCheckingConnection(false);
-      }
-    };
-    
-    if (user) {
-      verificarConexao();
-    }
-  }, [user]);
 
   // Buscar eventos do Google Calendar
   const { data: compromissos = [], isLoading } = useQuery({
@@ -73,34 +52,8 @@ export default function Compromissos() {
         return [];
       }
     },
-    enabled: googleConnected
+    enabled: !!user
   });
-
-  const handleConnectGoogleCalendar = async () => {
-    setCheckingConnection(true);
-    try {
-      const response = await base44.functions.invoke('verificarConexaoCalendar');
-      
-      if (response.data?.connected) {
-        setGoogleConnected(true);
-        queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-        alert('✅ Google Calendar conectado com sucesso!');
-      } else {
-        alert('⚠️ Google Calendar não está conectado. A integração já foi autorizada pelo administrador e está pronta para uso.');
-        // Recarregar para verificar novamente
-        const recheckResponse = await base44.functions.invoke('verificarConexaoCalendar');
-        if (recheckResponse.data?.connected) {
-          setGoogleConnected(true);
-          queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao conectar:', error);
-      alert('❌ Erro ao verificar conexão com Google Calendar');
-    } finally {
-      setCheckingConnection(false);
-    }
-  };
 
   const criarCompromissoMutation = useMutation({
     mutationFn: async (data) => {
@@ -135,12 +88,6 @@ export default function Compromissos() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!googleConnected) {
-      alert('⚠️ Você precisa conectar o Google Calendar antes de criar compromissos.');
-      return;
-    }
-
     criarCompromissoMutation.mutate(formData);
   };
 
@@ -186,24 +133,12 @@ export default function Compromissos() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {!checkingConnection && (
-                googleConnected ? (
-                  <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 px-4 py-2 rounded-lg">
-                    <CheckCircle2 className="w-5 h-5 text-green-400" />
-                    <span className="text-green-100 text-sm font-medium">Google Calendar Conectado</span>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={handleConnectGoogleCalendar}
-                    className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 font-bold"
-                  >
-                    🔗 Conectar Google Calendar
-                  </Button>
-                )
-              )}
+              <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 px-4 py-2 rounded-lg">
+                <CheckCircle2 className="w-5 h-5 text-green-400" />
+                <span className="text-green-100 text-sm font-medium">Google Calendar Integrado</span>
+              </div>
               <Button 
                 onClick={() => setShowDialog(true)}
-                disabled={!googleConnected}
                 className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6"
               >
                 <Plus className="w-5 h-5 mr-2" />
@@ -214,23 +149,7 @@ export default function Compromissos() {
         </div>
 
         {/* Lista de Compromissos */}
-        {!googleConnected ? (
-          <Card className="bg-white/10 border-white/20">
-            <CardContent className="p-12 text-center">
-              <AlertCircle className="w-16 h-16 text-orange-400 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Conecte seu Google Calendar</h3>
-              <p className="text-gray-300 mb-6">
-                Para visualizar e criar compromissos, conecte sua conta do Google Calendar.
-              </p>
-              <Button
-                onClick={handleConnectGoogleCalendar}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-bold"
-              >
-                🔗 Conectar Agora
-              </Button>
-            </CardContent>
-          </Card>
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
             <p className="text-white">Carregando compromissos...</p>

@@ -100,6 +100,8 @@ export default function Agenda() {
   const { data: eventosGoogle = [] } = useQuery({
     queryKey: ['google-calendar-events', currentWeekStart],
     queryFn: async () => {
+      if (!googleConnected) return [];
+      
       try {
         const weekStart = startOfDay(currentWeekStart);
         const weekEnd = endOfDay(addDays(currentWeekStart, 6));
@@ -114,7 +116,9 @@ export default function Agenda() {
         console.error('Erro ao buscar eventos do Google Calendar:', error);
         return [];
       }
-    }
+    },
+    enabled: googleConnected,
+    refetchInterval: 60000 // Atualiza a cada 1 minuto
   });
 
   const { data: allClientes = [] } = useQuery({
@@ -276,6 +280,10 @@ export default function Agenda() {
       queryClient.invalidateQueries({ queryKey: ["google-calendar-events"] });
       setShowDialog(false);
       resetForm();
+    },
+    onError: (error) => {
+      console.error('Erro ao salvar no CRM:', error);
+      alert('⚠️ Evento criado no Google Calendar mas houve erro ao salvar no CRM.');
     }
   });
 
@@ -360,15 +368,19 @@ export default function Agenda() {
     
     // Se modalidade for online, adicionar (Zoom) ao título
     const dataToSubmit = { ...formData };
-    if (formData.modalidade === "online" && formData.titulo && !formData.titulo.includes("(Zoom)")) {
-      dataToSubmit.titulo = `${formData.titulo} (Zoom)`;
+    if (formData.modalidade === "online" && formData.titulo && !formData.titulo.includes("(Online)")) {
+      dataToSubmit.titulo = `${formData.titulo} (Online)`;
     }
     
-    if (editingEvent) {
-      // Se estiver editando, apenas atualizar no CRM (não mexe no Google)
+    if (editingEvent && !editingEvent.isGoogleEvent) {
+      // Se estiver editando um evento interno, apenas atualizar no CRM
       updateMutation.mutate({ id: editingEvent.id, data: dataToSubmit });
+    } else if (editingEvent && editingEvent.isGoogleEvent) {
+      // Não permitir editar eventos do Google
+      alert('⚠️ Eventos do Google Calendar devem ser editados diretamente no Google Calendar.');
+      return;
     } else {
-      // Criar novo evento - primeiro criar no Google Calendar
+      // Criar novo evento - criar no Google Calendar E no CRM
       try {
         // Preparar dados para o Google Calendar
         const eventData = {
@@ -395,16 +407,19 @@ export default function Agenda() {
         const googleResponse = await base44.functions.invoke('criarEventoCalendar', eventData);
         
         if (googleResponse.data?.meetLink) {
-          // Se criou com sucesso, adicionar o meeting_link ao evento do CRM
+          // Se criou com sucesso, adicionar o meeting_link e google_event_id
           dataToSubmit.meeting_link = googleResponse.data.meetLink;
           dataToSubmit.google_event_id = googleResponse.data.eventId;
+          dataToSubmit.google_event_link = googleResponse.data.eventLink;
         }
 
-        // Criar no CRM com o link do Google Meet
+        // Criar no CRM com os dados do Google Calendar
         createMutation.mutate(dataToSubmit);
+        
+        alert('✅ Compromisso criado e sincronizado com Google Calendar!');
       } catch (error) {
         console.error('Erro ao criar evento:', error);
-        alert('❌ Erro ao criar evento no Google Calendar. Tente novamente.');
+        alert('❌ Erro ao sincronizar com Google Calendar: ' + (error.message || 'Tente novamente'));
       }
     }
   };

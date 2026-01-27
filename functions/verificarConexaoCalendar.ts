@@ -10,49 +10,49 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Tentar obter token de acesso do Google Calendar
-    try {
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
-      
-      if (!accessToken) {
-        return Response.json({ 
-          connected: false,
-          needsAuth: true,
-          message: 'Google Calendar não está autorizado'
-        });
-      }
+    // Buscar autenticação do usuário
+    const authRecords = await base44.asServiceRole.entities.GoogleCalendarAuth.filter({ 
+      user_email: user.email 
+    });
 
-      // Testar se o token é válido fazendo uma requisição simples
-      const testResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-
-      if (!testResponse.ok) {
-        const errorData = await testResponse.json().catch(() => ({}));
-        console.error('Erro na validação do token:', testResponse.status, errorData);
-        return Response.json({ 
-          connected: false,
-          needsAuth: true,
-          message: 'Token expirado ou inválido. Autorize novamente.'
-        });
-      }
-
-      return Response.json({ 
-        connected: true,
-        message: 'Google Calendar conectado com sucesso'
-      });
-
-    } catch (error) {
-      console.error('Erro ao verificar conexão:', error);
+    if (authRecords.length === 0) {
       return Response.json({ 
         connected: false,
         needsAuth: true,
-        message: 'Erro ao acessar Google Calendar. Autorize a integração.',
-        error: error.message
+        message: 'Você precisa autorizar o Google Calendar'
       });
     }
+
+    const authData = authRecords[0];
+    
+    // Verificar se o token expirou
+    if (authData.expires_at && authData.expires_at < Date.now()) {
+      return Response.json({ 
+        connected: false,
+        needsAuth: true,
+        message: 'Token expirado. Autorize novamente.'
+      });
+    }
+
+    // Testar se o token é válido
+    const testResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+      headers: {
+        'Authorization': `Bearer ${authData.access_token}`
+      }
+    });
+
+    if (!testResponse.ok) {
+      return Response.json({ 
+        connected: false,
+        needsAuth: true,
+        message: 'Token inválido. Autorize novamente.'
+      });
+    }
+
+    return Response.json({ 
+      connected: true,
+      message: 'Google Calendar conectado'
+    });
 
   } catch (error) {
     console.error('Erro geral:', error);

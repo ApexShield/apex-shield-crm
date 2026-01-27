@@ -19,8 +19,16 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Obter token de acesso do Google Calendar
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    // Buscar token do usuário
+    const authRecords = await base44.asServiceRole.entities.GoogleCalendarAuth.filter({ 
+      user_email: user.email 
+    });
+
+    if (authRecords.length === 0) {
+      return Response.json({ error: 'Usuário não autorizou Google Calendar' }, { status: 403 });
+    }
+
+    const accessToken = authRecords[0].access_token;
 
     // Criar evento no Google Calendar com Google Meet
     const event = {

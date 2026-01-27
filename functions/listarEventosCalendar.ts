@@ -13,8 +13,16 @@ Deno.serve(async (req) => {
     // Obter parâmetros da requisição
     const { dataInicio, dataFim } = await req.json();
 
-    // Obter token de acesso do Google Calendar
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    // Buscar token do usuário
+    const authRecords = await base44.asServiceRole.entities.GoogleCalendarAuth.filter({ 
+      user_email: user.email 
+    });
+
+    if (authRecords.length === 0) {
+      return Response.json({ eventos: [] });
+    }
+
+    const accessToken = authRecords[0].access_token;
 
     // Buscar eventos do Google Calendar
     const timeMin = dataInicio ? new Date(dataInicio).toISOString() : new Date().toISOString();

@@ -17,7 +17,8 @@ Deno.serve(async (req) => {
       if (!accessToken) {
         return Response.json({ 
           connected: false,
-          message: 'Google Calendar não conectado'
+          needsAuth: true,
+          message: 'Google Calendar não está autorizado'
         });
       }
 
@@ -29,9 +30,12 @@ Deno.serve(async (req) => {
       });
 
       if (!testResponse.ok) {
+        const errorData = await testResponse.json().catch(() => ({}));
+        console.error('Erro na validação do token:', testResponse.status, errorData);
         return Response.json({ 
           connected: false,
-          message: 'Token expirado ou inválido'
+          needsAuth: true,
+          message: 'Token expirado ou inválido. Autorize novamente.'
         });
       }
 
@@ -44,7 +48,8 @@ Deno.serve(async (req) => {
       console.error('Erro ao verificar conexão:', error);
       return Response.json({ 
         connected: false,
-        message: 'Google Calendar não conectado',
+        needsAuth: true,
+        message: 'Erro ao acessar Google Calendar. Autorize a integração.',
         error: error.message
       });
     }

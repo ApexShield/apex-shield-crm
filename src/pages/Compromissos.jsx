@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
+import GoogleCalendarConnect from "../components/GoogleCalendarConnect";
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4); // 04:00 às 23:00
 const COLORS = [
@@ -33,6 +34,7 @@ export default function Compromissos() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [showConfirmResend, setShowConfirmResend] = useState(false);
   const [pendingUpdateData, setPendingUpdateData] = useState(null);
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
   
   const getDefaultDates = () => {
     const now = new Date();
@@ -60,6 +62,23 @@ export default function Compromissos() {
     queryKey: ["user"],
     queryFn: () => base44.auth.me()
   });
+
+  // Verificar conexão do Google Calendar
+  const { data: connection } = useQuery({
+    queryKey: ["google-calendar-connection"],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('verificarConexaoUsuarioCalendar');
+      return response.data;
+    },
+    enabled: !!user
+  });
+
+  // Mostrar dialog de conexão se não estiver conectado
+  useEffect(() => {
+    if (user && connection && !connection.connected) {
+      setShowConnectDialog(true);
+    }
+  }, [user, connection]);
 
   const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -97,7 +116,7 @@ export default function Compromissos() {
         return [];
       }
     },
-    enabled: !!user,
+    enabled: !!user && connection?.connected,
     refetchInterval: 60000
   });
 
@@ -1094,6 +1113,12 @@ export default function Compromissos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Conexão Google Calendar */}
+      <GoogleCalendarConnect
+        open={showConnectDialog}
+        onClose={() => setShowConnectDialog(false)}
+      />
     </div>
   );
 }

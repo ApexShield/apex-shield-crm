@@ -225,12 +225,17 @@ export default function Compromissos() {
 
   const handleEditEvent = (event) => {
     setEditingEvent(event);
+    
+    // Garantir que as datas sejam válidas
+    const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
+    const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
+    
     setFormData({
       id: event.id,
-      titulo: event.titulo,
+      titulo: event.titulo || '',
       descricao: event.descricao || '',
-      data_inicio: event.data_inicio,
-      data_fim: event.data_fim,
+      data_inicio: dataInicio.toISOString(),
+      data_fim: dataFim.toISOString(),
       cor: event.cor || '#0891b2',
       tipo: COLORS.find(c => c.value === event.cor)?.tipo || 'agendado',
       modalidade: event.modalidade || '',
@@ -616,7 +621,14 @@ export default function Compromissos() {
                 <Label className="text-white mb-2 block">Data *</Label>
                 <Input
                   type="date"
-                  value={formData.data_inicio ? format(new Date(formData.data_inicio), "yyyy-MM-dd") : ""}
+                  value={formData.data_inicio ? (() => {
+                    try {
+                      const date = new Date(formData.data_inicio);
+                      return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd");
+                    } catch {
+                      return "";
+                    }
+                  })() : ""}
                   onChange={(e) => {
                     const [year, month, day] = e.target.value.split('-').map(Number);
                     const currentStart = formData.data_inicio ? new Date(formData.data_inicio) : new Date();

@@ -480,7 +480,19 @@ export default function Compromissos() {
                               >
                                 <div className="flex items-center justify-between gap-1">
                                   <div className="truncate flex-1">{event.titulo}</div>
-                                  <div className="text-[9px] bg-white/30 px-1 rounded">📅</div>
+                                  <div className="flex items-center gap-1">
+                                    {event.confirmado && (
+                                      <div className="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
+                                        ✓
+                                      </div>
+                                    )}
+                                    {event.total_participantes > 0 && !event.confirmado && (
+                                      <div className="text-[9px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
+                                        {event.total_participantes}
+                                      </div>
+                                    )}
+                                    <div className="text-[9px] bg-white/30 px-1 rounded">📅</div>
+                                  </div>
                                 </div>
                                 {event.meeting_link && (
                                   <div 
@@ -614,6 +626,50 @@ export default function Compromissos() {
                 📧 O convite da reunião será enviado para este email
               </p>
             </div>
+
+            {/* Mostrar participantes se existirem (ao editar) */}
+            {editingEvent && editingEvent.participantes && editingEvent.participantes.length > 0 && (
+              <div className="bg-white/5 border border-white/20 rounded-lg p-4">
+                <Label className="text-white mb-2 block">Participantes</Label>
+                <div className="space-y-2">
+                  {editingEvent.participantes.map((participante, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-white/10 rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                          {participante.nome?.charAt(0) || participante.email?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-white text-sm font-medium">{participante.nome || participante.email}</p>
+                          <p className="text-indigo-300 text-xs">{participante.email}</p>
+                        </div>
+                      </div>
+                      <div>
+                        {participante.status === 'accepted' && (
+                          <span className="text-green-400 text-xs bg-green-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+                            ✓ Confirmado
+                          </span>
+                        )}
+                        {participante.status === 'declined' && (
+                          <span className="text-red-400 text-xs bg-red-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+                            ✗ Recusado
+                          </span>
+                        )}
+                        {participante.status === 'tentative' && (
+                          <span className="text-yellow-400 text-xs bg-yellow-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+                            ? Talvez
+                          </span>
+                        )}
+                        {participante.status === 'needsAction' && (
+                          <span className="text-gray-400 text-xs bg-gray-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+                            ⏳ Aguardando
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Data e Horários */}
             <div className="grid grid-cols-3 gap-4">

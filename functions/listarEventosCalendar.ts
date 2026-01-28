@@ -10,24 +10,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Obter parâmetros da requisição
+    // Obter parâmetros
     const { dataInicio, dataFim } = await req.json();
+
+    if (!dataInicio || !dataFim) {
+      return Response.json({ 
+        error: 'Parâmetros dataInicio e dataFim são obrigatórios' 
+      }, { status: 400 });
+    }
 
     // Obter token de acesso
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
     
     if (!accessToken) {
-      return Response.json({ eventos: [] });
+      return Response.json({ error: 'Google Calendar não está conectado' }, { status: 403 });
     }
 
     // Buscar eventos do Google Calendar
-    const timeMin = dataInicio ? new Date(dataInicio).toISOString() : new Date().toISOString();
-    const timeMax = dataFim ? new Date(dataFim).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
+    url.searchParams.append('timeMin', dataInicio);
+    url.searchParams.append('timeMax', dataFim);
+    url.searchParams.append('singleEvents', 'true');
+    url.searchParams.append('orderBy', 'startTime');
 
-    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime`;
-
-    const response = await fetch(url, {
-      method: 'GET',
+    const response = await fetch(url.toString(), {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -44,24 +50,42 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json();
-
+    
+    // Mapear IDs de cores do Google Calendar para cores hexadecimais
+    const getHexColorFromGoogleId = (colorId) => {
+      const colorMap = {
+        "1": "#0891b2",  // Lavender -> Azul Pavão
+        "2": "#10b981",  // Sage -> Manjericão
+        "3": "#8b5cf6",  // Grape -> Mirtilo
+        "4": "#ec4899",  // Flamingo -> Flamingo
+        "5": "#fbbf24",  // Banana -> Amarelo Banana
+        "6": "#f97316",  // Tangerine -> Tangerina
+        "7": "#0891b2",  // Peacock -> Azul Pavão
+        "8": "#6b7280",  // Graphite -> Cinza
+        "9": "#0891b2",  // Blueberry -> Azul Pavão
+        "10": "#10b981", // Basil -> Manjericão
+        "11": "#ef4444"  // Tomato -> Vermelho
+      };
+      return colorMap[colorId] || "#0891b2"; // Default: Azul Pavão
+    };
+    
     // Formatar eventos para o formato do CRM
     const eventos = (data.items || []).map(event => {
+      const start = event.start?.dateTime || event.start?.date;
+      const end = event.end?.dateTime || event.end?.date;
       const meetingLink = event.hangoutLink || event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri;
-      
+      const cor = getHexColorFromGoogleId(event.colorId);
+
       return {
         id: event.id,
         titulo: event.summary || 'Sem título',
         descricao: event.description || '',
-        data_inicio: event.start.dateTime || event.start.date,
-        data_fim: event.end.dateTime || event.end.date,
-        endereco: event.location || '',
+        data_inicio: start,
+        data_fim: end,
+        cor: cor,
         meeting_link: meetingLink,
-        cor: '#4285F4',
-        tipo: 'google_calendar',
-        origem: 'Google Calendar',
         htmlLink: event.htmlLink,
-        google_event_id: event.id
+        origem: 'Google Calendar'
       };
     });
 

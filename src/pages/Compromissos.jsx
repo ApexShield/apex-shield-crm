@@ -335,12 +335,8 @@ export default function Compromissos() {
       const end = parseISO(event.data_fim);
       
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        return { topOffset: 0, height: 60 };
+        return { topOffset: 0, heightPx: 58 };
       }
-      
-      const slotStart = new Date(start);
-      slotStart.setMinutes(0, 0, 0);
-      slotStart.setHours(hour);
       
       // Calcular offset em minutos desde o início da hora
       const minutesFromHourStart = start.getMinutes();
@@ -348,12 +344,16 @@ export default function Compromissos() {
       
       // Calcular duração em minutos
       const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-      const height = (durationMinutes / 60) * 100; // Percentual da altura baseado na duração
       
-      return { topOffset, height };
+      // Cada hora tem 60px de altura
+      // 1 minuto = 1px
+      // Subtrair 2px para criar espaçamento entre eventos
+      const heightPx = Math.max(durationMinutes - 2, 20); // Mínimo 20px
+      
+      return { topOffset, heightPx };
     } catch (error) {
       console.error('Erro ao calcular posição do evento:', error);
-      return { topOffset: 0, height: 60 };
+      return { topOffset: 0, heightPx: 58 };
     }
   };
 
@@ -549,8 +549,13 @@ export default function Compromissos() {
                           const events = getEventsForSlot(day, hour);
                           // Filtrar apenas eventos que começam nesta hora
                           const eventsStartingHere = events.filter(e => {
-                            const start = parseISO(e.data_inicio);
-                            return start.getHours() === hour;
+                            try {
+                              const start = parseISO(e.data_inicio);
+                              if (isNaN(start.getTime())) return false;
+                              return start.getHours() === hour;
+                            } catch (error) {
+                              return false;
+                            }
                           });
                           
                           return (
@@ -566,9 +571,16 @@ export default function Compromissos() {
                                   onClick={() => handleSlotClick(day, hour)}
                                 >
                                   {eventsStartingHere.map((event, eventIndex) => {
-                                    const { topOffset, height } = calculateEventPosition(event, hour);
-                                    const start = parseISO(event.data_inicio);
-                                    const isValidStart = !isNaN(start.getTime());
+                                    const { topOffset, heightPx } = calculateEventPosition(event, hour);
+                                    
+                                    let start;
+                                    let isValidStart = false;
+                                    try {
+                                      start = parseISO(event.data_inicio);
+                                      isValidStart = !isNaN(start.getTime());
+                                    } catch (error) {
+                                      console.error('Erro ao processar data de início:', error);
+                                    }
                                     
                                     return (
                                       <Draggable 
@@ -587,7 +599,7 @@ export default function Compromissos() {
                                             style={{
                                               backgroundColor: event.cor || "#3b82f6",
                                               top: `${topOffset}%`,
-                                              height: `${Math.max(height, 40)}px`,
+                                              height: `${heightPx}px`,
                                               transform: snapshot.isDragging 
                                                 ? `${provided.draggableProps.style?.transform} translate(0, -10px)` 
                                                 : provided.draggableProps.style?.transform,

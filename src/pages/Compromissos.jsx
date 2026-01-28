@@ -330,22 +330,31 @@ export default function Compromissos() {
   };
 
   const calculateEventPosition = (event, hour) => {
-    const start = parseISO(event.data_inicio);
-    const end = parseISO(event.data_fim);
-    
-    const slotStart = new Date(start);
-    slotStart.setMinutes(0, 0, 0);
-    slotStart.setHours(hour);
-    
-    // Calcular offset em minutos desde o início da hora
-    const minutesFromHourStart = start.getMinutes();
-    const topOffset = (minutesFromHourStart / 60) * 100; // Percentual da altura da hora
-    
-    // Calcular duração em minutos
-    const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    const height = (durationMinutes / 60) * 100; // Percentual da altura baseado na duração
-    
-    return { topOffset, height };
+    try {
+      const start = parseISO(event.data_inicio);
+      const end = parseISO(event.data_fim);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return { topOffset: 0, height: 60 };
+      }
+      
+      const slotStart = new Date(start);
+      slotStart.setMinutes(0, 0, 0);
+      slotStart.setHours(hour);
+      
+      // Calcular offset em minutos desde o início da hora
+      const minutesFromHourStart = start.getMinutes();
+      const topOffset = (minutesFromHourStart / 60) * 100; // Percentual da altura da hora
+      
+      // Calcular duração em minutos
+      const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+      const height = (durationMinutes / 60) * 100; // Percentual da altura baseado na duração
+      
+      return { topOffset, height };
+    } catch (error) {
+      console.error('Erro ao calcular posição do evento:', error);
+      return { topOffset: 0, height: 60 };
+    }
   };
 
   const handleDragEnd = (result) => {
@@ -559,6 +568,7 @@ export default function Compromissos() {
                                   {eventsStartingHere.map((event, eventIndex) => {
                                     const { topOffset, height } = calculateEventPosition(event, hour);
                                     const start = parseISO(event.data_inicio);
+                                    const isValidStart = !isNaN(start.getTime());
                                     
                                     return (
                                       <Draggable 
@@ -594,9 +604,11 @@ export default function Compromissos() {
                                             <div className="flex items-center justify-between gap-1">
                                               <div className="truncate flex-1">
                                                 {event.titulo}
-                                                <div className="text-[9px] opacity-75 mt-0.5">
-                                                  {format(start, 'HH:mm', { locale: ptBR })}
-                                                </div>
+                                                {isValidStart && (
+                                                  <div className="text-[9px] opacity-75 mt-0.5">
+                                                    {format(start, 'HH:mm', { locale: ptBR })}
+                                                  </div>
+                                                )}
                                               </div>
                                               <div className="flex items-center gap-1">
                                                 {event.confirmado && (

@@ -857,9 +857,15 @@ export default function Agenda() {
                     }
                   })() : ""}
                   onChange={(e) => {
-                    const newDate = new Date(e.target.value);
+                    if (!e.target.value) return;
+                    const [year, month, day] = e.target.value.split('-').map(Number);
+                    if (!year || !month || !day) return;
+                    
                     const currentStart = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
-                    newDate.setHours(currentStart.getHours(), currentStart.getMinutes());
+                    const newDate = new Date(year, month - 1, day, currentStart.getHours(), currentStart.getMinutes());
+                    
+                    if (isNaN(newDate.getTime())) return;
+                    
                     const newEnd = new Date(newDate);
                     newEnd.setHours(newEnd.getHours() + 1);
                     setFormData({ 

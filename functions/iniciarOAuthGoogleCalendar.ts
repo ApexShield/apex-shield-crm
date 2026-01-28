@@ -1,8 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
-const BASE_URL = Deno.env.get("BASE_URL") || "https://apexshieldcrm.base44.app";
-const REDIRECT_URI = `${BASE_URL}/api/functions/callbackOAuthGoogleCalendar`;
+const REDIRECT_URI = "https://apexshieldcrm.base44.app/api/functions/callbackOAuthGoogleCalendar";
 
 Deno.serve(async (req) => {
   try {

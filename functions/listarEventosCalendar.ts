@@ -76,6 +76,17 @@ Deno.serve(async (req) => {
       const meetingLink = event.hangoutLink || event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri;
       const cor = getHexColorFromGoogleId(event.colorId);
 
+      // Extrair informações dos participantes
+      const attendees = event.attendees || [];
+      const participantes = attendees.map(att => ({
+        email: att.email,
+        nome: att.displayName || att.email,
+        status: att.responseStatus || 'needsAction' // accepted, declined, tentative, needsAction
+      }));
+      
+      // Verificar se algum participante confirmou
+      const temConfirmacao = attendees.some(att => att.responseStatus === 'accepted');
+
       return {
         id: event.id,
         titulo: event.summary || 'Sem título',
@@ -85,7 +96,10 @@ Deno.serve(async (req) => {
         cor: cor,
         meeting_link: meetingLink,
         htmlLink: event.htmlLink,
-        origem: 'Google Calendar'
+        origem: 'Google Calendar',
+        participantes: participantes,
+        total_participantes: participantes.length,
+        confirmado: temConfirmacao
       };
     });
 

@@ -22,6 +22,7 @@ const COLORS = [
 export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSave }) {
   const [tipoCompromisso, setTipoCompromisso] = useState(""); // AB Visita, Fechamento, Entrega de Apólice
   const [subTipoFechamento, setSubTipoFechamento] = useState(""); // F, F2, F3, F4, F5
+  const [emailConvidado, setEmailConvidado] = useState("");
   const [formData, setFormData] = useState({
     titulo: "",
     descricao: "",
@@ -104,6 +105,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         dataToSubmit.titulo = `${formData.titulo} (Online)`;
       }
 
+      const participanteEmail = emailConvidado || cliente?.email;
+      
       const eventData = {
         summary: dataToSubmit.titulo,
         description: dataToSubmit.descricao || '',
@@ -116,8 +119,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         location: formData.modalidade === 'presencial' ? (formData.endereco || '') : 'Online'
       };
 
-      if (cliente?.email) {
-        eventData.attendees = [{ email: cliente.email }];
+      if (participanteEmail) {
+        eventData.attendees = [{ email: participanteEmail }];
       }
 
       const googleResponse = await base44.functions.invoke('criarEventoCalendar', eventData);
@@ -139,7 +142,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         dataHora: formData.data_inicio,
         endereco: formData.endereco,
         titulo: dataToSubmit.titulo,
-        convidados: cliente?.email ? [cliente.email] : [],
+        convidados: participanteEmail ? [participanteEmail] : [],
         meeting_link: dataToSubmit.meeting_link
       };
 
@@ -159,6 +162,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const resetForm = () => {
     setTipoCompromisso("");
     setSubTipoFechamento("");
+    setEmailConvidado("");
     setFormData({
       titulo: "",
       descricao: "",
@@ -197,7 +201,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
   return (
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
-      <DialogContent className="max-w-lg bg-slate-900 border-white/20">
+      <DialogContent className="max-w-3xl bg-slate-900 border-white/20">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
             🗓️ Editar Compromisso
@@ -216,94 +220,114 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             />
           </div>
 
-          <div>
-            <Label className="text-white">Tipo de Compromisso *</Label>
-            <Select 
-              value={tipoCompromisso} 
-              onValueChange={(value) => {
-                setTipoCompromisso(value);
-                setSubTipoFechamento("");
-                if (value !== "Fechamento") {
-                  atualizarTitulo(value, "");
-                }
-              }}
-            >
-              <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                <SelectValue placeholder="Selecione o tipo..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AB Visita">AB Visita</SelectItem>
-                <SelectItem value="Fechamento">Fechamento</SelectItem>
-                <SelectItem value="Entrega de Apólice">Entrega de Apólice</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {tipoCompromisso === "Fechamento" && (
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-white">Fase do Fechamento *</Label>
+              <Label className="text-white">Tipo de Compromisso *</Label>
               <Select 
-                value={subTipoFechamento} 
+                value={tipoCompromisso} 
                 onValueChange={(value) => {
-                  setSubTipoFechamento(value);
-                  atualizarTitulo("Fechamento", value);
+                  setTipoCompromisso(value);
+                  setSubTipoFechamento("");
+                  if (value !== "Fechamento") {
+                    atualizarTitulo(value, "");
+                  }
                 }}
               >
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Selecione a fase..." />
+                  <SelectValue placeholder="Selecione o tipo..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="F">F</SelectItem>
-                  <SelectItem value="F2">F2</SelectItem>
-                  <SelectItem value="F3">F3</SelectItem>
-                  <SelectItem value="F4">F4</SelectItem>
-                  <SelectItem value="F5">F5</SelectItem>
+                  <SelectItem value="AB Visita">AB Visita</SelectItem>
+                  <SelectItem value="Fechamento">Fechamento</SelectItem>
+                  <SelectItem value="Entrega de Apólice">Entrega de Apólice</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          <div>
-            <Label className="text-white">Tipo</Label>
-            <Select 
-              value={formData.tipo} 
-              onValueChange={(value) => {
-                const selectedColor = COLORS.find(c => c.tipo === value);
-                setFormData({ 
-                  ...formData, 
-                  tipo: value,
-                  cor: selectedColor ? selectedColor.value : formData.cor
-                });
-              }}
-            >
-              <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="agendado">Agendado</SelectItem>
-                <SelectItem value="delay">Delay</SelectItem>
-                <SelectItem value="reuniao_realizada">Reunião Realizada</SelectItem>
-                <SelectItem value="venda_feita">Venda Feita</SelectItem>
-                <SelectItem value="pessoal">Compromisso Pessoal</SelectItem>
-                <SelectItem value="avanti">Compromisso da Avanti</SelectItem>
-              </SelectContent>
-            </Select>
+            {tipoCompromisso === "Fechamento" && (
+              <div>
+                <Label className="text-white">Fase do Fechamento *</Label>
+                <Select 
+                  value={subTipoFechamento} 
+                  onValueChange={(value) => {
+                    setSubTipoFechamento(value);
+                    atualizarTitulo("Fechamento", value);
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Selecione a fase..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="F">F</SelectItem>
+                    <SelectItem value="F2">F2</SelectItem>
+                    <SelectItem value="F3">F3</SelectItem>
+                    <SelectItem value="F4">F4</SelectItem>
+                    <SelectItem value="F5">F5</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-white">Tipo</Label>
+              <Select 
+                value={formData.tipo} 
+                onValueChange={(value) => {
+                  const selectedColor = COLORS.find(c => c.tipo === value);
+                  setFormData({ 
+                    ...formData, 
+                    tipo: value,
+                    cor: selectedColor ? selectedColor.value : formData.cor
+                  });
+                }}
+              >
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agendado">Agendado</SelectItem>
+                  <SelectItem value="delay">Delay</SelectItem>
+                  <SelectItem value="reuniao_realizada">Reunião Realizada</SelectItem>
+                  <SelectItem value="venda_feita">Venda Feita</SelectItem>
+                  <SelectItem value="pessoal">Compromisso Pessoal</SelectItem>
+                  <SelectItem value="avanti">Compromisso da Avanti</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-white">Modalidade</Label>
+              <Select
+                value={formData.modalidade}
+                onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
+              >
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Selecione a modalidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="presencial">📍 Presencial</SelectItem>
+                  <SelectItem value="online">💻 Online</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
-            <Label className="text-white">Modalidade</Label>
-            <Select
-              value={formData.modalidade}
-              onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
-            >
-              <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                <SelectValue placeholder="Selecione a modalidade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="presencial">📍 Presencial</SelectItem>
-                <SelectItem value="online">💻 Online</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-white">Email do Participante (opcional)</Label>
+            <Input
+              type="email"
+              value={emailConvidado}
+              onChange={(e) => setEmailConvidado(e.target.value)}
+              placeholder={cliente?.email || "Digite o email do convidado"}
+              className="bg-white/10 border-white/20 text-white"
+            />
+            {(emailConvidado || cliente?.email) && (
+              <div className="mt-2 bg-green-500/20 border border-green-500/50 px-3 py-2 rounded-lg text-sm text-green-100">
+                ✉️ Convite será enviado para: <strong>{emailConvidado || cliente.email}</strong>
+              </div>
+            )}
           </div>
 
           {formData.modalidade === "presencial" && (
@@ -318,65 +342,58 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             </div>
           )}
 
-          {cliente?.email && (
-            <div className="bg-green-500/20 border border-green-500/50 px-3 py-2 rounded-lg text-sm text-green-100">
-              ✉️ Convite será enviado para: <strong>{cliente.email}</strong>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <Label className="text-white mb-2 block">Data *</Label>
-              <Input
-                type="date"
-                value={formData.data_inicio ? (() => {
-                  try {
-                    const date = parseISO(formData.data_inicio);
-                    return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd");
-                  } catch {
-                    return "";
+          <div>
+            <Label className="text-white mb-2 block">Data *</Label>
+            <Input
+              type="date"
+              value={formData.data_inicio ? (() => {
+                try {
+                  const date = parseISO(formData.data_inicio);
+                  return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd");
+                } catch {
+                  return "";
+                }
+              })() : ""}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                try {
+                  const [year, month, day] = e.target.value.split('-').map(Number);
+                  if (!year || !month || !day) return;
+                  
+                  let currentHour = 12;
+                  let currentMinute = 0;
+                  
+                  if (formData.data_inicio) {
+                    try {
+                      const currentStart = parseISO(formData.data_inicio);
+                      if (!isNaN(currentStart.getTime())) {
+                        currentHour = currentStart.getHours();
+                        currentMinute = currentStart.getMinutes();
+                      }
+                    } catch {}
                   }
-                })() : ""}
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  try {
-                    const [year, month, day] = e.target.value.split('-').map(Number);
-                    if (!year || !month || !day) return;
-                    
-                    let currentHour = 12;
-                    let currentMinute = 0;
-                    
-                    if (formData.data_inicio) {
-                      try {
-                        const currentStart = parseISO(formData.data_inicio);
-                        if (!isNaN(currentStart.getTime())) {
-                          currentHour = currentStart.getHours();
-                          currentMinute = currentStart.getMinutes();
-                        }
-                      } catch {}
-                    }
-                    
-                    const newDate = new Date(year, month - 1, day, currentHour, currentMinute);
-                    
-                    if (isNaN(newDate.getTime())) return;
-                    
-                    const newEnd = new Date(newDate);
-                    newEnd.setHours(newEnd.getHours() + 1);
-                    setFormData({ 
-                      ...formData, 
-                      data_inicio: newDate.toISOString(),
-                      data_fim: newEnd.toISOString()
-                    });
-                  } catch (error) {
-                    console.error('Erro ao processar data:', error);
-                  }
-                }}
-                className="bg-white/10 border-white/20 text-white w-full"
-                required
-              />
-            </div>
+                  
+                  const newDate = new Date(year, month - 1, day, currentHour, currentMinute);
+                  
+                  if (isNaN(newDate.getTime())) return;
+                  
+                  const newEnd = new Date(newDate);
+                  newEnd.setHours(newEnd.getHours() + 1);
+                  setFormData({ 
+                    ...formData, 
+                    data_inicio: newDate.toISOString(),
+                    data_fim: newEnd.toISOString()
+                  });
+                } catch (error) {
+                  console.error('Erro ao processar data:', error);
+                }
+              }}
+              className="bg-white/10 border-white/20 text-white w-full"
+              required
+            />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-white mb-2 block">Horário Início *</Label>
                 <div className="flex gap-2">
@@ -524,7 +541,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
           <div>
             <Label className="text-white mb-2 block">Cor do Compromisso</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {COLORS.map((color) => (
                 <button
                   key={color.value}

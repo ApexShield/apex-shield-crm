@@ -1,4 +1,3 @@
-import Agenda from './pages/Agenda';
 import Aniversariantes from './pages/Aniversariantes';
 import BoasVindas from './pages/BoasVindas';
 import CalculadoraRapida from './pages/CalculadoraRapida';
@@ -11,7 +10,6 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Agenda": Agenda,
     "Aniversariantes": Aniversariantes,
     "BoasVindas": BoasVindas,
     "CalculadoraRapida": CalculadoraRapida,

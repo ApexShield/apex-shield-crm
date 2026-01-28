@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     }
 
     // Obter dados do evento
-    const { eventId, summary, description, startDateTime, endDateTime, location, attendees, colorId } = await req.json();
+    const { eventId, summary, description, startDateTime, endDateTime, location, attendees, colorId, sendUpdates } = await req.json();
 
     if (!eventId || !summary || !startDateTime || !endDateTime) {
       return Response.json({ 
@@ -55,11 +55,11 @@ Deno.serve(async (req) => {
       },
       guestsCanModify: true,
       guestsCanInviteOthers: false,
-      sendUpdates: 'all',
       colorId: colorId || '9'
     };
 
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+    const updateUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?sendUpdates=${sendUpdates || 'none'}`;
+    const response = await fetch(updateUrl, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

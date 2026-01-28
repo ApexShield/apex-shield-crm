@@ -931,15 +931,46 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       }}
                       maxLength={14}
                     />
-                    <Input 
-                      className="h-8 text-xs"
-                      value={indicacao.conexao} 
-                      onChange={(e) => {
-                        const newIndicacoes = [...formData.indicacoes];
-                        newIndicacoes[idx].conexao = e.target.value.toUpperCase();
-                        setFormData({ ...formData, indicacoes: newIndicacoes });
-                      }}
-                    />
+                    <div className="flex gap-1">
+                      <Input 
+                        className="h-8 text-xs flex-1"
+                        value={indicacao.conexao} 
+                        onChange={(e) => {
+                          const newIndicacoes = [...formData.indicacoes];
+                          newIndicacoes[idx].conexao = e.target.value.toUpperCase();
+                          setFormData({ ...formData, indicacoes: newIndicacoes });
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8 px-2 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                        onClick={async () => {
+                          if (!indicacao.nome || !indicacao.telefone) {
+                            alert('Preencha o nome e telefone da indicação antes de criar o lead');
+                            return;
+                          }
+                          
+                          const nomeNovoLead = `${indicacao.nome} IND ${formData.nome}`;
+                          const telefoneNovoLead = indicacao.telefone;
+                          
+                          try {
+                            await base44.entities.Cliente.create({
+                              nome: nomeNovoLead,
+                              telefone: telefoneNovoLead,
+                              status: "Novo",
+                              data_cadastro: new Date().toISOString().split('T')[0]
+                            });
+                            alert('✅ Lead criado com sucesso!');
+                          } catch (error) {
+                            console.error('Erro ao criar lead:', error);
+                            alert('❌ Erro ao criar lead: ' + error.message);
+                          }
+                        }}
+                      >
+                        <UserPlus className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </>

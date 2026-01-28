@@ -44,6 +44,20 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       return;
     }
 
+    // Validar se as datas são válidas
+    try {
+      const startDate = parseISO(formData.data_inicio);
+      const endDate = parseISO(formData.data_fim);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        setErro("Datas inválidas. Por favor, verifique os campos de data e hora.");
+        return;
+      }
+    } catch (error) {
+      setErro("Erro ao processar as datas. Por favor, verifique os campos.");
+      return;
+    }
+
     if (!formData.modalidade) {
       setErro("Por favor, selecione a modalidade (Online ou Presencial)");
       return;
@@ -248,21 +262,37 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                 })() : ""}
                 onChange={(e) => {
                   if (!e.target.value) return;
-                  const [year, month, day] = e.target.value.split('-').map(Number);
-                  if (!year || !month || !day) return;
-                  
-                  const currentStart = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
-                  const newDate = new Date(year, month - 1, day, currentStart.getHours(), currentStart.getMinutes());
-                  
-                  if (isNaN(newDate.getTime())) return;
-                  
-                  const newEnd = new Date(newDate);
-                  newEnd.setHours(newEnd.getHours() + 1);
-                  setFormData({ 
-                    ...formData, 
-                    data_inicio: newDate.toISOString(),
-                    data_fim: newEnd.toISOString()
-                  });
+                  try {
+                    const [year, month, day] = e.target.value.split('-').map(Number);
+                    if (!year || !month || !day) return;
+                    
+                    let currentHour = 12;
+                    let currentMinute = 0;
+                    
+                    if (formData.data_inicio) {
+                      try {
+                        const currentStart = parseISO(formData.data_inicio);
+                        if (!isNaN(currentStart.getTime())) {
+                          currentHour = currentStart.getHours();
+                          currentMinute = currentStart.getMinutes();
+                        }
+                      } catch {}
+                    }
+                    
+                    const newDate = new Date(year, month - 1, day, currentHour, currentMinute);
+                    
+                    if (isNaN(newDate.getTime())) return;
+                    
+                    const newEnd = new Date(newDate);
+                    newEnd.setHours(newEnd.getHours() + 1);
+                    setFormData({ 
+                      ...formData, 
+                      data_inicio: newDate.toISOString(),
+                      data_fim: newEnd.toISOString()
+                    });
+                  } catch (error) {
+                    console.error('Erro ao processar data:', error);
+                  }
                 }}
                 className="bg-white/10 border-white/20 text-white w-full"
                 required
@@ -283,16 +313,20 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                       }
                     })() : ""}
                     onValueChange={(hour) => {
-                      const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
-                      if (isNaN(date.getTime())) return;
-                      date.setHours(parseInt(hour));
-                      const endDate = new Date(date);
-                      endDate.setHours(endDate.getHours() + 1);
-                      setFormData({ 
-                        ...formData, 
-                        data_inicio: date.toISOString(),
-                        data_fim: endDate.toISOString()
-                      });
+                      try {
+                        const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        if (isNaN(date.getTime())) return;
+                        date.setHours(parseInt(hour));
+                        const endDate = new Date(date);
+                        endDate.setHours(endDate.getHours() + 1);
+                        setFormData({ 
+                          ...formData, 
+                          data_inicio: date.toISOString(),
+                          data_fim: endDate.toISOString()
+                        });
+                      } catch (error) {
+                        console.error('Erro ao processar hora:', error);
+                      }
                     }}
                   >
                     <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
@@ -316,16 +350,20 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                       }
                     })() : ""}
                     onValueChange={(minute) => {
-                      const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
-                      if (isNaN(date.getTime())) return;
-                      date.setMinutes(parseInt(minute));
-                      const endDate = new Date(date);
-                      endDate.setHours(endDate.getHours() + 1);
-                      setFormData({ 
-                        ...formData, 
-                        data_inicio: date.toISOString(),
-                        data_fim: endDate.toISOString()
-                      });
+                      try {
+                        const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        if (isNaN(date.getTime())) return;
+                        date.setMinutes(parseInt(minute));
+                        const endDate = new Date(date);
+                        endDate.setHours(endDate.getHours() + 1);
+                        setFormData({ 
+                          ...formData, 
+                          data_inicio: date.toISOString(),
+                          data_fim: endDate.toISOString()
+                        });
+                      } catch (error) {
+                        console.error('Erro ao processar minuto:', error);
+                      }
                     }}
                   >
                     <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
@@ -352,10 +390,14 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                       }
                     })() : ""}
                     onValueChange={(hour) => {
-                      const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
-                      if (isNaN(date.getTime())) return;
-                      date.setHours(parseInt(hour));
-                      setFormData({ ...formData, data_fim: date.toISOString() });
+                      try {
+                        const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        if (isNaN(date.getTime())) return;
+                        date.setHours(parseInt(hour));
+                        setFormData({ ...formData, data_fim: date.toISOString() });
+                      } catch (error) {
+                        console.error('Erro ao processar hora fim:', error);
+                      }
                     }}
                   >
                     <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
@@ -379,10 +421,14 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                       }
                     })() : ""}
                     onValueChange={(minute) => {
-                      const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
-                      if (isNaN(date.getTime())) return;
-                      date.setMinutes(parseInt(minute));
-                      setFormData({ ...formData, data_fim: date.toISOString() });
+                      try {
+                        const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        if (isNaN(date.getTime())) return;
+                        date.setMinutes(parseInt(minute));
+                        setFormData({ ...formData, data_fim: date.toISOString() });
+                      } catch (error) {
+                        console.error('Erro ao processar minuto fim:', error);
+                      }
                     }}
                   >
                     <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">

@@ -58,11 +58,14 @@ Deno.serve(async (req) => {
     const userInfo = await userInfoResponse.json();
     const googleEmail = userInfo.email;
 
-    // Salvar tokens no banco
-    const base44 = createClientFromRequest(req);
+    // Salvar tokens no banco usando service role
+    const { Base44Client } = await import('npm:@base44/sdk@0.8.6');
+    const base44 = new Base44Client({
+      serviceRoleKey: Deno.env.get('BASE44_SERVICE_ROLE_KEY')
+    });
     
     // Verificar se já existe conexão para este usuário
-    const existing = await base44.asServiceRole.entities.UserGoogleCalendarAuth.filter({
+    const existing = await base44.entities.UserGoogleCalendarAuth.filter({
       user_email: state
     });
 
@@ -70,7 +73,7 @@ Deno.serve(async (req) => {
 
     if (existing.length > 0) {
       // Atualizar
-      await base44.asServiceRole.entities.UserGoogleCalendarAuth.update(existing[0].id, {
+      await base44.entities.UserGoogleCalendarAuth.update(existing[0].id, {
         google_email: googleEmail,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token || existing[0].refresh_token,
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
       });
     } else {
       // Criar novo
-      await base44.asServiceRole.entities.UserGoogleCalendarAuth.create({
+      await base44.entities.UserGoogleCalendarAuth.create({
         user_email: state,
         google_email: googleEmail,
         access_token: tokens.access_token,

@@ -419,8 +419,8 @@ export default function Compromissos() {
               <div className="min-w-[900px]">
                 {/* Cabeçalho dos Dias */}
                 <div className="grid grid-cols-8 border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-10">
-                  <div className="p-4 text-center border-r border-white/10">
-                    <Clock className="w-5 h-5 mx-auto text-indigo-400" />
+                  <div className="p-2 text-center border-r border-white/10">
+                    <Clock className="w-4 h-4 mx-auto text-indigo-400" />
                   </div>
                   {weekDays.map((day, i) => (
                     <motion.div
@@ -428,17 +428,17 @@ export default function Compromissos() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className={`p-4 text-center border-r border-white/10 ${
+                      className={`p-2 text-center border-r border-white/10 ${
                         isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""
                       }`}
                     >
-                      <div className="text-xs font-bold text-indigo-300 uppercase mb-1">
+                      <div className="text-[10px] font-bold text-indigo-300 uppercase mb-1">
                         {format(day, "EEE", { locale: ptBR })}
                       </div>
                       <div
-                        className={`text-3xl font-black ${
+                        className={`text-xl font-black ${
                           isSameDay(day, new Date()) 
-                            ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto" 
+                            ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-8 h-8 rounded-full flex items-center justify-center mx-auto" 
                             : "text-white"
                         }`}
                       >
@@ -452,7 +452,7 @@ export default function Compromissos() {
                 <div className="relative">
                   {HOURS.map((hour) => (
                     <div key={hour} className="grid grid-cols-8 border-b border-white/5">
-                      <div className="p-3 text-sm font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
+                      <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
                         {String(hour).padStart(2, "0")}:00
                       </div>
                       {weekDays.map((day, dayIndex) => {
@@ -460,7 +460,7 @@ export default function Compromissos() {
                         return (
                           <div
                             key={dayIndex}
-                            className="min-h-[70px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-1 transition-colors"
+                            className="min-h-[60px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-0.5 transition-colors"
                             onClick={() => handleSlotClick(day, hour)}
                           >
                             {events.map((event, eventIndex) => (
@@ -468,10 +468,10 @@ export default function Compromissos() {
                                 key={event.id}
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="absolute left-1 right-1 rounded-lg px-3 py-2 text-xs text-white font-bold shadow-lg cursor-pointer hover:scale-105 transition-transform z-10"
+                                className="absolute left-0.5 right-0.5 rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-pointer hover:scale-[1.02] transition-transform z-10"
                                 style={{
                                   backgroundColor: event.cor || "#3b82f6",
-                                  top: `${eventIndex * 28 + 4}px`
+                                  top: `${eventIndex * 26 + 2}px`
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -482,27 +482,26 @@ export default function Compromissos() {
                                   <div className="truncate flex-1">{event.titulo}</div>
                                   <div className="flex items-center gap-1">
                                     {event.confirmado && (
-                                      <div className="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
+                                      <div className="text-[11px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
                                         ✓
                                       </div>
                                     )}
                                     {event.total_participantes > 0 && !event.confirmado && (
-                                      <div className="text-[9px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
-                                        {event.total_participantes}
+                                      <div className="text-[10px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
+                                        ⏳
                                       </div>
                                     )}
-                                    <div className="text-[9px] bg-white/30 px-1 rounded">📅</div>
                                   </div>
                                 </div>
                                 {event.meeting_link && (
                                   <div 
-                                    className="text-[10px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
+                                    className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       window.open(event.meeting_link, '_blank');
                                     }}
                                   >
-                                    🎥 Entrar na reunião
+                                    🎥 Meet
                                   </div>
                                 )}
                               </motion.div>

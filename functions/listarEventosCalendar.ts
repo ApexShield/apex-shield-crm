@@ -81,11 +81,14 @@ Deno.serve(async (req) => {
       const participantes = attendees.map(att => ({
         email: att.email,
         nome: att.displayName || att.email,
-        status: att.responseStatus || 'needsAction' // accepted, declined, tentative, needsAction
+        status: att.responseStatus || 'needsAction', // accepted, declined, tentative, needsAction
+        isOrganizer: att.organizer === true
       }));
       
-      // Verificar se algum participante confirmou
-      const temConfirmacao = attendees.some(att => att.responseStatus === 'accepted');
+      // Verificar se algum participante (excluindo o organizador) confirmou
+      const temConfirmacao = attendees.some(att => 
+        att.responseStatus === 'accepted' && att.organizer !== true
+      );
 
       return {
         id: event.id,

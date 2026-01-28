@@ -19,6 +19,11 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
+    // Adicionar mensagem padrão na descrição se não existir
+    const mensagemPadrao = "⏰ IMPORTANTE: A confirmação deste compromisso ajuda muito na comunicação! Você receberá lembretes automáticos minutos antes do horário para ajudar na sua gestão de tempo.";
+    const descricaoAtual = description || '';
+    const descricaoCompleta = descricaoAtual.includes('⏰ IMPORTANTE') ? descricaoAtual : descricaoAtual + "\n\n" + mensagemPadrao;
+
     // Obter token de acesso
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
     
@@ -26,10 +31,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Google Calendar não está conectado' }, { status: 403 });
     }
 
-    // Atualizar evento no Google Calendar
+    // Atualizar evento no Google Calendar com lembretes
     const event = {
       summary: summary,
-      description: description || '',
+      description: descricaoCompleta,
       location: location || '',
       start: {
         dateTime: startDateTime,
@@ -40,6 +45,17 @@ Deno.serve(async (req) => {
         timeZone: 'America/Sao_Paulo'
       },
       attendees: attendees || [],
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 60 },
+          { method: 'popup', minutes: 30 },
+          { method: 'popup', minutes: 10 }
+        ]
+      },
+      guestsCanModify: true,
+      guestsCanInviteOthers: false,
+      sendUpdates: 'all',
       colorId: colorId || '9'
     };
 

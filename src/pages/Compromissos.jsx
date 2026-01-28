@@ -7,23 +7,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Plus, Trash2, Clock, CheckCircle2, AlertCircle, CalendarDays } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
-const COLORS = [
-  { value: "#0891b2", label: "Azul Pavão", tipo: "agendado" },
-  { value: "#fbbf24", label: "Amarelo Banana", tipo: "delay" },
-  { value: "#8b5cf6", label: "Mirtilo", tipo: "reuniao_realizada" },
-  { value: "#10b981", label: "Manjericão", tipo: "venda_feita" },
-  { value: "#f97316", label: "Tangerina", tipo: "pessoal" },
-  { value: "#ec4899", label: "Flamingo", tipo: "avanti" }
-];
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 
+const HOURS = Array.from({ length: 20 }, (_, i) => i + 4); // 04:00 às 23:00
+const COLORS = [
+  { value: "#0891b2", label: "Azul Pavão - Agendado", tipo: "agendado" },
+  { value: "#fbbf24", label: "Amarelo Banana - Delay", tipo: "delay" },
+  { value: "#8b5cf6", label: "Mirtilo - Reunião Realizada", tipo: "reuniao_realizada" },
+  { value: "#10b981", label: "Manjericão - Venda Feita", tipo: "venda_feita" },
+  { value: "#f97316", label: "Tangerina - Compromisso Pessoal", tipo: "pessoal" },
+  { value: "#ec4899", label: "Flamingo - Compromisso da Avanti", tipo: "avanti" }
+];
+
 export default function Compromissos() {
+  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDialog, setShowDialog] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  
   const getDefaultDates = () => {
     const now = new Date();
     const endTime = new Date(now.getTime() + 3600000); // +1 hora
@@ -70,18 +76,15 @@ export default function Compromissos() {
 
   // Buscar eventos do Google Calendar
   const { data: compromissos = [], isLoading } = useQuery({
-    queryKey: ['compromissos-google'],
+    queryKey: ['compromissos-google', currentWeekStart],
     queryFn: async () => {
       try {
-        const hoje = new Date();
-        const umMesAtras = new Date(hoje);
-        umMesAtras.setMonth(hoje.getMonth() - 1);
-        const umMesFrente = new Date(hoje);
-        umMesFrente.setMonth(hoje.getMonth() + 1);
+        const weekStart = startOfDay(currentWeekStart);
+        const weekEnd = endOfDay(addDays(currentWeekStart, 6));
         
         const response = await base44.functions.invoke('listarEventosCalendar', {
-          dataInicio: umMesAtras.toISOString(),
-          dataFim: umMesFrente.toISOString()
+          dataInicio: weekStart.toISOString(),
+          dataFim: weekEnd.toISOString()
         });
         
         return response.data?.eventos || [];
@@ -90,7 +93,8 @@ export default function Compromissos() {
         return [];
       }
     },
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 60000
   });
 
   const criarCompromissoMutation = useMutation({
@@ -144,138 +148,245 @@ export default function Compromissos() {
     });
   };
 
-  // Agrupar compromissos por data
-  const compromissosAgrupados = useMemo(() => {
-    const grupos = {};
-    compromissos.forEach(comp => {
-      const data = format(parseISO(comp.data_inicio), "yyyy-MM-dd");
-      if (!grupos[data]) {
-        grupos[data] = [];
-      }
-      grupos[data].push(comp);
-    });
-    return grupos;
-  }, [compromissos]);
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+  }, [currentWeekStart]);
 
-  const datasOrdenadas = Object.keys(compromissosAgrupados).sort();
+  const handleSlotClick = (day, hour) => {
+    const startTime = new Date(day);
+    startTime.setHours(hour, 0, 0, 0);
+    const endTime = new Date(startTime);
+    endTime.setHours(hour + 1, 0, 0, 0);
+
+    setSelectedSlot({ startTime, endTime });
+    setFormData({
+      titulo: "",
+      descricao: "",
+      data_inicio: startTime.toISOString(),
+      data_fim: endTime.toISOString(),
+      cor: "#0891b2",
+      tipo: "agendado",
+      modalidade: "",
+      meeting_link: "",
+      email_participante: ""
+    });
+    setShowDialog(true);
+  };
+
+  const getEventsForSlot = (day, hour) => {
+    return compromissos.filter(comp => {
+      const compStart = parseISO(comp.data_inicio);
+      const slotStart = new Date(day);
+      slotStart.setHours(hour, 0, 0, 0);
+      const slotEnd = new Date(slotStart);
+      slotEnd.setHours(hour + 1, 0, 0, 0);
+      
+      return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
+      <div className="max-w-[1800px] mx-auto">
+        {/* Header Moderno */}
+        <div className="mb-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Calendar className="w-7 h-7 text-white" />
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <CalendarDays className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-black text-white">Compromissos</h1>
-                <p className="text-purple-300">Sincronizado com Google Calendar</p>
+                <h1 className="text-3xl font-black text-white">Agenda Profissional</h1>
+                <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => setShowDialog(true)}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Novo Compromisso
-              </Button>
-            </div>
+            <Button 
+              onClick={() => {
+                const now = new Date();
+                setFormData({
+                  titulo: "",
+                  descricao: "",
+                  data_inicio: now.toISOString(),
+                  data_fim: new Date(now.getTime() + 3600000).toISOString(),
+                  cor: "#0891b2",
+                  tipo: "agendado",
+                  modalidade: "",
+                  meeting_link: "",
+                  email_participante: ""
+                });
+                setShowDialog(true);
+              }}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Criar Compromisso
+            </Button>
           </div>
         </div>
 
-        {/* Lista de Compromissos */}
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white">Carregando compromissos...</p>
-          </div>
-        ) : compromissos.length === 0 ? (
-          <Card className="bg-white/10 border-white/20">
-            <CardContent className="p-12 text-center">
-              <Calendar className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Nenhum compromisso encontrado</h3>
-              <p className="text-gray-300 mb-6">
-                Crie seu primeiro compromisso clicando no botão acima.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {datasOrdenadas.map((data, index) => (
-              <motion.div
-                key={data}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+          {/* Header da Semana */}
+          <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
-                <div className="mb-3">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-purple-400" />
-                    {format(parseISO(data), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </h2>
-                </div>
-                <div className="space-y-3">
-                  {compromissosAgrupados[data].map((comp) => (
-                    <Card 
-                      key={comp.id} 
-                      className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all cursor-pointer"
-                      onClick={() => {
-                        if (comp.htmlLink) {
-                          window.open(comp.htmlLink, '_blank');
-                        }
-                      }}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-bold text-white mb-1">
-                              {comp.titulo}
-                            </h3>
-                            {comp.descricao && (
-                              <p className="text-sm text-gray-300 mb-2">{comp.descricao}</p>
-                            )}
-                            <div className="flex items-center gap-4 text-sm text-purple-300">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {format(parseISO(comp.data_inicio), "HH:mm", { locale: ptBR })}
-                                {' → '}
-                                {format(parseISO(comp.data_fim), "HH:mm", { locale: ptBR })}
-                              </div>
-                              {comp.origem && (
-                                <div className="text-xs bg-blue-500/20 px-2 py-1 rounded">
-                                  📅 {comp.origem}
-                                </div>
-                              )}
-                            </div>
-                            {comp.meeting_link && (
-                              <a 
-                                href={comp.meeting_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 text-sm text-blue-300 hover:text-blue-200 mt-2 bg-blue-500/20 px-3 py-1 rounded-lg"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                🎥 Entrar na reunião
-                              </a>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
-                              <Calendar className="w-5 h-5 text-purple-400" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white border-0 font-bold"
+              >
+                Hoje
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+            <span className="text-xl font-bold text-white">
+              {format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+          </div>
+
+          <div className="flex">
+            {/* Sidebar com Mini Calendário */}
+            <div className="w-80 border-r border-white/10 p-6 bg-white/5">
+              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Mini Calendário
+              </h3>
+              <div className="bg-white rounded-xl p-2">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    setCurrentWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
+                  }}
+                  locale={ptBR}
+                  className="rounded-md"
+                />
+              </div>
+
+              {/* Legenda de Cores */}
+              <div className="mt-6">
+                <h4 className="text-white font-bold mb-3 text-sm">Legenda</h4>
+                <div className="space-y-2">
+                  {COLORS.map((color) => (
+                    <div key={color.value} className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color.value }}
+                      />
+                      <span className="text-xs text-indigo-200">{color.label}</span>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
-            ))}
+              </div>
+            </div>
+
+            {/* Grade de Horários */}
+            <div className="flex-1 overflow-auto">
+              <div className="min-w-[900px]">
+                {/* Cabeçalho dos Dias */}
+                <div className="grid grid-cols-8 border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-10">
+                  <div className="p-4 text-center border-r border-white/10">
+                    <Clock className="w-5 h-5 mx-auto text-indigo-400" />
+                  </div>
+                  {weekDays.map((day, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className={`p-4 text-center border-r border-white/10 ${
+                        isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-indigo-300 uppercase mb-1">
+                        {format(day, "EEE", { locale: ptBR })}
+                      </div>
+                      <div
+                        className={`text-3xl font-black ${
+                          isSameDay(day, new Date()) 
+                            ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto" 
+                            : "text-white"
+                        }`}
+                      >
+                        {format(day, "d")}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Grid de Horários */}
+                <div className="relative">
+                  {HOURS.map((hour) => (
+                    <div key={hour} className="grid grid-cols-8 border-b border-white/5">
+                      <div className="p-3 text-sm font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
+                        {String(hour).padStart(2, "0")}:00
+                      </div>
+                      {weekDays.map((day, dayIndex) => {
+                        const events = getEventsForSlot(day, hour);
+                        return (
+                          <div
+                            key={dayIndex}
+                            className="min-h-[70px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-1 transition-colors"
+                            onClick={() => handleSlotClick(day, hour)}
+                          >
+                            {events.map((event, eventIndex) => (
+                              <motion.div
+                                key={event.id}
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="absolute left-1 right-1 rounded-lg px-3 py-2 text-xs text-white font-bold shadow-lg cursor-pointer hover:scale-105 transition-transform z-10"
+                                style={{
+                                  backgroundColor: event.cor || "#3b82f6",
+                                  top: `${eventIndex * 28 + 4}px`
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (event.htmlLink) {
+                                    window.open(event.htmlLink, '_blank');
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="truncate flex-1">{event.titulo}</div>
+                                  <div className="text-[9px] bg-white/30 px-1 rounded">📅</div>
+                                </div>
+                                {event.meeting_link && (
+                                  <div 
+                                    className="text-[10px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(event.meeting_link, '_blank');
+                                    }}
+                                  >
+                                    🎥 Entrar na reunião
+                                  </div>
+                                )}
+                              </motion.div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Dialog de Criação */}

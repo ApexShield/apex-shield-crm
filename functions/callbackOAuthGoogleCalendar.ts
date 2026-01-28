@@ -58,41 +58,9 @@ Deno.serve(async (req) => {
     const userInfo = await userInfoResponse.json();
     const googleEmail = userInfo.email;
 
-    // Salvar tokens no banco usando service role
-    const { Base44Client } = await import('npm:@base44/sdk@0.8.6');
-    const base44 = new Base44Client({
-      serviceRoleKey: Deno.env.get('BASE44_SERVICE_ROLE_KEY')
-    });
-    
-    // Verificar se já existe conexão para este usuário
-    const existing = await base44.entities.UserGoogleCalendarAuth.filter({
-      user_email: state
-    });
-
     const tokenExpiry = new Date(Date.now() + (tokens.expires_in * 1000)).toISOString();
 
-    if (existing.length > 0) {
-      // Atualizar
-      await base44.entities.UserGoogleCalendarAuth.update(existing[0].id, {
-        google_email: googleEmail,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || existing[0].refresh_token,
-        token_expiry: tokenExpiry,
-        connected_at: new Date().toISOString()
-      });
-    } else {
-      // Criar novo
-      await base44.entities.UserGoogleCalendarAuth.create({
-        user_email: state,
-        google_email: googleEmail,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_expiry: tokenExpiry,
-        connected_at: new Date().toISOString()
-      });
-    }
-
-    // Retornar HTML que fecha o popup
+    // Retornar HTML que envia dados para o opener e fecha o popup
     return new Response(`
       <html>
         <body>
@@ -100,6 +68,18 @@ Deno.serve(async (req) => {
           <p>Conta Google: <strong>${googleEmail}</strong></p>
           <p>Esta janela será fechada automaticamente...</p>
           <script>
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'google_calendar_connected',
+                data: {
+                  user_email: '${state}',
+                  google_email: '${googleEmail}',
+                  access_token: '${tokens.access_token}',
+                  refresh_token: '${tokens.refresh_token || ''}',
+                  token_expiry: '${tokenExpiry}'
+                }
+              }, '*');
+            }
             setTimeout(() => {
               window.close();
             }, 2000);

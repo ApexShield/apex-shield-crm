@@ -73,12 +73,19 @@ export default function Compromissos() {
     enabled: !!user
   });
 
-  // Mostrar dialog de conexão se não estiver conectado
+  // Abrir automaticamente o modal de conexão se não estiver conectado
   useEffect(() => {
     if (user && connection && !connection.connected) {
       setShowConnectDialog(true);
     }
   }, [user, connection]);
+
+  // Após conectar, recarregar os compromissos
+  useEffect(() => {
+    if (connection?.connected) {
+      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+    }
+  }, [connection?.connected, queryClient]);
 
   const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],

@@ -312,19 +312,40 @@ export default function Compromissos() {
       
       try {
         const compStart = parseISO(comp.data_inicio);
-        if (isNaN(compStart.getTime())) return false;
+        const compEnd = parseISO(comp.data_fim);
+        if (isNaN(compStart.getTime()) || isNaN(compEnd.getTime())) return false;
         
         const slotStart = new Date(day);
         slotStart.setHours(hour, 0, 0, 0);
         const slotEnd = new Date(slotStart);
         slotEnd.setHours(hour + 1, 0, 0, 0);
         
-        return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
+        // Evento deve aparecer se começar neste slot OU se estiver em andamento neste horário
+        return isSameDay(compStart, day) && compStart < slotEnd && compEnd > slotStart;
       } catch (error) {
         console.error('Erro ao processar data do evento:', error);
         return false;
       }
     });
+  };
+
+  const calculateEventPosition = (event, hour) => {
+    const start = parseISO(event.data_inicio);
+    const end = parseISO(event.data_fim);
+    
+    const slotStart = new Date(start);
+    slotStart.setMinutes(0, 0, 0);
+    slotStart.setHours(hour);
+    
+    // Calcular offset em minutos desde o início da hora
+    const minutesFromHourStart = start.getMinutes();
+    const topOffset = (minutesFromHourStart / 60) * 100; // Percentual da altura da hora
+    
+    // Calcular duração em minutos
+    const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+    const height = (durationMinutes / 60) * 100; // Percentual da altura baseado na duração
+    
+    return { topOffset, height };
   };
 
   const handleDragEnd = (result) => {
@@ -511,79 +532,101 @@ export default function Compromissos() {
                   {/* Grid de Horários */}
                   <div className="relative">
                     {HOURS.map((hour) => (
-                      <div key={hour} className="grid grid-cols-8 border-b border-white/5">
+                      <div key={hour} className="grid grid-cols-8 border-b border-white/5" style={{ height: '60px' }}>
                         <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
                           {String(hour).padStart(2, "0")}:00
                         </div>
                         {weekDays.map((day, dayIndex) => {
                           const events = getEventsForSlot(day, hour);
+                          // Filtrar apenas eventos que começam nesta hora
+                          const eventsStartingHere = events.filter(e => {
+                            const start = parseISO(e.data_inicio);
+                            return start.getHours() === hour;
+                          });
+                          
                           return (
                             <Droppable key={`${dayIndex}_${hour}`} droppableId={`${dayIndex}_${hour}`}>
                               {(provided, snapshot) => (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.droppableProps}
-                                  className={`min-h-[60px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-0.5 transition-colors ${
+                                  className={`border-r border-white/5 hover:bg-white/10 cursor-pointer relative transition-colors ${
                                     snapshot.isDraggingOver ? 'bg-indigo-500/20' : ''
                                   }`}
+                                  style={{ height: '60px' }}
                                   onClick={() => handleSlotClick(day, hour)}
                                 >
-                                  {events.map((event, eventIndex) => (
-                                    <Draggable 
-                                      key={event.id} 
-                                      draggableId={`${event.id}_${dayIndex}_${hour}`} 
-                                      index={eventIndex}
-                                    >
-                                      {(provided, snapshot) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          className={`absolute left-0.5 right-0.5 rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-move hover:scale-[1.02] transition-transform ${
-                                            snapshot.isDragging ? 'z-50 opacity-80 scale-105' : 'z-10'
-                                          }`}
-                                          style={{
-                                            backgroundColor: event.cor || "#3b82f6",
-                                            top: `${eventIndex * 26 + 2}px`,
-                                            ...provided.draggableProps.style
-                                          }}
-                                          onClick={(e) => {
-                                            if (!snapshot.isDragging) {
-                                              e.stopPropagation();
-                                              handleEditEvent(event);
-                                            }
-                                          }}
-                                        >
-                                          <div className="flex items-center justify-between gap-1">
-                                            <div className="truncate flex-1">{event.titulo}</div>
-                                            <div className="flex items-center gap-1">
-                                              {event.confirmado && (
-                                                <div className="text-[11px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
-                                                  ✓
-                                                </div>
-                                              )}
-                                              {event.total_participantes > 0 && !event.confirmado && (
-                                                <div className="text-[10px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
-                                                  ⏳
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                          {event.meeting_link && (
-                                            <div 
-                                              className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
-                                              onClick={(e) => {
+                                  {eventsStartingHere.map((event, eventIndex) => {
+                                    const { topOffset, height } = calculateEventPosition(event, hour);
+                                    const start = parseISO(event.data_inicio);
+                                    
+                                    return (
+                                      <Draggable 
+                                        key={event.id} 
+                                        draggableId={`${event.id}_${dayIndex}_${hour}`} 
+                                        index={eventIndex}
+                                      >
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className={`absolute left-0.5 right-0.5 rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab active:cursor-grabbing overflow-hidden ${
+                                              snapshot.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'
+                                            }`}
+                                            style={{
+                                              backgroundColor: event.cor || "#3b82f6",
+                                              top: `${topOffset}%`,
+                                              height: `${Math.max(height, 40)}px`,
+                                              transform: snapshot.isDragging 
+                                                ? `${provided.draggableProps.style?.transform} translate(0, -10px)` 
+                                                : provided.draggableProps.style?.transform,
+                                              transition: snapshot.isDragging ? 'none' : 'all 0.2s',
+                                              ...provided.draggableProps.style
+                                            }}
+                                            onClick={(e) => {
+                                              if (!snapshot.isDragging) {
                                                 e.stopPropagation();
-                                                window.open(event.meeting_link, '_blank');
-                                              }}
-                                            >
-                                              🎥 Meet
+                                                handleEditEvent(event);
+                                              }
+                                            }}
+                                          >
+                                            <div className="flex items-center justify-between gap-1">
+                                              <div className="truncate flex-1">
+                                                {event.titulo}
+                                                <div className="text-[9px] opacity-75 mt-0.5">
+                                                  {format(start, 'HH:mm', { locale: ptBR })}
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-1">
+                                                {event.confirmado && (
+                                                  <div className="text-[11px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
+                                                    ✓
+                                                  </div>
+                                                )}
+                                                {event.total_participantes > 0 && !event.confirmado && (
+                                                  <div className="text-[10px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
+                                                    ⏳
+                                                  </div>
+                                                )}
+                                              </div>
                                             </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </Draggable>
-                                  ))}
+                                            {event.meeting_link && (
+                                              <div 
+                                                className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  window.open(event.meeting_link, '_blank');
+                                                }}
+                                              >
+                                                🎥 Meet
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                    );
+                                  })}
                                   {provided.placeholder}
                                 </div>
                               )}

@@ -894,6 +894,7 @@ export default function Agenda() {
                       })() : ""}
                       onValueChange={(hour) => {
                         const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        if (isNaN(date.getTime())) return;
                         date.setHours(parseInt(hour));
                         const endDate = new Date(date);
                         endDate.setHours(endDate.getHours() + 1);
@@ -926,6 +927,7 @@ export default function Agenda() {
                       })() : ""}
                       onValueChange={(minute) => {
                         const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                        if (isNaN(date.getTime())) return;
                         date.setMinutes(parseInt(minute));
                         const endDate = new Date(date);
                         endDate.setHours(endDate.getHours() + 1);
@@ -961,6 +963,7 @@ export default function Agenda() {
                       })() : ""}
                       onValueChange={(hour) => {
                         const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        if (isNaN(date.getTime())) return;
                         date.setHours(parseInt(hour));
                         setFormData({ ...formData, data_fim: date.toISOString() });
                       }}
@@ -987,6 +990,7 @@ export default function Agenda() {
                       })() : ""}
                       onValueChange={(minute) => {
                         const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                        if (isNaN(date.getTime())) return;
                         date.setMinutes(parseInt(minute));
                         setFormData({ ...formData, data_fim: date.toISOString() });
                       }}

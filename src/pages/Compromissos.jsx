@@ -649,8 +649,15 @@ export default function Compromissos() {
                 <Label className="text-white mb-2 block">Horário Início *</Label>
                 <div className="flex gap-2">
                   <Select
-                    value={formData.data_inicio ? format(new Date(formData.data_inicio), "HH") : ""}
-                    onValueChange={(hour) => {
+                   value={formData.data_inicio ? (() => {
+                     try {
+                       const date = new Date(formData.data_inicio);
+                       return isNaN(date.getTime()) ? "" : format(date, "HH");
+                     } catch {
+                       return "";
+                     }
+                   })() : ""}
+                   onValueChange={(hour) => {
                       const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
                       date.setHours(parseInt(hour));
                       const endDate = new Date(date);
@@ -674,8 +681,15 @@ export default function Compromissos() {
                     </SelectContent>
                   </Select>
                   <Select
-                    value={formData.data_inicio ? format(new Date(formData.data_inicio), "mm") : ""}
-                    onValueChange={(minute) => {
+                   value={formData.data_inicio ? (() => {
+                     try {
+                       const date = new Date(formData.data_inicio);
+                       return isNaN(date.getTime()) ? "" : format(date, "mm");
+                     } catch {
+                       return "";
+                     }
+                   })() : ""}
+                   onValueChange={(minute) => {
                       const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
                       date.setMinutes(parseInt(minute));
                       const endDate = new Date(date);
@@ -702,8 +716,15 @@ export default function Compromissos() {
                 <Label className="text-white mb-2 block">Horário Fim *</Label>
                 <div className="flex gap-2">
                   <Select
-                    value={formData.data_fim ? format(new Date(formData.data_fim), "HH") : ""}
-                    onValueChange={(hour) => {
+                   value={formData.data_fim ? (() => {
+                     try {
+                       const date = new Date(formData.data_fim);
+                       return isNaN(date.getTime()) ? "" : format(date, "HH");
+                     } catch {
+                       return "";
+                     }
+                   })() : ""}
+                   onValueChange={(hour) => {
                       const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
                       date.setHours(parseInt(hour));
                       setFormData({ ...formData, data_fim: date.toISOString() });
@@ -721,8 +742,15 @@ export default function Compromissos() {
                     </SelectContent>
                   </Select>
                   <Select
-                    value={formData.data_fim ? format(new Date(formData.data_fim), "mm") : ""}
-                    onValueChange={(minute) => {
+                   value={formData.data_fim ? (() => {
+                     try {
+                       const date = new Date(formData.data_fim);
+                       return isNaN(date.getTime()) ? "" : format(date, "mm");
+                     } catch {
+                       return "";
+                     }
+                   })() : ""}
+                   onValueChange={(minute) => {
                       const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
                       date.setMinutes(parseInt(minute));
                       setFormData({ ...formData, data_fim: date.toISOString() });

@@ -51,48 +51,6 @@ export default function Compromissos() {
     queryFn: () => base44.auth.me()
   });
 
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [checkingConnection, setCheckingConnection] = useState(true);
-
-  // Verificar conexão com Google Calendar
-  React.useEffect(() => {
-    const verificarConexao = async () => {
-      try {
-        const response = await base44.functions.invoke('verificarConexaoCalendar');
-        setGoogleConnected(response.data?.connected || false);
-      } catch (error) {
-        console.error('Erro ao verificar conexão:', error);
-        setGoogleConnected(false);
-      } finally {
-        setCheckingConnection(false);
-      }
-    };
-    
-    if (user) {
-      verificarConexao();
-    }
-  }, [user]);
-
-  const handleConnectGoogleCalendar = async () => {
-    try {
-      const response = await base44.functions.invoke('verificarConexaoCalendar');
-      
-      if (response.data?.connected) {
-        alert('✅ Google Calendar já está conectado!');
-        setGoogleConnected(true);
-      } else if (response.data?.needsAuth) {
-        if (confirm('📅 Para usar a integração com Google Calendar, você precisa autorizar o acesso.\n\n✅ Clique em OK para ir para a página de Integrações')) {
-          window.open('https://app.base44.com/dashboard/integrations', '_blank');
-        }
-      } else {
-        alert('⚠️ ' + (response.data?.message || 'Erro ao conectar com Google Calendar'));
-      }
-    } catch (error) {
-      console.error('Erro ao conectar:', error);
-      alert('❌ Erro ao conectar com Google Calendar.\n\nPor favor, autorize a integração em:\nDashboard → Integrações → Google Calendar');
-    }
-  };
-
   const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],
     queryFn: () => base44.entities.Cliente.list()
@@ -170,12 +128,6 @@ export default function Compromissos() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!googleConnected) {
-      alert('⚠️ Você precisa conectar o Google Calendar antes de criar compromissos.\n\nClique no botão "Conectar Google Calendar" no topo da página.');
-      return;
-    }
-    
     criarCompromissoMutation.mutate(formData);
   };
 
@@ -223,21 +175,6 @@ export default function Compromissos() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {!checkingConnection && (
-                googleConnected ? (
-                  <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 px-4 py-2 rounded-lg">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-green-100 text-sm font-medium">📅 Google Calendar Conectado</span>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={handleConnectGoogleCalendar}
-                    className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 font-bold"
-                  >
-                    🔗 Conectar Google Calendar
-                  </Button>
-                )
-              )}
               <Button 
                 onClick={() => setShowDialog(true)}
                 className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6"

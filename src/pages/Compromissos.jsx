@@ -175,13 +175,22 @@ export default function Compromissos() {
 
   const getEventsForSlot = (day, hour) => {
     return compromissos.filter(comp => {
-      const compStart = parseISO(comp.data_inicio);
-      const slotStart = new Date(day);
-      slotStart.setHours(hour, 0, 0, 0);
-      const slotEnd = new Date(slotStart);
-      slotEnd.setHours(hour + 1, 0, 0, 0);
+      if (!comp.data_inicio) return false;
       
-      return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
+      try {
+        const compStart = parseISO(comp.data_inicio);
+        if (isNaN(compStart.getTime())) return false;
+        
+        const slotStart = new Date(day);
+        slotStart.setHours(hour, 0, 0, 0);
+        const slotEnd = new Date(slotStart);
+        slotEnd.setHours(hour + 1, 0, 0, 0);
+        
+        return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
+      } catch (error) {
+        console.error('Erro ao processar data do evento:', error);
+        return false;
+      }
     });
   };
 

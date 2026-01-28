@@ -29,6 +29,7 @@ export default function Compromissos() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDialog, setShowDialog] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
   
   const getDefaultDates = () => {
     const now = new Date();
@@ -127,6 +128,55 @@ export default function Compromissos() {
     }
   });
 
+  const atualizarCompromissoMutation = useMutation({
+    mutationFn: async (data) => {
+      const eventData = {
+        eventId: data.id,
+        summary: data.titulo,
+        description: data.descricao || '',
+        startDateTime: data.data_inicio,
+        endDateTime: data.data_fim,
+        location: data.modalidade === 'presencial' ? (data.endereco || '') : 'Online',
+        colorId: getGoogleColorId(data.cor)
+      };
+
+      // Adicionar participante se fornecido
+      if (data.email_participante) {
+        eventData.attendees = [{ email: data.email_participante }];
+      }
+
+      return await base44.functions.invoke('atualizarEventoCalendar', eventData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+      setShowDialog(false);
+      setEditingEvent(null);
+      resetForm();
+      alert('✅ Compromisso atualizado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar compromisso:', error);
+      alert('❌ Erro ao atualizar compromisso. Tente novamente.');
+    }
+  });
+
+  const deletarCompromissoMutation = useMutation({
+    mutationFn: async (eventId) => {
+      return await base44.functions.invoke('deletarEventoCalendar', { eventId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+      setShowDialog(false);
+      setEditingEvent(null);
+      resetForm();
+      alert('✅ Compromisso deletado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Erro ao deletar compromisso:', error);
+      alert('❌ Erro ao deletar compromisso. Tente novamente.');
+    }
+  });
+
   // Mapear cores do painel para IDs de cores do Google Calendar
   const getGoogleColorId = (hexColor) => {
     const colorMap = {
@@ -160,10 +210,38 @@ export default function Compromissos() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    criarCompromissoMutation.mutate(formData);
+    if (editingEvent) {
+      atualizarCompromissoMutation.mutate(formData);
+    } else {
+      criarCompromissoMutation.mutate(formData);
+    }
+  };
+
+  const handleDeleteEvent = () => {
+    if (editingEvent && confirm('Tem certeza que deseja deletar este compromisso?')) {
+      deletarCompromissoMutation.mutate(editingEvent.id);
+    }
+  };
+
+  const handleEditEvent = (event) => {
+    setEditingEvent(event);
+    setFormData({
+      id: event.id,
+      titulo: event.titulo,
+      descricao: event.descricao || '',
+      data_inicio: event.data_inicio,
+      data_fim: event.data_fim,
+      cor: event.cor || '#0891b2',
+      tipo: COLORS.find(c => c.value === event.cor)?.tipo || 'agendado',
+      modalidade: event.modalidade || '',
+      meeting_link: event.meeting_link || '',
+      email_participante: event.email_participante || ''
+    });
+    setShowDialog(true);
   };
 
   const resetForm = () => {
+    setEditingEvent(null);
     setFormData({
       titulo: "",
       descricao: "",
@@ -392,9 +470,7 @@ export default function Compromissos() {
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (event.htmlLink) {
-                                    window.open(event.htmlLink, '_blank');
-                                  }
+                                  handleEditEvent(event);
                                 }}
                               >
                                 <div className="flex items-center justify-between gap-1">
@@ -431,7 +507,7 @@ export default function Compromissos() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">
-              ➕ Novo Compromisso
+              {editingEvent ? '✏️ Editar Compromisso' : '➕ Novo Compromisso'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -693,22 +769,43 @@ export default function Compromissos() {
             </div>
 
             {/* Botões */}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowDialog(false)}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit"
-                disabled={criarCompromissoMutation.isPending}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-              >
-                {criarCompromissoMutation.isPending ? 'Criando...' : 'Criar'}
-              </Button>
+            <div className="flex justify-between pt-2">
+              <div>
+                {editingEvent && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleDeleteEvent}
+                    disabled={deletarCompromissoMutation.isPending}
+                    className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20"
+                  >
+                    {deletarCompromissoMutation.isPending ? 'Deletando...' : 'Deletar'}
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowDialog(false);
+                    resetForm();
+                  }}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={criarCompromissoMutation.isPending || atualizarCompromissoMutation.isPending}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                >
+                  {editingEvent 
+                    ? (atualizarCompromissoMutation.isPending ? 'Salvando...' : 'Salvar')
+                    : (criarCompromissoMutation.isPending ? 'Criando...' : 'Criar')
+                  }
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>

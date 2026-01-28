@@ -230,12 +230,16 @@ export default function Compromissos() {
     const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
     const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
     
+    // Validar se as datas são válidas
+    const validDataInicio = isNaN(dataInicio.getTime()) ? new Date() : dataInicio;
+    const validDataFim = isNaN(dataFim.getTime()) ? new Date(validDataInicio.getTime() + 3600000) : dataFim;
+    
     setFormData({
       id: event.id,
       titulo: event.titulo || '',
       descricao: event.descricao || '',
-      data_inicio: dataInicio.toISOString(),
-      data_fim: dataFim.toISOString(),
+      data_inicio: validDataInicio.toISOString(),
+      data_fim: validDataFim.toISOString(),
       cor: event.cor || '#0891b2',
       tipo: COLORS.find(c => c.value === event.cor)?.tipo || 'agendado',
       modalidade: event.modalidade || '',
@@ -685,9 +689,16 @@ export default function Compromissos() {
                     }
                   })() : ""}
                   onChange={(e) => {
+                    if (!e.target.value) return;
                     const [year, month, day] = e.target.value.split('-').map(Number);
+                    if (!year || !month || !day) return;
+                    
                     const currentStart = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
+                    if (isNaN(currentStart.getTime())) return;
+                    
                     const newDate = new Date(year, month - 1, day, currentStart.getHours(), currentStart.getMinutes());
+                    if (isNaN(newDate.getTime())) return;
+                    
                     const newEnd = new Date(newDate);
                     newEnd.setHours(newEnd.getHours() + 1);
                     setFormData({ 
@@ -714,6 +725,7 @@ export default function Compromissos() {
                    })() : ""}
                    onValueChange={(hour) => {
                       const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
+                      if (isNaN(date.getTime())) return;
                       date.setHours(parseInt(hour));
                       const endDate = new Date(date);
                       endDate.setHours(endDate.getHours() + 1);
@@ -746,6 +758,7 @@ export default function Compromissos() {
                    })() : ""}
                    onValueChange={(minute) => {
                       const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
+                      if (isNaN(date.getTime())) return;
                       date.setMinutes(parseInt(minute));
                       const endDate = new Date(date);
                       endDate.setHours(endDate.getHours() + 1);
@@ -781,6 +794,7 @@ export default function Compromissos() {
                    })() : ""}
                    onValueChange={(hour) => {
                       const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
+                      if (isNaN(date.getTime())) return;
                       date.setHours(parseInt(hour));
                       setFormData({ ...formData, data_fim: date.toISOString() });
                     }}
@@ -807,6 +821,7 @@ export default function Compromissos() {
                    })() : ""}
                    onValueChange={(minute) => {
                       const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
+                      if (isNaN(date.getTime())) return;
                       date.setMinutes(parseInt(minute));
                       setFormData({ ...formData, data_fim: date.toISOString() });
                     }}

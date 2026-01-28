@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     }
 
     // Obter dados do evento
-    const { summary, description, startDateTime, endDateTime, location, attendees } = await req.json();
+    const { summary, description, startDateTime, endDateTime, location, attendees, colorId } = await req.json();
 
     if (!summary || !startDateTime || !endDateTime) {
       return Response.json({ 
@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
         timeZone: 'America/Sao_Paulo'
       },
       attendees: attendees || [],
+      colorId: colorId || '9', // Cor do evento no Google Calendar
       conferenceData: {
         createRequest: {
           requestId: `meet-${Date.now()}`,

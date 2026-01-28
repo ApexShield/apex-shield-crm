@@ -102,13 +102,10 @@ export default function Compromissos() {
       const eventData = {
         summary: data.titulo,
         description: data.descricao || '',
-        start: {
-          dateTime: data.data_inicio
-        },
-        end: {
-          dateTime: data.data_fim
-        },
-        location: data.modalidade === 'presencial' ? (data.endereco || '') : 'Online'
+        startDateTime: data.data_inicio,
+        endDateTime: data.data_fim,
+        location: data.modalidade === 'presencial' ? (data.endereco || '') : 'Online',
+        colorId: getGoogleColorId(data.cor)
       };
 
       // Adicionar participante se fornecido
@@ -129,6 +126,37 @@ export default function Compromissos() {
       alert('❌ Erro ao criar compromisso. Tente novamente.');
     }
   });
+
+  // Mapear cores do painel para IDs de cores do Google Calendar
+  const getGoogleColorId = (hexColor) => {
+    const colorMap = {
+      "#0891b2": "9",  // Azul Pavão -> Blue
+      "#fbbf24": "5",  // Amarelo Banana -> Yellow
+      "#8b5cf6": "3",  // Mirtilo -> Purple
+      "#10b981": "10", // Manjericão -> Green
+      "#f97316": "6",  // Tangerina -> Orange
+      "#ec4899": "4"   // Flamingo -> Pink
+    };
+    return colorMap[hexColor] || "9"; // Default: Blue
+  };
+
+  // Mapear IDs de cores do Google Calendar para cores do painel
+  const getHexColorFromGoogleId = (colorId) => {
+    const colorMap = {
+      "1": "#0891b2",  // Lavender -> Azul Pavão
+      "2": "#10b981",  // Sage -> Manjericão
+      "3": "#8b5cf6",  // Grape -> Mirtilo
+      "4": "#ec4899",  // Flamingo -> Flamingo
+      "5": "#fbbf24",  // Banana -> Amarelo Banana
+      "6": "#f97316",  // Tangerine -> Tangerina
+      "7": "#0891b2",  // Peacock -> Azul Pavão
+      "8": "#6b7280",  // Graphite -> Cinza
+      "9": "#0891b2",  // Blueberry -> Azul Pavão
+      "10": "#10b981", // Basil -> Manjericão
+      "11": "#ef4444"  // Tomato -> Vermelho
+    };
+    return colorMap[colorId] || "#0891b2"; // Default: Azul Pavão
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();

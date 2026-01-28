@@ -320,8 +320,14 @@ export default function Agenda() {
     const weekEnd = endOfDay(addDays(currentWeekStart, 6));
     
     return compromissos.filter(comp => {
-      const compStart = parseISO(comp.data_inicio);
-      return compStart >= weekStart && compStart <= weekEnd;
+      try {
+        if (!comp.data_inicio) return false;
+        const compStart = parseISO(comp.data_inicio);
+        if (isNaN(compStart.getTime())) return false;
+        return compStart >= weekStart && compStart <= weekEnd;
+      } catch {
+        return false;
+      }
     });
   }, [compromissos, currentWeekStart]);
 
@@ -453,13 +459,20 @@ export default function Agenda() {
 
   const getEventsForSlot = (day, hour) => {
     return weekCompromissos.filter(comp => {
-      const compStart = parseISO(comp.data_inicio);
-      const slotStart = new Date(day);
-      slotStart.setHours(hour, 0, 0, 0);
-      const slotEnd = new Date(slotStart);
-      slotEnd.setHours(hour + 1, 0, 0, 0);
-      
-      return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
+      try {
+        if (!comp.data_inicio) return false;
+        const compStart = parseISO(comp.data_inicio);
+        if (isNaN(compStart.getTime())) return false;
+        
+        const slotStart = new Date(day);
+        slotStart.setHours(hour, 0, 0, 0);
+        const slotEnd = new Date(slotStart);
+        slotEnd.setHours(hour + 1, 0, 0, 0);
+        
+        return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
+      } catch {
+        return false;
+      }
     });
   };
 
@@ -830,7 +843,14 @@ export default function Agenda() {
                 <Label className="text-white mb-2 block">Data do Compromisso *</Label>
                 <Input
                   type="date"
-                  value={formData.data_inicio ? format(parseISO(formData.data_inicio), "yyyy-MM-dd") : ""}
+                  value={formData.data_inicio ? (() => {
+                    try {
+                      const date = parseISO(formData.data_inicio);
+                      return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd");
+                    } catch {
+                      return "";
+                    }
+                  })() : ""}
                   onChange={(e) => {
                     const newDate = new Date(e.target.value);
                     const currentStart = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
@@ -853,7 +873,14 @@ export default function Agenda() {
                   <Label className="text-white mb-2 block">Horário Início *</Label>
                   <div className="flex gap-2">
                     <Select
-                      value={formData.data_inicio ? format(parseISO(formData.data_inicio), "HH") : ""}
+                      value={formData.data_inicio ? (() => {
+                        try {
+                          const date = parseISO(formData.data_inicio);
+                          return isNaN(date.getTime()) ? "" : format(date, "HH");
+                        } catch {
+                          return "";
+                        }
+                      })() : ""}
                       onValueChange={(hour) => {
                         const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
                         date.setHours(parseInt(hour));
@@ -878,7 +905,14 @@ export default function Agenda() {
                       </SelectContent>
                     </Select>
                     <Select
-                      value={formData.data_inicio ? format(parseISO(formData.data_inicio), "mm") : ""}
+                      value={formData.data_inicio ? (() => {
+                        try {
+                          const date = parseISO(formData.data_inicio);
+                          return isNaN(date.getTime()) ? "" : format(date, "mm");
+                        } catch {
+                          return "";
+                        }
+                      })() : ""}
                       onValueChange={(minute) => {
                         const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
                         date.setMinutes(parseInt(minute));
@@ -906,7 +940,14 @@ export default function Agenda() {
                   <Label className="text-white mb-2 block">Horário Fim *</Label>
                   <div className="flex gap-2">
                     <Select
-                      value={formData.data_fim ? format(parseISO(formData.data_fim), "HH") : ""}
+                      value={formData.data_fim ? (() => {
+                        try {
+                          const date = parseISO(formData.data_fim);
+                          return isNaN(date.getTime()) ? "" : format(date, "HH");
+                        } catch {
+                          return "";
+                        }
+                      })() : ""}
                       onValueChange={(hour) => {
                         const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
                         date.setHours(parseInt(hour));
@@ -925,7 +966,14 @@ export default function Agenda() {
                       </SelectContent>
                     </Select>
                     <Select
-                      value={formData.data_fim ? format(parseISO(formData.data_fim), "mm") : ""}
+                      value={formData.data_fim ? (() => {
+                        try {
+                          const date = parseISO(formData.data_fim);
+                          return isNaN(date.getTime()) ? "" : format(date, "mm");
+                        } catch {
+                          return "";
+                        }
+                      })() : ""}
                       onValueChange={(minute) => {
                         const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
                         date.setMinutes(parseInt(minute));

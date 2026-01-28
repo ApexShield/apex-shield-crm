@@ -37,11 +37,13 @@ export default function GoogleCalendarConnect({ open, onClose }) {
               // Salvar tokens no banco
               await base44.functions.invoke('salvarTokensCalendar', event.data.data);
               
-              // Atualizar status
-              queryClient.invalidateQueries({ queryKey: ["google-calendar-connection"] });
+              // Atualizar status e fechar modal
+              await queryClient.invalidateQueries({ queryKey: ["google-calendar-connection"] });
+              alert('✅ Google Calendar conectado com sucesso!');
               onClose();
             } catch (err) {
               console.error('Erro ao salvar tokens:', err);
+              alert('❌ Erro ao salvar autenticação');
             }
             
             setIsConnecting(false);

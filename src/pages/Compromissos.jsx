@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 
@@ -326,6 +327,43 @@ export default function Compromissos() {
     });
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const { draggableId, destination } = result;
+    const [eventId, originalDay, originalHour] = draggableId.split('_');
+    const [newDay, newHour] = destination.droppableId.split('_');
+
+    const event = compromissos.find(e => e.id === eventId);
+    if (!event) return;
+
+    // Calcular nova data/hora
+    const dayIndex = parseInt(newDay);
+    const hourValue = parseInt(newHour);
+    const newDate = addDays(currentWeekStart, dayIndex);
+    
+    const newStartTime = new Date(newDate);
+    newStartTime.setHours(hourValue, 0, 0, 0);
+    
+    const eventDuration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();
+    const newEndTime = new Date(newStartTime.getTime() + eventDuration);
+
+    // Atualizar evento
+    const updatedData = {
+      id: event.id,
+      titulo: event.titulo,
+      descricao: event.descricao,
+      data_inicio: newStartTime.toISOString(),
+      data_fim: newEndTime.toISOString(),
+      cor: event.cor,
+      modalidade: event.modalidade,
+      email_participante: event.email_participante,
+      sendUpdates: 'all' // Notificar participantes sobre a mudança de horário
+    };
+
+    atualizarCompromissoMutation.mutate(updatedData);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
       <div className="max-w-[1800px] mx-auto">
@@ -436,105 +474,128 @@ export default function Compromissos() {
             </div>
 
             {/* Grade de Horários */}
-            <div className="flex-1 overflow-auto">
-              <div className="min-w-[900px]">
-                {/* Cabeçalho dos Dias */}
-                <div className="grid grid-cols-8 border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-10">
-                  <div className="p-2 text-center border-r border-white/10">
-                    <Clock className="w-4 h-4 mx-auto text-indigo-400" />
-                  </div>
-                  {weekDays.map((day, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`p-2 text-center border-r border-white/10 ${
-                        isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""
-                      }`}
-                    >
-                      <div className="text-[10px] font-bold text-indigo-300 uppercase mb-1">
-                        {format(day, "EEE", { locale: ptBR })}
-                      </div>
-                      <div
-                        className={`text-xl font-black ${
-                          isSameDay(day, new Date()) 
-                            ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-8 h-8 rounded-full flex items-center justify-center mx-auto" 
-                            : "text-white"
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="flex-1 overflow-auto">
+                <div className="min-w-[900px]">
+                  {/* Cabeçalho dos Dias */}
+                  <div className="grid grid-cols-8 border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-10">
+                    <div className="p-2 text-center border-r border-white/10">
+                      <Clock className="w-4 h-4 mx-auto text-indigo-400" />
+                    </div>
+                    {weekDays.map((day, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`p-2 text-center border-r border-white/10 ${
+                          isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""
                         }`}
                       >
-                        {format(day, "d")}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                        <div className="text-[10px] font-bold text-indigo-300 uppercase mb-1">
+                          {format(day, "EEE", { locale: ptBR })}
+                        </div>
+                        <div
+                          className={`text-xl font-black ${
+                            isSameDay(day, new Date()) 
+                              ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-8 h-8 rounded-full flex items-center justify-center mx-auto" 
+                              : "text-white"
+                          }`}
+                        >
+                          {format(day, "d")}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
 
-                {/* Grid de Horários */}
-                <div className="relative">
-                  {HOURS.map((hour) => (
-                    <div key={hour} className="grid grid-cols-8 border-b border-white/5">
-                      <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
-                        {String(hour).padStart(2, "0")}:00
-                      </div>
-                      {weekDays.map((day, dayIndex) => {
-                        const events = getEventsForSlot(day, hour);
-                        return (
-                          <div
-                            key={dayIndex}
-                            className="min-h-[60px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-0.5 transition-colors"
-                            onClick={() => handleSlotClick(day, hour)}
-                          >
-                            {events.map((event, eventIndex) => (
-                              <motion.div
-                                key={event.id}
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                className="absolute left-0.5 right-0.5 rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-pointer hover:scale-[1.02] transition-transform z-10"
-                                style={{
-                                  backgroundColor: event.cor || "#3b82f6",
-                                  top: `${eventIndex * 26 + 2}px`
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditEvent(event);
-                                }}
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <div className="truncate flex-1">{event.titulo}</div>
-                                  <div className="flex items-center gap-1">
-                                    {event.confirmado && (
-                                      <div className="text-[11px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
-                                        ✓
-                                      </div>
-                                    )}
-                                    {event.total_participantes > 0 && !event.confirmado && (
-                                      <div className="text-[10px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
-                                        ⏳
-                                      </div>
-                                    )}
-                                  </div>
+                  {/* Grid de Horários */}
+                  <div className="relative">
+                    {HOURS.map((hour) => (
+                      <div key={hour} className="grid grid-cols-8 border-b border-white/5">
+                        <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
+                          {String(hour).padStart(2, "0")}:00
+                        </div>
+                        {weekDays.map((day, dayIndex) => {
+                          const events = getEventsForSlot(day, hour);
+                          return (
+                            <Droppable key={`${dayIndex}_${hour}`} droppableId={`${dayIndex}_${hour}`}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.droppableProps}
+                                  className={`min-h-[60px] border-r border-white/5 hover:bg-white/10 cursor-pointer relative p-0.5 transition-colors ${
+                                    snapshot.isDraggingOver ? 'bg-indigo-500/20' : ''
+                                  }`}
+                                  onClick={() => handleSlotClick(day, hour)}
+                                >
+                                  {events.map((event, eventIndex) => (
+                                    <Draggable 
+                                      key={event.id} 
+                                      draggableId={`${event.id}_${dayIndex}_${hour}`} 
+                                      index={eventIndex}
+                                    >
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className={`absolute left-0.5 right-0.5 rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-move hover:scale-[1.02] transition-transform ${
+                                            snapshot.isDragging ? 'z-50 opacity-80 scale-105' : 'z-10'
+                                          }`}
+                                          style={{
+                                            backgroundColor: event.cor || "#3b82f6",
+                                            top: `${eventIndex * 26 + 2}px`,
+                                            ...provided.draggableProps.style
+                                          }}
+                                          onClick={(e) => {
+                                            if (!snapshot.isDragging) {
+                                              e.stopPropagation();
+                                              handleEditEvent(event);
+                                            }
+                                          }}
+                                        >
+                                          <div className="flex items-center justify-between gap-1">
+                                            <div className="truncate flex-1">{event.titulo}</div>
+                                            <div className="flex items-center gap-1">
+                                              {event.confirmado && (
+                                                <div className="text-[11px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
+                                                  ✓
+                                                </div>
+                                              )}
+                                              {event.total_participantes > 0 && !event.confirmado && (
+                                                <div className="text-[10px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
+                                                  ⏳
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                          {event.meeting_link && (
+                                            <div 
+                                              className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(event.meeting_link, '_blank');
+                                              }}
+                                            >
+                                              🎥 Meet
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  ))}
+                                  {provided.placeholder}
                                 </div>
-                                {event.meeting_link && (
-                                  <div 
-                                    className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      window.open(event.meeting_link, '_blank');
-                                    }}
-                                  >
-                                    🎥 Meet
-                                  </div>
-                                )}
-                              </motion.div>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                              )}
+                            </Droppable>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            </DragDropContext>
           </div>
         </div>
       </div>

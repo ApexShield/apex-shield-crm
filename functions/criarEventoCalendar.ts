@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     // Criar evento no Google Calendar com Google Meet
     const event = {
       summary: summary,
-      description: description || '',
+      description: descricaoCompleta,
       location: location || '',
       start: {
         dateTime: startDateTime,
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
         timeZone: 'America/Sao_Paulo'
       },
       attendees: attendees || [],
-      colorId: colorId || '9', // Cor do evento no Google Calendar
+      colorId: colorId || '9',
       conferenceData: {
         createRequest: {
           requestId: `meet-${Date.now()}`,
@@ -54,10 +54,14 @@ Deno.serve(async (req) => {
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'email', minutes: 24 * 60 },
-          { method: 'popup', minutes: 30 }
+          { method: 'email', minutes: 60 },
+          { method: 'popup', minutes: 30 },
+          { method: 'popup', minutes: 10 }
         ]
-      }
+      },
+      guestsCanModify: true,
+      guestsCanInviteOthers: false,
+      sendUpdates: 'all'
     };
 
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {

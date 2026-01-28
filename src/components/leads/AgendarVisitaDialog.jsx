@@ -20,6 +20,8 @@ const COLORS = [
 ];
 
 export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSave }) {
+  const [tipoCompromisso, setTipoCompromisso] = useState(""); // AB Visita, Fechamento, Entrega de Apólice
+  const [subTipoFechamento, setSubTipoFechamento] = useState(""); // F, F2, F3, F4, F5
   const [formData, setFormData] = useState({
     titulo: "",
     descricao: "",
@@ -36,8 +38,33 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
   const isVIPOrAdmin = user?.role === "admin" || user?.role_type === "UsuarioVIP";
 
+  // Atualizar título automaticamente quando tipo de compromisso mudar
+  const atualizarTitulo = (tipoComp, subTipo) => {
+    let prefixo = "";
+    if (tipoComp === "AB Visita") {
+      prefixo = "AB Visita";
+    } else if (tipoComp === "Fechamento" && subTipo) {
+      prefixo = subTipo;
+    } else if (tipoComp === "Entrega de Apólice") {
+      prefixo = "ENT APOLICE";
+    }
+    
+    const novoTitulo = prefixo ? `${prefixo} - ${cliente?.nome || ''}` : "";
+    setFormData(prev => ({ ...prev, titulo: novoTitulo }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!tipoCompromisso) {
+      setErro("Por favor, selecione o tipo de compromisso");
+      return;
+    }
+
+    if (tipoCompromisso === "Fechamento" && !subTipoFechamento) {
+      setErro("Por favor, selecione a fase do fechamento");
+      return;
+    }
     
     if (!formData.titulo || !formData.data_inicio || !formData.data_fim) {
       setErro("Por favor, preencha todos os campos obrigatórios");
@@ -130,6 +157,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   };
 
   const resetForm = () => {
+    setTipoCompromisso("");
+    setSubTipoFechamento("");
     setFormData({
       titulo: "",
       descricao: "",
@@ -183,8 +212,56 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               placeholder={`${cliente?.nome || 'Compromisso'}`}
               className="bg-white/10 border-white/20 text-white"
               required
+              readOnly
             />
           </div>
+
+          <div>
+            <Label className="text-white">Tipo de Compromisso *</Label>
+            <Select 
+              value={tipoCompromisso} 
+              onValueChange={(value) => {
+                setTipoCompromisso(value);
+                setSubTipoFechamento("");
+                if (value !== "Fechamento") {
+                  atualizarTitulo(value, "");
+                }
+              }}
+            >
+              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectValue placeholder="Selecione o tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AB Visita">AB Visita</SelectItem>
+                <SelectItem value="Fechamento">Fechamento</SelectItem>
+                <SelectItem value="Entrega de Apólice">Entrega de Apólice</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {tipoCompromisso === "Fechamento" && (
+            <div>
+              <Label className="text-white">Fase do Fechamento *</Label>
+              <Select 
+                value={subTipoFechamento} 
+                onValueChange={(value) => {
+                  setSubTipoFechamento(value);
+                  atualizarTitulo("Fechamento", value);
+                }}
+              >
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Selecione a fase..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="F">F</SelectItem>
+                  <SelectItem value="F2">F2</SelectItem>
+                  <SelectItem value="F3">F3</SelectItem>
+                  <SelectItem value="F4">F4</SelectItem>
+                  <SelectItem value="F5">F5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label className="text-white">Tipo</Label>

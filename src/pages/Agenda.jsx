@@ -353,11 +353,16 @@ export default function Agenda() {
 
   const handleEventClick = (event) => {
     setEditingEvent(event);
+    
+    // Validar e garantir datas válidas
+    const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
+    const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
+    
     setFormData({
       titulo: event.titulo || "",
       descricao: event.descricao || "",
-      data_inicio: event.data_inicio,
-      data_fim: event.data_fim,
+      data_inicio: isNaN(dataInicio.getTime()) ? new Date().toISOString() : dataInicio.toISOString(),
+      data_fim: isNaN(dataFim.getTime()) ? new Date(Date.now() + 3600000).toISOString() : dataFim.toISOString(),
       cor: event.cor || "#0891b2",
       tipo: event.tipo || "agendado",
       cliente_id: event.cliente_id || "",

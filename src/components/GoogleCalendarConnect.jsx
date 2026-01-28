@@ -30,6 +30,27 @@ export default function GoogleCalendarConnect({ open, onClose }) {
       const response = await base44.functions.invoke('iniciarOAuthGoogleCalendar');
       
       if (response.data?.authUrl) {
+        // Listener para receber dados do callback
+        const messageHandler = async (event) => {
+          if (event.data?.type === 'google_calendar_connected') {
+            try {
+              // Salvar tokens no banco
+              await base44.functions.invoke('salvarTokensCalendar', event.data.data);
+              
+              // Atualizar status
+              queryClient.invalidateQueries({ queryKey: ["google-calendar-connection"] });
+              onClose();
+            } catch (err) {
+              console.error('Erro ao salvar tokens:', err);
+            }
+            
+            setIsConnecting(false);
+            window.removeEventListener('message', messageHandler);
+          }
+        };
+        
+        window.addEventListener('message', messageHandler);
+        
         // Abrir popup para OAuth
         const width = 600;
         const height = 700;
@@ -42,13 +63,12 @@ export default function GoogleCalendarConnect({ open, onClose }) {
           `width=${width},height=${height},left=${left},top=${top}`
         );
 
-        // Listener para quando o OAuth for completado
+        // Listener para quando o popup for fechado (fallback)
         const checkPopupClosed = setInterval(() => {
           if (popup.closed) {
             clearInterval(checkPopupClosed);
+            window.removeEventListener('message', messageHandler);
             setIsConnecting(false);
-            queryClient.invalidateQueries({ queryKey: ["google-calendar-connection"] });
-            onClose();
           }
         }, 500);
       }

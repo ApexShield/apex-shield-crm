@@ -542,9 +542,9 @@ export default function Compromissos() {
                   type="date"
                   value={formData.data_inicio ? format(new Date(formData.data_inicio), "yyyy-MM-dd") : ""}
                   onChange={(e) => {
-                    const newDate = new Date(e.target.value);
+                    const [year, month, day] = e.target.value.split('-').map(Number);
                     const currentStart = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-                    newDate.setHours(currentStart.getHours(), currentStart.getMinutes());
+                    const newDate = new Date(year, month - 1, day, currentStart.getHours(), currentStart.getMinutes());
                     const newEnd = new Date(newDate);
                     newEnd.setHours(newEnd.getHours() + 1);
                     setFormData({ 

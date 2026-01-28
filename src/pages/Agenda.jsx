@@ -354,24 +354,46 @@ export default function Agenda() {
   const handleEventClick = (event) => {
     setEditingEvent(event);
     
-    // Validar e garantir datas válidas
-    const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
-    const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
-    
-    setFormData({
-      titulo: event.titulo || "",
-      descricao: event.descricao || "",
-      data_inicio: isNaN(dataInicio.getTime()) ? new Date().toISOString() : dataInicio.toISOString(),
-      data_fim: isNaN(dataFim.getTime()) ? new Date(Date.now() + 3600000).toISOString() : dataFim.toISOString(),
-      cor: event.cor || "#0891b2",
-      tipo: event.tipo || "agendado",
-      cliente_id: event.cliente_id || "",
-      cliente_nome: event.cliente_nome || "",
-      endereco: event.endereco || "",
-      modalidade: event.modalidade || "",
-      meeting_link: event.meeting_link || ""
-    });
-    setShowDialog(true);
+    try {
+      // Validar e garantir datas válidas
+      let dataInicio, dataFim;
+      
+      if (event.data_inicio) {
+        dataInicio = new Date(event.data_inicio);
+        if (isNaN(dataInicio.getTime())) {
+          dataInicio = new Date();
+        }
+      } else {
+        dataInicio = new Date();
+      }
+      
+      if (event.data_fim) {
+        dataFim = new Date(event.data_fim);
+        if (isNaN(dataFim.getTime())) {
+          dataFim = new Date(dataInicio.getTime() + 3600000);
+        }
+      } else {
+        dataFim = new Date(dataInicio.getTime() + 3600000);
+      }
+      
+      setFormData({
+        titulo: event.titulo || "",
+        descricao: event.descricao || "",
+        data_inicio: dataInicio.toISOString(),
+        data_fim: dataFim.toISOString(),
+        cor: event.cor || "#0891b2",
+        tipo: event.tipo || "agendado",
+        cliente_id: event.cliente_id || "",
+        cliente_nome: event.cliente_nome || "",
+        endereco: event.endereco || "",
+        modalidade: event.modalidade || "",
+        meeting_link: event.meeting_link || ""
+      });
+      setShowDialog(true);
+    } catch (error) {
+      console.error('Erro ao abrir evento:', error);
+      alert('Erro ao carregar dados do evento. Por favor, tente novamente.');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -475,7 +497,8 @@ export default function Agenda() {
         slotEnd.setHours(hour + 1, 0, 0, 0);
         
         return isSameDay(compStart, day) && compStart >= slotStart && compStart < slotEnd;
-      } catch {
+      } catch (error) {
+        console.error('Erro ao filtrar eventos:', error);
         return false;
       }
     });
@@ -707,7 +730,7 @@ export default function Agenda() {
                                 }}
                                 >
                                 <div className="flex items-center justify-between gap-1">
-                                  <div className="truncate flex-1">{event.titulo}</div>
+                                  <div className="truncate flex-1">{event.titulo || 'Sem título'}</div>
                                   {event.isGoogleEvent && (
                                     <div className="text-[9px] bg-white/30 px-1 rounded">📅</div>
                                   )}

@@ -30,6 +30,8 @@ export default function Compromissos() {
   const [showDialog, setShowDialog] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [showConfirmResend, setShowConfirmResend] = useState(false);
+  const [pendingUpdateData, setPendingUpdateData] = useState(null);
   
   const getDefaultDates = () => {
     const now = new Date();
@@ -137,7 +139,8 @@ export default function Compromissos() {
         startDateTime: data.data_inicio,
         endDateTime: data.data_fim,
         location: data.modalidade === 'presencial' ? (data.endereco || '') : 'Online',
-        colorId: getGoogleColorId(data.cor)
+        colorId: getGoogleColorId(data.cor),
+        sendUpdates: data.sendUpdates || 'none' // none, all, externalOnly
       };
 
       // Adicionar participante se fornecido
@@ -211,10 +214,24 @@ export default function Compromissos() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingEvent) {
-      atualizarCompromissoMutation.mutate(formData);
+      // Se tem participante, perguntar se quer reenviar convite
+      if (formData.email_participante || (editingEvent.participantes && editingEvent.participantes.length > 0)) {
+        setPendingUpdateData(formData);
+        setShowConfirmResend(true);
+      } else {
+        atualizarCompromissoMutation.mutate(formData);
+      }
     } else {
       criarCompromissoMutation.mutate(formData);
     }
+  };
+
+  const handleConfirmResend = (sendUpdates) => {
+    if (pendingUpdateData) {
+      atualizarCompromissoMutation.mutate({ ...pendingUpdateData, sendUpdates });
+    }
+    setShowConfirmResend(false);
+    setPendingUpdateData(null);
   };
 
   const handleDeleteEvent = () => {
@@ -918,6 +935,35 @@ export default function Compromissos() {
               </div>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Reenvio */}
+      <Dialog open={showConfirmResend} onOpenChange={setShowConfirmResend}>
+        <DialogContent className="max-w-md bg-slate-900 border-white/20">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">📧 Notificar Participantes?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-indigo-200">
+              Você está alterando um compromisso que possui participantes. Deseja reenviar o convite atualizado para notificá-los sobre as mudanças?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => handleConfirmResend('none')}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                Não, não enviar
+              </Button>
+              <Button
+                onClick={() => handleConfirmResend('all')}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              >
+                Sim, reenviar convite
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

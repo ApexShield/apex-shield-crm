@@ -23,16 +23,23 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const [tipoCompromisso, setTipoCompromisso] = useState(""); // AB Visita, Fechamento, Entrega de Apólice
   const [subTipoFechamento, setSubTipoFechamento] = useState(""); // F, F2, F3, F4, F5
   const [emailConvidado, setEmailConvidado] = useState("");
-  const [formData, setFormData] = useState({
-    titulo: "",
-    descricao: "",
-    data_inicio: "",
-    data_fim: "",
-    cor: "#0891b2",
-    tipo: "agendado",
-    modalidade: "",
-    meeting_link: "",
-    endereco: ""
+  const [formData, setFormData] = useState(() => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    const end = new Date(now);
+    end.setHours(end.getHours() + 1);
+    
+    return {
+      titulo: "",
+      descricao: "",
+      data_inicio: now.toISOString(),
+      data_fim: end.toISOString(),
+      cor: "#0891b2",
+      tipo: "agendado",
+      modalidade: "",
+      meeting_link: "",
+      endereco: ""
+    };
   });
   const [validando, setValidando] = useState(false);
   const [erro, setErro] = useState("");
@@ -160,14 +167,19 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   };
 
   const resetForm = () => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    const end = new Date(now);
+    end.setHours(end.getHours() + 1);
+    
     setTipoCompromisso("");
     setSubTipoFechamento("");
     setEmailConvidado("");
     setFormData({
       titulo: "",
       descricao: "",
-      data_inicio: "",
-      data_fim: "",
+      data_inicio: now.toISOString(),
+      data_fim: end.toISOString(),
       cor: "#0891b2",
       tipo: "agendado",
       modalidade: "",
@@ -201,7 +213,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
   return (
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
-      <DialogContent className="max-w-3xl bg-slate-900 border-white/20">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
             🗓️ Editar Compromisso

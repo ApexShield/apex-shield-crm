@@ -64,29 +64,56 @@ Deno.serve(async (req) => {
     // Enviar dados para o opener window e fechar
     return new Response(`
       <html>
-        <body style="font-family: Arial; padding: 40px; text-align: center; background: linear-gradient(to bottom right, #10b981, #3b82f6);">
+        <head>
+          <meta charset="UTF-8">
+          <title>Conectado com Sucesso</title>
+        </head>
+        <body style="font-family: Arial; padding: 40px; text-align: center; background: linear-gradient(to bottom right, #10b981, #3b82f6); margin: 0;">
           <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; margin: 0 auto;">
             <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
             <h2 style="color: #10b981; margin-bottom: 10px;">Conectado com sucesso!</h2>
             <p style="color: #64748b; margin-bottom: 20px;">Conta Google: <strong>${googleUser.email}</strong></p>
-            <p style="color: #64748b; font-size: 14px;">Salvando conexão...</p>
+            <p id="status" style="color: #64748b; font-size: 14px;">Salvando conexão...</p>
           </div>
           <script>
-            const authData = ${JSON.stringify(authData)};
-            if (window.opener) {
-              window.opener.postMessage({ 
-                type: 'google_auth_success', 
-                data: authData 
-              }, '*');
-              setTimeout(() => window.close(), 1000);
-            } else {
-              document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><p>Por favor, feche esta janela manualmente</p></div>';
-            }
+            (function() {
+              const authData = ${JSON.stringify(authData)};
+              
+              function sendMessage() {
+                if (window.opener && !window.opener.closed) {
+                  try {
+                    window.opener.postMessage({ 
+                      type: 'google_auth_success', 
+                      data: authData 
+                    }, '*');
+                    document.getElementById('status').textContent = 'Conexão salva! Fechando...';
+                    return true;
+                  } catch (e) {
+                    console.error('Erro ao enviar mensagem:', e);
+                    return false;
+                  }
+                }
+                return false;
+              }
+              
+              // Tentar enviar mensagem imediatamente
+              const sent = sendMessage();
+              
+              if (sent) {
+                // Aguardar 2 segundos antes de fechar para garantir que a mensagem foi processada
+                setTimeout(() => {
+                  window.close();
+                }, 2000);
+              } else {
+                document.getElementById('status').innerHTML = 
+                  'Por favor, <strong>feche esta janela manualmente</strong>';
+              }
+            })();
           </script>
         </body>
       </html>
     `, {
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
 
   } catch (error) {

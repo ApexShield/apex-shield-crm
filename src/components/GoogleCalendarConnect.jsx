@@ -26,17 +26,25 @@ export default function GoogleCalendarConnect({ open, onClose }) {
 
   useEffect(() => {
     const handleMessage = async (event) => {
-      if (event.data.type === 'google_auth_success') {
+      // Validar origem da mensagem para segurança
+      if (event.data && event.data.type === 'google_auth_success') {
+        console.log('Recebida autenticação Google:', event.data);
+        
         try {
           // Salvar tokens no banco de dados
-          await base44.functions.invoke('salvarTokenGoogle', event.data.data);
+          const response = await base44.functions.invoke('salvarTokenGoogle', event.data.data);
           
-          // Atualizar UI
-          queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
-          setIsConnecting(false);
+          if (response.data.success) {
+            console.log('Autenticação salva com sucesso');
+            // Atualizar UI
+            queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
+            setIsConnecting(false);
+          } else {
+            throw new Error('Falha ao salvar autenticação');
+          }
         } catch (error) {
           console.error('Erro ao salvar autenticação:', error);
-          alert('Erro ao salvar conexão');
+          alert('Erro ao salvar conexão com Google Calendar. Por favor, tente novamente.');
           setIsConnecting(false);
         }
       }
@@ -51,7 +59,35 @@ export default function GoogleCalendarConnect({ open, onClose }) {
     try {
       const response = await base44.functions.invoke('iniciarOAuthGoogle');
       if (response.data.authUrl) {
-        window.open(response.data.authUrl, '_blank', 'width=600,height=700');
+        const popup = window.open(
+          response.data.authUrl, 
+          'GoogleAuth', 
+          'width=600,height=700,toolbar=0,menubar=0,location=0'
+        );
+        
+        // Verificar se popup foi bloqueado
+        if (!popup || popup.closed) {
+          alert('Por favor, habilite pop-ups para este site e tente novamente.');
+          setIsConnecting(false);
+          return;
+        }
+        
+        // Timeout de segurança caso o usuário feche a janela sem completar
+        const timeout = setTimeout(() => {
+          if (isConnecting) {
+            console.log('Timeout de conexão');
+            setIsConnecting(false);
+          }
+        }, 60000); // 1 minuto
+        
+        // Limpar timeout se a conexão for bem-sucedida
+        const originalHandler = window.onmessage;
+        window.onmessage = (event) => {
+          if (event.data?.type === 'google_auth_success') {
+            clearTimeout(timeout);
+          }
+          if (originalHandler) originalHandler(event);
+        };
       }
     } catch (error) {
       console.error('Erro ao conectar:', error);

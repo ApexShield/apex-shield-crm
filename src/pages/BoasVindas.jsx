@@ -570,6 +570,17 @@ export default function BoasVindas() {
             <p className="text-cyan-200 text-xl font-semibold">
               24 Ferramentas Poderosas · Sistema Profissional · Totalmente Gratuito
             </p>
+            <div className="mt-4">
+              <a
+                href={createPageUrl("PoliticaPrivacidade")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1"
+              >
+                <Shield className="w-4 h-4" />
+                Ver Política de Privacidade
+              </a>
+            </div>
             <div className="flex items-center justify-center gap-6 mt-6 flex-wrap">
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
                 <Gift className="w-5 h-5 text-green-400" />
@@ -625,13 +636,15 @@ export default function BoasVindas() {
                   className="text-white cursor-pointer leading-relaxed"
                 >
                   Li e aceito a{" "}
-                  <Link 
-                    to={createPageUrl("PoliticaPrivacidade")} 
+                  <a
+                    href={createPageUrl("PoliticaPrivacidade")}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="text-cyan-400 hover:text-cyan-300 underline font-semibold"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Política de Privacidade
-                  </Link>
+                  </a>
                   {" "}e concordo com o uso dos meus dados conforme descrito.
                 </Label>
               </div>

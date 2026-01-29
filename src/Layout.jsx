@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import ConvitesDialog from "./components/ConvitesDialog";
+import AniversariantesPopup from "./components/AniversariantesPopup";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
@@ -176,6 +177,9 @@ export default function Layout({ children, currentPageName }) {
         onClose={() => setShowConvitesDialog(false)}
         userEmail={user?.email}
         />
+
+        {/* Popup de Aniversariantes */}
+        <AniversariantesPopup />
         </div>
         );
         }

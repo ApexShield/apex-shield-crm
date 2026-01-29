@@ -19,8 +19,17 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Obter token do Google Calendar via app connector
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
+    // Obter token OAuth do usuário
+    const tokenResponse = await base44.functions.invoke('obterTokenUsuario');
+    
+    if (tokenResponse.data.needsAuth || tokenResponse.data.error) {
+      return Response.json({ 
+        error: 'Usuário precisa conectar conta Google',
+        needsAuth: true
+      }, { status: 401 });
+    }
+    
+    const accessToken = tokenResponse.data.access_token;
 
     // Buscar eventos no Google Calendar
     const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +

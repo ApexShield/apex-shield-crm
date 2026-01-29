@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,35 +56,60 @@ export default function BoasVindas() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [selectedHierarchy, setSelectedHierarchy] = useState("");
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => base44.auth.me()
   });
 
+  // Redirecionar para Leads se usuário já aceitou política
+  useEffect(() => {
+    if (currentUser?.aceite_politica_privacidade) {
+      navigate(createPageUrl("Leads"));
+    }
+  }, [currentUser, navigate]);
+
   const updateProfileMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       setShowProfileDialog(false);
+      setShowPrivacyDialog(false);
       navigate(createPageUrl("Leads"));
     }
   });
 
   const handleStartClick = () => {
-    // Verificar se usuário já tem hierarquia definida
-    if (currentUser?.tipo_hierarquia && currentUser.tipo_hierarquia !== "Sem Hierarquia") {
-      navigate(createPageUrl("Leads"));
-    } else {
-      setShowProfileDialog(true);
+    // Mostrar diálogo de aceite da política
+    setShowPrivacyDialog(true);
+  };
+
+  const handleAcceptPrivacy = () => {
+    if (acceptedPrivacy) {
+      // Verificar se usuário já tem hierarquia definida
+      if (currentUser?.tipo_hierarquia && currentUser.tipo_hierarquia !== "Sem Hierarquia") {
+        // Salvar aceite e redirecionar
+        updateProfileMutation.mutate({
+          aceite_politica_privacidade: true,
+          data_aceite_politica: new Date().toISOString()
+        });
+      } else {
+        // Mostrar diálogo de perfil
+        setShowPrivacyDialog(false);
+        setShowProfileDialog(true);
+      }
     }
   };
 
   const handleSaveProfile = () => {
     if (selectedHierarchy) {
       updateProfileMutation.mutate({
-        tipo_hierarquia: selectedHierarchy
+        tipo_hierarquia: selectedHierarchy,
+        aceite_politica_privacidade: true,
+        data_aceite_politica: new Date().toISOString()
       });
     }
   };
@@ -560,6 +586,75 @@ export default function BoasVindas() {
             </div>
           </motion.div>
         </motion.div>
+
+        {/* Dialog de Aceite da Política de Privacidade */}
+        <Dialog open={showPrivacyDialog} onOpenChange={setShowPrivacyDialog}>
+          <DialogContent className="bg-slate-900 border-white/20 max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-white text-2xl flex items-center gap-2">
+                <Shield className="w-6 h-6 text-cyan-400" />
+                Política de Privacidade
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 text-cyan-100 text-sm leading-relaxed">
+                <p className="mb-3">
+                  Para usar o <strong>APEX SHIELD CRM</strong>, precisamos do seu consentimento para:
+                </p>
+                <ul className="list-disc ml-6 space-y-2">
+                  <li><strong>Criar e gerenciar compromissos</strong> no seu Google Calendar</li>
+                  <li><strong>Visualizar seus eventos</strong> para melhor organização</li>
+                  <li><strong>Armazenar dados de leads e clientes</strong> que você cadastrar</li>
+                  <li><strong>Proteger seus dados</strong> com criptografia e segurança</li>
+                </ul>
+                <p className="mt-3 text-xs text-cyan-200">
+                  ✅ Seus dados são privados e nunca compartilhados com terceiros<br/>
+                  ✅ Você pode revogar o acesso a qualquer momento
+                </p>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+                <Checkbox 
+                  id="accept-privacy"
+                  checked={acceptedPrivacy}
+                  onCheckedChange={setAcceptedPrivacy}
+                  className="mt-1"
+                />
+                <Label 
+                  htmlFor="accept-privacy" 
+                  className="text-white cursor-pointer leading-relaxed"
+                >
+                  Li e aceito a{" "}
+                  <Link 
+                    to={createPageUrl("PoliticaPrivacidade")} 
+                    target="_blank"
+                    className="text-cyan-400 hover:text-cyan-300 underline font-semibold"
+                  >
+                    Política de Privacidade
+                  </Link>
+                  {" "}e concordo com o uso dos meus dados conforme descrito.
+                </Label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => setShowPrivacyDialog(false)}
+                  variant="outline"
+                  className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAcceptPrivacy}
+                  disabled={!acceptedPrivacy || updateProfileMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                >
+                  {updateProfileMutation.isPending ? "Processando..." : "Aceitar e Continuar"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Dialog de Seleção de Perfil */}
         <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>

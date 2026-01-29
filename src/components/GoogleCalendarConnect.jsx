@@ -24,61 +24,9 @@ export default function GoogleCalendarConnect({ open, onClose }) {
     enabled: open && !!user
   });
 
-  const handleConnect = async () => {
-    try {
-      setIsConnecting(true);
-      const response = await base44.functions.invoke('iniciarOAuthGoogleCalendar');
-      
-      if (response.data?.authUrl) {
-        // Listener para receber dados do callback
-        const messageHandler = async (event) => {
-          if (event.data?.type === 'google_calendar_connected') {
-            try {
-              // Salvar tokens no banco
-              await base44.functions.invoke('salvarTokensCalendar', event.data.data);
-              
-              // Atualizar status e fechar modal
-              await queryClient.invalidateQueries({ queryKey: ["google-calendar-connection"] });
-              alert('✅ Google Calendar conectado com sucesso!');
-              onClose();
-            } catch (err) {
-              console.error('Erro ao salvar tokens:', err);
-              alert('❌ Erro ao salvar autenticação');
-            }
-            
-            setIsConnecting(false);
-            window.removeEventListener('message', messageHandler);
-          }
-        };
-        
-        window.addEventListener('message', messageHandler);
-        
-        // Abrir popup para OAuth
-        const width = 600;
-        const height = 700;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height) / 2;
-        
-        const popup = window.open(
-          response.data.authUrl,
-          'Google Calendar OAuth',
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
-
-        // Listener para quando o popup for fechado (fallback)
-        const checkPopupClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkPopupClosed);
-            window.removeEventListener('message', messageHandler);
-            setIsConnecting(false);
-          }
-        }, 500);
-      }
-    } catch (error) {
-      console.error('Erro ao conectar Google Calendar:', error);
-      alert('❌ Erro ao conectar com Google Calendar');
-      setIsConnecting(false);
-    }
+  const handleConnect = () => {
+    alert('✅ Google Calendar já está conectado via autenticação do sistema!');
+    onClose();
   };
 
   const isGmailUser = user?.email?.endsWith('@gmail.com');

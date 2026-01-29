@@ -1170,7 +1170,11 @@ export default function Compromissos() {
         </DialogContent>
       </Dialog>
 
-
+      {/* Dialog de Conexão Google Calendar */}
+      <GoogleCalendarConnect
+        open={showConnectDialog}
+        onClose={() => setShowConnectDialog(false)}
+      />
     </div>
   );
 }

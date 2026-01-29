@@ -1,8 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { Base44 } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
     const userEmail = url.searchParams.get('state');
@@ -54,8 +53,14 @@ Deno.serve(async (req) => {
 
     const googleUser = await userInfoResponse.json();
 
+    // Usar Base44 SDK com service role
+    const base44 = new Base44({
+      appId: Deno.env.get("BASE44_APP_ID"),
+      serviceRoleKey: Deno.env.get("BASE44_SERVICE_ROLE_KEY")
+    });
+
     // Verificar se já existe autenticação para este usuário
-    const existingAuth = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+    const existingAuth = await base44.entities.UserGoogleAuth.filter({
       user_email: userEmail
     });
 
@@ -69,9 +74,9 @@ Deno.serve(async (req) => {
     };
 
     if (existingAuth.length > 0) {
-      await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuth[0].id, authData);
+      await base44.entities.UserGoogleAuth.update(existingAuth[0].id, authData);
     } else {
-      await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
+      await base44.entities.UserGoogleAuth.create(authData);
     }
 
     return new Response(`

@@ -24,18 +24,34 @@ export default function GoogleCalendarConnect({ open, onClose }) {
     enabled: open && !!user
   });
 
+  useEffect(() => {
+    const handleMessage = async (event) => {
+      if (event.data.type === 'google_auth_success') {
+        try {
+          // Salvar tokens no banco de dados
+          await base44.functions.invoke('salvarTokenGoogle', event.data.data);
+          
+          // Atualizar UI
+          queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
+          setIsConnecting(false);
+        } catch (error) {
+          console.error('Erro ao salvar autenticação:', error);
+          alert('Erro ao salvar conexão');
+          setIsConnecting(false);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [queryClient]);
+
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
       const response = await base44.functions.invoke('iniciarOAuthGoogle');
       if (response.data.authUrl) {
         window.open(response.data.authUrl, '_blank', 'width=600,height=700');
-        
-        // Aguardar 3 segundos e verificar conexão
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
-          setIsConnecting(false);
-        }, 3000);
       }
     } catch (error) {
       console.error('Erro ao conectar:', error);

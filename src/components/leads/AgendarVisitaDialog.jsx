@@ -43,7 +43,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const atualizarTitulo = (tipoComp, subTipo) => {
     let prefixo = "";
     if (tipoComp === "AB Visita") {
-      prefixo = "AB Visita";
+      prefixo = "AB";
     } else if (tipoComp === "Fechamento" && subTipo) {
       prefixo = subTipo;
     } else if (tipoComp === "Entrega de Apólice") {
@@ -396,7 +396,129 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-white mb-2 block">Horário Início *</Label>
-...
+              <div className="flex gap-2">
+                <Select
+                  value={formData.data_inicio ? (() => {
+                    try {
+                      const date = parseISO(formData.data_inicio);
+                      return isNaN(date.getTime()) ? "" : format(date, "HH");
+                    } catch {
+                      return "";
+                    }
+                  })() : ""}
+                  onValueChange={(hour) => {
+                    const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                    if (isNaN(date.getTime())) return;
+                    date.setHours(parseInt(hour));
+                    const endDate = new Date(date);
+                    endDate.setHours(endDate.getHours() + 1);
+                    setFormData({ 
+                      ...formData, 
+                      data_inicio: date.toISOString(),
+                      data_fim: endDate.toISOString()
+                    });
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                    <SelectValue placeholder="H" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
+                      <SelectItem key={h} value={String(h).padStart(2, '0')}>
+                        {String(h).padStart(2, '0')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={formData.data_inicio ? (() => {
+                    try {
+                      const date = parseISO(formData.data_inicio);
+                      return isNaN(date.getTime()) ? "" : format(date, "mm");
+                    } catch {
+                      return "";
+                    }
+                  })() : ""}
+                  onValueChange={(minute) => {
+                    const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                    if (isNaN(date.getTime())) return;
+                    date.setMinutes(parseInt(minute));
+                    const endDate = new Date(date);
+                    endDate.setHours(endDate.getHours() + 1);
+                    setFormData({ 
+                      ...formData, 
+                      data_inicio: date.toISOString(),
+                      data_fim: endDate.toISOString()
+                    });
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                    <SelectValue placeholder="M" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['00', '15', '30', '45'].map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-white mb-2 block">Horário Fim *</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.data_fim ? (() => {
+                    try {
+                      const date = parseISO(formData.data_fim);
+                      return isNaN(date.getTime()) ? "" : format(date, "HH");
+                    } catch {
+                      return "";
+                    }
+                  })() : ""}
+                  onValueChange={(hour) => {
+                    const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                    if (isNaN(date.getTime())) return;
+                    date.setHours(parseInt(hour));
+                    setFormData({ ...formData, data_fim: date.toISOString() });
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                    <SelectValue placeholder="H" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
+                      <SelectItem key={h} value={String(h).padStart(2, '0')}>
+                        {String(h).padStart(2, '0')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={formData.data_fim ? (() => {
+                    try {
+                      const date = parseISO(formData.data_fim);
+                      return isNaN(date.getTime()) ? "" : format(date, "mm");
+                    } catch {
+                      return "";
+                    }
+                  })() : ""}
+                  onValueChange={(minute) => {
+                    const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                    if (isNaN(date.getTime())) return;
+                    date.setMinutes(parseInt(minute));
+                    setFormData({ ...formData, data_fim: date.toISOString() });
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
+                    <SelectValue placeholder="M" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['00', '15', '30', '45'].map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

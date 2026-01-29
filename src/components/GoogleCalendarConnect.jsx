@@ -16,20 +16,33 @@ export default function GoogleCalendarConnect({ open, onClose }) {
   });
 
   const { data: connection, isLoading } = useQuery({
-    queryKey: ["google-calendar-connection"],
+    queryKey: ["google-calendar-user-connection"],
     queryFn: async () => {
-      const response = await base44.functions.invoke('verificarConexaoUsuarioCalendar');
+      const response = await base44.functions.invoke('verificarConexaoGoogleUsuario');
       return response.data;
     },
     enabled: open && !!user
   });
 
-  const handleConnect = () => {
-    alert('✅ Google Calendar já está conectado via autenticação do sistema!');
-    onClose();
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      const response = await base44.functions.invoke('iniciarOAuthGoogle');
+      if (response.data.authUrl) {
+        window.open(response.data.authUrl, '_blank', 'width=600,height=700');
+        
+        // Aguardar 3 segundos e verificar conexão
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
+          setIsConnecting(false);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Erro ao conectar:', error);
+      alert('Erro ao iniciar conexão com Google');
+      setIsConnecting(false);
+    }
   };
-
-  const isGmailUser = user?.email?.endsWith('@gmail.com');
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -63,7 +76,7 @@ export default function GoogleCalendarConnect({ open, onClose }) {
               </div>
 
               <p className="text-indigo-200 text-sm">
-                Sua agenda está sincronizada. Todos os compromissos serão criados no seu Google Calendar pessoal.
+                Sua agenda pessoal está sincronizada. Todos os compromissos serão criados no seu Google Calendar.
               </p>
 
               <Button
@@ -83,20 +96,20 @@ export default function GoogleCalendarConnect({ open, onClose }) {
                 <div className="flex items-start gap-3">
                   <Calendar className="w-6 h-6 text-blue-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-blue-300 font-bold mb-2">Google Calendar Integrado</p>
+                    <p className="text-blue-300 font-bold mb-2">Conecte sua conta Google</p>
                     <p className="text-sm text-blue-200/80">
-                      O Google Calendar já está conectado ao sistema. Todos os compromissos serão sincronizados automaticamente.
+                      Para usar o Google Calendar, você precisa conectar sua conta pessoal do Gmail.
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white/5 rounded-xl p-4 space-y-2 text-sm text-indigo-200">
-                <p className="font-bold text-white mb-2">Recursos disponíveis:</p>
+                <p className="font-bold text-white mb-2">O que será sincronizado:</p>
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-                    <p>Criação e gerenciamento de eventos</p>
+                    <p>Seus compromissos e eventos</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
@@ -104,17 +117,37 @@ export default function GoogleCalendarConnect({ open, onClose }) {
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-                    <p>Convites e confirmações de participantes</p>
+                    <p>Convites para participantes</p>
                   </div>
                 </div>
               </div>
 
+              {user?.email && !user.email.endsWith('@gmail.com') && (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-yellow-200">
+                    Você está logado com <strong>{user.email}</strong>. 
+                    Na próxima etapa, conecte uma conta Gmail para usar o Google Calendar.
+                  </p>
+                </div>
+              )}
+
               <Button
-                onClick={onClose}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold py-6 text-lg"
+                onClick={handleConnect}
+                disabled={isConnecting}
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 font-bold py-6 text-lg"
               >
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                Começar a Usar
+                {isConnecting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Conectando...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Conectar Google Calendar
+                  </>
+                )}
               </Button>
             </motion.div>
           )}

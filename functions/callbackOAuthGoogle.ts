@@ -1,5 +1,3 @@
-import { Base44 } from 'npm:@base44/sdk@0.8.6';
-
 Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
@@ -53,17 +51,7 @@ Deno.serve(async (req) => {
 
     const googleUser = await userInfoResponse.json();
 
-    // Usar Base44 SDK com service role
-    const base44 = new Base44({
-      appId: Deno.env.get("BASE44_APP_ID"),
-      serviceRoleKey: Deno.env.get("BASE44_SERVICE_ROLE_KEY")
-    });
-
-    // Verificar se já existe autenticação para este usuário
-    const existingAuth = await base44.entities.UserGoogleAuth.filter({
-      user_email: userEmail
-    });
-
+    // Criar dados para enviar ao frontend
     const authData = {
       user_email: userEmail,
       google_email: googleUser.email,
@@ -73,12 +61,7 @@ Deno.serve(async (req) => {
       scopes: tokens.scope?.split(' ') || []
     };
 
-    if (existingAuth.length > 0) {
-      await base44.entities.UserGoogleAuth.update(existingAuth[0].id, authData);
-    } else {
-      await base44.entities.UserGoogleAuth.create(authData);
-    }
-
+    // Enviar dados para o opener window e fechar
     return new Response(`
       <html>
         <body style="font-family: Arial; padding: 40px; text-align: center; background: linear-gradient(to bottom right, #10b981, #3b82f6);">
@@ -86,11 +69,19 @@ Deno.serve(async (req) => {
             <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
             <h2 style="color: #10b981; margin-bottom: 10px;">Conectado com sucesso!</h2>
             <p style="color: #64748b; margin-bottom: 20px;">Conta Google: <strong>${googleUser.email}</strong></p>
-            <p style="color: #64748b; font-size: 14px;">Você pode fechar esta janela</p>
-            <button onclick="window.close()" style="margin-top: 20px; padding: 12px 30px; background: #10b981; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Fechar</button>
+            <p style="color: #64748b; font-size: 14px;">Salvando conexão...</p>
           </div>
           <script>
-            setTimeout(() => window.close(), 3000);
+            const authData = ${JSON.stringify(authData)};
+            if (window.opener) {
+              window.opener.postMessage({ 
+                type: 'google_auth_success', 
+                data: authData 
+              }, '*');
+              setTimeout(() => window.close(), 1000);
+            } else {
+              document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><p>Por favor, feche esta janela manualmente</p></div>';
+            }
           </script>
         </body>
       </html>

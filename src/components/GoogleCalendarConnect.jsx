@@ -26,27 +26,11 @@ export default function GoogleCalendarConnect({ open, onClose }) {
 
   useEffect(() => {
     const handleMessage = async (event) => {
-      // Validar origem da mensagem para segurança
-      if (event.data && event.data.type === 'google_auth_success') {
-        console.log('Recebida autenticação Google:', event.data);
-        
-        try {
-          // Salvar tokens no banco de dados
-          const response = await base44.functions.invoke('salvarTokenGoogle', event.data.data);
-          
-          if (response.data.success) {
-            console.log('Autenticação salva com sucesso');
-            // Atualizar UI
-            queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
-            setIsConnecting(false);
-          } else {
-            throw new Error('Falha ao salvar autenticação');
-          }
-        } catch (error) {
-          console.error('Erro ao salvar autenticação:', error);
-          alert('Erro ao salvar conexão com Google Calendar. Por favor, tente novamente.');
-          setIsConnecting(false);
-        }
+      if (event.data && event.data.type === 'google_auth_complete') {
+        console.log('Autenticação Google concluída');
+        // Atualizar UI
+        queryClient.invalidateQueries({ queryKey: ["google-calendar-user-connection"] });
+        setIsConnecting(false);
       }
     };
 

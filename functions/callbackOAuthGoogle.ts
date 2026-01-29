@@ -51,7 +51,10 @@ Deno.serve(async (req) => {
 
     const googleUser = await userInfoResponse.json();
 
-    // Criar dados para enviar ao frontend
+    // Salvar direto no banco usando service role
+    const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
+    const BASE44_SERVICE_ROLE_KEY = Deno.env.get("BASE44_SERVICE_ROLE_KEY");
+
     const authData = {
       user_email: userEmail,
       google_email: googleUser.email,
@@ -61,7 +64,47 @@ Deno.serve(async (req) => {
       scopes: tokens.scope?.split(' ') || []
     };
 
-    // Enviar dados para o opener window e fechar
+    // Verificar se já existe autenticação
+    const checkResponse = await fetch(
+      `https://api.base44.com/v1/apps/${BASE44_APP_ID}/entities/UserGoogleAuth?filter=${encodeURIComponent(JSON.stringify({ user_email: userEmail }))}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${BASE44_SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const existingAuths = await checkResponse.json();
+
+    if (existingAuths.length > 0) {
+      // Atualizar
+      await fetch(
+        `https://api.base44.com/v1/apps/${BASE44_APP_ID}/entities/UserGoogleAuth/${existingAuths[0].id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${BASE44_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(authData)
+        }
+      );
+    } else {
+      // Criar
+      await fetch(
+        `https://api.base44.com/v1/apps/${BASE44_APP_ID}/entities/UserGoogleAuth`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${BASE44_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(authData)
+        }
+      );
+    }
+
     return new Response(`
       <html>
         <head>
@@ -73,42 +116,20 @@ Deno.serve(async (req) => {
             <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
             <h2 style="color: #10b981; margin-bottom: 10px;">Conectado com sucesso!</h2>
             <p style="color: #64748b; margin-bottom: 20px;">Conta Google: <strong>${googleUser.email}</strong></p>
-            <p id="status" style="color: #64748b; font-size: 14px;">Salvando conexão...</p>
+            <p id="status" style="color: #64748b; font-size: 14px;">Conexão salva! Fechando...</p>
           </div>
           <script>
-            (function() {
-              const authData = ${JSON.stringify(authData)};
-              
-              function sendMessage() {
-                if (window.opener && !window.opener.closed) {
-                  try {
-                    window.opener.postMessage({ 
-                      type: 'google_auth_success', 
-                      data: authData 
-                    }, '*');
-                    document.getElementById('status').textContent = 'Conexão salva! Fechando...';
-                    return true;
-                  } catch (e) {
-                    console.error('Erro ao enviar mensagem:', e);
-                    return false;
-                  }
-                }
-                return false;
-              }
-              
-              // Tentar enviar mensagem imediatamente
-              const sent = sendMessage();
-              
-              if (sent) {
-                // Aguardar 2 segundos antes de fechar para garantir que a mensagem foi processada
-                setTimeout(() => {
-                  window.close();
-                }, 2000);
-              } else {
-                document.getElementById('status').innerHTML = 
-                  'Por favor, <strong>feche esta janela manualmente</strong>';
-              }
-            })();
+            // Notificar a janela principal
+            if (window.opener && !window.opener.closed) {
+              window.opener.postMessage({ 
+                type: 'google_auth_complete'
+              }, '*');
+            }
+            
+            // Fechar automaticamente
+            setTimeout(() => {
+              window.close();
+            }, 2000);
           </script>
         </body>
       </html>

@@ -355,6 +355,45 @@ export default function Compromissos() {
     });
   };
 
+  // Detectar eventos sobrepostos e calcular posições
+  const getEventLayoutInfo = (events) => {
+    if (events.length <= 1) {
+      return events.map(event => ({ event, column: 0, totalColumns: 1 }));
+    }
+
+    // Ordenar eventos por hora de início
+    const sortedEvents = [...events].sort((a, b) => {
+      const aStart = parseISO(a.data_inicio);
+      const bStart = parseISO(b.data_inicio);
+      return aStart.getTime() - bStart.getTime();
+    });
+
+    // Detectar sobreposições
+    const layouts = sortedEvents.map((event, index) => {
+      const eventStart = parseISO(event.data_inicio);
+      const eventEnd = parseISO(event.data_fim);
+      
+      // Verificar quantos eventos sobrepõem com este
+      const overlapping = sortedEvents.filter((otherEvent, otherIndex) => {
+        if (otherIndex === index) return false;
+        
+        const otherStart = parseISO(otherEvent.data_inicio);
+        const otherEnd = parseISO(otherEvent.data_fim);
+        
+        // Verificar se há sobreposição
+        return eventStart < otherEnd && eventEnd > otherStart;
+      });
+
+      return {
+        event,
+        column: index % Math.max(2, overlapping.length + 1),
+        totalColumns: Math.max(2, overlapping.length + 1)
+      };
+    });
+
+    return layouts;
+  };
+
   const calculateEventPosition = (event, hour) => {
     try {
       const start = parseISO(event.data_inicio);
@@ -583,6 +622,9 @@ export default function Compromissos() {
                               return false;
                             }
                           });
+
+                          // Calcular layout para eventos sobrepostos
+                          const eventLayouts = getEventLayoutInfo(eventsStartingHere);
                           
                           return (
                             <Droppable key={`${dayIndex}_${hour}`} droppableId={`${dayIndex}_${hour}`}>
@@ -596,7 +638,8 @@ export default function Compromissos() {
                                   style={{ height: '60px' }}
                                   onClick={() => handleSlotClick(day, hour)}
                                 >
-                                  {eventsStartingHere.map((event, eventIndex) => {
+                                  {eventLayouts.map((layout, eventIndex) => {
+                                    const event = layout.event;
                                     const { topOffset, heightPx } = calculateEventPosition(event, hour);
                                     
                                     let start;
@@ -607,6 +650,10 @@ export default function Compromissos() {
                                     } catch (error) {
                                       console.error('Erro ao processar data de início:', error);
                                     }
+
+                                    // Calcular largura e posição horizontal para eventos sobrepostos
+                                    const widthPercent = 100 / layout.totalColumns;
+                                    const leftPercent = (layout.column * widthPercent);
                                     
                                     return (
                                       <Draggable 
@@ -619,13 +666,15 @@ export default function Compromissos() {
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
                                             {...provided.dragHandleProps}
-                                            className={`absolute left-0.5 right-0.5 rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab active:cursor-grabbing overflow-hidden ${
+                                            className={`absolute rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab active:cursor-grabbing overflow-hidden ${
                                               snapshot.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'
                                             }`}
                                             style={{
                                               backgroundColor: event.cor || "#3b82f6",
                                               top: `${topOffset}%`,
                                               height: `${heightPx}px`,
+                                              left: layout.totalColumns > 1 ? `${leftPercent}%` : '2px',
+                                              width: layout.totalColumns > 1 ? `${widthPercent - 1}%` : 'calc(100% - 4px)',
                                               transform: snapshot.isDragging 
                                                 ? `${provided.draggableProps.style?.transform} translate(0, -10px)` 
                                                 : provided.draggableProps.style?.transform,

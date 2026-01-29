@@ -19,21 +19,8 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Buscar token OAuth do usuário específico
-    const connections = await base44.asServiceRole.entities.UserGoogleCalendarAuth.filter({
-      user_email: user.email
-    });
-
-    if (connections.length === 0) {
-      return Response.json({ error: 'Google Calendar não conectado para este usuário' }, { status: 403 });
-    }
-
-    const connection = connections[0];
-    const accessToken = connection.access_token;
-    
-    if (!accessToken) {
-      return Response.json({ error: 'Token de acesso não encontrado' }, { status: 403 });
-    }
+    // Obter token do Google Calendar via app connector
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
     // Deletar evento no Google Calendar
     const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {

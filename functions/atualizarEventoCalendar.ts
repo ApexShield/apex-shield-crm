@@ -24,21 +24,8 @@ Deno.serve(async (req) => {
     const descricaoAtual = description || '';
     const descricaoCompleta = descricaoAtual.includes('⏰ IMPORTANTE') ? descricaoAtual : descricaoAtual + "\n\n" + mensagemPadrao;
 
-    // Buscar token OAuth do usuário específico
-    const connections = await base44.asServiceRole.entities.UserGoogleCalendarAuth.filter({
-      user_email: user.email
-    });
-
-    if (connections.length === 0) {
-      return Response.json({ error: 'Google Calendar não conectado para este usuário' }, { status: 403 });
-    }
-
-    const connection = connections[0];
-    const accessToken = connection.access_token;
-    
-    if (!accessToken) {
-      return Response.json({ error: 'Token de acesso não encontrado' }, { status: 403 });
-    }
+    // Obter token do Google Calendar via app connector
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
     // Atualizar evento no Google Calendar com lembretes
     const event = {

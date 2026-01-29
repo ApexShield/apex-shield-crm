@@ -15,108 +15,89 @@ Deno.serve(async (req) => {
 
     if (!dataInicio || !dataFim) {
       return Response.json({ 
-        error: 'Parâmetros dataInicio e dataFim são obrigatórios' 
+        error: 'Campos obrigatórios: dataInicio, dataFim' 
       }, { status: 400 });
     }
 
-    // Buscar token OAuth do usuário específico
-    const connections = await base44.asServiceRole.entities.UserGoogleCalendarAuth.filter({
-      user_email: user.email
-    });
+    // Obter token do Google Calendar via app connector
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
-    if (connections.length === 0) {
-      return Response.json({ error: 'Google Calendar não conectado para este usuário' }, { status: 403 });
-    }
+    // Buscar eventos no Google Calendar
+    const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
+      `timeMin=${encodeURIComponent(dataInicio)}&` +
+      `timeMax=${encodeURIComponent(dataFim)}&` +
+      `singleEvents=true&` +
+      `orderBy=startTime`;
 
-    const connection = connections[0];
-    const accessToken = connection.access_token;
-    
-    if (!accessToken) {
-      return Response.json({ error: 'Token de acesso não encontrado' }, { status: 403 });
-    }
-
-    // Buscar eventos do Google Calendar
-    const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
-    url.searchParams.append('timeMin', dataInicio);
-    url.searchParams.append('timeMax', dataFim);
-    url.searchParams.append('singleEvents', 'true');
-    url.searchParams.append('orderBy', 'startTime');
-
-    const response = await fetch(url.toString(), {
+    const calendarResponse = await fetch(calendarUrl, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${accessToken}`
       }
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Erro do Google Calendar:', error);
+    if (!calendarResponse.ok) {
+      const error = await calendarResponse.text();
+      console.error('Erro ao buscar eventos:', error);
       return Response.json({ 
+        success: false, 
         error: 'Erro ao buscar eventos do Google Calendar',
         details: error
-      }, { status: response.status });
+      }, { status: calendarResponse.status });
     }
 
-    const data = await response.json();
-    
-    // Mapear IDs de cores do Google Calendar para cores hexadecimais
-    const getHexColorFromGoogleId = (colorId) => {
-      const colorMap = {
-        "1": "#0891b2",  // Lavender -> Azul Pavão
-        "2": "#10b981",  // Sage -> Manjericão
-        "3": "#8b5cf6",  // Grape -> Mirtilo
-        "4": "#ec4899",  // Flamingo -> Flamingo
-        "5": "#fbbf24",  // Banana -> Amarelo Banana
-        "6": "#f97316",  // Tangerine -> Tangerina
-        "7": "#0891b2",  // Peacock -> Azul Pavão
-        "8": "#6b7280",  // Graphite -> Cinza
-        "9": "#0891b2",  // Blueberry -> Azul Pavão
-        "10": "#10b981", // Basil -> Manjericão
-        "11": "#ef4444"  // Tomato -> Vermelho
-      };
-      return colorMap[colorId] || "#0891b2"; // Default: Azul Pavão
-    };
-    
-    // Formatar eventos para o formato do CRM
-    const eventos = (data.items || []).map(event => {
-      const start = event.start?.dateTime || event.start?.date;
-      const end = event.end?.dateTime || event.end?.date;
-      const meetingLink = event.hangoutLink || event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri;
-      const cor = getHexColorFromGoogleId(event.colorId);
+    const calendarData = await calendarResponse.json();
 
+    // Mapear cores do Google Calendar para cores hexadecimais
+    const colorMap = {
+      "1": "#0891b2",  // Lavender -> Azul Pavão
+      "2": "#10b981",  // Sage -> Manjericão
+      "3": "#8b5cf6",  // Grape -> Mirtilo
+      "4": "#ec4899",  // Flamingo -> Flamingo
+      "5": "#fbbf24",  // Banana -> Amarelo Banana
+      "6": "#f97316",  // Tangerine -> Tangerina
+      "7": "#0891b2",  // Peacock -> Azul Pavão
+      "8": "#6b7280",  // Graphite -> Cinza
+      "9": "#0891b2",  // Blueberry -> Azul Pavão
+      "10": "#10b981", // Basil -> Manjericão
+      "11": "#ef4444"  // Tomato -> Vermelho
+    };
+
+    // Transformar eventos do Google Calendar para formato do CRM
+    const eventos = (calendarData.items || []).map(event => {
+      const colorId = event.colorId || '9';
+      const hexColor = colorMap[colorId] || '#0891b2';
+      
       // Extrair informações dos participantes
       const attendees = event.attendees || [];
       const participantes = attendees.map(att => ({
         email: att.email,
         nome: att.displayName || att.email,
-        status: att.responseStatus || 'needsAction', // accepted, declined, tentative, needsAction
-        isOrganizer: att.organizer === true
+        status: att.responseStatus // 'accepted', 'declined', 'tentative', 'needsAction'
       }));
-      
-      // Verificar se algum participante (excluindo o organizador) confirmou
-      const temConfirmacao = attendees.some(att => 
-        att.responseStatus === 'accepted' && att.organizer !== true
-      );
+
+      // Verificar se alguém confirmou
+      const confirmado = attendees.some(att => att.responseStatus === 'accepted');
+      const totalParticipantes = attendees.length;
 
       return {
         id: event.id,
         titulo: event.summary || 'Sem título',
         descricao: event.description || '',
-        data_inicio: start,
-        data_fim: end,
-        cor: cor,
-        meeting_link: meetingLink,
-        htmlLink: event.htmlLink,
-        origem: 'Google Calendar',
+        data_inicio: event.start?.dateTime || event.start?.date,
+        data_fim: event.end?.dateTime || event.end?.date,
+        cor: hexColor,
+        modalidade: event.location === 'Online' ? 'online' : 'presencial',
+        endereco: event.location || '',
+        meeting_link: event.hangoutLink || event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri || '',
         participantes: participantes,
-        total_participantes: participantes.length,
-        confirmado: temConfirmacao
+        confirmado: confirmado,
+        total_participantes: totalParticipantes,
+        htmlLink: event.htmlLink
       };
     });
 
     return Response.json({ 
-      success: true,
+      success: true, 
       eventos: eventos,
       total: eventos.length
     });
@@ -124,6 +105,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Erro ao listar eventos:', error);
     return Response.json({ 
+      success: false, 
       error: error.message || 'Erro ao listar eventos'
     }, { status: 500 });
   }

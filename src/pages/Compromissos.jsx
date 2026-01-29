@@ -63,8 +63,29 @@ export default function Compromissos() {
     queryFn: () => base44.auth.me()
   });
 
-  // Google Calendar já está conectado via app connector do Base44
-  // Não precisa verificar conexão individual
+  // Verificar conexão do Google Calendar do usuário atual
+  const { data: connection } = useQuery({
+    queryKey: ["google-calendar-connection"],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('verificarConexaoGoogleUsuario');
+      return response.data;
+    },
+    enabled: !!user
+  });
+
+  // Abrir automaticamente o modal de conexão se não estiver conectado
+  useEffect(() => {
+    if (user && connection && !connection.connected) {
+      setShowConnectDialog(true);
+    }
+  }, [user, connection]);
+
+  // Após conectar, recarregar os compromissos
+  useEffect(() => {
+    if (connection?.connected) {
+      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
+    }
+  }, [connection?.connected, queryClient]);
 
   const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -102,7 +123,7 @@ export default function Compromissos() {
         return [];
       }
     },
-    enabled: !!user,
+    enabled: !!user && connection?.connected,
     refetchInterval: 60000
   });
 

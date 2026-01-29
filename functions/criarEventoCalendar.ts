@@ -23,17 +23,8 @@ Deno.serve(async (req) => {
     const mensagemPadrao = "\n\n⏰ IMPORTANTE: A confirmação deste compromisso ajuda muito na comunicação! Você receberá lembretes automáticos minutos antes do horário para ajudar na sua gestão de tempo.";
     const descricaoCompleta = (description || '') + mensagemPadrao;
 
-    // Obter token OAuth do usuário
-    const tokenResponse = await base44.functions.invoke('obterTokenUsuario');
-
-    if (tokenResponse.data.needsAuth || tokenResponse.data.error) {
-      return Response.json({ 
-        error: 'Usuário precisa conectar conta Google',
-        needsAuth: true
-      }, { status: 401 });
-    }
-
-    const accessToken = tokenResponse.data.access_token;
+    // Obter token do Google Calendar via app connector
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
     // Criar evento no Google Calendar com Google Meet
     const event = {

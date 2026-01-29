@@ -24,17 +24,8 @@ Deno.serve(async (req) => {
     const descricaoAtual = description || '';
     const descricaoCompleta = descricaoAtual.includes('⏰ IMPORTANTE') ? descricaoAtual : descricaoAtual + "\n\n" + mensagemPadrao;
 
-    // Obter token OAuth do usuário
-    const tokenResponse = await base44.functions.invoke('obterTokenUsuario');
-    
-    if (tokenResponse.data.needsAuth || tokenResponse.data.error) {
-      return Response.json({ 
-        error: 'Usuário precisa conectar conta Google',
-        needsAuth: true
-      }, { status: 401 });
-    }
-    
-    const accessToken = tokenResponse.data.access_token;
+    // Obter token do Google Calendar via app connector
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
     // Atualizar evento no Google Calendar com lembretes
     const event = {

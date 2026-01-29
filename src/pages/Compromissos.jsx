@@ -63,29 +63,8 @@ export default function Compromissos() {
     queryFn: () => base44.auth.me()
   });
 
-  // Verificar conexão do Google Calendar do usuário atual
-  const { data: connection } = useQuery({
-    queryKey: ["google-calendar-connection"],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('verificarConexaoGoogleUsuario');
-      return response.data;
-    },
-    enabled: !!user
-  });
-
-  // Abrir automaticamente o modal de conexão se não estiver conectado
-  useEffect(() => {
-    if (user && connection && !connection.connected) {
-      setShowConnectDialog(true);
-    }
-  }, [user, connection]);
-
-  // Após conectar, recarregar os compromissos
-  useEffect(() => {
-    if (connection?.connected) {
-      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-    }
-  }, [connection?.connected, queryClient]);
+  // Google Calendar usa app connector nativo do Base44
+  // Todos os usuários veem o calendário da conta apexshieldcorretoradeseguros@gmail.com
 
   const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -123,7 +102,7 @@ export default function Compromissos() {
         return [];
       }
     },
-    enabled: !!user && connection?.connected,
+    enabled: !!user,
     refetchInterval: 60000
   });
 
@@ -1170,11 +1149,7 @@ export default function Compromissos() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Conexão Google Calendar */}
-      <GoogleCalendarConnect
-        open={showConnectDialog}
-        onClose={() => setShowConnectDialog(false)}
-      />
+
     </div>
   );
 }

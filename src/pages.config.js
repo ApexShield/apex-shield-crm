@@ -56,6 +56,7 @@ import GestaoUsuarios from './pages/GestaoUsuarios';
 import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade';
+import TermosServico from './pages/TermosServico';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +70,7 @@ export const PAGES = {
     "Leads": Leads,
     "Organograma": Organograma,
     "PoliticaPrivacidade": PoliticaPrivacidade,
+    "TermosServico": TermosServico,
 }
 
 export const pagesConfig = {

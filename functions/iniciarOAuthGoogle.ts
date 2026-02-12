@@ -11,7 +11,9 @@ Deno.serve(async (req) => {
 
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    const REDIRECT_URI = `${new URL(req.url).origin}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    // Usar domínio customizado se disponível, senão usar origin da request
+    const origin = new URL(req.url).origin;
+    const REDIRECT_URI = `${origin}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
     
     const scopes = [
       'https://www.googleapis.com/auth/calendar.events',

@@ -160,7 +160,13 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       alert('✅ Compromisso criado e sincronizado com Google Calendar!');
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
-      setErro(`Erro ao criar agendamento: ${error.message || 'Tente novamente'}`);
+      const errorData = error.response?.data;
+      if (errorData?.needsAuth) {
+        setErro("Você precisa conectar sua conta Google antes de criar agendamentos. Vá em Compromissos > Conectar Google Calendar.");
+      } else {
+        const msg = errorData?.error || errorData?.details || error.message || 'Tente novamente';
+        setErro(`Erro ao criar agendamento: ${msg}`);
+      }
     } finally {
       setValidando(false);
     }

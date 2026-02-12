@@ -14,6 +14,15 @@ import {
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
+  // Google Site Verification meta tag
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'google-site-verification';
+    meta.content = 'XRLxgP2qEXgHOSlX4WwQECA9f7pK7LsAQWfTN6eICLY';
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(meta); };
+  }, []);
+
   useEffect(() => {
     base44.auth.isAuthenticated().then(auth => {
       if (auth) {

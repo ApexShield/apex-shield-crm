@@ -23,13 +23,19 @@ const navigation = [
   { name: "Termos de Serviço", icon: Briefcase, page: "TermosServico" }
 ];
 
+const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico"];
+
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showConvitesDialog, setShowConvitesDialog] = useState(false);
 
+  const isPublicPage = PUBLIC_PAGES.includes(currentPageName);
+
   const { data: user } = useQuery({
     queryKey: ["user"],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    retry: false,
+    enabled: !isPublicPage
   });
 
   const { data: convitesPendentes = [] } = useQuery({

@@ -53,11 +53,11 @@ import CalculadoraRapida from './pages/CalculadoraRapida';
 import Compromissos from './pages/Compromissos';
 import GestaoCustos from './pages/GestaoCustos';
 import GestaoUsuarios from './pages/GestaoUsuarios';
+import Home from './pages/Home';
 import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade';
 import TermosServico from './pages/TermosServico';
-import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -68,11 +68,11 @@ export const PAGES = {
     "Compromissos": Compromissos,
     "GestaoCustos": GestaoCustos,
     "GestaoUsuarios": GestaoUsuarios,
+    "Home": Home,
     "Leads": Leads,
     "Organograma": Organograma,
     "PoliticaPrivacidade": PoliticaPrivacidade,
     "TermosServico": TermosServico,
-    "Home": Home,
 }
 
 export const pagesConfig = {

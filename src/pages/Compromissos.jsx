@@ -944,8 +944,16 @@ export default function Compromissos() {
                      }
                    })() : ""}
                    onValueChange={(hour) => {
+                      if (!hour) return;
                       const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-                      if (isNaN(date.getTime())) return;
+                      if (isNaN(date.getTime())) {
+                        const now = new Date();
+                        now.setHours(parseInt(hour));
+                        const endDate = new Date(now);
+                        endDate.setHours(endDate.getHours() + 1);
+                        setFormData({ ...formData, data_inicio: now.toISOString(), data_fim: endDate.toISOString() });
+                        return;
+                      }
                       date.setHours(parseInt(hour));
                       const endDate = new Date(date);
                       endDate.setHours(endDate.getHours() + 1);
@@ -977,8 +985,16 @@ export default function Compromissos() {
                      }
                    })() : ""}
                    onValueChange={(minute) => {
+                      if (!minute) return;
                       const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-                      if (isNaN(date.getTime())) return;
+                      if (isNaN(date.getTime())) {
+                        const now = new Date();
+                        now.setMinutes(parseInt(minute));
+                        const endDate = new Date(now);
+                        endDate.setHours(endDate.getHours() + 1);
+                        setFormData({ ...formData, data_inicio: now.toISOString(), data_fim: endDate.toISOString() });
+                        return;
+                      }
                       date.setMinutes(parseInt(minute));
                       const endDate = new Date(date);
                       endDate.setHours(endDate.getHours() + 1);
@@ -1013,8 +1029,14 @@ export default function Compromissos() {
                      }
                    })() : ""}
                    onValueChange={(hour) => {
+                      if (!hour) return;
                       const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
-                      if (isNaN(date.getTime())) return;
+                      if (isNaN(date.getTime())) {
+                        const now = new Date();
+                        now.setHours(parseInt(hour));
+                        setFormData({ ...formData, data_fim: now.toISOString() });
+                        return;
+                      }
                       date.setHours(parseInt(hour));
                       setFormData({ ...formData, data_fim: date.toISOString() });
                     }}
@@ -1040,8 +1062,14 @@ export default function Compromissos() {
                      }
                    })() : ""}
                    onValueChange={(minute) => {
+                      if (!minute) return;
                       const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
-                      if (isNaN(date.getTime())) return;
+                      if (isNaN(date.getTime())) {
+                        const now = new Date();
+                        now.setMinutes(parseInt(minute));
+                        setFormData({ ...formData, data_fim: now.toISOString() });
+                        return;
+                      }
                       date.setMinutes(parseInt(minute));
                       setFormData({ ...formData, data_fim: date.toISOString() });
                     }}

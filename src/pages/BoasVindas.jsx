@@ -570,7 +570,7 @@ export default function BoasVindas() {
             <p className="text-cyan-200 text-xl font-semibold">
               24 Ferramentas Poderosas · Sistema Profissional · Totalmente Gratuito
             </p>
-            <div className="mt-4">
+            <div className="mt-4 flex items-center justify-center gap-4 flex-wrap">
               <a
                 href={createPageUrl("PoliticaPrivacidade")}
                 target="_blank"
@@ -578,7 +578,17 @@ export default function BoasVindas() {
                 className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1"
               >
                 <Shield className="w-4 h-4" />
-                Ver Política de Privacidade
+                Política de Privacidade
+              </a>
+              <span className="text-cyan-500">•</span>
+              <a
+                href={createPageUrl("TermosServico")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1"
+              >
+                <FileText className="w-4 h-4" />
+                Termos de Serviço
               </a>
             </div>
             <div className="flex items-center justify-center gap-6 mt-6 flex-wrap">

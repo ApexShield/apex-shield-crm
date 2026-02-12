@@ -29,19 +29,14 @@ Deno.serve(async (req) => {
     // Obter token OAuth do usuário
     const tokenResponse = await base44.functions.invoke('obterTokenUsuario');
 
-    console.log('Token response status:', tokenResponse.status);
-    console.log('Token response data:', JSON.stringify(tokenResponse.data));
-
     if (tokenResponse.data.needsAuth || tokenResponse.data.error) {
       return Response.json({ 
         error: 'Usuário precisa conectar conta Google',
-        needsAuth: true,
-        details: tokenResponse.data
+        needsAuth: true
       }, { status: 401 });
     }
 
     const accessToken = tokenResponse.data.access_token;
-    console.log('Access token obtido:', accessToken ? 'sim' : 'não');
 
     // Criar evento no Google Calendar com Google Meet
     const event = {

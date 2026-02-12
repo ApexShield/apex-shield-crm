@@ -23,7 +23,7 @@ const navigation = [
   { name: "Termos de Serviço", icon: Briefcase, page: "TermosServico" }
 ];
 
-const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico"];
+const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico", "BoasVindas"];
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,7 +47,6 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!user?.email
   });
 
-  // Mostrar convites pendentes automaticamente
   useEffect(() => {
     if (convitesPendentes.length > 0) {
       setShowConvitesDialog(true);
@@ -58,13 +57,13 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.logout();
   };
 
-  // Páginas públicas: sem sidebar, sem layout do CRM
+  // Páginas públicas: renderizar apenas o conteúdo, sem sidebar nem layout do CRM
   if (isPublicPage) {
-    return <>{children}</>;
+    return <div className="min-h-screen">{children}</div>;
   }
 
-  // Páginas protegidas: redirecionar para login se não autenticado
-  if (!user && !isPublicPage) {
+  // Páginas protegidas: mostrar loading enquanto carrega user
+  if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
@@ -113,7 +112,6 @@ export default function Layout({ children, currentPageName }) {
 
           <nav className="flex-1 p-4 space-y-1">
             {navigation.map((item) => {
-              // Esconder itens admin-only se não for admin
               if (item.adminOnly && (!user || user.role !== "admin")) return null;
 
               const isActive = currentPageName === item.page;
@@ -191,17 +189,15 @@ export default function Layout({ children, currentPageName }) {
         <main>
           {children}
         </main>
-        </div>
+      </div>
 
-        {/* Dialog de Convites */}
-        <ConvitesDialog
+      <ConvitesDialog
         open={showConvitesDialog}
         onClose={() => setShowConvitesDialog(false)}
         userEmail={user?.email}
-        />
+      />
 
-        {/* Popup de Aniversariantes */}
-        <AniversariantesPopup />
-        </div>
-        );
-        }
+      <AniversariantesPopup />
+    </div>
+  );
+}

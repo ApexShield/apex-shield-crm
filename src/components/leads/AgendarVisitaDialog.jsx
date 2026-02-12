@@ -128,7 +128,11 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
       const googleResponse = await base44.functions.invoke('criarEventoCalendar', eventData);
       
-      if (googleResponse.data?.meetLink) {
+      if (googleResponse.data?.meetingLink) {
+        dataToSubmit.meeting_link = googleResponse.data.meetingLink;
+        dataToSubmit.google_event_id = googleResponse.data.eventId;
+        dataToSubmit.google_event_link = googleResponse.data.htmlLink;
+      } else if (googleResponse.data?.meetLink) {
         dataToSubmit.meeting_link = googleResponse.data.meetLink;
         dataToSubmit.google_event_id = googleResponse.data.eventId;
         dataToSubmit.google_event_link = googleResponse.data.eventLink;

@@ -213,7 +213,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
   return (
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20 w-[95vw]">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
             🗓️ Editar Compromisso

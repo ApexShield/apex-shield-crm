@@ -172,8 +172,13 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Erro ao criar evento:', error);
+    
+    // Se for erro do axios (chamada interna), extrair detalhes
+    const statusCode = error.response?.status || 500;
+    const errorDetail = error.response?.data?.error || error.message || 'Erro ao criar evento';
+    
     return Response.json({ 
-      error: error.message || 'Erro ao criar evento'
-    }, { status: 500 });
+      error: typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail)
+    }, { status: statusCode });
   }
 });

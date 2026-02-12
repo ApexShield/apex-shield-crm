@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Cake, Phone, Mail, Calendar, Gift, PartyPopper, Sparkles, Users } from "lucide-react";
+import { Cake, Phone, Mail, Calendar, Gift, PartyPopper, Sparkles, Users, Heart } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, parseISO, isSameDay, isWithinInterval, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -38,7 +38,6 @@ export default function Aniversariantes() {
     if (!user || !allUsers.length) return [];
     
     if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
-      // Líder de Agência vê todos corretores da sua agência
       return allUsers.filter(u => 
         u.agencia_id === user.agencia_id && 
         u.tipo_hierarquia === "Corretor"
@@ -46,7 +45,6 @@ export default function Aniversariantes() {
     }
     
     if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
-      // Líder de Unidade vê apenas corretores da sua unidade
       return allUsers.filter(u => 
         u.unidade_id === user.unidade_id &&
         u.tipo_hierarquia === "Corretor" &&
@@ -61,7 +59,6 @@ export default function Aniversariantes() {
   const clientes = React.useMemo(() => {
     if (!user || !allClientes.length || !allUsers.length) return [];
     
-    // Filtrar apenas usuários que fazem parte de uma hierarquia
     const usuariosComHierarquia = allUsers.filter(u => 
       u.tipo_hierarquia && u.tipo_hierarquia !== "Sem Hierarquia" && u.agencia_id
     );
@@ -69,17 +66,14 @@ export default function Aniversariantes() {
     
     let leadsFiltrados = [];
     
-    // Admin vê leads de usuários com hierarquia
     if (user.role === "admin") {
       leadsFiltrados = allClientes.filter(c => emailsComHierarquia.includes(c.created_by));
     }
-    // Líder de Agência vê leads de sua agência
     else if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
       const usuariosDaAgencia = usuariosComHierarquia.filter(u => u.agencia_id === user.agencia_id);
       const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
       leadsFiltrados = allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
     }
-    // Líder de Unidade vê leads de sua unidade
     else if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
       const usuariosDaUnidade = usuariosComHierarquia.filter(u => 
         u.unidade_id === user.unidade_id &&
@@ -88,12 +82,10 @@ export default function Aniversariantes() {
       const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
       leadsFiltrados = allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
     }
-    // Corretor com hierarquia vê apenas seus próprios leads
     else if (user.tipo_hierarquia && user.tipo_hierarquia !== "Sem Hierarquia" && user.agencia_id) {
       leadsFiltrados = allClientes.filter(c => c.created_by === user.email);
     }
     
-    // Aplicar filtro de usuário selecionado
     if (usuarioFiltro && usuarioFiltro !== "todos") {
       leadsFiltrados = leadsFiltrados.filter(c => c.created_by === usuarioFiltro);
     }
@@ -101,30 +93,79 @@ export default function Aniversariantes() {
     return leadsFiltrados;
   }, [allClientes, user, allUsers, usuarioFiltro]);
 
-  // Verificar se há data de nascimento e calcular aniversariantes
+  // Calcular aniversariantes (clientes + filhos + casamento)
   const aniversariantes = React.useMemo(() => {
     const hoje = new Date();
     const inicioSemana = startOfDay(hoje);
     const fimSemana = addDays(inicioSemana, 7);
+    const todos = [];
 
-    const clientesComAniversario = clientes.filter(c => c.data_nascimento);
-
-    return clientesComAniversario.map(cliente => {
+    // 1. Aniversários de clientes
+    clientes.filter(c => c.data_nascimento).forEach(cliente => {
       const dataNasc = parseISO(cliente.data_nascimento);
       const aniversarioEsteAno = new Date(hoje.getFullYear(), dataNasc.getMonth(), dataNasc.getDate());
-      
       const idade = hoje.getFullYear() - dataNasc.getFullYear();
       const ehHoje = isSameDay(aniversarioEsteAno, hoje);
       const ehNaSemana = isWithinInterval(aniversarioEsteAno, { start: inicioSemana, end: fimSemana });
-
-      return {
+      todos.push({
         ...cliente,
+        tipo_aniversario: "cliente",
+        display_nome: cliente.nome,
+        display_info: `${idade} anos`,
+        display_emoji: "🎂",
         dataAniversario: aniversarioEsteAno,
         idade,
         ehHoje,
         ehNaSemana
-      };
-    }).filter(c => filter === "hoje" ? c.ehHoje : c.ehNaSemana)
+      });
+    });
+
+    // 2. Aniversários dos filhos
+    clientes.forEach(cliente => {
+      (cliente.filhos_info || []).forEach(filho => {
+        if (!filho.data_nascimento) return;
+        const dataNasc = parseISO(filho.data_nascimento);
+        const aniversarioEsteAno = new Date(hoje.getFullYear(), dataNasc.getMonth(), dataNasc.getDate());
+        const idade = hoje.getFullYear() - dataNasc.getFullYear();
+        const ehHoje = isSameDay(aniversarioEsteAno, hoje);
+        const ehNaSemana = isWithinInterval(aniversarioEsteAno, { start: inicioSemana, end: fimSemana });
+        todos.push({
+          ...cliente,
+          tipo_aniversario: "filho",
+          filho_nome: filho.nome || "Filho(a)",
+          display_nome: `${filho.nome || "Filho(a)"} de ${cliente.nome}`,
+          display_info: `Completando ${idade} anos`,
+          display_emoji: "👶",
+          dataAniversario: aniversarioEsteAno,
+          idade,
+          ehHoje,
+          ehNaSemana
+        });
+      });
+    });
+
+    // 3. Aniversários de casamento
+    clientes.filter(c => c.data_casamento).forEach(cliente => {
+      const dataCasamento = parseISO(cliente.data_casamento);
+      const aniversarioEsteAno = new Date(hoje.getFullYear(), dataCasamento.getMonth(), dataCasamento.getDate());
+      const anos = hoje.getFullYear() - dataCasamento.getFullYear();
+      const ehHoje = isSameDay(aniversarioEsteAno, hoje);
+      const ehNaSemana = isWithinInterval(aniversarioEsteAno, { start: inicioSemana, end: fimSemana });
+      todos.push({
+        ...cliente,
+        tipo_aniversario: "casamento",
+        display_nome: cliente.nome,
+        display_info: `${anos} anos de casado(a)`,
+        display_emoji: "💍",
+        dataAniversario: aniversarioEsteAno,
+        idade: anos,
+        ehHoje,
+        ehNaSemana
+      });
+    });
+
+    return todos
+      .filter(c => filter === "hoje" ? c.ehHoje : c.ehNaSemana)
       .sort((a, b) => a.dataAniversario - b.dataAniversario);
   }, [clientes, filter]);
 
@@ -136,7 +177,6 @@ export default function Aniversariantes() {
   useEffect(() => {
     if (aniversariantesHoje.length > 0) {
       setShowPopup(true);
-      // Confetti!
       confetti({
         particleCount: 100,
         spread: 70,
@@ -145,12 +185,7 @@ export default function Aniversariantes() {
     }
   }, [aniversariantesHoje.length]);
 
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: () => base44.auth.me()
-  });
-
-  const handleSendMessage = async (cliente) => {
+  const handleSendMessage = async (item) => {
     const nomeCorretor = prompt("Digite o nome da corretora que assina a mensagem:");
     
     if (!nomeCorretor) {
@@ -158,7 +193,32 @@ export default function Aniversariantes() {
       return;
     }
     
-    const mensagem = `Olá, ${cliente.nome}!
+    let mensagem = "";
+    
+    if (item.tipo_aniversario === "filho") {
+      mensagem = `Olá, ${item.nome}!
+
+Hoje é um dia muito especial para a sua família! ${item.filho_nome} está completando ${item.idade} anos!
+
+Desejamos muita saúde, alegria e felicidade para ${item.filho_nome}. Que este novo ano de vida seja repleto de conquistas e momentos inesquecíveis!
+
+Parabéns para ${item.filho_nome} e para toda a família!
+
+Com carinho,
+${nomeCorretor}`;
+    } else if (item.tipo_aniversario === "casamento") {
+      mensagem = `Olá, ${item.nome}!
+
+Hoje é um dia muito especial — seu aniversário de casamento! Parabéns por ${item.idade} anos de união, amor e companheirismo!
+
+Que esta data seja comemorada com muita alegria ao lado de quem você ama. Desejamos que o amor de vocês continue crescendo a cada dia!
+
+Feliz aniversário de casamento!
+
+Com carinho,
+${nomeCorretor}`;
+    } else {
+      mensagem = `Olá, ${item.nome}!
 
 Hoje é um dia muito especial e nós não poderíamos deixar passar em branco! Queremos te desejar um feliz aniversário repleto de alegrias, saúde e realizações.
 
@@ -168,20 +228,25 @@ Parabéns pelo seu dia!
 
 Com carinho,
 ${nomeCorretor}`;
+    }
     
-    if (cliente.telefone) {
-      const telefone = cliente.telefone.replace(/\D/g, '');
+    if (item.telefone) {
+      const telefone = item.telefone.replace(/\D/g, '');
       window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank');
       
-      // Atualizar cliente com status de mensagem enviada
       try {
-        const observacoes = cliente.observacoes || [];
+        const observacoes = item.observacoes || [];
+        const tipoMsg = item.tipo_aniversario === "filho" 
+          ? `aniversário do filho(a) ${item.filho_nome}` 
+          : item.tipo_aniversario === "casamento" 
+            ? "aniversário de casamento" 
+            : "aniversário pessoal";
         observacoes.push({
           data: new Date().toISOString(),
-          texto: `Parabéns enviados via WhatsApp por ${nomeCorretor}`
+          texto: `Parabéns (${tipoMsg}) enviados via WhatsApp por ${nomeCorretor}`
         });
         
-        await base44.entities.Cliente.update(cliente.id, {
+        await base44.entities.Cliente.update(item.id, {
           observacoes,
           mensagem_aniversario_enviada: true,
           data_ultima_mensagem: new Date().toISOString()
@@ -192,6 +257,30 @@ ${nomeCorretor}`;
         console.error("Erro ao atualizar status:", error);
       }
     }
+  };
+
+  const getGradient = (item) => {
+    const gradients = {
+      cliente: item.ehHoje ? "from-pink-400 via-rose-400 to-red-500" : "from-purple-400 via-indigo-400 to-blue-500",
+      filho: item.ehHoje ? "from-cyan-400 via-blue-400 to-indigo-500" : "from-teal-400 via-cyan-400 to-blue-500",
+      casamento: item.ehHoje ? "from-amber-400 via-yellow-400 to-orange-500" : "from-amber-300 via-yellow-300 to-orange-400"
+    };
+    return gradients[item.tipo_aniversario] || gradients.cliente;
+  };
+
+  const getBadge = (tipo) => {
+    const badges = {
+      cliente: "🎂 Aniversário",
+      filho: "👶 Aniv. Filho(a)",
+      casamento: "💍 Aniv. Casamento"
+    };
+    return badges[tipo] || badges.cliente;
+  };
+
+  const getIcon = (tipo) => {
+    if (tipo === "casamento") return <Heart className="w-8 h-8 text-white" />;
+    if (tipo === "filho") return <Users className="w-8 h-8 text-white" />;
+    return <PartyPopper className="w-8 h-8 text-white" />;
   };
 
   return (
@@ -239,7 +328,7 @@ ${nomeCorretor}`;
               }`}
             >
               <Cake className="w-5 h-5 mr-2" />
-              Hoje ({aniversariantesHoje.length})
+              Hoje ({aniversariantes.filter(a => a.ehHoje).length})
             </Button>
             <Button
               onClick={() => setFilter("semana")}
@@ -277,82 +366,80 @@ ${nomeCorretor}`;
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {aniversariantes.map((cliente, index) => (
+              {aniversariantes.map((item, index) => (
                 <motion.div
-                  key={cliente.id}
+                  key={`${item.id}-${item.tipo_aniversario}-${index}`}
                   initial={{ opacity: 0, y: 20, scale: 0.9 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <Card
-                    className={`relative overflow-hidden ${
-                      cliente.ehHoje
-                        ? "bg-gradient-to-br from-pink-400 via-rose-400 to-red-500"
-                        : "bg-gradient-to-br from-purple-400 via-indigo-400 to-blue-500"
-                    } p-6 hover:scale-105 transition-transform duration-300 shadow-2xl`}
+                    className={`relative overflow-hidden bg-gradient-to-br ${getGradient(item)} p-6 hover:scale-105 transition-transform duration-300 shadow-2xl`}
                   >
-                    {/* Confetti Background */}
                     <div className="absolute top-0 right-0 opacity-20">
                       <Sparkles className="w-32 h-32 text-white" />
                     </div>
 
-                    {/* Badge "HOJE" */}
-                    {cliente.ehHoje && (
+                    {/* Badge tipo */}
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-white/30 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-bold">
+                        {getBadge(item.tipo_aniversario)}
+                      </span>
+                    </div>
+
+                    {item.ehHoje && (
                       <div className="absolute top-4 right-4">
                         <motion.div
                           animate={{ rotate: [0, -10, 10, -10, 0] }}
                           transition={{ repeat: Infinity, duration: 2 }}
                           className="bg-yellow-300 text-yellow-900 px-3 py-1 rounded-full text-xs font-black shadow-lg"
                         >
-                          🎂 HOJE!
+                          {item.display_emoji} HOJE!
                         </motion.div>
                       </div>
                     )}
 
-                    {/* Ícone Principal */}
-                    <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-4 mb-4 mt-8">
                       <div className="w-16 h-16 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center">
-                        <PartyPopper className="w-8 h-8 text-white" />
+                        {getIcon(item.tipo_aniversario)}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-black text-white">{cliente.nome}</h3>
+                        <h3 className="text-xl font-black text-white">{item.display_nome}</h3>
                         <p className="text-white/90 text-sm font-semibold">
-                          {cliente.idade} anos
+                          {item.display_info}
                         </p>
                       </div>
                     </div>
 
-                    {/* Informações */}
                     <div className="space-y-3 mb-4">
                       <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-3">
                         <Calendar className="w-5 h-5 text-white flex-shrink-0" />
                         <span className="text-white font-semibold">
-                          {format(cliente.dataAniversario, "dd 'de' MMMM", { locale: ptBR })}
+                          {format(item.dataAniversario, "dd 'de' MMMM", { locale: ptBR })}
                         </span>
                       </div>
 
-                      {cliente.telefone && (
+                      {item.telefone && (
                         <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-3">
                           <Phone className="w-5 h-5 text-white flex-shrink-0" />
                           <span className="text-white font-medium text-sm">
-                            {cliente.telefone}
+                            {item.telefone}
                           </span>
                         </div>
                       )}
 
-                      {cliente.email && (
+                      {item.email && (
                         <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-3">
                           <Mail className="w-5 h-5 text-white flex-shrink-0" />
                           <span className="text-white font-medium text-sm truncate">
-                            {cliente.email}
+                            {item.email}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Botão de Ação */}
                     <Button
-                      onClick={() => handleSendMessage(cliente)}
+                      onClick={() => handleSendMessage(item)}
                       className="w-full bg-white text-purple-700 hover:bg-purple-50 font-bold py-3 rounded-xl shadow-lg"
                     >
                       <Gift className="w-4 h-4 mr-2" />
@@ -378,9 +465,9 @@ ${nomeCorretor}`;
           </DialogHeader>
           
           <div className="space-y-4 max-h-96 overflow-y-auto">
-            {aniversariantesHoje.map((cliente, index) => (
+            {aniversariantesHoje.map((item, index) => (
               <motion.div
-                key={cliente.id}
+                key={`popup-${item.id}-${item.tipo_aniversario}-${index}`}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.2 }}
@@ -388,21 +475,32 @@ ${nomeCorretor}`;
                 <Card className="bg-white/20 backdrop-blur-md border-white/40 p-4">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                      <Cake className="w-8 h-8 text-pink-500" />
+                      {item.tipo_aniversario === "casamento" ? (
+                        <Heart className="w-8 h-8 text-amber-500" />
+                      ) : item.tipo_aniversario === "filho" ? (
+                        <Users className="w-8 h-8 text-cyan-500" />
+                      ) : (
+                        <Cake className="w-8 h-8 text-pink-500" />
+                      )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-xl font-bold text-white">{cliente.nome}</h4>
-                      <p className="text-white/90">🎉 {cliente.idade} anos hoje!</p>
-                      {cliente.telefone && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-white/30 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                          {getBadge(item.tipo_aniversario)}
+                        </span>
+                      </div>
+                      <h4 className="text-xl font-bold text-white">{item.display_nome}</h4>
+                      <p className="text-white/90">{item.display_emoji} {item.display_info} hoje!</p>
+                      {item.telefone && (
                         <p className="text-white/80 text-sm flex items-center gap-2 mt-1">
                           <Phone className="w-4 h-4" />
-                          {cliente.telefone}
+                          {item.telefone}
                         </p>
                       )}
                     </div>
                     <Button
                       onClick={() => {
-                        handleSendMessage(cliente);
+                        handleSendMessage(item);
                         confetti({
                           particleCount: 50,
                           spread: 60,

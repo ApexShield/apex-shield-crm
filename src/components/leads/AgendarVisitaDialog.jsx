@@ -117,12 +117,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       const eventData = {
         summary: dataToSubmit.titulo,
         description: dataToSubmit.descricao || '',
-        start: {
-          dateTime: dataToSubmit.data_inicio
-        },
-        end: {
-          dateTime: dataToSubmit.data_fim
-        },
+        startDateTime: dataToSubmit.data_inicio,
+        endDateTime: dataToSubmit.data_fim,
         location: formData.modalidade === 'presencial' ? (formData.endereco || '') : 'Online'
       };
 

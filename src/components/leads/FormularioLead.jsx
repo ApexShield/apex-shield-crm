@@ -66,11 +66,9 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
   const [formData, setFormData] = useState({
     codigo: nextCodigo || "",
-    status: "AB Fone",
-    data_cadastro: new Date().toISOString().split('T')[0],
-    nome: "",
-    cpf: "",
+...
     regime_casamento: "",
+    data_casamento: "",
     filhos: "",
     filhos_info: [],
     telefone: "",
@@ -123,11 +121,9 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     } else {
       setFormData({
         codigo: nextCodigo || "",
-        status: "AB Fone",
-        data_cadastro: new Date().toISOString().split('T')[0],
-        nome: "",
-        cpf: "",
+...
         regime_casamento: "",
+        data_casamento: "",
         filhos: "",
         filhos_info: [],
         telefone: "",
@@ -296,7 +292,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   const handleFilhosChange = (quantidade) => {
     const num = parseInt(quantidade) || 0;
     const newFilhosInfo = Array(num).fill(null).map((_, i) => 
-      formData.filhos_info[i] || { nome: "", idade: "" }
+      formData.filhos_info[i] || { nome: "", data_nascimento: "" }
     );
     setFormData({ ...formData, filhos: quantidade, filhos_info: newFilhosInfo });
   };
@@ -465,19 +461,26 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                             value={filho.nome}
                             onChange={(e) => {
                               const newInfo = [...formData.filhos_info];
-                              newInfo[idx].nome = e.target.value.toUpperCase();
+                              newInfo[idx] = { ...newInfo[idx], nome: e.target.value.toUpperCase() };
                               setFormData({ ...formData, filhos_info: newInfo });
                             }}
                           />
-                          <Label className="text-xs">Idade:</Label>
+                          <Label className="text-xs">Data de Nascimento:</Label>
                           <Input
-                            value={filho.idade}
+                            type="date"
+                            value={filho.data_nascimento || ""}
                             onChange={(e) => {
                               const newInfo = [...formData.filhos_info];
-                              newInfo[idx].idade = e.target.value;
+                              newInfo[idx] = { ...newInfo[idx], data_nascimento: e.target.value };
                               setFormData({ ...formData, filhos_info: newInfo });
                             }}
+                            max={new Date().toISOString().split('T')[0]}
                           />
+                          {filho.data_nascimento && (
+                            <div className="text-xs font-semibold bg-white/50 rounded px-2 py-1">
+                              Idade atual: {calculateAge(filho.data_nascimento)} anos
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -727,7 +730,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
                   <div>
                     <Label className="text-xs">Estado Civil:</Label>
-                    <Select value={formData.estado_civil} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento})}>
+                    <Select value={formData.estado_civil} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento, data_casamento: v !== "CASADO" ? "" : formData.data_casamento})}>
                       <SelectTrigger tabIndex={23}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SOLTEIRO">SOLTEIRO</SelectItem>
@@ -739,17 +742,28 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
 
                   {formData.estado_civil === "CASADO" && (
-                    <div>
-                      <Label className="text-xs">Regime de Casamento:</Label>
-                      <Select value={formData.regime_casamento} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
-                        <SelectTrigger tabIndex={24}><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="COMUNHÃO TOTAL">COMUNHÃO TOTAL</SelectItem>
-                          <SelectItem value="COMUNHÃO PARCIAL">COMUNHÃO PARCIAL</SelectItem>
-                          <SelectItem value="SEPARAÇÃO TOTAL">SEPARAÇÃO TOTAL</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <>
+                      <div>
+                        <Label className="text-xs">Regime de Casamento:</Label>
+                        <Select value={formData.regime_casamento} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
+                          <SelectTrigger tabIndex={24}><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="COMUNHÃO TOTAL">COMUNHÃO TOTAL</SelectItem>
+                            <SelectItem value="COMUNHÃO PARCIAL">COMUNHÃO PARCIAL</SelectItem>
+                            <SelectItem value="SEPARAÇÃO TOTAL">SEPARAÇÃO TOTAL</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Data de Casamento:</Label>
+                        <Input 
+                          type="date" 
+                          value={formData.data_casamento || ""} 
+                          onChange={(e) => setFormData({...formData, data_casamento: e.target.value})}
+                          max={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                    </>
                   )}
                   
                   <div>

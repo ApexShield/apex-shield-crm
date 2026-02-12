@@ -58,6 +58,11 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.logout();
   };
 
+  // Páginas públicas: sem sidebar, sem layout do CRM
+  if (isPublicPage) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <AnimatePresence>

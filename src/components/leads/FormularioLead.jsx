@@ -66,7 +66,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
   const [formData, setFormData] = useState({
     codigo: nextCodigo || "",
-...
+    status: "AB Fone",
+    data_cadastro: new Date().toISOString().split('T')[0],
+    nome: "",
+    cpf: "",
     regime_casamento: "",
     data_casamento: "",
     filhos: "",
@@ -121,7 +124,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     } else {
       setFormData({
         codigo: nextCodigo || "",
-...
+        status: "AB Fone",
+        data_cadastro: new Date().toISOString().split('T')[0],
+        nome: "",
+        cpf: "",
         regime_casamento: "",
         data_casamento: "",
         filhos: "",

@@ -57,6 +57,7 @@ import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade';
 import TermosServico from './pages/TermosServico';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -71,6 +72,7 @@ export const PAGES = {
     "Organograma": Organograma,
     "PoliticaPrivacidade": PoliticaPrivacidade,
     "TermosServico": TermosServico,
+    "Home": Home,
 }
 
 export const pagesConfig = {

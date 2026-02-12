@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
     }
 
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
-    const REDIRECT_URI = `${new URL(req.url).origin}/api/apps/${Deno.env.get("BASE44_APP_ID")}/functions/callbackOAuthGoogle`;
+    const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
+    const REDIRECT_URI = `${new URL(req.url).origin}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
     
     const scopes = [
       'https://www.googleapis.com/auth/calendar.events',
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
       `scope=${encodeURIComponent(scopes.join(' '))}&` +
       `access_type=offline&` +
       `prompt=consent&` +
-      `state=${user.email}`;
+      `state=${encodeURIComponent(user.email)}`;
 
     return Response.json({ authUrl });
 

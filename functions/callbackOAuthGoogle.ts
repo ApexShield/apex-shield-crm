@@ -1,3 +1,5 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
 Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
@@ -21,7 +23,8 @@ Deno.serve(async (req) => {
 
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
-    const REDIRECT_URI = `${url.origin}/api/apps/${Deno.env.get("BASE44_APP_ID")}/functions/callbackOAuthGoogle`;
+    const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
+    const REDIRECT_URI = `${url.origin}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
 
     // Trocar código por tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -51,9 +54,14 @@ Deno.serve(async (req) => {
 
     const googleUser = await userInfoResponse.json();
 
-    // Salvar direto no banco usando service role
-    const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    const BASE44_SERVICE_ROLE_KEY = Deno.env.get("BASE44_SERVICE_ROLE_KEY");
+    // Usar o SDK com service role para salvar os tokens
+    // Criar um fake request com o header Base44-App-Id para inicializar o SDK
+    const fakeReq = new Request(req.url, {
+      headers: new Headers({
+        'Base44-App-Id': BASE44_APP_ID
+      })
+    });
+    const base44 = createClientFromRequest(fakeReq);
 
     const authData = {
       user_email: userEmail,
@@ -65,71 +73,35 @@ Deno.serve(async (req) => {
     };
 
     // Verificar se já existe autenticação
-    const checkResponse = await fetch(
-      `https://api.base44.com/v1/apps/${BASE44_APP_ID}/entities/UserGoogleAuth?filter=${encodeURIComponent(JSON.stringify({ user_email: userEmail }))}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${BASE44_SERVICE_ROLE_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    const existingAuths = await checkResponse.json();
+    const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+      user_email: userEmail
+    });
 
     if (existingAuths.length > 0) {
-      // Atualizar
-      await fetch(
-        `https://api.base44.com/v1/apps/${BASE44_APP_ID}/entities/UserGoogleAuth/${existingAuths[0].id}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${BASE44_SERVICE_ROLE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(authData)
-        }
-      );
+      await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
     } else {
-      // Criar
-      await fetch(
-        `https://api.base44.com/v1/apps/${BASE44_APP_ID}/entities/UserGoogleAuth`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${BASE44_SERVICE_ROLE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(authData)
-        }
-      );
+      await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
     }
 
     return new Response(`
       <html>
         <head>
           <meta charset="UTF-8">
-          <title>Conectado com Sucesso</title>
+          <title>APEX SHIELD CRM - Conectado</title>
         </head>
         <body style="font-family: Arial; padding: 40px; text-align: center; background: linear-gradient(to bottom right, #10b981, #3b82f6); margin: 0;">
           <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; margin: 0 auto;">
             <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-            <h2 style="color: #10b981; margin-bottom: 10px;">Conectado com sucesso!</h2>
+            <h2 style="color: #10b981; margin-bottom: 10px;">APEX SHIELD CRM</h2>
+            <h3 style="color: #10b981; margin-bottom: 10px;">Conectado com sucesso!</h3>
             <p style="color: #64748b; margin-bottom: 20px;">Conta Google: <strong>${googleUser.email}</strong></p>
             <p id="status" style="color: #64748b; font-size: 14px;">Conexão salva! Fechando...</p>
           </div>
           <script>
-            // Notificar a janela principal
             if (window.opener && !window.opener.closed) {
-              window.opener.postMessage({ 
-                type: 'google_auth_complete'
-              }, '*');
+              window.opener.postMessage({ type: 'google_auth_complete' }, '*');
             }
-            
-            // Fechar automaticamente
-            setTimeout(() => {
-              window.close();
-            }, 2000);
+            setTimeout(() => { window.close(); }, 2000);
           </script>
         </body>
       </html>

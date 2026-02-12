@@ -473,7 +473,11 @@ export default function Leads() {
                   return (
                     <TableRow
                       key={cliente.id}
-                      className="hover:bg-white/10 cursor-pointer border-white/5 transition-colors"
+                      className={`cursor-pointer border-white/5 transition-colors ${
+                        selectedLead?.id === cliente.id 
+                          ? 'bg-indigo-500/30 ring-1 ring-indigo-400/50' 
+                          : 'hover:bg-white/10'
+                      }`}
                       onClick={() => setSelectedLead(cliente)}
                       onDoubleClick={() => {
                         setEditingLead(cliente);

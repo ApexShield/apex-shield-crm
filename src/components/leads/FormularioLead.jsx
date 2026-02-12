@@ -363,7 +363,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   return (
     <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 w-[95vw]">
         <DialogHeader>
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -378,7 +378,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-x-auto">
             {/* COLUNA 1 */}
             <div className="space-y-4">
               <motion.div 
@@ -1002,7 +1002,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="flex gap-3 mt-6"
+            className="flex gap-3 mt-6 flex-wrap"
           >
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
               <Button 

@@ -16,18 +16,22 @@ Deno.serve(async (req) => {
     const startDateTime = body.startDateTime || body.start?.dateTime;
     const endDateTime = body.endDateTime || body.end?.dateTime;
 
+    console.log('Dados recebidos:', JSON.stringify({ summary, startDateTime, endDateTime, location }));
+
     if (!summary || !startDateTime || !endDateTime) {
       return Response.json({ 
-        error: 'Campos obrigatórios: summary, startDateTime, endDateTime' 
+        error: 'Campos obrigatórios: summary, startDateTime, endDateTime',
+        received: { summary: !!summary, startDateTime: !!startDateTime, endDateTime: !!endDateTime }
       }, { status: 400 });
     }
 
     // Adicionar mensagem padrão na descrição
-    const mensagemPadrao = "\n\n⏰ IMPORTANTE: A confirmação deste compromisso ajuda muito na comunicação! Você receberá lembretes automáticos minutos antes do horário para ajudar na sua gestão de tempo.";
+    const mensagemPadrao = "\n\n⏰ IMPORTANTE: A confirmação deste compromisso ajuda muito na comunicação!";
     const descricaoCompleta = (description || '') + mensagemPadrao;
 
     // Obter token OAuth do usuário
     const tokenResponse = await base44.functions.invoke('obterTokenUsuario');
+    console.log('Token response:', JSON.stringify(tokenResponse.data));
 
     if (tokenResponse.data.needsAuth || tokenResponse.data.error) {
       return Response.json({ 
@@ -37,6 +41,25 @@ Deno.serve(async (req) => {
     }
 
     const accessToken = tokenResponse.data.access_token;
+    
+    if (!accessToken) {
+      return Response.json({ 
+        error: 'Token de acesso não encontrado',
+        needsAuth: true
+      }, { status: 401 });
+    }
+
+    // Garantir formato ISO correto para as datas
+    let formattedStart = startDateTime;
+    let formattedEnd = endDateTime;
+    
+    // Se não tem timezone info, adicionar São Paulo timezone
+    if (!formattedStart.includes('+') && !formattedStart.includes('-', 10) && !formattedStart.endsWith('Z')) {
+      formattedStart = formattedStart + '-03:00';
+    }
+    if (!formattedEnd.includes('+') && !formattedEnd.includes('-', 10) && !formattedEnd.endsWith('Z')) {
+      formattedEnd = formattedEnd + '-03:00';
+    }
 
     // Criar evento no Google Calendar com Google Meet
     const event = {
@@ -44,11 +67,11 @@ Deno.serve(async (req) => {
       description: descricaoCompleta,
       location: location || '',
       start: {
-        dateTime: startDateTime,
+        dateTime: formattedStart,
         timeZone: 'America/Sao_Paulo'
       },
       end: {
-        dateTime: endDateTime,
+        dateTime: formattedEnd,
         timeZone: 'America/Sao_Paulo'
       },
       attendees: attendees || [],
@@ -72,6 +95,8 @@ Deno.serve(async (req) => {
       sendUpdates: 'all'
     };
 
+    console.log('Enviando evento para Google Calendar:', JSON.stringify(event));
+
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
       method: 'POST',
       headers: {
@@ -82,11 +107,11 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Erro do Google Calendar:', error);
+      const errorText = await response.text();
+      console.error('Erro do Google Calendar:', errorText);
       return Response.json({ 
         error: 'Erro ao criar evento no Google Calendar',
-        details: error
+        details: errorText
       }, { status: response.status });
     }
 

@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       return Response.json({ 
         error: 'Usuário não conectou conta Google',
         needsAuth: true
-      }, { status: 404 });
+      });
     }
 
     const auth = auths[0];

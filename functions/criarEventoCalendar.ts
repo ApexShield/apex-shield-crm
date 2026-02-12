@@ -11,7 +11,10 @@ Deno.serve(async (req) => {
     }
 
     // Obter dados do evento
-    const { summary, description, startDateTime, endDateTime, location, attendees, colorId } = await req.json();
+    const body = await req.json();
+    const { summary, description, location, attendees, colorId } = body;
+    const startDateTime = body.startDateTime || body.start?.dateTime;
+    const endDateTime = body.endDateTime || body.end?.dateTime;
 
     if (!summary || !startDateTime || !endDateTime) {
       return Response.json({ 

@@ -63,6 +63,15 @@ export default function Layout({ children, currentPageName }) {
     return <>{children}</>;
   }
 
+  // Páginas protegidas: redirecionar para login se não autenticado
+  if (!user && !isPublicPage) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <AnimatePresence>

@@ -448,7 +448,7 @@ export default function Leads() {
         {/* Tabela de Dados */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">
           <div className="overflow-x-auto overflow-y-auto touch-pan-x touch-pan-y" style={{ maxHeight: '500px', WebkitOverflowScrolling: 'touch' }}>
-            <Table className="table-auto w-full">
+            <Table className="table-auto w-full min-w-[1200px]">
               <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm z-10">
                 <TableRow className="border-white/10">
                   <TableHead className="font-bold text-white whitespace-nowrap">Cód</TableHead>

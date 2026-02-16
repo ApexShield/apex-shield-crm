@@ -843,7 +843,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                         style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
                       >
                         <Calendar className="w-4 h-4 mr-2" />
-                        Agendar Visita no Google Agenda
+                        Agendar Visita
                       </Button>
                     )}
                   </div>

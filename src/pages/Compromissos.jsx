@@ -435,6 +435,16 @@ export default function Compromissos() {
                       <span className="text-xs text-indigo-200">{c.label}</span>
                     </div>
                   ))}
+                  <div className="border-t border-white/10 pt-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-white" /></span>
+                      <span className="text-xs text-indigo-200">Presença confirmada</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center"><Clock className="w-2.5 h-2.5 text-white" /></span>
+                      <span className="text-xs text-indigo-200">Aguardando confirmação</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

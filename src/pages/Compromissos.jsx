@@ -400,7 +400,7 @@ export default function Compromissos() {
               <Button onClick={async () => {
                 setCheckingConfirmations(true);
                 try {
-                  const res = await base44.functions.invoke('verificarConfirmacoesGmail', {});
+                  const res = await base44.functions.invoke('verificarConfirmacoesCalendar', {});
                   const data = res.data;
                   queryClient.invalidateQueries({ queryKey: ['compromissos'] });
                   alert(data.message || 'Verificação concluída');
@@ -487,7 +487,16 @@ export default function Compromissos() {
                                             onClick={(e) => { if (!snap.isDragging) { e.stopPropagation(); handleEditEvent(event); } }}>
                                             <div className="flex items-center gap-1">
                                               <span className="truncate flex-1">{event.titulo}</span>
-                                              {event.convidado_confirmou && <CheckCircle2 className="w-3 h-3 text-green-200 flex-shrink-0" />}
+                                              {event.email_participante && event.convidado_confirmou && (
+                                                <span className="flex-shrink-0 bg-green-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Presença confirmada">
+                                                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                                </span>
+                                              )}
+                                              {event.email_participante && !event.convidado_confirmou && (
+                                                <span className="flex-shrink-0 bg-yellow-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Aguardando confirmação">
+                                                  <Clock className="w-3 h-3 text-white" />
+                                                </span>
+                                              )}
                                               {event._isGoogleOnly && <Calendar className="w-3 h-3 text-white/70 flex-shrink-0" />}
                                             </div>
                                             {!isNaN(start.getTime()) && <div className="text-[9px] opacity-75">{format(start, 'HH:mm')}</div>}

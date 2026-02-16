@@ -470,6 +470,11 @@ export default function Compromissos() {
               <Button onClick={() => setShowFixoDialog(true)} variant="outline" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20">
                 <Repeat className="w-4 h-4 mr-2" /> Compromisso Fixo
               </Button>
+              <Button onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
+              }} variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20">
+                <Download className="w-4 h-4 mr-2" /> Sincronizar Google
+              </Button>
               <Button onClick={async () => {
                 setCheckingConfirmations(true);
                 try {

@@ -70,11 +70,39 @@ export default function Compromissos() {
   }, [allClientes, user]);
 
   // Buscar compromissos da entidade local
-  const { data: compromissos = [], isLoading } = useQuery({
+  const { data: localCompromissos = [], isLoading } = useQuery({
     queryKey: ['compromissos'],
     queryFn: () => base44.entities.Compromisso.list('-data_inicio', 500),
     enabled: !!user
   });
+
+  // Buscar eventos do Google Calendar para a semana atual
+  const weekEnd = useMemo(() => endOfWeek(currentWeekStart, { weekStartsOn: 1 }), [currentWeekStart]);
+  const { data: googleEvents = [] } = useQuery({
+    queryKey: ['google-calendar-events', currentWeekStart.toISOString()],
+    queryFn: async () => {
+      const dataInicio = new Date(currentWeekStart);
+      dataInicio.setHours(0, 0, 0, 0);
+      const dataFim = new Date(weekEnd);
+      dataFim.setHours(23, 59, 59, 999);
+      const res = await base44.functions.invoke('listarEventosCalendar', {
+        dataInicio: dataInicio.toISOString(),
+        dataFim: dataFim.toISOString()
+      });
+      return res.data?.eventos || [];
+    },
+    enabled: !!user,
+    staleTime: 60000,
+  });
+
+  // Merge: local compromissos + google events (avoid duplicates by google_event_id)
+  const compromissos = useMemo(() => {
+    const localGoogleIds = new Set(localCompromissos.filter(c => c.google_event_id).map(c => c.google_event_id));
+    const googleOnly = googleEvents
+      .filter(ge => !ge.is_all_day && !localGoogleIds.has(ge.google_event_id))
+      .map(ge => ({ ...ge, id: `gcal_${ge.google_event_id}`, _isGoogleOnly: true }));
+    return [...localCompromissos, ...googleOnly];
+  }, [localCompromissos, googleEvents]);
 
   const enviarEmailCompromisso = async (compromissoData, tipo = "novo", compromissoId = null) => {
     if (!compromissoData.email_participante) return;

@@ -596,7 +596,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           )}
 
           <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg">
-            📧 Se informar email do participante, um convite personalizado será enviado
+            📅 Se informar email do participante, um convite do Google Calendar será enviado com botão de Sim/Não/Talvez
           </div>
 
           <div className="flex gap-2 justify-end pt-4">

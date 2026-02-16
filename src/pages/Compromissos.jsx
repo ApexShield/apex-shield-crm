@@ -546,7 +546,7 @@ export default function Compromissos() {
               </div>
             </div>
             <div><Label className="text-white">Email do Participante (opcional)</Label><Input type="email" value={formData.email_participante} onChange={(e) => setFormData({ ...formData, email_participante: e.target.value })} placeholder="participante@email.com" className="bg-white/10 border-white/20 text-white" />
-              <p className="text-xs text-indigo-300 mt-1">📧 Um email personalizado será enviado para este endereço</p>
+              <p className="text-xs text-indigo-300 mt-1">📅 Um convite do Google Calendar será enviado para este endereço</p>
             </div>
             {formData.modalidade === "online" && (
               <div><Label className="text-white">Link da Reunião</Label><Input value={formData.meeting_link || defaultMeetingLink} onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })} placeholder="https://meet.google.com/..." className="bg-white/10 border-white/20 text-white" />
@@ -602,7 +602,7 @@ export default function Compromissos() {
                 </Button>
               </div>
             )}
-            <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg"><Mail className="w-4 h-4" /> Se informar um email de participante, um convite personalizado será enviado automaticamente</div>
+            <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg"><Calendar className="w-4 h-4" /> Se informar um email de participante, um convite do Google Calendar será enviado com opções Sim/Não/Talvez</div>
             <div className="flex justify-between pt-2">
               <div>{editingEvent && <Button type="button" variant="outline" onClick={handleDeleteEvent} disabled={deletarMutation.isPending} className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20">{deletarMutation.isPending ? 'Deletando...' : 'Deletar'}</Button>}</div>
               <div className="flex gap-2">

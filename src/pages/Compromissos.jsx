@@ -80,6 +80,16 @@ export default function Compromissos() {
     const linkReuniao = compromissoData.meeting_link || defaultMeetingLink || "";
     const organizador = user?.full_name || user?.email || "Organizador";
 
+    const detalhesHTML = `
+      <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
+        <p style="margin:8px 0;color:#475569;"><strong>📅 Data:</strong> ${dataFormatada}</p>
+        <p style="margin:8px 0;color:#475569;"><strong>🕐 Horário:</strong> ${horaInicio} - ${horaFim}</p>
+        <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
+        ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
+        ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
+        ${compromissoData.descricao ? `<p style="margin:8px 0;color:#475569;"><strong>📝 Descrição:</strong> ${compromissoData.descricao}</p>` : ''}
+      </div>`;
+
     let assunto = "", corpo = "";
     if (tipo === "novo") {
       assunto = `📅 Convite: ${compromissoData.titulo}`;
@@ -90,15 +100,9 @@ export default function Compromissos() {
         </div>
         <div style="padding:30px;">
           <h2 style="color:#1e293b;margin:0 0 20px;">${compromissoData.titulo}</h2>
-          <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
-            <p style="margin:8px 0;color:#475569;"><strong>📅 Data:</strong> ${dataFormatada}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>🕐 Horário:</strong> ${horaInicio} - ${horaFim}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
-            ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
-            ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
-            ${compromissoData.descricao ? `<p style="margin:8px 0;color:#475569;"><strong>📝 Descrição:</strong> ${compromissoData.descricao}</p>` : ''}
-          </div>
+          ${detalhesHTML}
           <p style="color:#64748b;margin-top:20px;font-size:14px;">Organizado por: <strong>${organizador}</strong></p>
+          <p style="color:#64748b;margin-top:10px;font-size:13px;">Por favor, responda este email com <strong>"CONFIRMO"</strong> para confirmar sua presença.</p>
         </div>
         <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
           APEX SHIELD CRM - Gestão Profissional de Compromissos
@@ -114,14 +118,9 @@ export default function Compromissos() {
         <div style="padding:30px;">
           <p style="color:#dc2626;font-weight:bold;margin:0 0 15px;">⚠️ O compromisso abaixo foi alterado pelo organizador:</p>
           <h2 style="color:#1e293b;margin:0 0 20px;">${compromissoData.titulo}</h2>
-          <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
-            <p style="margin:8px 0;color:#475569;"><strong>📅 Nova Data:</strong> ${dataFormatada}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>🕐 Novo Horário:</strong> ${horaInicio} - ${horaFim}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
-            ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
-            ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
-          </div>
+          ${detalhesHTML}
           <p style="color:#64748b;margin-top:20px;font-size:14px;">Atualizado por: <strong>${organizador}</strong></p>
+          <p style="color:#64748b;margin-top:10px;font-size:13px;">Por favor, responda este email com <strong>"CONFIRMO"</strong> para confirmar sua presença.</p>
         </div>
         <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
           APEX SHIELD CRM - Gestão Profissional de Compromissos
@@ -232,7 +231,8 @@ export default function Compromissos() {
       cor: event.cor || '#0891b2', tipo: COLORS.find(c => c.value === event.cor)?.tipo || 'agendado',
       modalidade: event.modalidade || '', meeting_link: event.meeting_link || '',
       email_participante: event.email_participante || '', endereco: event.endereco || '',
-      cliente_id: event.cliente_id || '', cliente_nome: event.cliente_nome || ''
+      cliente_id: event.cliente_id || '', cliente_nome: event.cliente_nome || '',
+      email_enviado: event.email_enviado || false, convidado_confirmou: event.convidado_confirmou || false
     });
     setShowDialog(true);
   };
@@ -438,6 +438,25 @@ export default function Compromissos() {
             </div>
             <div><Label className="text-white">Email do Participante (opcional)</Label><Input type="email" value={formData.email_participante} onChange={(e) => setFormData({ ...formData, email_participante: e.target.value })} placeholder="participante@email.com" className="bg-white/10 border-white/20 text-white" />
               <p className="text-xs text-indigo-300 mt-1">📧 Um email personalizado será enviado para este endereço</p>
+              {editingEvent && formData.email_participante && (
+                <div className="mt-2 flex items-center gap-3 flex-wrap">
+                  {formData.email_enviado && (
+                    <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">✉️ Email enviado</span>
+                  )}
+                  {formData.convidado_confirmou ? (
+                    <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Confirmado</span>
+                  ) : (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full">⏳ Aguardando confirmação</span>
+                  )}
+                  <Button type="button" size="sm" variant="outline" className="text-xs h-6 bg-white/5 border-white/20 text-green-300 hover:bg-green-500/20" onClick={async () => {
+                    await base44.entities.Compromisso.update(editingEvent.id, { convidado_confirmou: true });
+                    setFormData({ ...formData, convidado_confirmou: true });
+                    queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+                  }}>
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Marcar Confirmado
+                  </Button>
+                </div>
+              )}
             </div>
             {formData.modalidade === "online" && (
               <div><Label className="text-white">Link da Reunião</Label><Input value={formData.meeting_link || defaultMeetingLink} onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })} placeholder="https://meet.google.com/..." className="bg-white/10 border-white/20 text-white" />

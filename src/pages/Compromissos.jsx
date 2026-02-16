@@ -304,6 +304,15 @@ export default function Compromissos() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button onClick={async () => {
+                try {
+                  const res = await base44.functions.invoke('verificarConfirmacoesGmail', {});
+                  queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+                  alert(`✅ Verificação concluída! ${res.data.confirmed || 0} confirmação(ões) encontrada(s).`);
+                } catch (e) { alert('Erro ao verificar: ' + e.message); }
+              }} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <Mail className="w-4 h-4 mr-2" /> Verificar Confirmações
+              </Button>
               <Button onClick={() => setShowLinkDialog(true)} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                 <Link2 className="w-4 h-4 mr-2" /> Link de Reunião Padrão
               </Button>

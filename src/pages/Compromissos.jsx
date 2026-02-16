@@ -377,6 +377,11 @@ export default function Compromissos() {
   };
 
   const handleEditEvent = (event) => {
+    // If it's a Google-only event, open the Google Calendar link
+    if (event._isGoogleOnly && event.htmlLink) {
+      window.open(event.htmlLink, '_blank');
+      return;
+    }
     setEditingEvent(event);
     const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
     const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);

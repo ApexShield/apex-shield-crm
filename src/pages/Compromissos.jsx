@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Settings, Mail } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-
-import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay, addMinutes } from "date-fns";
+import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
-import GoogleCalendarConnect from "../components/GoogleCalendarConnect";
 
-const HOURS = Array.from({ length: 20 }, (_, i) => i + 4); // 04:00 às 23:00
+const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
 const COLORS = [
   { value: "#0891b2", label: "Azul Pavão - Agendado", tipo: "agendado" },
   { value: "#fbbf24", label: "Amarelo Banana - Delay", tipo: "delay" },
@@ -30,232 +28,181 @@ export default function Compromissos() {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
   const [showConfirmResend, setShowConfirmResend] = useState(false);
   const [pendingUpdateData, setPendingUpdateData] = useState(null);
-  const [showConnectDialog, setShowConnectDialog] = useState(false);
-  
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [defaultMeetingLink, setDefaultMeetingLink] = useState("");
+
   const getDefaultDates = () => {
     const now = new Date();
-    const endTime = new Date(now.getTime() + 3600000); // +1 hora
-    return {
-      data_inicio: now.toISOString(),
-      data_fim: endTime.toISOString()
-    };
+    return { data_inicio: now.toISOString(), data_fim: new Date(now.getTime() + 3600000).toISOString() };
   };
 
   const [formData, setFormData] = useState({
-    titulo: "",
-    descricao: "",
-    ...getDefaultDates(),
-    cor: "#0891b2",
-    tipo: "agendado",
-    modalidade: "",
-    meeting_link: "",
-    email_participante: ""
+    titulo: "", descricao: "", ...getDefaultDates(),
+    cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", email_participante: "", endereco: ""
   });
 
   const queryClient = useQueryClient();
 
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: () => base44.auth.me()
+  const { data: user } = useQuery({ queryKey: ["user"], queryFn: () => base44.auth.me() });
+
+  // Carregar link padrão do perfil do usuário
+  React.useEffect(() => {
+    if (user?.link_reuniao_padrao) setDefaultMeetingLink(user.link_reuniao_padrao);
+  }, [user]);
+
+  const { data: allClientes = [] } = useQuery({
+    queryKey: ["clientes"], queryFn: () => base44.entities.Cliente.list(), enabled: !!user
   });
 
-  // Verificar conexão do Google Calendar do usuário atual
-  const { data: connection } = useQuery({
-    queryKey: ["google-calendar-connection"],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('verificarConexaoGoogleUsuario');
-      return response.data;
-    },
+  const clientes = useMemo(() => {
+    if (!user || !allClientes.length) return [];
+    if (user.role === "admin") return allClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    return allClientes.filter(c => c.created_by === user.email).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  }, [allClientes, user]);
+
+  // Buscar compromissos da entidade local
+  const { data: compromissos = [], isLoading } = useQuery({
+    queryKey: ['compromissos'],
+    queryFn: () => base44.entities.Compromisso.list('-data_inicio', 500),
     enabled: !!user
   });
 
-  // Abrir automaticamente o modal de conexão se não estiver conectado
-  useEffect(() => {
-    if (user && connection && !connection.connected) {
-      setShowConnectDialog(true);
+  const enviarEmailCompromisso = async (compromissoData, tipo = "novo") => {
+    if (!compromissoData.email_participante) return;
+    const dataInicio = new Date(compromissoData.data_inicio);
+    const dataFim = new Date(compromissoData.data_fim);
+    const dataFormatada = format(dataInicio, "dd/MM/yyyy", { locale: ptBR });
+    const horaInicio = format(dataInicio, "HH:mm");
+    const horaFim = format(dataFim, "HH:mm");
+    const linkReuniao = compromissoData.meeting_link || defaultMeetingLink || "";
+    const organizador = user?.full_name || user?.email || "Organizador";
+
+    let assunto = "", corpo = "";
+    if (tipo === "novo") {
+      assunto = `📅 Convite: ${compromissoData.titulo}`;
+      corpo = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:30px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:24px;">📅 Novo Compromisso</h1>
+          <p style="color:#e0e7ff;margin:8px 0 0;">APEX SHIELD CRM</p>
+        </div>
+        <div style="padding:30px;">
+          <h2 style="color:#1e293b;margin:0 0 20px;">${compromissoData.titulo}</h2>
+          <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
+            <p style="margin:8px 0;color:#475569;"><strong>📅 Data:</strong> ${dataFormatada}</p>
+            <p style="margin:8px 0;color:#475569;"><strong>🕐 Horário:</strong> ${horaInicio} - ${horaFim}</p>
+            <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
+            ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
+            ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
+            ${compromissoData.descricao ? `<p style="margin:8px 0;color:#475569;"><strong>📝 Descrição:</strong> ${compromissoData.descricao}</p>` : ''}
+          </div>
+          <p style="color:#64748b;margin-top:20px;font-size:14px;">Organizado por: <strong>${organizador}</strong></p>
+        </div>
+        <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
+          APEX SHIELD CRM - Gestão Profissional de Compromissos
+        </div>
+      </div>`;
+    } else {
+      assunto = `🔄 Compromisso Atualizado: ${compromissoData.titulo}`;
+      corpo = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#f59e0b,#ef4444);padding:30px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:24px;">🔄 Compromisso Atualizado</h1>
+          <p style="color:#fef3c7;margin:8px 0 0;">APEX SHIELD CRM</p>
+        </div>
+        <div style="padding:30px;">
+          <p style="color:#dc2626;font-weight:bold;margin:0 0 15px;">⚠️ O compromisso abaixo foi alterado pelo organizador:</p>
+          <h2 style="color:#1e293b;margin:0 0 20px;">${compromissoData.titulo}</h2>
+          <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
+            <p style="margin:8px 0;color:#475569;"><strong>📅 Nova Data:</strong> ${dataFormatada}</p>
+            <p style="margin:8px 0;color:#475569;"><strong>🕐 Novo Horário:</strong> ${horaInicio} - ${horaFim}</p>
+            <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
+            ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
+            ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
+          </div>
+          <p style="color:#64748b;margin-top:20px;font-size:14px;">Atualizado por: <strong>${organizador}</strong></p>
+        </div>
+        <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
+          APEX SHIELD CRM - Gestão Profissional de Compromissos
+        </div>
+      </div>`;
     }
-  }, [user, connection]);
 
-  // Após conectar, recarregar os compromissos
-  useEffect(() => {
-    if (connection?.connected) {
-      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-    }
-  }, [connection?.connected, queryClient]);
-
-  const { data: allClientes = [] } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: () => base44.entities.Cliente.list()
-  });
-
-  // Filtrar clientes do usuário
-  const clientes = useMemo(() => {
-    if (!user || !allClientes.length) return [];
-    
-    if (user.role === "admin") {
-      return allClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    }
-    
-    const meusClientes = allClientes.filter(c => c.created_by === user.email);
-    return meusClientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-  }, [allClientes, user]);
-
-  // Buscar eventos do Google Calendar
-  const { data: compromissos = [], isLoading } = useQuery({
-    queryKey: ['compromissos-google', currentWeekStart],
-    queryFn: async () => {
-      try {
-        const weekStart = startOfDay(currentWeekStart);
-        const weekEnd = endOfDay(addDays(currentWeekStart, 6));
-        
-        const response = await base44.functions.invoke('listarEventosCalendar', {
-          dataInicio: weekStart.toISOString(),
-          dataFim: weekEnd.toISOString()
-        });
-        
-        return response.data?.eventos || [];
-      } catch (error) {
-        console.error('Erro ao buscar compromissos:', error);
-        return [];
-      }
-    },
-    enabled: !!user && connection?.connected,
-    refetchInterval: 60000
-  });
-
-  const criarCompromissoMutation = useMutation({
-    mutationFn: async (data) => {
-      const eventData = {
-        summary: data.titulo,
-        description: data.descricao || '',
-        startDateTime: data.data_inicio,
-        endDateTime: data.data_fim,
-        location: data.modalidade === 'presencial' ? (data.endereco || '') : 'Online',
-        colorId: getGoogleColorId(data.cor)
-      };
-
-      // Adicionar participante se fornecido
-      if (data.email_participante) {
-        eventData.attendees = [{ email: data.email_participante }];
-      }
-
-      return await base44.functions.invoke('criarEventoCalendar', eventData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-      setShowDialog(false);
-      resetForm();
-      alert('✅ Compromisso criado com sucesso no Google Calendar!');
-    },
-    onError: (error) => {
-      console.error('Erro ao criar compromisso:', error);
-      alert('❌ Erro ao criar compromisso. Tente novamente.');
-    }
-  });
-
-  const atualizarCompromissoMutation = useMutation({
-    mutationFn: async (data) => {
-      const eventData = {
-        eventId: data.id,
-        summary: data.titulo,
-        description: data.descricao || '',
-        startDateTime: data.data_inicio,
-        endDateTime: data.data_fim,
-        location: data.modalidade === 'presencial' ? (data.endereco || '') : 'Online',
-        colorId: getGoogleColorId(data.cor),
-        sendUpdates: data.sendUpdates || 'none' // none, all, externalOnly
-      };
-
-      // Adicionar participante se fornecido
-      if (data.email_participante) {
-        eventData.attendees = [{ email: data.email_participante }];
-      }
-
-      return await base44.functions.invoke('atualizarEventoCalendar', eventData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-      setShowDialog(false);
-      setEditingEvent(null);
-      resetForm();
-      alert('✅ Compromisso atualizado com sucesso!');
-    },
-    onError: (error) => {
-      console.error('Erro ao atualizar compromisso:', error);
-      alert('❌ Erro ao atualizar compromisso. Tente novamente.');
-    }
-  });
-
-  const deletarCompromissoMutation = useMutation({
-    mutationFn: async (eventId) => {
-      return await base44.functions.invoke('deletarEventoCalendar', { eventId });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['compromissos-google'] });
-      setShowDialog(false);
-      setEditingEvent(null);
-      resetForm();
-      alert('✅ Compromisso deletado com sucesso!');
-    },
-    onError: (error) => {
-      console.error('Erro ao deletar compromisso:', error);
-      alert('❌ Erro ao deletar compromisso. Tente novamente.');
-    }
-  });
-
-  // Mapear cores do painel para IDs de cores do Google Calendar
-  const getGoogleColorId = (hexColor) => {
-    const colorMap = {
-      "#0891b2": "9",  // Azul Pavão -> Blue
-      "#fbbf24": "5",  // Amarelo Banana -> Yellow
-      "#8b5cf6": "3",  // Mirtilo -> Purple
-      "#10b981": "10", // Manjericão -> Green
-      "#f97316": "6",  // Tangerina -> Orange
-      "#ec4899": "4"   // Flamingo -> Pink
-    };
-    return colorMap[hexColor] || "9"; // Default: Blue
+    await base44.integrations.Core.SendEmail({
+      to: compromissoData.email_participante,
+      subject: assunto,
+      body: corpo,
+      from_name: "APEX SHIELD CRM"
+    });
   };
 
-  // Mapear IDs de cores do Google Calendar para cores do painel
-  const getHexColorFromGoogleId = (colorId) => {
-    const colorMap = {
-      "1": "#0891b2",  // Lavender -> Azul Pavão
-      "2": "#10b981",  // Sage -> Manjericão
-      "3": "#8b5cf6",  // Grape -> Mirtilo
-      "4": "#ec4899",  // Flamingo -> Flamingo
-      "5": "#fbbf24",  // Banana -> Amarelo Banana
-      "6": "#f97316",  // Tangerine -> Tangerina
-      "7": "#0891b2",  // Peacock -> Azul Pavão
-      "8": "#6b7280",  // Graphite -> Cinza
-      "9": "#0891b2",  // Blueberry -> Azul Pavão
-      "10": "#10b981", // Basil -> Manjericão
-      "11": "#ef4444"  // Tomato -> Vermelho
-    };
-    return colorMap[colorId] || "#0891b2"; // Default: Azul Pavão
+  const criarMutation = useMutation({
+    mutationFn: async (data) => {
+      if (!data.meeting_link && defaultMeetingLink && data.modalidade === "online") {
+        data.meeting_link = defaultMeetingLink;
+      }
+      const result = await base44.entities.Compromisso.create(data);
+      if (data.email_participante) await enviarEmailCompromisso(data, "novo");
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      setShowDialog(false);
+      resetForm();
+      alert('✅ Compromisso criado com sucesso!');
+    }
+  });
+
+  const atualizarMutation = useMutation({
+    mutationFn: async (data) => {
+      const { id, sendEmail, ...updateData } = data;
+      await base44.entities.Compromisso.update(id, updateData);
+      if (sendEmail && updateData.email_participante) await enviarEmailCompromisso(updateData, "atualizado");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      setShowDialog(false);
+      setEditingEvent(null);
+      resetForm();
+      alert('✅ Compromisso atualizado!');
+    }
+  });
+
+  const deletarMutation = useMutation({
+    mutationFn: (id) => base44.entities.Compromisso.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      setShowDialog(false);
+      setEditingEvent(null);
+      resetForm();
+      alert('✅ Compromisso deletado!');
+    }
+  });
+
+  const salvarLinkPadrao = async () => {
+    await base44.auth.updateMe({ link_reuniao_padrao: defaultMeetingLink });
+    setShowLinkDialog(false);
+    alert('✅ Link de reunião padrão salvo!');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingEvent) {
-      // Se tem participante, perguntar se quer reenviar convite
-      if (formData.email_participante || (editingEvent.participantes && editingEvent.participantes.length > 0)) {
+      if (formData.email_participante) {
         setPendingUpdateData(formData);
         setShowConfirmResend(true);
       } else {
-        atualizarCompromissoMutation.mutate(formData);
+        atualizarMutation.mutate({ ...formData, id: editingEvent.id, sendEmail: false });
       }
     } else {
-      criarCompromissoMutation.mutate(formData);
+      criarMutation.mutate(formData);
     }
   };
 
-  const handleConfirmResend = (sendUpdates) => {
+  const handleConfirmResend = (send) => {
     if (pendingUpdateData) {
-      atualizarCompromissoMutation.mutate({ ...pendingUpdateData, sendUpdates });
+      atualizarMutation.mutate({ ...pendingUpdateData, id: editingEvent.id, sendEmail: send });
     }
     setShowConfirmResend(false);
     setPendingUpdateData(null);
@@ -263,206 +210,83 @@ export default function Compromissos() {
 
   const handleDeleteEvent = () => {
     if (editingEvent && confirm('Tem certeza que deseja deletar este compromisso?')) {
-      deletarCompromissoMutation.mutate(editingEvent.id);
+      deletarMutation.mutate(editingEvent.id);
     }
   };
 
   const handleEditEvent = (event) => {
     setEditingEvent(event);
-    
-    // Garantir que as datas sejam válidas
     const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
     const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
-    
-    // Validar se as datas são válidas
-    const validDataInicio = isNaN(dataInicio.getTime()) ? new Date() : dataInicio;
-    const validDataFim = isNaN(dataFim.getTime()) ? new Date(validDataInicio.getTime() + 3600000) : dataFim;
-    
+    const validStart = isNaN(dataInicio.getTime()) ? new Date() : dataInicio;
+    const validEnd = isNaN(dataFim.getTime()) ? new Date(validStart.getTime() + 3600000) : dataFim;
     setFormData({
-      id: event.id,
-      titulo: event.titulo || '',
-      descricao: event.descricao || '',
-      data_inicio: validDataInicio.toISOString(),
-      data_fim: validDataFim.toISOString(),
-      cor: event.cor || '#0891b2',
-      tipo: COLORS.find(c => c.value === event.cor)?.tipo || 'agendado',
-      modalidade: event.modalidade || '',
-      meeting_link: event.meeting_link || '',
-      email_participante: event.email_participante || ''
+      titulo: event.titulo || '', descricao: event.descricao || '',
+      data_inicio: validStart.toISOString(), data_fim: validEnd.toISOString(),
+      cor: event.cor || '#0891b2', tipo: COLORS.find(c => c.value === event.cor)?.tipo || 'agendado',
+      modalidade: event.modalidade || '', meeting_link: event.meeting_link || '',
+      email_participante: event.email_participante || '', endereco: event.endereco || '',
+      cliente_id: event.cliente_id || '', cliente_nome: event.cliente_nome || ''
     });
     setShowDialog(true);
   };
 
   const resetForm = () => {
     setEditingEvent(null);
-    setFormData({
-      titulo: "",
-      descricao: "",
-      ...getDefaultDates(),
-      cor: "#0891b2",
-      tipo: "agendado",
-      modalidade: "",
-      meeting_link: "",
-      email_participante: ""
-    });
+    setFormData({ titulo: "", descricao: "", ...getDefaultDates(), cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", email_participante: "", endereco: "" });
   };
 
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
-  }, [currentWeekStart]);
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)), [currentWeekStart]);
 
   const handleSlotClick = (day, hour) => {
-    const startTime = new Date(day);
-    startTime.setHours(hour, 0, 0, 0);
-    const endTime = new Date(startTime);
-    endTime.setHours(hour + 1, 0, 0, 0);
-
-    setSelectedSlot({ startTime, endTime });
-    setFormData({
-      titulo: "",
-      descricao: "",
-      data_inicio: startTime.toISOString(),
-      data_fim: endTime.toISOString(),
-      cor: "#0891b2",
-      tipo: "agendado",
-      modalidade: "",
-      meeting_link: "",
-      email_participante: ""
-    });
+    const s = new Date(day); s.setHours(hour, 0, 0, 0);
+    const e = new Date(s); e.setHours(hour + 1, 0, 0, 0);
+    setFormData({ titulo: "", descricao: "", data_inicio: s.toISOString(), data_fim: e.toISOString(), cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", email_participante: "", endereco: "" });
     setShowDialog(true);
   };
 
   const getEventsForSlot = (day, hour) => {
     return compromissos.filter(comp => {
       if (!comp.data_inicio) return false;
-      
-      try {
-        const compStart = parseISO(comp.data_inicio);
-        const compEnd = parseISO(comp.data_fim);
-        if (isNaN(compStart.getTime()) || isNaN(compEnd.getTime())) return false;
-        
-        const slotStart = new Date(day);
-        slotStart.setHours(hour, 0, 0, 0);
-        const slotEnd = new Date(slotStart);
-        slotEnd.setHours(hour + 1, 0, 0, 0);
-        
-        // Evento deve aparecer se começar neste slot OU se estiver em andamento neste horário
-        return isSameDay(compStart, day) && compStart < slotEnd && compEnd > slotStart;
-      } catch (error) {
-        console.error('Erro ao processar data do evento:', error);
-        return false;
-      }
+      const cs = new Date(comp.data_inicio);
+      const ce = new Date(comp.data_fim);
+      if (isNaN(cs.getTime()) || isNaN(ce.getTime())) return false;
+      const ss = new Date(day); ss.setHours(hour, 0, 0, 0);
+      const se = new Date(ss); se.setHours(hour + 1, 0, 0, 0);
+      return isSameDay(cs, day) && cs < se && ce > ss;
     });
   };
 
-  // Detectar eventos sobrepostos e calcular posições
-  const getEventLayoutInfo = (events) => {
-    if (events.length <= 1) {
-      return events.map(event => ({ event, column: 0, totalColumns: 1 }));
-    }
-
-    // Ordenar eventos por hora de início
-    const sortedEvents = [...events].sort((a, b) => {
-      const aStart = parseISO(a.data_inicio);
-      const bStart = parseISO(b.data_inicio);
-      return aStart.getTime() - bStart.getTime();
-    });
-
-    // Detectar sobreposições
-    const layouts = sortedEvents.map((event, index) => {
-      const eventStart = parseISO(event.data_inicio);
-      const eventEnd = parseISO(event.data_fim);
-      
-      // Verificar quantos eventos sobrepõem com este
-      const overlapping = sortedEvents.filter((otherEvent, otherIndex) => {
-        if (otherIndex === index) return false;
-        
-        const otherStart = parseISO(otherEvent.data_inicio);
-        const otherEnd = parseISO(otherEvent.data_fim);
-        
-        // Verificar se há sobreposição
-        return eventStart < otherEnd && eventEnd > otherStart;
-      });
-
-      return {
-        event,
-        column: index % Math.max(2, overlapping.length + 1),
-        totalColumns: Math.max(2, overlapping.length + 1)
-      };
-    });
-
-    return layouts;
-  };
-
-  const calculateEventPosition = (event, hour) => {
-    try {
-      const start = parseISO(event.data_inicio);
-      const end = parseISO(event.data_fim);
-      
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        return { topOffset: 0, heightPx: 58 };
-      }
-      
-      // Calcular offset em minutos desde o início da hora
-      const minutesFromHourStart = start.getMinutes();
-      const topOffset = (minutesFromHourStart / 60) * 100; // Percentual da altura da hora
-      
-      // Calcular duração em minutos
-      const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-      
-      // Cada hora tem 60px de altura
-      // 1 minuto = 1px
-      // Subtrair 2px para criar espaçamento entre eventos
-      const heightPx = Math.max(durationMinutes - 2, 20); // Mínimo 20px
-      
-      return { topOffset, heightPx };
-    } catch (error) {
-      console.error('Erro ao calcular posição do evento:', error);
-      return { topOffset: 0, heightPx: 58 };
-    }
+  const calculateEventPosition = (event) => {
+    const start = new Date(event.data_inicio);
+    const end = new Date(event.data_fim);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return { topOffset: 0, heightPx: 58 };
+    const topOffset = (start.getMinutes() / 60) * 100;
+    const heightPx = Math.max((end.getTime() - start.getTime()) / (1000 * 60) - 2, 20);
+    return { topOffset, heightPx };
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-
-    const { draggableId, destination } = result;
-    const [eventId, originalDay, originalHour] = draggableId.split('_');
-    const [newDay, newHour] = destination.droppableId.split('_');
-
+    const eventId = result.draggableId.split('_')[0];
+    const [newDay, newHour] = result.destination.droppableId.split('_').map(Number);
     const event = compromissos.find(e => e.id === eventId);
     if (!event) return;
-
-    // Calcular nova data/hora
-    const dayIndex = parseInt(newDay);
-    const hourValue = parseInt(newHour);
-    const newDate = addDays(currentWeekStart, dayIndex);
-    
-    const newStartTime = new Date(newDate);
-    newStartTime.setHours(hourValue, 0, 0, 0);
-    
-    const eventDuration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();
-    const newEndTime = new Date(newStartTime.getTime() + eventDuration);
-
-    // Atualizar evento
-    const updatedData = {
-      id: event.id,
-      titulo: event.titulo,
-      descricao: event.descricao,
-      data_inicio: newStartTime.toISOString(),
-      data_fim: newEndTime.toISOString(),
-      cor: event.cor,
-      modalidade: event.modalidade,
-      email_participante: event.email_participante,
-      sendUpdates: 'all' // Notificar participantes sobre a mudança de horário
-    };
-
-    atualizarCompromissoMutation.mutate(updatedData);
+    const newDate = addDays(currentWeekStart, newDay);
+    const newStart = new Date(newDate); newStart.setHours(newHour, 0, 0, 0);
+    const duration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();
+    const newEnd = new Date(newStart.getTime() + duration);
+    atualizarMutation.mutate({
+      id: event.id, titulo: event.titulo, descricao: event.descricao,
+      data_inicio: newStart.toISOString(), data_fim: newEnd.toISOString(),
+      cor: event.cor, modalidade: event.modalidade, email_participante: event.email_participante || "",
+      sendEmail: !!event.email_participante
+    });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
       <div className="max-w-[1800px] mx-auto">
-        {/* Header Moderno */}
         <div className="mb-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
@@ -474,253 +298,83 @@ export default function Compromissos() {
                 <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
               </div>
             </div>
-            <Button 
-              onClick={() => {
-                const now = new Date();
-                setFormData({
-                  titulo: "",
-                  descricao: "",
-                  data_inicio: now.toISOString(),
-                  data_fim: new Date(now.getTime() + 3600000).toISOString(),
-                  cor: "#0891b2",
-                  tipo: "agendado",
-                  modalidade: "",
-                  meeting_link: "",
-                  email_participante: ""
-                });
-                setShowDialog(true);
-              }}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Criar Compromisso
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowLinkDialog(true)} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <Link2 className="w-4 h-4 mr-2" /> Link de Reunião Padrão
+              </Button>
+              <Button onClick={() => { resetForm(); setShowDialog(true); }} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg">
+                <Plus className="w-5 h-5 mr-2" /> Criar Compromisso
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-          {/* Header da Semana */}
           <div className="flex items-center justify-between p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white border-0 font-bold"
-              >
-                Hoje
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </Button>
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20"><ChevronLeft className="w-5 h-5" /></Button>
+              <Button variant="outline" onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0 font-bold">Hoje</Button>
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20"><ChevronRight className="w-5 h-5" /></Button>
             </div>
-            <span className="text-xl font-bold text-white">
-              {format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}
-            </span>
+            <span className="text-xl font-bold text-white">{format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}</span>
           </div>
 
           <div className="flex">
-            {/* Sidebar com Mini Calendário */}
             <div className="w-80 border-r border-white/10 p-6 bg-white/5">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Mini Calendário
-              </h3>
+              <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Clock className="w-5 h-5" /> Mini Calendário</h3>
               <div className="bg-white rounded-xl p-2">
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    setSelectedDate(date);
-                    setCurrentWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
-                  }}
-                  locale={ptBR}
-                  className="rounded-md"
-                />
+                <CalendarComponent mode="single" selected={selectedDate} onSelect={(date) => { setSelectedDate(date); setCurrentWeekStart(startOfWeek(date, { weekStartsOn: 1 })); }} locale={ptBR} className="rounded-md" />
               </div>
-
-              {/* Legenda de Cores */}
               <div className="mt-6">
                 <h4 className="text-white font-bold mb-3 text-sm">Legenda</h4>
                 <div className="space-y-2">
-                  {COLORS.map((color) => (
-                    <div key={color.value} className="flex items-center gap-2">
-                      <div 
-                        className="w-4 h-4 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: color.value }}
-                      />
-                      <span className="text-xs text-indigo-200">{color.label}</span>
+                  {COLORS.map((c) => (
+                    <div key={c.value} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: c.value }} />
+                      <span className="text-xs text-indigo-200">{c.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Grade de Horários */}
             <DragDropContext onDragEnd={handleDragEnd}>
               <div className="flex-1 overflow-auto">
                 <div className="min-w-[900px]">
-                  {/* Cabeçalho dos Dias */}
                   <div className="grid grid-cols-8 border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="p-2 text-center border-r border-white/10">
-                      <Clock className="w-4 h-4 mx-auto text-indigo-400" />
-                    </div>
+                    <div className="p-2 text-center border-r border-white/10"><Clock className="w-4 h-4 mx-auto text-indigo-400" /></div>
                     {weekDays.map((day, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className={`p-2 text-center border-r border-white/10 ${
-                          isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""
-                        }`}
-                      >
-                        <div className="text-[10px] font-bold text-indigo-300 uppercase mb-1">
-                          {format(day, "EEE", { locale: ptBR })}
-                        </div>
-                        <div
-                          className={`text-xl font-black ${
-                            isSameDay(day, new Date()) 
-                              ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-8 h-8 rounded-full flex items-center justify-center mx-auto" 
-                              : "text-white"
-                          }`}
-                        >
-                          {format(day, "d")}
-                        </div>
-                      </motion.div>
+                      <div key={i} className={`p-2 text-center border-r border-white/10 ${isSameDay(day, new Date()) ? "bg-gradient-to-b from-indigo-600/20 to-transparent" : ""}`}>
+                        <div className="text-[10px] font-bold text-indigo-300 uppercase mb-1">{format(day, "EEE", { locale: ptBR })}</div>
+                        <div className={`text-xl font-black ${isSameDay(day, new Date()) ? "text-white bg-gradient-to-br from-indigo-500 to-purple-600 w-8 h-8 rounded-full flex items-center justify-center mx-auto" : "text-white"}`}>{format(day, "d")}</div>
+                      </div>
                     ))}
                   </div>
-
-                  {/* Grid de Horários */}
                   <div className="relative">
                     {HOURS.map((hour) => (
                       <div key={hour} className="grid grid-cols-8 border-b border-white/5" style={{ height: '60px' }}>
-                        <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">
-                          {String(hour).padStart(2, "0")}:00
-                        </div>
+                        <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">{String(hour).padStart(2, "0")}:00</div>
                         {weekDays.map((day, dayIndex) => {
-                          const events = getEventsForSlot(day, hour);
-                          // Filtrar apenas eventos que começam nesta hora
-                          const eventsStartingHere = events.filter(e => {
-                            try {
-                              const start = parseISO(e.data_inicio);
-                              if (isNaN(start.getTime())) return false;
-                              return start.getHours() === hour;
-                            } catch (error) {
-                              return false;
-                            }
-                          });
-
-                          // Calcular layout para eventos sobrepostos
-                          const eventLayouts = getEventLayoutInfo(eventsStartingHere);
-                          
+                          const events = getEventsForSlot(day, hour).filter(e => { const s = new Date(e.data_inicio); return !isNaN(s.getTime()) && s.getHours() === hour; });
                           return (
                             <Droppable key={`${dayIndex}_${hour}`} droppableId={`${dayIndex}_${hour}`}>
                               {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.droppableProps}
-                                  className={`border-r border-white/5 hover:bg-white/10 cursor-pointer relative transition-colors ${
-                                    snapshot.isDraggingOver ? 'bg-indigo-500/20' : ''
-                                  }`}
-                                  style={{ height: '60px' }}
-                                  onClick={() => handleSlotClick(day, hour)}
-                                >
-                                  {eventLayouts.map((layout, eventIndex) => {
-                                    const event = layout.event;
-                                    const { topOffset, heightPx } = calculateEventPosition(event, hour);
-                                    
-                                    let start;
-                                    let isValidStart = false;
-                                    try {
-                                      start = parseISO(event.data_inicio);
-                                      isValidStart = !isNaN(start.getTime());
-                                    } catch (error) {
-                                      console.error('Erro ao processar data de início:', error);
-                                    }
-
-                                    // Calcular largura e posição horizontal para eventos sobrepostos
-                                    const widthPercent = 100 / layout.totalColumns;
-                                    const leftPercent = (layout.column * widthPercent);
-                                    
+                                <div ref={provided.innerRef} {...provided.droppableProps}
+                                  className={`border-r border-white/5 hover:bg-white/10 cursor-pointer relative transition-colors ${snapshot.isDraggingOver ? 'bg-indigo-500/20' : ''}`}
+                                  style={{ height: '60px' }} onClick={() => handleSlotClick(day, hour)}>
+                                  {events.map((event, idx) => {
+                                    const { topOffset, heightPx } = calculateEventPosition(event);
+                                    const start = new Date(event.data_inicio);
                                     return (
-                                      <Draggable 
-                                        key={event.id} 
-                                        draggableId={`${event.id}_${dayIndex}_${hour}`} 
-                                        index={eventIndex}
-                                      >
-                                        {(provided, snapshot) => (
-                                          <div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            className={`absolute rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab active:cursor-grabbing overflow-hidden ${
-                                              snapshot.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'
-                                            }`}
-                                            style={{
-                                              backgroundColor: event.cor || "#3b82f6",
-                                              top: `${topOffset}%`,
-                                              height: `${heightPx}px`,
-                                              left: layout.totalColumns > 1 ? `${leftPercent}%` : '2px',
-                                              width: layout.totalColumns > 1 ? `${widthPercent - 1}%` : 'calc(100% - 4px)',
-                                              transform: snapshot.isDragging 
-                                                ? `${provided.draggableProps.style?.transform} translate(0, -10px)` 
-                                                : provided.draggableProps.style?.transform,
-                                              transition: snapshot.isDragging ? 'none' : 'all 0.2s',
-                                              ...provided.draggableProps.style
-                                            }}
-                                            onClick={(e) => {
-                                              if (!snapshot.isDragging) {
-                                                e.stopPropagation();
-                                                handleEditEvent(event);
-                                              }
-                                            }}
-                                          >
-                                            <div className="flex items-center justify-between gap-1">
-                                              <div className="truncate flex-1">
-                                                {event.titulo}
-                                                {isValidStart && (
-                                                  <div className="text-[9px] opacity-75 mt-0.5">
-                                                    {format(start, 'HH:mm', { locale: ptBR })}
-                                                  </div>
-                                                )}
-                                              </div>
-                                              <div className="flex items-center gap-1">
-                                                {event.confirmado && (
-                                                  <div className="text-[11px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-bold" title="Convidado confirmou presença">
-                                                    ✓
-                                                  </div>
-                                                )}
-                                                {event.total_participantes > 0 && !event.confirmado && (
-                                                  <div className="text-[10px] bg-yellow-500/80 text-white px-1.5 py-0.5 rounded-full font-bold" title="Aguardando confirmação">
-                                                    ⏳
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </div>
-                                            {event.meeting_link && (
-                                              <div 
-                                                className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  window.open(event.meeting_link, '_blank');
-                                                }}
-                                              >
-                                                🎥 Meet
-                                              </div>
-                                            )}
+                                      <Draggable key={event.id} draggableId={`${event.id}_${dayIndex}_${hour}`} index={idx}>
+                                        {(prov, snap) => (
+                                          <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
+                                            className={`absolute rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab overflow-hidden ${snap.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'}`}
+                                            style={{ backgroundColor: event.cor || "#3b82f6", top: `${topOffset}%`, height: `${heightPx}px`, left: '2px', width: 'calc(100% - 4px)', ...prov.draggableProps.style }}
+                                            onClick={(e) => { if (!snap.isDragging) { e.stopPropagation(); handleEditEvent(event); } }}>
+                                            <div className="truncate">{event.titulo}</div>
+                                            {!isNaN(start.getTime()) && <div className="text-[9px] opacity-75">{format(start, 'HH:mm')}</div>}
+                                            {event.meeting_link && <div className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); window.open(event.meeting_link, '_blank'); }}>🔗 Reunião</div>}
                                           </div>
                                         )}
                                       </Draggable>
@@ -742,426 +396,82 @@ export default function Compromissos() {
         </div>
       </div>
 
-      {/* Dialog de Criação */}
+      {/* Dialog Criar/Editar */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20">
           <DialogHeader>
-            <DialogTitle className="text-white text-xl">
-              {editingEvent ? '✏️ Editar Compromisso' : '➕ Novo Compromisso'}
-            </DialogTitle>
+            <DialogTitle className="text-white text-xl">{editingEvent ? '✏️ Editar Compromisso' : '➕ Novo Compromisso'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Linha 1: Título e Tipo */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white">Título *</Label>
-                <Input
-                  value={formData.titulo}
-                  onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                  className="bg-white/10 border-white/20 text-white"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-white">Tipo</Label>
-                <Select 
-                  value={formData.tipo} 
-                  onValueChange={(value) => {
-                    const selectedColor = COLORS.find(c => c.tipo === value);
-                    setFormData({ 
-                      ...formData, 
-                      tipo: value,
-                      cor: selectedColor ? selectedColor.value : formData.cor
-                    });
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agendado">Agendado</SelectItem>
-                    <SelectItem value="delay">Delay</SelectItem>
-                    <SelectItem value="reuniao_realizada">Reunião Realizada</SelectItem>
-                    <SelectItem value="venda_feita">Venda Feita</SelectItem>
-                    <SelectItem value="pessoal">Compromisso Pessoal</SelectItem>
-                    <SelectItem value="avanti">Compromisso da Avanti</SelectItem>
-                  </SelectContent>
+              <div><Label className="text-white">Título *</Label><Input value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} className="bg-white/10 border-white/20 text-white" required /></div>
+              <div><Label className="text-white">Tipo</Label>
+                <Select value={formData.tipo} onValueChange={(v) => { const c = COLORS.find(x => x.tipo === v); setFormData({ ...formData, tipo: v, cor: c ? c.value : formData.cor }); }}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>{COLORS.map(c => <SelectItem key={c.tipo} value={c.tipo}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-
-            {/* Linha 2: Modalidade e Cliente */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white">Modalidade</Label>
-                <Select
-                  value={formData.modalidade}
-                  onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Selecione a modalidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="presencial">📍 Presencial</SelectItem>
-                    <SelectItem value="online">💻 Online</SelectItem>
-                  </SelectContent>
+              <div><Label className="text-white">Modalidade</Label>
+                <Select value={formData.modalidade} onValueChange={(v) => setFormData({ ...formData, modalidade: v })}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent><SelectItem value="presencial">📍 Presencial</SelectItem><SelectItem value="online">💻 Online</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label className="text-white">Cliente (opcional)</Label>
-                <Select
-                  value={formData.cliente_id}
-                  onValueChange={(value) => {
-                    const cliente = clientes.find(c => c.id === value);
-                    setFormData({
-                      ...formData,
-                      cliente_id: value,
-                      cliente_nome: cliente?.nome || "",
-                      email_participante: cliente?.email || ""
-                    });
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Selecione um cliente..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
-                        {cliente.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+              <div><Label className="text-white">Cliente (opcional)</Label>
+                <Select value={formData.cliente_id} onValueChange={(v) => { const cl = clientes.find(c => c.id === v); setFormData({ ...formData, cliente_id: v, cliente_nome: cl?.nome || "", email_participante: cl?.email || "" }); }}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>{clientes.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-
-            {/* Email do Participante */}
-            <div>
-              <Label className="text-white">Email do Participante (opcional)</Label>
-              <Input
-                type="email"
-                value={formData.email_participante}
-                onChange={(e) => setFormData({ ...formData, email_participante: e.target.value })}
-                placeholder="participante@email.com"
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <p className="text-xs text-indigo-300 mt-1">
-                📧 O convite da reunião será enviado para este email
-              </p>
+            <div><Label className="text-white">Email do Participante (opcional)</Label><Input type="email" value={formData.email_participante} onChange={(e) => setFormData({ ...formData, email_participante: e.target.value })} placeholder="participante@email.com" className="bg-white/10 border-white/20 text-white" />
+              <p className="text-xs text-indigo-300 mt-1">📧 Um email personalizado será enviado para este endereço</p>
             </div>
-
-            {/* Mostrar participantes se existirem (ao editar) */}
-            {editingEvent && editingEvent.participantes && editingEvent.participantes.length > 0 && (
-              <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-                <Label className="text-white mb-2 block">Participantes</Label>
-                <div className="space-y-2">
-                  {editingEvent.participantes.map((participante, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-white/10 rounded-lg p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                          {participante.nome?.charAt(0) || participante.email?.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="text-white text-sm font-medium">{participante.nome || participante.email}</p>
-                          <p className="text-indigo-300 text-xs">{participante.email}</p>
-                        </div>
-                      </div>
-                      <div>
-                        {participante.status === 'accepted' && (
-                          <span className="text-green-400 text-xs bg-green-500/20 px-2 py-1 rounded-full flex items-center gap-1">
-                            ✓ Confirmado
-                          </span>
-                        )}
-                        {participante.status === 'declined' && (
-                          <span className="text-red-400 text-xs bg-red-500/20 px-2 py-1 rounded-full flex items-center gap-1">
-                            ✗ Recusado
-                          </span>
-                        )}
-                        {participante.status === 'tentative' && (
-                          <span className="text-yellow-400 text-xs bg-yellow-500/20 px-2 py-1 rounded-full flex items-center gap-1">
-                            ? Talvez
-                          </span>
-                        )}
-                        {participante.status === 'needsAction' && (
-                          <span className="text-gray-400 text-xs bg-gray-500/20 px-2 py-1 rounded-full flex items-center gap-1">
-                            ⏳ Aguardando
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {formData.modalidade === "online" && (
+              <div><Label className="text-white">Link da Reunião</Label><Input value={formData.meeting_link || defaultMeetingLink} onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })} placeholder="https://meet.google.com/..." className="bg-white/10 border-white/20 text-white" />
+                {defaultMeetingLink && !formData.meeting_link && <p className="text-xs text-green-300 mt-1">✅ Usando link padrão configurado</p>}
               </div>
             )}
-
-            {/* Data e Horários */}
+            {formData.modalidade === "presencial" && (
+              <div><Label className="text-white">Endereço (opcional)</Label><Input value={formData.endereco} onChange={(e) => setFormData({ ...formData, endereco: e.target.value })} placeholder="Endereço do compromisso" className="bg-white/10 border-white/20 text-white" /></div>
+            )}
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-white mb-2 block">Data *</Label>
-                <Input
-                  type="date"
-                  value={formData.data_inicio ? (() => {
-                    try {
-                      const date = new Date(formData.data_inicio);
-                      return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd");
-                    } catch {
-                      return "";
-                    }
-                  })() : ""}
-                  onChange={(e) => {
-                    if (!e.target.value) return;
-                    const [year, month, day] = e.target.value.split('-').map(Number);
-                    if (!year || !month || !day) return;
-                    
-                    const currentStart = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-                    if (isNaN(currentStart.getTime())) return;
-                    
-                    const newDate = new Date(year, month - 1, day, currentStart.getHours(), currentStart.getMinutes());
-                    if (isNaN(newDate.getTime())) return;
-                    
-                    const newEnd = new Date(newDate);
-                    newEnd.setHours(newEnd.getHours() + 1);
-                    setFormData({ 
-                      ...formData, 
-                      data_inicio: newDate.toISOString(),
-                      data_fim: newEnd.toISOString()
-                    });
-                  }}
-                  className="bg-white/10 border-white/20 text-white w-full"
-                  required
-                />
+              <div><Label className="text-white mb-2 block">Data *</Label>
+                <Input type="date" value={formData.data_inicio ? (() => { const d = new Date(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "yyyy-MM-dd"); })() : ""}
+                  onChange={(e) => { if (!e.target.value) return; const [y,m,d] = e.target.value.split('-').map(Number); const cur = new Date(formData.data_inicio || Date.now()); const nd = new Date(y, m-1, d, cur.getHours(), cur.getMinutes()); if (isNaN(nd.getTime())) return; const ne = new Date(nd); ne.setHours(ne.getHours()+1); setFormData({ ...formData, data_inicio: nd.toISOString(), data_fim: ne.toISOString() }); }}
+                  className="bg-white/10 border-white/20 text-white w-full" required />
               </div>
-              <div>
-                <Label className="text-white mb-2 block">Horário Início *</Label>
-                <div className="flex gap-2">
-                  <Select
-                   value={formData.data_inicio ? (() => {
-                     try {
-                       const date = new Date(formData.data_inicio);
-                       return isNaN(date.getTime()) ? "" : format(date, "HH");
-                     } catch {
-                       return "";
-                     }
-                   })() : ""}
-                   onValueChange={(hour) => {
-                      if (!hour) return;
-                      const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-                      if (isNaN(date.getTime())) {
-                        const now = new Date();
-                        now.setHours(parseInt(hour));
-                        const endDate = new Date(now);
-                        endDate.setHours(endDate.getHours() + 1);
-                        setFormData({ ...formData, data_inicio: now.toISOString(), data_fim: endDate.toISOString() });
-                        return;
-                      }
-                      date.setHours(parseInt(hour));
-                      const endDate = new Date(date);
-                      endDate.setHours(endDate.getHours() + 1);
-                      setFormData({ 
-                        ...formData, 
-                        data_inicio: date.toISOString(),
-                        data_fim: endDate.toISOString()
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                      <SelectValue placeholder="H" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
-                        <SelectItem key={h} value={String(h).padStart(2, '0')}>
-                          {String(h).padStart(2, '0')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                   value={formData.data_inicio ? (() => {
-                     try {
-                       const date = new Date(formData.data_inicio);
-                       return isNaN(date.getTime()) ? "" : format(date, "mm");
-                     } catch {
-                       return "";
-                     }
-                   })() : ""}
-                   onValueChange={(minute) => {
-                      if (!minute) return;
-                      const date = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-                      if (isNaN(date.getTime())) {
-                        const now = new Date();
-                        now.setMinutes(parseInt(minute));
-                        const endDate = new Date(now);
-                        endDate.setHours(endDate.getHours() + 1);
-                        setFormData({ ...formData, data_inicio: now.toISOString(), data_fim: endDate.toISOString() });
-                        return;
-                      }
-                      date.setMinutes(parseInt(minute));
-                      const endDate = new Date(date);
-                      endDate.setHours(endDate.getHours() + 1);
-                      setFormData({ 
-                        ...formData, 
-                        data_inicio: date.toISOString(),
-                        data_fim: endDate.toISOString()
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                      <SelectValue placeholder="M" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['00', '15', '30', '45'].map(m => (
-                        <SelectItem key={m} value={m}>{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div><Label className="text-white mb-2 block">Início *</Label>
+                <Input type="time" value={formData.data_inicio ? (() => { const d = new Date(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "HH:mm"); })() : ""}
+                  onChange={(e) => { if (!e.target.value) return; const [h,m] = e.target.value.split(':').map(Number); const d = new Date(formData.data_inicio || Date.now()); d.setHours(h,m); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}
+                  className="bg-white/10 border-white/20 text-white w-full" required />
               </div>
-              <div>
-                <Label className="text-white mb-2 block">Horário Fim *</Label>
-                <div className="flex gap-2">
-                  <Select
-                   value={formData.data_fim ? (() => {
-                     try {
-                       const date = new Date(formData.data_fim);
-                       return isNaN(date.getTime()) ? "" : format(date, "HH");
-                     } catch {
-                       return "";
-                     }
-                   })() : ""}
-                   onValueChange={(hour) => {
-                      if (!hour) return;
-                      const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
-                      if (isNaN(date.getTime())) {
-                        const now = new Date();
-                        now.setHours(parseInt(hour));
-                        setFormData({ ...formData, data_fim: now.toISOString() });
-                        return;
-                      }
-                      date.setHours(parseInt(hour));
-                      setFormData({ ...formData, data_fim: date.toISOString() });
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                      <SelectValue placeholder="H" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
-                        <SelectItem key={h} value={String(h).padStart(2, '0')}>
-                          {String(h).padStart(2, '0')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                   value={formData.data_fim ? (() => {
-                     try {
-                       const date = new Date(formData.data_fim);
-                       return isNaN(date.getTime()) ? "" : format(date, "mm");
-                     } catch {
-                       return "";
-                     }
-                   })() : ""}
-                   onValueChange={(minute) => {
-                      if (!minute) return;
-                      const date = formData.data_fim ? new Date(formData.data_fim) : new Date();
-                      if (isNaN(date.getTime())) {
-                        const now = new Date();
-                        now.setMinutes(parseInt(minute));
-                        setFormData({ ...formData, data_fim: now.toISOString() });
-                        return;
-                      }
-                      date.setMinutes(parseInt(minute));
-                      setFormData({ ...formData, data_fim: date.toISOString() });
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                      <SelectValue placeholder="M" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['00', '15', '30', '45'].map(m => (
-                        <SelectItem key={m} value={m}>{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div><Label className="text-white mb-2 block">Fim *</Label>
+                <Input type="time" value={formData.data_fim ? (() => { const d = new Date(formData.data_fim); return isNaN(d.getTime()) ? "" : format(d, "HH:mm"); })() : ""}
+                  onChange={(e) => { if (!e.target.value) return; const [h,m] = e.target.value.split(':').map(Number); const d = new Date(formData.data_fim || Date.now()); d.setHours(h,m); setFormData({ ...formData, data_fim: d.toISOString() }); }}
+                  className="bg-white/10 border-white/20 text-white w-full" required />
               </div>
             </div>
-
-            {/* Cor do Compromisso */}
-            <div>
-              <Label className="text-white mb-2 block">Cor do Compromisso</Label>
+            <div><Label className="text-white mb-2 block">Cor do Compromisso</Label>
               <div className="grid grid-cols-3 gap-2">
-                {COLORS.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    className={`flex items-center gap-2 p-2 rounded-lg border-2 hover:scale-105 transition-transform ${
-                      formData.cor === color.value ? "border-white bg-white/10" : "border-white/20 bg-white/5"
-                    }`}
-                    onClick={() => setFormData({ ...formData, cor: color.value, tipo: color.tipo })}
-                  >
-                    <div 
-                      className="w-5 h-5 rounded-full flex-shrink-0 shadow-lg"
-                      style={{ backgroundColor: color.value }}
-                    />
-                    <span className="text-xs text-left text-white font-medium">{color.label}</span>
+                {COLORS.map((c) => (
+                  <button key={c.value} type="button" className={`flex items-center gap-2 p-2 rounded-lg border-2 hover:scale-105 transition-transform ${formData.cor === c.value ? "border-white bg-white/10" : "border-white/20 bg-white/5"}`} onClick={() => setFormData({ ...formData, cor: c.value, tipo: c.tipo })}>
+                    <div className="w-5 h-5 rounded-full flex-shrink-0 shadow-lg" style={{ backgroundColor: c.value }} />
+                    <span className="text-xs text-left text-white font-medium">{c.label}</span>
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Descrição */}
-            <div>
-              <Label className="text-white">Descrição</Label>
-              <Textarea
-                value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                rows={2}
-                className="bg-white/10 border-white/20 text-white"
-              />
-            </div>
-
-            {/* Info do Google Meet */}
-            <div className="text-xs text-green-300 flex items-center gap-1 bg-green-500/10 p-2 rounded-lg">
-              ✨ O link do Google Meet será gerado automaticamente ao salvar
-            </div>
-
-            {/* Botões */}
+            <div><Label className="text-white">Descrição</Label><Textarea value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} className="bg-white/10 border-white/20 text-white" /></div>
+            <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg"><Mail className="w-4 h-4" /> Se informar um email de participante, um convite personalizado será enviado automaticamente</div>
             <div className="flex justify-between pt-2">
-              <div>
-                {editingEvent && (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleDeleteEvent}
-                    disabled={deletarCompromissoMutation.isPending}
-                    className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20"
-                  >
-                    {deletarCompromissoMutation.isPending ? 'Deletando...' : 'Deletar'}
-                  </Button>
-                )}
-              </div>
+              <div>{editingEvent && <Button type="button" variant="outline" onClick={handleDeleteEvent} disabled={deletarMutation.isPending} className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20">{deletarMutation.isPending ? 'Deletando...' : 'Deletar'}</Button>}</div>
               <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowDialog(false);
-                    resetForm();
-                  }}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={criarCompromissoMutation.isPending || atualizarCompromissoMutation.isPending}
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                >
-                  {editingEvent 
-                    ? (atualizarCompromissoMutation.isPending ? 'Salvando...' : 'Salvar')
-                    : (criarCompromissoMutation.isPending ? 'Criando...' : 'Criar')
-                  }
+                <Button type="button" variant="outline" onClick={() => { setShowDialog(false); resetForm(); }} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Cancelar</Button>
+                <Button type="submit" disabled={criarMutation.isPending || atualizarMutation.isPending} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
+                  {editingEvent ? (atualizarMutation.isPending ? 'Salvando...' : 'Salvar') : (criarMutation.isPending ? 'Criando...' : 'Criar')}
                 </Button>
               </div>
             </div>
@@ -1169,40 +479,35 @@ export default function Compromissos() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Confirmação de Reenvio */}
+      {/* Confirmar reenvio de email */}
       <Dialog open={showConfirmResend} onOpenChange={setShowConfirmResend}>
         <DialogContent className="max-w-md bg-slate-900 border-white/20">
-          <DialogHeader>
-            <DialogTitle className="text-white text-xl">📧 Notificar Participantes?</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-white text-xl">📧 Notificar Participante?</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-indigo-200">
-              Você está alterando um compromisso que possui participantes. Deseja reenviar o convite atualizado para notificá-los sobre as mudanças?
-            </p>
+            <p className="text-indigo-200">Deseja enviar um email atualizado ao participante sobre as mudanças?</p>
             <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => handleConfirmResend('none')}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                Não, não enviar
-              </Button>
-              <Button
-                onClick={() => handleConfirmResend('all')}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-              >
-                Sim, reenviar convite
-              </Button>
+              <Button variant="outline" onClick={() => handleConfirmResend(false)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Não enviar</Button>
+              <Button onClick={() => handleConfirmResend(true)} className="bg-gradient-to-r from-green-500 to-emerald-600">Sim, enviar email</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Conexão Google Calendar */}
-      <GoogleCalendarConnect
-        open={showConnectDialog}
-        onClose={() => setShowConnectDialog(false)}
-      />
+      {/* Dialog Link Padrão */}
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent className="max-w-md bg-slate-900 border-white/20">
+          <DialogHeader><DialogTitle className="text-white text-xl flex items-center gap-2"><Link2 className="w-5 h-5 text-cyan-400" /> Link de Reunião Padrão</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-indigo-200 text-sm">Configure o link de reunião que será incluído automaticamente nos emails de convite para compromissos online.</p>
+            <div><Label className="text-white">Link da Reunião</Label><Input value={defaultMeetingLink} onChange={(e) => setDefaultMeetingLink(e.target.value)} placeholder="https://meet.google.com/abc-defg-hij" className="bg-white/10 border-white/20 text-white" /></div>
+            <p className="text-xs text-indigo-300">Pode ser Google Meet, Zoom, Teams ou qualquer plataforma de videoconferência.</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Cancelar</Button>
+              <Button onClick={salvarLinkPadrao} className="bg-gradient-to-r from-green-500 to-emerald-600">Salvar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

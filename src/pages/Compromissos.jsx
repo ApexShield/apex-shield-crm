@@ -71,7 +71,7 @@ export default function Compromissos() {
     enabled: !!user
   });
 
-  const enviarEmailCompromisso = async (compromissoData, tipo = "novo") => {
+  const enviarEmailCompromisso = async (compromissoData, tipo = "novo", compromissoId = null) => {
     if (!compromissoData.email_participante) return;
     const dataInicio = new Date(compromissoData.data_inicio);
     const dataFim = new Date(compromissoData.data_fim);
@@ -80,6 +80,19 @@ export default function Compromissos() {
     const horaFim = format(dataFim, "HH:mm");
     const linkReuniao = compromissoData.meeting_link || defaultMeetingLink || "";
     const organizador = user?.full_name || user?.email || "Organizador";
+
+    const baseUrl = window.location.origin;
+    const confirmUrl = compromissoId ? `${baseUrl}/functions/confirmarPresenca?id=${compromissoId}&action=confirmar` : '';
+    const recusarUrl = compromissoId ? `${baseUrl}/functions/confirmarPresenca?id=${compromissoId}&action=recusar` : '';
+
+    const botoesRSVP = compromissoId ? `
+      <div style="margin-top:24px;text-align:center;">
+        <p style="color:#475569;font-size:14px;margin-bottom:16px;font-weight:600;">Você confirma sua presença?</p>
+        <div style="display:inline-block;">
+          <a href="${confirmUrl}" style="display:inline-block;background:#10b981;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px;">✅ Sim, confirmo</a>
+          <a href="${recusarUrl}" style="display:inline-block;background:#ef4444;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px;">❌ Não poderei ir</a>
+        </div>
+      </div>` : '';
 
     let assunto = "", corpo = "";
     if (tipo === "novo") {
@@ -99,6 +112,7 @@ export default function Compromissos() {
             ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
             ${compromissoData.descricao ? `<p style="margin:8px 0;color:#475569;"><strong>📝 Descrição:</strong> ${compromissoData.descricao}</p>` : ''}
           </div>
+          ${botoesRSVP}
           <p style="color:#64748b;margin-top:20px;font-size:14px;">Organizado por: <strong>${organizador}</strong></p>
         </div>
         <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
@@ -122,6 +136,7 @@ export default function Compromissos() {
             ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
             ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
           </div>
+          ${botoesRSVP}
           <p style="color:#64748b;margin-top:20px;font-size:14px;">Atualizado por: <strong>${organizador}</strong></p>
         </div>
         <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">

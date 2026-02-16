@@ -357,8 +357,7 @@ export default function Compromissos() {
     atualizarMutation.mutate({
       id: event.id, titulo: event.titulo, descricao: event.descricao,
       data_inicio: newStart.toISOString(), data_fim: newEnd.toISOString(),
-      cor: event.cor, modalidade: event.modalidade, email_participante: event.email_participante || "",
-      sendEmail: !!event.email_participante
+      cor: event.cor, modalidade: event.modalidade, email_participante: event.email_participante || ""
     });
   };
 

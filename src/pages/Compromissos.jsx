@@ -152,6 +152,37 @@ export default function Compromissos() {
     });
   };
 
+  const syncToGoogleCalendar = async (compromissoData, compromissoId, existingGoogleEventId = null) => {
+    try {
+      const attendees = compromissoData.email_participante ? [{ email: compromissoData.email_participante }] : [];
+      const payload = {
+        summary: compromissoData.titulo,
+        description: compromissoData.descricao || '',
+        startDateTime: compromissoData.data_inicio,
+        endDateTime: compromissoData.data_fim,
+        location: compromissoData.endereco || '',
+        attendees
+      };
+
+      let googleEventId = existingGoogleEventId;
+      if (existingGoogleEventId) {
+        const res = await base44.functions.invoke('atualizarEventoCalendar', { ...payload, eventId: existingGoogleEventId });
+        googleEventId = res.data?.eventId || existingGoogleEventId;
+      } else {
+        const res = await base44.functions.invoke('criarEventoCalendar', payload);
+        googleEventId = res.data?.eventId;
+        if (res.data?.meetingLink && compromissoData.modalidade === 'online' && !compromissoData.meeting_link) {
+          await base44.entities.Compromisso.update(compromissoId, { meeting_link: res.data.meetingLink });
+        }
+      }
+      if (googleEventId) {
+        await base44.entities.Compromisso.update(compromissoId, { google_event_id: googleEventId });
+      }
+    } catch (err) {
+      console.error('Erro ao sincronizar com Google Calendar:', err);
+    }
+  };
+
   const criarMutation = useMutation({
     mutationFn: async (data) => {
       if (!data.meeting_link && defaultMeetingLink && data.modalidade === "online") {
@@ -162,6 +193,7 @@ export default function Compromissos() {
       }
       const result = await base44.entities.Compromisso.create(data);
       if (data.email_participante) await enviarEmailCompromisso(data, "novo", result.id);
+      await syncToGoogleCalendar(data, result.id);
       return result;
     },
     onSuccess: () => {
@@ -180,6 +212,8 @@ export default function Compromissos() {
       }
       await base44.entities.Compromisso.update(id, updateData);
       if (sendEmail && updateData.email_participante) await enviarEmailCompromisso(updateData, "atualizado", id);
+      const existing = compromissos.find(c => c.id === id);
+      await syncToGoogleCalendar(updateData, id, existing?.google_event_id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
@@ -191,7 +225,17 @@ export default function Compromissos() {
   });
 
   const deletarMutation = useMutation({
-    mutationFn: (id) => base44.entities.Compromisso.delete(id),
+    mutationFn: async (id) => {
+      const existing = compromissos.find(c => c.id === id);
+      if (existing?.google_event_id) {
+        try {
+          await base44.functions.invoke('deletarEventoCalendar', { eventId: existing.google_event_id });
+        } catch (err) {
+          console.error('Erro ao deletar do Google Calendar:', err);
+        }
+      }
+      await base44.entities.Compromisso.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
       setShowDialog(false);

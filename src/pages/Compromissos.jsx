@@ -36,6 +36,8 @@ export default function Compromissos() {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [defaultMeetingLink, setDefaultMeetingLink] = useState("");
   const [checkingConfirmations, setCheckingConfirmations] = useState(false);
+  const [showFixoDialog, setShowFixoDialog] = useState(false);
+  const [savingFixo, setSavingFixo] = useState(false);
 
   const getDefaultDates = () => {
     const now = new Date();

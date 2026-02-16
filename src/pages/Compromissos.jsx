@@ -260,7 +260,7 @@ export default function Compromissos() {
 
   const deletarMutation = useMutation({
     mutationFn: async (id) => {
-      const existing = compromissos.find(c => c.id === id);
+      const existing = localCompromissos.find(c => c.id === id);
       if (existing?.google_event_id) {
         try {
           await base44.functions.invoke('deletarEventoCalendar', { eventId: existing.google_event_id });

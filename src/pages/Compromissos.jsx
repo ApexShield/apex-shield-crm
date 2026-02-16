@@ -249,6 +249,67 @@ export default function Compromissos() {
     }
   });
 
+  const criarCompromissosFixos = async (formFixo) => {
+    setSavingFixo(true);
+    try {
+      const inicio = new Date(formFixo.data_inicio + "T00:00:00");
+      const fim = new Date(formFixo.data_fim + "T00:00:00");
+      const allDays = eachDayOfInterval({ start: inicio, end: fim });
+      const diasFiltrados = allDays.filter(d => formFixo.dias.includes(getDay(d)));
+
+      const compromissos = diasFiltrados.map(dia => {
+        const [hi, mi] = formFixo.hora_inicio.split(":").map(Number);
+        const [hf, mf] = formFixo.hora_fim.split(":").map(Number);
+        const di = new Date(dia); di.setHours(hi, mi, 0, 0);
+        const df = new Date(dia); df.setHours(hf, mf, 0, 0);
+        return {
+          titulo: formFixo.titulo,
+          descricao: formFixo.descricao || "",
+          data_inicio: di.toISOString(),
+          data_fim: df.toISOString(),
+          cor: formFixo.cor,
+          tipo: formFixo.tipo,
+          is_fixo: true,
+          fixo_dias_semana: formFixo.dias,
+          fixo_hora_inicio: formFixo.hora_inicio,
+          fixo_hora_fim: formFixo.hora_fim,
+          fixo_data_inicio: formFixo.data_inicio,
+          fixo_data_fim: formFixo.data_fim
+        };
+      });
+
+      if (compromissos.length === 0) {
+        alert("Nenhum dia corresponde aos critérios selecionados.");
+        return;
+      }
+
+      await base44.entities.Compromisso.bulkCreate(compromissos);
+
+      // Sync each to Google Calendar
+      for (const c of compromissos) {
+        try {
+          const res = await base44.functions.invoke('criarEventoCalendar', {
+            summary: c.titulo,
+            description: c.descricao,
+            startDateTime: c.data_inicio,
+            endDateTime: c.data_fim
+          });
+          // We don't save google_event_id for bulk, it's optional
+        } catch (err) {
+          console.error('Erro sync fixo:', err);
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      setShowFixoDialog(false);
+      alert(`✅ ${compromissos.length} compromissos fixos criados com sucesso!`);
+    } catch (err) {
+      alert("Erro ao criar compromissos fixos: " + err.message);
+    } finally {
+      setSavingFixo(false);
+    }
+  };
+
   const salvarLinkPadrao = async () => {
     await base44.auth.updateMe({ link_reuniao_padrao: defaultMeetingLink });
     setShowLinkDialog(false);

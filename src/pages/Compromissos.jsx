@@ -114,15 +114,7 @@ export default function Compromissos() {
     const linkReuniao = compromissoData.meeting_link || defaultMeetingLink || "";
     const organizador = user?.full_name || user?.email || "Organizador";
 
-    // Build the public function URL using the same pattern as callbackOAuthGoogle
-    const getFunctionsBaseUrl = () => {
-      // Extract app ID from current page URL or use base44 client
-      const match = window.location.pathname.match(/\/apps\/([^/]+)/);
-      if (match) return `https://app.base44.com/api/apps/${match[1]}/functions`;
-      // Fallback: use the origin + /api/functions pattern
-      return `${window.location.origin}/api/functions`;
-    };
-    const functionsBaseUrl = getFunctionsBaseUrl();
+    const functionsBaseUrl = `${window.location.origin}/api/functions`;
     const confirmUrl = compromissoId ? `${functionsBaseUrl}/confirmarPresenca?id=${compromissoId}&action=confirmar` : '';
     const recusarUrl = compromissoId ? `${functionsBaseUrl}/confirmarPresenca?id=${compromissoId}&action=recusar` : '';
 

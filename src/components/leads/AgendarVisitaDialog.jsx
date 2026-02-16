@@ -163,12 +163,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         const horaFim = fmt(dataFim, "HH:mm");
         const organizador = user?.full_name || user?.email || "Organizador";
 
-        const getFunctionsBaseUrl = () => {
-          const match = window.location.pathname.match(/\/apps\/([^/]+)/);
-          if (match) return `https://app.base44.com/api/apps/${match[1]}/functions`;
-          return `${window.location.origin}/api/functions`;
-        };
-        const functionsBaseUrl = getFunctionsBaseUrl();
+        const functionsBaseUrl = `${window.location.origin}/api/functions`;
         const confirmUrl = `${functionsBaseUrl}/confirmarPresenca?id=${compromisso.id}&action=confirmar`;
         const recusarUrl = `${functionsBaseUrl}/confirmarPresenca?id=${compromisso.id}&action=recusar`;
 

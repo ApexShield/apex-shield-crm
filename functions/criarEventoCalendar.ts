@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
       start: { dateTime: formattedStart, timeZone: 'America/Sao_Paulo' },
       end: { dateTime: formattedEnd, timeZone: 'America/Sao_Paulo' },
       attendees: attendees || [],
-      colorId: colorId || '9',
+      colorId: colorId || '7',
       conferenceData: {
         createRequest: {
           requestId: `meet-${Date.now()}`,

@@ -566,8 +566,10 @@ export default function Compromissos() {
                                             <div className="flex items-center gap-1">
                                               <span className="truncate flex-1">{event.titulo}</span>
                                               {event.convidado_confirmou && <CheckCircle2 className="w-3 h-3 text-green-200 flex-shrink-0" />}
+                                              {event._isGoogleOnly && <Calendar className="w-3 h-3 text-white/70 flex-shrink-0" />}
                                             </div>
                                             {!isNaN(start.getTime()) && <div className="text-[9px] opacity-75">{format(start, 'HH:mm')}</div>}
+                                            {event.endereco && <div className="text-[9px] opacity-80 truncate">{event.endereco.split(',')[0]}</div>}
                                             {event.modalidade && <div className="text-[9px] opacity-80">{event.modalidade === 'online' ? 'Meet' : 'Presencial'}</div>}
                                             {event.meeting_link && <div className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); window.open(event.meeting_link, '_blank'); }}>🔗 Reunião</div>}
                                           </div>

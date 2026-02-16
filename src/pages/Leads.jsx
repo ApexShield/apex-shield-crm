@@ -488,10 +488,16 @@ export default function Leads() {
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.nome}</TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">
-                        {cliente.data_contato ? format(new Date(cliente.data_contato), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
+                        {cliente.data_contato ? (() => {
+                          const parts = cliente.data_contato.split('T')[0].split('-');
+                          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        })() : <span className="text-white/50">—</span>}
                       </TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">
-                        {cliente.agendar_visita ? format(new Date(cliente.agendar_visita), "dd/MM/yyyy", { locale: ptBR }) : <span className="text-white/50">—</span>}
+                        {cliente.agendar_visita ? (() => {
+                          const parts = cliente.agendar_visita.split('T')[0].split('-');
+                          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        })() : <span className="text-white/50">—</span>}
                       </TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.status}</TableCell>
                       <TableCell className="font-bold whitespace-nowrap">

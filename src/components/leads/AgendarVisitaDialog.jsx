@@ -98,10 +98,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       return;
     }
 
-    if (formData.modalidade === "presencial" && !formData.endereco) {
-      setErro("Por favor, informe o endereço para compromisso presencial");
-      return;
-    }
+    // Endereço não é obrigatório para presencial
 
     setValidando(true);
     setErro("");

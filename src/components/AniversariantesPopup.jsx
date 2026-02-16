@@ -32,32 +32,28 @@ export default function AniversariantesPopup() {
   });
 
   const clientes = React.useMemo(() => {
-    if (!user || !allClientes.length || !allUsers.length) return [];
-    
-    const usuariosComHierarquia = allUsers.filter(u => 
-      u.tipo_hierarquia && u.tipo_hierarquia !== "Sem Hierarquia" && u.agencia_id
-    );
-    const emailsComHierarquia = usuariosComHierarquia.map(u => u.email);
+    if (!user || !allClientes.length) return [];
     
     let leadsFiltrados = [];
     
     if (user.role === "admin") {
-      leadsFiltrados = allClientes.filter(c => emailsComHierarquia.includes(c.created_by));
+      leadsFiltrados = allClientes;
     }
     else if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
-      const usuariosDaAgencia = usuariosComHierarquia.filter(u => u.agencia_id === user.agencia_id);
+      const usuariosDaAgencia = allUsers.filter(u => u.agencia_id === user.agencia_id);
       const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
       leadsFiltrados = allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
     }
     else if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
-      const usuariosDaUnidade = usuariosComHierarquia.filter(u => 
+      const usuariosDaUnidade = allUsers.filter(u => 
         u.unidade_id === user.unidade_id &&
         (u.lider_email === user.email || u.lider_id === user.id || u.email === user.email)
       );
       const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
       leadsFiltrados = allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
     }
-    else if (user.tipo_hierarquia && user.tipo_hierarquia !== "Sem Hierarquia" && user.agencia_id) {
+    else {
+      // Usuários básicos/corretores veem seus próprios clientes
       leadsFiltrados = allClientes.filter(c => c.created_by === user.email);
     }
     

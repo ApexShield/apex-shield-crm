@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    const REDIRECT_URI = `${url.origin}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    const REDIRECT_URI = `https://app.base44.com/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
 
     // Trocar código por tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {

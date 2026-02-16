@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Settings, Mail, CheckCircle2, RefreshCw } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Mail, CheckCircle2, RefreshCw, Repeat } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
+import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
+import ConexaoStatusBanner from "../components/compromissos/ConexaoStatusBanner";
+import CompromissoFixoDialog from "../components/compromissos/CompromissoFixoDialog";
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
 const COLORS = [

@@ -245,11 +245,12 @@ export default function Compromissos() {
       }
       await base44.entities.Compromisso.update(id, updateData);
       if (sendEmail && updateData.email_participante) await enviarEmailCompromisso(updateData, "atualizado", id);
-      const existing = compromissos.find(c => c.id === id);
+      const existing = localCompromissos.find(c => c.id === id);
       await syncToGoogleCalendar(updateData, id, existing?.google_event_id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
       setShowDialog(false);
       setEditingEvent(null);
       resetForm();

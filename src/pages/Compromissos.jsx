@@ -417,7 +417,8 @@ export default function Compromissos() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
       <div className="max-w-[1800px] mx-auto">
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
+          <ConexaoStatusBanner />
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
@@ -428,7 +429,10 @@ export default function Compromissos() {
                 <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={() => setShowFixoDialog(true)} variant="outline" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20">
+                <Repeat className="w-4 h-4 mr-2" /> Compromisso Fixo
+              </Button>
               <Button onClick={async () => {
                 setCheckingConfirmations(true);
                 try {

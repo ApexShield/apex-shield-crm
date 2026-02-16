@@ -161,7 +161,7 @@ export default function Compromissos() {
         data.email_enviado = true;
       }
       const result = await base44.entities.Compromisso.create(data);
-      if (data.email_participante) await enviarEmailCompromisso(data, "novo");
+      if (data.email_participante) await enviarEmailCompromisso(data, "novo", result.id);
       return result;
     },
     onSuccess: () => {
@@ -179,7 +179,7 @@ export default function Compromissos() {
         updateData.email_enviado = true;
       }
       await base44.entities.Compromisso.update(id, updateData);
-      if (sendEmail && updateData.email_participante) await enviarEmailCompromisso(updateData, "atualizado");
+      if (sendEmail && updateData.email_participante) await enviarEmailCompromisso(updateData, "atualizado", id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });

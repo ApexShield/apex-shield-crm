@@ -279,13 +279,7 @@ export default function Compromissos() {
     }
   };
 
-  const handleConfirmResend = (send) => {
-    if (pendingUpdateData) {
-      atualizarMutation.mutate({ ...pendingUpdateData, id: editingEvent.id, sendEmail: send });
-    }
-    setShowConfirmResend(false);
-    setPendingUpdateData(null);
-  };
+  // Removed: Google Calendar handles email notifications automatically
 
   const handleDeleteEvent = () => {
     if (editingEvent && confirm('Tem certeza que deseja deletar este compromisso?')) {
@@ -623,19 +617,7 @@ export default function Compromissos() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmar reenvio de email */}
-      <Dialog open={showConfirmResend} onOpenChange={setShowConfirmResend}>
-        <DialogContent className="max-w-md bg-slate-900 border-white/20">
-          <DialogHeader><DialogTitle className="text-white text-xl">📧 Notificar Participante?</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <p className="text-indigo-200">Deseja enviar um email atualizado ao participante sobre as mudanças?</p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => handleConfirmResend(false)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Não enviar</Button>
-              <Button onClick={() => handleConfirmResend(true)} className="bg-gradient-to-r from-green-500 to-emerald-600">Sim, enviar email</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Removido: Google Calendar envia notificações automaticamente */}
 
       {/* Dialog Link Padrão */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>

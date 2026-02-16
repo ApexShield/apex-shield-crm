@@ -119,61 +119,76 @@ export default function Compromissos() {
     const recusarUrl = compromissoId ? `${baseUrl}/functions/confirmarPresenca?id=${compromissoId}&action=recusar` : '';
 
     const botoesRSVP = compromissoId ? `
-      <div style="margin-top:24px;text-align:center;">
-        <p style="color:#475569;font-size:14px;margin-bottom:16px;font-weight:600;">Você confirma sua presença?</p>
-        <div style="display:inline-block;">
-          <a href="${confirmUrl}" style="display:inline-block;background:#10b981;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px;">✅ Sim, confirmo</a>
-          <a href="${recusarUrl}" style="display:inline-block;background:#ef4444;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px;">❌ Não poderei ir</a>
+      <div style="margin-top:24px;text-align:center;background:#f8fafc;border-radius:12px;padding:20px;">
+        <p style="color:#334155;font-size:14px;margin-bottom:16px;font-weight:700;">Você confirma sua presença?</p>
+        <div>
+          <a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin:0 6px;box-shadow:0 4px 12px rgba(5,150,105,0.3);">✅ Sim, confirmo</a>
+          <a href="${recusarUrl}" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin:0 6px;box-shadow:0 4px 12px rgba(220,38,38,0.3);">❌ Não poderei ir</a>
         </div>
+      </div>` : '';
+
+    const meetingBtnHtml = linkReuniao ? `
+      <div style="text-align:center;margin-top:20px;">
+        <a href="${linkReuniao}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(79,70,229,0.3);">💻 Entrar na Reunião</a>
       </div>` : '';
 
     let assunto = "", corpo = "";
     if (tipo === "novo") {
       assunto = `📅 Convite: ${compromissoData.titulo}`;
-      corpo = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:30px;text-align:center;">
-          <h1 style="color:white;margin:0;font-size:24px;">📅 Novo Compromisso</h1>
-          <p style="color:#e0e7ff;margin:8px 0 0;">APEX SHIELD CRM</p>
+      corpo = `<div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:40px 32px;text-align:center;">
+          <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;"><span style="font-size:28px;">📅</span></div>
+          <h1 style="color:white;margin:0;font-size:22px;font-weight:700;">Novo Compromisso</h1>
+          <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:13px;letter-spacing:0.05em;text-transform:uppercase;">APEX SHIELD CRM</p>
         </div>
-        <div style="padding:30px;">
-          <h2 style="color:#1e293b;margin:0 0 20px;">${compromissoData.titulo}</h2>
-          <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
-            <p style="margin:8px 0;color:#475569;"><strong>📅 Data:</strong> ${dataFormatada}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>🕐 Horário:</strong> ${horaInicio} - ${horaFim}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
-            ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
-            ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
-            ${compromissoData.descricao ? `<p style="margin:8px 0;color:#475569;"><strong>📝 Descrição:</strong> ${compromissoData.descricao}</p>` : ''}
+        <div style="padding:32px;">
+          <h2 style="color:#1e293b;margin:0 0 20px;font-size:20px;font-weight:700;">${compromissoData.titulo}</h2>
+          <div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #4f46e5;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="padding:8px 0;color:#64748b;font-size:14px;width:30px;vertical-align:top;">📅</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">Data: ${dataFormatada}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">🕐</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">Horário: ${horaInicio} - ${horaFim}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">📍</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}${compromissoData.endereco ? ' — ' + compromissoData.endereco : ''}</td></tr>
+              ${compromissoData.descricao ? `<tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">📝</td><td style="padding:8px 0;color:#334155;font-size:14px;">${compromissoData.descricao}</td></tr>` : ''}
+            </table>
           </div>
+          ${meetingBtnHtml}
           ${botoesRSVP}
-          <p style="color:#64748b;margin-top:20px;font-size:14px;">Organizado por: <strong>${organizador}</strong></p>
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;">
+            <p style="color:#64748b;font-size:13px;margin:0;">Organizado por <strong style="color:#334155;">${organizador}</strong></p>
+          </div>
         </div>
-        <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
-          APEX SHIELD CRM - Gestão Profissional de Compromissos
+        <div style="background:#f8fafc;padding:16px;text-align:center;border-top:1px solid #e2e8f0;">
+          <p style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin:0;">● APEX SHIELD CRM</p>
         </div>
       </div>`;
     } else {
       assunto = `🔄 Compromisso Atualizado: ${compromissoData.titulo}`;
-      corpo = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#f59e0b,#ef4444);padding:30px;text-align:center;">
-          <h1 style="color:white;margin:0;font-size:24px;">🔄 Compromisso Atualizado</h1>
-          <p style="color:#fef3c7;margin:8px 0 0;">APEX SHIELD CRM</p>
+      corpo = `<div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:40px 32px;text-align:center;">
+          <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;"><span style="font-size:28px;">🔄</span></div>
+          <h1 style="color:white;margin:0;font-size:22px;font-weight:700;">Compromisso Atualizado</h1>
+          <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:13px;letter-spacing:0.05em;text-transform:uppercase;">APEX SHIELD CRM</p>
         </div>
-        <div style="padding:30px;">
-          <p style="color:#dc2626;font-weight:bold;margin:0 0 15px;">⚠️ O compromisso abaixo foi alterado pelo organizador:</p>
-          <h2 style="color:#1e293b;margin:0 0 20px;">${compromissoData.titulo}</h2>
-          <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
-            <p style="margin:8px 0;color:#475569;"><strong>📅 Nova Data:</strong> ${dataFormatada}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>🕐 Novo Horário:</strong> ${horaInicio} - ${horaFim}</p>
-            <p style="margin:8px 0;color:#475569;"><strong>📍 Modalidade:</strong> ${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
-            ${compromissoData.endereco ? `<p style="margin:8px 0;color:#475569;"><strong>📍 Endereço:</strong> ${compromissoData.endereco}</p>` : ''}
-            ${linkReuniao ? `<p style="margin:8px 0;"><strong>🔗 Link da Reunião:</strong> <a href="${linkReuniao}" style="color:#6366f1;">${linkReuniao}</a></p>` : ''}
+        <div style="padding:32px;">
+          <div style="background:#fef3c7;border-radius:8px;padding:12px 16px;margin-bottom:20px;border-left:4px solid #f59e0b;">
+            <p style="color:#92400e;font-weight:600;margin:0;font-size:14px;">⚠️ O compromisso abaixo foi alterado pelo organizador</p>
           </div>
+          <h2 style="color:#1e293b;margin:0 0 20px;font-size:20px;font-weight:700;">${compromissoData.titulo}</h2>
+          <div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #f59e0b;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="padding:8px 0;color:#64748b;font-size:14px;width:30px;vertical-align:top;">📅</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">Nova Data: ${dataFormatada}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">🕐</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">Novo Horário: ${horaInicio} - ${horaFim}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">📍</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">${compromissoData.modalidade === 'online' ? 'Online' : 'Presencial'}${compromissoData.endereco ? ' — ' + compromissoData.endereco : ''}</td></tr>
+            </table>
+          </div>
+          ${meetingBtnHtml}
           ${botoesRSVP}
-          <p style="color:#64748b;margin-top:20px;font-size:14px;">Atualizado por: <strong>${organizador}</strong></p>
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;">
+            <p style="color:#64748b;font-size:13px;margin:0;">Atualizado por <strong style="color:#334155;">${organizador}</strong></p>
+          </div>
         </div>
-        <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
-          APEX SHIELD CRM - Gestão Profissional de Compromissos
+        <div style="background:#f8fafc;padding:16px;text-align:center;border-top:1px solid #e2e8f0;">
+          <p style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin:0;">● APEX SHIELD CRM</p>
         </div>
       </div>`;
     }

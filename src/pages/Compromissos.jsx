@@ -38,6 +38,7 @@ export default function Compromissos() {
   const [checkingConfirmations, setCheckingConfirmations] = useState(false);
   const [showFixoDialog, setShowFixoDialog] = useState(false);
   const [savingFixo, setSavingFixo] = useState(false);
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
 
   const getDefaultDates = () => {
     const now = new Date();

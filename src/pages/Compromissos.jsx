@@ -573,10 +573,13 @@ export default function Compromissos() {
                 </Select>
               </div>
               <div><Label className="text-white">Cliente (opcional)</Label>
-                <Select value={formData.cliente_id} onValueChange={(v) => { const cl = clientes.find(c => c.id === v); setFormData({ ...formData, cliente_id: v, cliente_nome: cl?.nome || "", email_participante: cl?.email || "" }); }}>
+                <Select value={formData.cliente_id} onValueChange={(v) => { const cl = clientes.find(c => c.id === v); setFormData({ ...formData, cliente_id: v, cliente_nome: cl?.nome || "", email_participante: cl?.email || formData.email_participante }); }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>{clientes.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                  <SelectContent>{clientes.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.email ? ` (${c.email})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
+                {formData.cliente_id && !clientes.find(c => c.id === formData.cliente_id)?.email && (
+                  <p className="text-xs text-yellow-300 mt-1">⚠️ Este cliente não possui email cadastrado</p>
+                )}
               </div>
             </div>
             <div><Label className="text-white">Email do Participante (opcional)</Label><Input type="email" value={formData.email_participante} onChange={(e) => setFormData({ ...formData, email_participante: e.target.value })} placeholder="participante@email.com" className="bg-white/10 border-white/20 text-white" />

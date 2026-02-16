@@ -129,11 +129,10 @@ export default function Compromissos() {
       </div>`;
     }
 
-    await base44.integrations.Core.SendEmail({
+    await base44.functions.invoke('enviarEmailGmail', {
       to: compromissoData.email_participante,
       subject: assunto,
-      body: corpo,
-      from_name: "APEX SHIELD CRM"
+      body: corpo
     });
   };
 

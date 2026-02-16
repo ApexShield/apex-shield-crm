@@ -142,7 +142,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         const horaFim = fmt(dataFim, "HH:mm");
         const organizador = user?.full_name || user?.email || "Organizador";
 
-        await base44.integrations.Core.SendEmail({
+        await base44.functions.invoke('enviarEmailGmail', {
           to: participanteEmail,
           subject: `📅 Convite: ${dataToSubmit.titulo}`,
           body: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
@@ -161,8 +161,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               <p style="color:#64748b;margin-top:20px;">Organizado por: <strong>${organizador}</strong></p>
               <p style="color:#64748b;margin-top:10px;font-size:13px;">Por favor, responda este email com <strong>"CONFIRMO"</strong> para confirmar sua presença.</p>
             </div>
-          </div>`,
-          from_name: "APEX SHIELD CRM"
+          </div>`
         });
       }
 

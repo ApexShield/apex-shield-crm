@@ -159,6 +159,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                 ${formData.endereco ? `<p><strong>📍 Endereço:</strong> ${formData.endereco}</p>` : ''}
               </div>
               <p style="color:#64748b;margin-top:20px;">Organizado por: <strong>${organizador}</strong></p>
+              <p style="color:#64748b;margin-top:10px;font-size:13px;">Por favor, responda este email com <strong>"CONFIRMO"</strong> para confirmar sua presença.</p>
             </div>
           </div>`,
           from_name: "APEX SHIELD CRM"

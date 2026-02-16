@@ -446,9 +446,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                     }
                   })() : ""}
                   onValueChange={(hour) => {
-                    const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                    const date = new Date(formData.data_inicio || Date.now());
                     if (isNaN(date.getTime())) return;
                     date.setHours(parseInt(hour));
+                    if (isNaN(date.getTime())) return;
                     const endDate = new Date(date);
                     endDate.setHours(endDate.getHours() + 1);
                     setFormData({ 
@@ -479,9 +480,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                     }
                   })() : ""}
                   onValueChange={(minute) => {
-                    const date = formData.data_inicio ? parseISO(formData.data_inicio) : new Date();
+                    const date = new Date(formData.data_inicio || Date.now());
                     if (isNaN(date.getTime())) return;
                     date.setMinutes(parseInt(minute));
+                    if (isNaN(date.getTime())) return;
                     const endDate = new Date(date);
                     endDate.setHours(endDate.getHours() + 1);
                     setFormData({ 
@@ -515,9 +517,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                     }
                   })() : ""}
                   onValueChange={(hour) => {
-                    const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                    const date = new Date(formData.data_fim || Date.now());
                     if (isNaN(date.getTime())) return;
                     date.setHours(parseInt(hour));
+                    if (isNaN(date.getTime())) return;
                     setFormData({ ...formData, data_fim: date.toISOString() });
                   }}
                 >
@@ -542,9 +545,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                     }
                   })() : ""}
                   onValueChange={(minute) => {
-                    const date = formData.data_fim ? parseISO(formData.data_fim) : new Date();
+                    const date = new Date(formData.data_fim || Date.now());
                     if (isNaN(date.getTime())) return;
                     date.setMinutes(parseInt(minute));
+                    if (isNaN(date.getTime())) return;
                     setFormData({ ...formData, data_fim: date.toISOString() });
                   }}
                 >

@@ -123,23 +123,45 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         eventData.attendees = [{ email: participanteEmail }];
       }
 
-      const googleResponse = await base44.functions.invoke('criarEventoCalendar', eventData);
-      
-      if (googleResponse.data?.meetingLink) {
-        dataToSubmit.meeting_link = googleResponse.data.meetingLink;
-        dataToSubmit.google_event_id = googleResponse.data.eventId;
-        dataToSubmit.google_event_link = googleResponse.data.htmlLink;
-      } else if (googleResponse.data?.meetLink) {
-        dataToSubmit.meeting_link = googleResponse.data.meetLink;
-        dataToSubmit.google_event_id = googleResponse.data.eventId;
-        dataToSubmit.google_event_link = googleResponse.data.eventLink;
-      }
-
-      await base44.entities.Compromisso.create({
+      // Salvar compromisso localmente
+      const compromisso = await base44.entities.Compromisso.create({
         ...dataToSubmit,
         cliente_id: cliente?.id || "",
         cliente_nome: cliente?.nome || ""
       });
+
+      // Enviar email de convite ao participante
+      if (participanteEmail) {
+        const dataInicio = new Date(dataToSubmit.data_inicio);
+        const dataFim = new Date(dataToSubmit.data_fim);
+        const { format: fmt } = await import("date-fns");
+        const dataFormatada = fmt(dataInicio, "dd/MM/yyyy");
+        const horaInicio = fmt(dataInicio, "HH:mm");
+        const horaFim = fmt(dataFim, "HH:mm");
+        const organizador = user?.full_name || user?.email || "Organizador";
+
+        await base44.integrations.Core.SendEmail({
+          to: participanteEmail,
+          subject: `📅 Convite: ${dataToSubmit.titulo}`,
+          body: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:30px;text-align:center;">
+              <h1 style="color:white;margin:0;">📅 Novo Compromisso</h1>
+              <p style="color:#e0e7ff;margin:8px 0 0;">APEX SHIELD CRM</p>
+            </div>
+            <div style="padding:30px;">
+              <h2 style="color:#1e293b;">${dataToSubmit.titulo}</h2>
+              <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
+                <p><strong>📅 Data:</strong> ${dataFormatada}</p>
+                <p><strong>🕐 Horário:</strong> ${horaInicio} - ${horaFim}</p>
+                <p><strong>📍 Modalidade:</strong> ${formData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
+                ${formData.endereco ? `<p><strong>📍 Endereço:</strong> ${formData.endereco}</p>` : ''}
+              </div>
+              <p style="color:#64748b;margin-top:20px;">Organizado por: <strong>${organizador}</strong></p>
+            </div>
+          </div>`,
+          from_name: "APEX SHIELD CRM"
+        });
+      }
 
       const agendamento = {
         tipo: formData.tipo,
@@ -154,16 +176,11 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       resetForm();
       onClose();
       
-      alert('✅ Compromisso criado e sincronizado com Google Calendar!');
+      alert('✅ Compromisso criado com sucesso!' + (participanteEmail ? ' Convite enviado por email.' : ''));
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
-      const errorData = error.response?.data;
-      if (errorData?.needsAuth) {
-        setErro("Você precisa conectar sua conta Google antes de criar agendamentos. Vá em Compromissos > Conectar Google Calendar.");
-      } else {
-        const msg = errorData?.error || errorData?.details || error.message || 'Tente novamente';
-        setErro(`Erro ao criar agendamento: ${msg}`);
-      }
+      const msg = error.response?.data?.error || error.message || 'Tente novamente';
+      setErro(`Erro ao criar agendamento: ${msg}`);
     } finally {
       setValidando(false);
     }
@@ -582,8 +599,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             </div>
           )}
 
-          <div className="text-xs text-green-300 flex items-center gap-1">
-            ✨ O link do Google Meet será gerado automaticamente ao salvar
+          <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg">
+            📧 Se informar email do participante, um convite personalizado será enviado
           </div>
 
           <div className="flex gap-2 justify-end pt-4">

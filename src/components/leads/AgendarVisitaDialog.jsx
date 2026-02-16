@@ -127,7 +127,9 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       const compromisso = await base44.entities.Compromisso.create({
         ...dataToSubmit,
         cliente_id: cliente?.id || "",
-        cliente_nome: cliente?.nome || ""
+        cliente_nome: cliente?.nome || "",
+        email_participante: participanteEmail || "",
+        email_enviado: !!participanteEmail
       });
 
       // Enviar email de convite ao participante

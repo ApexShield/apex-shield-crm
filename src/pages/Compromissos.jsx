@@ -682,6 +682,8 @@ export default function Compromissos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CompromissoFixoDialog open={showFixoDialog} onClose={() => setShowFixoDialog(false)} onSave={criarCompromissosFixos} saving={savingFixo} />
     </div>
   );
 }

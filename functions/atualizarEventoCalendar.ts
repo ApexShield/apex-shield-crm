@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       start: { dateTime: startDateTime, timeZone: 'America/Sao_Paulo' },
       end: { dateTime: endDateTime, timeZone: 'America/Sao_Paulo' },
       attendees: attendees || [],
-      colorId: colorId || '9',
+      colorId: colorId || '7',
       reminders: {
         useDefault: false,
         overrides: [

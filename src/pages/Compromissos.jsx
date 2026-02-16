@@ -31,8 +31,7 @@ export default function Compromissos() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDialog, setShowDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [showConfirmResend, setShowConfirmResend] = useState(false);
-  const [pendingUpdateData, setPendingUpdateData] = useState(null);
+  // Removed: email confirmation dialog no longer needed - Google Calendar handles notifications
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [defaultMeetingLink, setDefaultMeetingLink] = useState("");
   const [checkingConfirmations, setCheckingConfirmations] = useState(false);

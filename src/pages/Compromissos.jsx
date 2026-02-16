@@ -272,6 +272,7 @@ export default function Compromissos() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
       setShowDialog(false);
       setEditingEvent(null);
       resetForm();

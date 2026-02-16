@@ -438,7 +438,7 @@ export default function Compromissos() {
     const eventId = result.draggableId.split('_')[0];
     const [newDay, newHour] = result.destination.droppableId.split('_').map(Number);
     const event = compromissos.find(e => e.id === eventId);
-    if (!event) return;
+    if (!event || event._isGoogleOnly) return;
     const newDate = addDays(currentWeekStart, newDay);
     const newStart = new Date(newDate); newStart.setHours(newHour, 0, 0, 0);
     const duration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();

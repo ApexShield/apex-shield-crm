@@ -114,9 +114,10 @@ export default function Compromissos() {
     const linkReuniao = compromissoData.meeting_link || defaultMeetingLink || "";
     const organizador = user?.full_name || user?.email || "Organizador";
 
-    const baseUrl = window.location.origin;
-    const confirmUrl = compromissoId ? `${baseUrl}/functions/confirmarPresenca?id=${compromissoId}&action=confirmar` : '';
-    const recusarUrl = compromissoId ? `${baseUrl}/functions/confirmarPresenca?id=${compromissoId}&action=recusar` : '';
+    const appId = window.__BASE44_APP_ID || '';
+    const functionsBaseUrl = `https://app.base44.com/api/apps/${appId}/functions`;
+    const confirmUrl = compromissoId ? `${functionsBaseUrl}/confirmarPresenca?id=${compromissoId}&action=confirmar` : '';
+    const recusarUrl = compromissoId ? `${functionsBaseUrl}/confirmarPresenca?id=${compromissoId}&action=recusar` : '';
 
     const botoesRSVP = compromissoId ? `
       <div style="margin-top:24px;text-align:center;background:#f8fafc;border-radius:12px;padding:20px;">

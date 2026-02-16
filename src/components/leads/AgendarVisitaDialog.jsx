@@ -163,9 +163,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         const horaFim = fmt(dataFim, "HH:mm");
         const organizador = user?.full_name || user?.email || "Organizador";
 
-        const baseUrl = window.location.origin;
-        const confirmUrl = `${baseUrl}/functions/confirmarPresenca?id=${compromisso.id}&action=confirmar`;
-        const recusarUrl = `${baseUrl}/functions/confirmarPresenca?id=${compromisso.id}&action=recusar`;
+        const appId = window.__BASE44_APP_ID || '';
+        const functionsBaseUrl = `https://app.base44.com/api/apps/${appId}/functions`;
+        const confirmUrl = `${functionsBaseUrl}/confirmarPresenca?id=${compromisso.id}&action=confirmar`;
+        const recusarUrl = `${functionsBaseUrl}/confirmarPresenca?id=${compromisso.id}&action=recusar`;
 
         const linkReuniao = dataToSubmit.meeting_link || '';
         const meetingBtnHtml = linkReuniao ? `<div style="text-align:center;margin-top:20px;"><a href="${linkReuniao}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(79,70,229,0.3);">💻 Entrar na Reunião</a></div>` : '';

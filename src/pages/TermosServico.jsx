@@ -54,7 +54,7 @@ export default function TermosServico() {
               </p>
               <ul className="list-disc ml-6 space-y-2">
                 <li>Gestão de leads e funil de vendas</li>
-                <li>Agendamento de compromissos com integração ao Google Calendar</li>
+                <li>Agenda profissional com envio de convites por email</li>
                 <li>Gestão de apólices e documentos</li>
                 <li>Relatórios e análises de desempenho</li>
                 <li>Comunicação integrada (WhatsApp e Email)</li>
@@ -109,23 +109,22 @@ export default function TermosServico() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="w-5 h-5 text-indigo-600" />
-                5. Integração com Google Calendar
+                5. Agenda Profissional e Emails
               </CardTitle>
             </CardHeader>
             <CardContent className="text-slate-600 space-y-3">
               <p>
-                O APEX SHIELD CRM oferece integração com o Google Calendar para gerenciamento 
-                de compromissos. Ao conectar sua conta Google:
+                O APEX SHIELD CRM possui agenda profissional integrada para gerenciamento de compromissos:
               </p>
               <ul className="list-disc ml-6 space-y-2">
-                <li>Você autoriza o acesso aos seus eventos de calendário conforme os escopos solicitados</li>
-                <li>O sistema criará, editará e excluirá eventos em seu nome</li>
-                <li>Links de Google Meet poderão ser gerados automaticamente</li>
-                <li>Você pode desconectar sua conta Google a qualquer momento</li>
+                <li>O sistema permite criar, editar e excluir compromissos</li>
+                <li>Emails personalizados de convite são enviados aos participantes</li>
+                <li>Ao alterar compromissos, os participantes podem ser notificados por email</li>
+                <li>Você pode configurar um link padrão de reunião para seus convites</li>
               </ul>
               <p className="text-sm bg-indigo-50 p-3 rounded-lg mt-4">
-                ✅ O uso dos dados do Google é limitado ao necessário para funcionamento do CRM, 
-                em conformidade com a Política de Dados de Usuário dos Serviços de API do Google.
+                ✅ Os emails são enviados apenas para os participantes que você informar, 
+                nunca para terceiros não autorizados.
               </p>
             </CardContent>
           </Card>
@@ -143,7 +142,7 @@ export default function TermosServico() {
               </p>
               <ul className="list-disc ml-6 space-y-2">
                 <li>Todos os dados são transmitidos via HTTPS/TLS</li>
-                <li>Autenticação OAuth 2.0 para integração com serviços Google</li>
+                <li>Autenticação segura com controle de acesso por hierarquia</li>
                 <li>Controle de acesso baseado em hierarquia (RLS)</li>
                 <li>Cada usuário acessa apenas seus próprios dados e os de sua equipe</li>
                 <li>Não vendemos ou compartilhamos dados com terceiros</li>

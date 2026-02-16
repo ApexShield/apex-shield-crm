@@ -44,7 +44,7 @@ export default function Home() {
 
   const features = [
     { icon: Target, title: "Funil de Vendas em 9 Etapas", desc: "Do primeiro contato até entrega da apólice com cores visuais distintas", gradient: "from-blue-500 to-cyan-500" },
-    { icon: Calendar, title: "Google Calendar Integrado", desc: "Agende reuniões e compromissos sincronizados com seu Google Calendar", gradient: "from-green-500 to-emerald-500" },
+    { icon: Calendar, title: "Agenda Profissional", desc: "Painel de compromissos próprio com envio de emails personalizados aos convidados", gradient: "from-green-500 to-emerald-500" },
     { icon: BarChart3, title: "Dashboard em Tempo Real", desc: "Gráficos, métricas e visão 360° do seu funil de vendas", gradient: "from-purple-500 to-pink-500" },
     { icon: Clock, title: "Agendamento Inteligente", desc: "Visitas, fechamentos e entregas com modalidade online/presencial", gradient: "from-orange-500 to-red-500" },
     { icon: Cake, title: "Aniversariantes Automático", desc: "Alerta de aniversários com envio de mensagem WhatsApp em 1 clique", gradient: "from-pink-500 to-rose-500" },
@@ -98,7 +98,7 @@ export default function Home() {
             <p className="text-cyan-200 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed mb-8">
               O APEX SHIELD CRM é uma plataforma profissional de gestão de relacionamento com clientes (CRM) 
               desenvolvida especificamente para <strong>corretores de seguros</strong>. Gerencie leads, compromissos, 
-              apólices, documentos e equipe — tudo em um só lugar, integrado ao Google Calendar.
+              apólices, documentos e equipe — tudo em um só lugar.
             </p>
 
             {/* Stats */}
@@ -150,16 +150,14 @@ export default function Home() {
               de seguros a organizarem sua operação de vendas de forma profissional.
             </p>
             <p>
-              O sistema oferece <strong>funil de vendas em 9 etapas</strong>, agendamento de compromissos com 
-              <strong> integração ao Google Calendar</strong> (criação de eventos, Google Meet automático e convites), 
-              gestão de apólices, documentos, relatórios em PDF, comunicação integrada via WhatsApp e Email, 
-              gestão financeira, organograma de equipe com hierarquia e muito mais.
+              O sistema oferece <strong>funil de vendas em 9 etapas</strong>, agenda profissional com envio de 
+              convites por email, gestão de apólices, documentos, relatórios em PDF, comunicação integrada 
+              via WhatsApp e Email, gestão financeira, organograma de equipe com hierarquia e muito mais.
             </p>
             <p>
-              Utilizamos a <strong>integração com o Google Calendar</strong> para permitir que corretores agendem 
-              reuniões, visitas e compromissos diretamente no calendário, com geração automática de links 
-              do Google Meet para reuniões online. Os dados são protegidos com criptografia e nunca 
-              compartilhados com terceiros.
+              Nossa <strong>agenda profissional integrada</strong> permite que corretores agendem reuniões, 
+              visitas e compromissos com envio automático de convites personalizados por email aos participantes. 
+              Os dados são protegidos com criptografia e nunca compartilhados com terceiros.
             </p>
           </div>
         </motion.div>
@@ -207,7 +205,7 @@ export default function Home() {
               {[
                 { icon: ShieldCheck, title: "Organização Total", desc: "Funil visual com 9 etapas e cores inteligentes", color: "from-blue-400 to-cyan-400" },
                 { icon: Rocket, title: "Produtividade 10x", desc: "Ações em 2 cliques e automações poderosas", color: "from-purple-400 to-pink-400" },
-                { icon: Globe, title: "Google Calendar", desc: "Agenda sincronizada com Google Meet automático", color: "from-green-400 to-emerald-400" },
+                { icon: Globe, title: "Agenda Inteligente", desc: "Compromissos com envio automático de convites por email", color: "from-green-400 to-emerald-400" },
                 { icon: Phone, title: "Comunicação Integrada", desc: "WhatsApp, Email e telefone em 1 clique", color: "from-orange-400 to-red-400" },
                 { icon: Lock, title: "Dados Protegidos", desc: "Criptografia, LGPD e controle de acesso", color: "from-slate-400 to-slate-500" },
                 { icon: Award, title: "100% Gratuito", desc: "Todas as funcionalidades sem custo algum", color: "from-yellow-400 to-orange-400" },
@@ -256,8 +254,8 @@ export default function Home() {
             </div>
             
             <p className="text-cyan-200/70 text-sm max-w-2xl mx-auto">
-              O APEX SHIELD CRM utiliza a integração com Google Calendar para gerenciamento de 
-              compromissos profissionais. Seus dados são protegidos e nunca compartilhados com terceiros.
+              O APEX SHIELD CRM possui agenda profissional integrada para gerenciamento de 
+              compromissos. Seus dados são protegidos e nunca compartilhados com terceiros.
             </p>
 
             <div className="flex items-center justify-center gap-6 flex-wrap">

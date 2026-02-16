@@ -623,8 +623,8 @@ export default function BoasVindas() {
                   Para usar o <strong>APEX SHIELD CRM</strong>, precisamos do seu consentimento para:
                 </p>
                 <ul className="list-disc ml-6 space-y-2">
-                  <li><strong>Criar e gerenciar compromissos</strong> no seu Google Calendar</li>
-                  <li><strong>Visualizar seus eventos</strong> para melhor organização</li>
+                  <li><strong>Criar e gerenciar compromissos</strong> na agenda profissional do CRM</li>
+                  <li><strong>Enviar convites por email</strong> aos participantes dos compromissos</li>
                   <li><strong>Armazenar dados de leads e clientes</strong> que você cadastrar</li>
                   <li><strong>Proteger seus dados</strong> com criptografia e segurança</li>
                 </ul>

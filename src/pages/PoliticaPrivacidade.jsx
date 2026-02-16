@@ -45,35 +45,32 @@ export default function PoliticaPrivacidade() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-indigo-600" />
-                2. Integração com Google Calendar
+                2. Agenda Profissional e Envio de Emails
               </CardTitle>
             </CardHeader>
             <CardContent className="text-slate-600 space-y-3">
-              <p className="font-semibold">Por que precisamos de acesso ao seu Google Calendar:</p>
+              <p className="font-semibold">Como funciona a agenda do CRM:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li>
                   <strong>Criar compromissos:</strong> Agendar reuniões, visitas e ligações 
-                  diretamente no seu calendário pessoal
+                  diretamente na agenda profissional do CRM
                 </li>
                 <li>
-                  <strong>Visualizar eventos:</strong> Mostrar seus compromissos na interface 
-                  do CRM para melhor organização
+                  <strong>Envio de convites:</strong> Emails personalizados são enviados 
+                  automaticamente aos participantes
                 </li>
                 <li>
-                  <strong>Atualizar eventos:</strong> Editar horários, descrições e participantes 
-                  de compromissos já agendados
+                  <strong>Atualizar eventos:</strong> Ao editar compromissos, os participantes 
+                  podem ser notificados por email sobre as mudanças
                 </li>
                 <li>
-                  <strong>Deletar eventos:</strong> Remover compromissos cancelados
-                </li>
-                <li>
-                  <strong>Google Meet:</strong> Criar links automáticos de videochamada para 
-                  reuniões online
+                  <strong>Links de reunião:</strong> Configure um link padrão de videoconferência 
+                  para inclusão nos convites
                 </li>
               </ul>
               <p className="text-sm bg-indigo-50 p-3 rounded-lg mt-4">
-                ✅ <strong>Garantia:</strong> Só acessamos SEUS eventos. Nunca acessamos calendários 
-                de outras pessoas. Nunca compartilhamos seus dados com terceiros.
+                ✅ <strong>Garantia:</strong> Os emails são enviados apenas para participantes 
+                que você cadastrar. Nunca compartilhamos seus dados com terceiros.
               </p>
             </CardContent>
           </Card>
@@ -101,11 +98,11 @@ export default function PoliticaPrivacidade() {
                 <li>Histórico de interações e observações</li>
               </ul>
 
-              <p className="mt-4"><strong>Dados do Google Calendar:</strong></p>
+              <p className="mt-4"><strong>Dados de Compromissos:</strong></p>
               <ul className="list-disc ml-6 space-y-1">
-                <li>Eventos criados através do CRM</li>
-                <li>Eventos existentes no seu calendário (somente para visualização)</li>
-                <li>Participantes dos eventos</li>
+                <li>Compromissos criados na agenda do CRM</li>
+                <li>Dados de participantes informados pelo usuário</li>
+                <li>Emails enviados como convites de compromissos</li>
               </ul>
 
               <p className="text-sm bg-amber-50 p-3 rounded-lg mt-4">
@@ -129,12 +126,12 @@ export default function PoliticaPrivacidade() {
                   protocolo HTTPS/TLS
                 </li>
                 <li>
-                  <strong>Autenticação OAuth 2.0:</strong> Usamos o padrão de segurança do 
-                  Google para acesso ao Calendar
+                  <strong>Autenticação segura:</strong> Sistema de autenticação robusto 
+                  com controle de acesso por hierarquia
                 </li>
                 <li>
-                  <strong>Tokens seguros:</strong> Armazenamos tokens de acesso criptografados 
-                  e com data de expiração
+                  <strong>Dados protegidos:</strong> Armazenamento seguro com 
+                  controle de permissões por usuário
                 </li>
                 <li>
                   <strong>Acesso controlado:</strong> Apenas você pode ver seus próprios leads 
@@ -163,7 +160,7 @@ export default function PoliticaPrivacidade() {
                 <li><strong>Excluir</strong> seus dados pessoais</li>
                 <li><strong>Revogar</strong> o consentimento de uso de dados</li>
                 <li><strong>Exportar</strong> seus dados em formato legível</li>
-                <li><strong>Desconectar</strong> sua conta Google a qualquer momento</li>
+                <li><strong>Solicitar exclusão</strong> de sua conta a qualquer momento</li>
               </ul>
             </CardContent>
           </Card>
@@ -203,9 +200,9 @@ export default function PoliticaPrivacidade() {
 
           <div className="bg-indigo-50 border-l-4 border-indigo-600 p-6 rounded-lg">
             <p className="text-slate-700">
-              <strong>Resumo:</strong> Usamos o Google Calendar apenas para criar e gerenciar 
-              seus compromissos profissionais. Seus dados são protegidos, nunca compartilhados 
-              com terceiros, e você pode revogar o acesso a qualquer momento.
+              <strong>Resumo:</strong> O CRM possui agenda profissional própria para gerenciar 
+              seus compromissos. Emails de convite são enviados apenas aos participantes que 
+              você cadastrar. Seus dados são protegidos e nunca compartilhados com terceiros.
             </p>
           </div>
         </div>

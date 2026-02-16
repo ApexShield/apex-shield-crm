@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Settings, Mail } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Settings, Mail, CheckCircle2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -142,6 +142,9 @@ export default function Compromissos() {
       if (!data.meeting_link && defaultMeetingLink && data.modalidade === "online") {
         data.meeting_link = defaultMeetingLink;
       }
+      if (data.email_participante) {
+        data.email_enviado = true;
+      }
       const result = await base44.entities.Compromisso.create(data);
       if (data.email_participante) await enviarEmailCompromisso(data, "novo");
       return result;
@@ -157,6 +160,9 @@ export default function Compromissos() {
   const atualizarMutation = useMutation({
     mutationFn: async (data) => {
       const { id, sendEmail, ...updateData } = data;
+      if (sendEmail && updateData.email_participante) {
+        updateData.email_enviado = true;
+      }
       await base44.entities.Compromisso.update(id, updateData);
       if (sendEmail && updateData.email_participante) await enviarEmailCompromisso(updateData, "atualizado");
     },
@@ -372,8 +378,12 @@ export default function Compromissos() {
                                             className={`absolute rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab overflow-hidden ${snap.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'}`}
                                             style={{ backgroundColor: event.cor || "#3b82f6", top: `${topOffset}%`, height: `${heightPx}px`, left: '2px', width: 'calc(100% - 4px)', ...prov.draggableProps.style }}
                                             onClick={(e) => { if (!snap.isDragging) { e.stopPropagation(); handleEditEvent(event); } }}>
-                                            <div className="truncate">{event.titulo}</div>
+                                            <div className="flex items-center gap-1">
+                                              <span className="truncate flex-1">{event.titulo}</span>
+                                              {event.convidado_confirmou && <CheckCircle2 className="w-3 h-3 text-green-200 flex-shrink-0" />}
+                                            </div>
                                             {!isNaN(start.getTime()) && <div className="text-[9px] opacity-75">{format(start, 'HH:mm')}</div>}
+                                            {event.modalidade && <div className="text-[9px] opacity-80">{event.modalidade === 'online' ? 'Meet' : 'Presencial'}</div>}
                                             {event.meeting_link && <div className="text-[9px] opacity-90 truncate mt-0.5 cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); window.open(event.meeting_link, '_blank'); }}>🔗 Reunião</div>}
                                           </div>
                                         )}

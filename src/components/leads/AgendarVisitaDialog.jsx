@@ -153,59 +153,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         console.error('Erro ao sincronizar com Google Calendar:', err);
       }
 
-      // Enviar email de convite ao participante com botões de confirmação
-      if (participanteEmail) {
-        const dataInicio = new Date(dataToSubmit.data_inicio);
-        const dataFim = new Date(dataToSubmit.data_fim);
-        const { format: fmt } = await import("date-fns");
-        const dataFormatada = fmt(dataInicio, "dd/MM/yyyy");
-        const horaInicio = fmt(dataInicio, "HH:mm");
-        const horaFim = fmt(dataFim, "HH:mm");
-        const organizador = user?.full_name || user?.email || "Organizador";
-
-        const functionsBaseUrl = `${window.location.origin}/api/functions`;
-        const confirmUrl = `${functionsBaseUrl}/confirmarPresenca?id=${compromisso.id}&action=confirmar`;
-        const recusarUrl = `${functionsBaseUrl}/confirmarPresenca?id=${compromisso.id}&action=recusar`;
-
-        const linkReuniao = dataToSubmit.meeting_link || '';
-        const meetingBtnHtml = linkReuniao ? `<div style="text-align:center;margin-top:20px;"><a href="${linkReuniao}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(79,70,229,0.3);">💻 Entrar na Reunião</a></div>` : '';
-
-        await base44.functions.invoke('enviarEmailGmail', {
-          to: participanteEmail,
-          subject: `📅 Convite: ${dataToSubmit.titulo}`,
-          body: `<div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:40px 32px;text-align:center;">
-              <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;"><span style="font-size:28px;">📅</span></div>
-              <h1 style="color:white;margin:0;font-size:22px;font-weight:700;">Novo Compromisso</h1>
-              <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:13px;letter-spacing:0.05em;text-transform:uppercase;">APEX SHIELD CRM</p>
-            </div>
-            <div style="padding:32px;">
-              <h2 style="color:#1e293b;margin:0 0 20px;font-size:20px;font-weight:700;">${dataToSubmit.titulo}</h2>
-              <div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #4f46e5;">
-                <table style="width:100%;border-collapse:collapse;">
-                  <tr><td style="padding:8px 0;color:#64748b;font-size:14px;width:30px;vertical-align:top;">📅</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">Data: ${dataFormatada}</td></tr>
-                  <tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">🕐</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">Horário: ${horaInicio} - ${horaFim}</td></tr>
-                  <tr><td style="padding:8px 0;color:#64748b;font-size:14px;vertical-align:top;">📍</td><td style="padding:8px 0;color:#334155;font-size:14px;font-weight:600;">${formData.modalidade === 'online' ? 'Online' : 'Presencial'}${formData.endereco ? ' — ' + formData.endereco : ''}</td></tr>
-                </table>
-              </div>
-              ${meetingBtnHtml}
-              <div style="margin-top:24px;text-align:center;background:#f8fafc;border-radius:12px;padding:20px;">
-                <p style="color:#334155;font-size:14px;margin-bottom:16px;font-weight:700;">Você confirma sua presença?</p>
-                <div>
-                  <a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin:0 6px;box-shadow:0 4px 12px rgba(5,150,105,0.3);">✅ Sim, confirmo</a>
-                  <a href="${recusarUrl}" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin:0 6px;box-shadow:0 4px 12px rgba(220,38,38,0.3);">❌ Não poderei ir</a>
-                </div>
-              </div>
-              <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;">
-                <p style="color:#64748b;font-size:13px;margin:0;">Organizado por <strong style="color:#334155;">${organizador}</strong></p>
-              </div>
-            </div>
-            <div style="background:#f8fafc;padding:16px;text-align:center;border-top:1px solid #e2e8f0;">
-              <p style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin:0;">● APEX SHIELD CRM</p>
-            </div>
-          </div>`
-        });
-      }
+      // O Google Calendar já envia convite automaticamente com botão Sim/Não/Talvez (sendUpdates=all)
 
       const agendamento = {
         tipo: formData.tipo,

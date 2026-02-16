@@ -273,12 +273,8 @@ export default function Compromissos() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingEvent) {
-      if (formData.email_participante) {
-        setPendingUpdateData(formData);
-        setShowConfirmResend(true);
-      } else {
-        atualizarMutation.mutate({ ...formData, id: editingEvent.id, sendEmail: false });
-      }
+      // O Google Calendar já notifica automaticamente ao atualizar (sendUpdates=all)
+      atualizarMutation.mutate({ ...formData, id: editingEvent.id });
     } else {
       criarMutation.mutate(formData);
     }

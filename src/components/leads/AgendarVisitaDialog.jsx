@@ -132,7 +132,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         email_enviado: !!participanteEmail
       });
 
-      // Enviar email de convite ao participante
+      // Enviar email de convite ao participante com botões de confirmação
       if (participanteEmail) {
         const dataInicio = new Date(dataToSubmit.data_inicio);
         const dataFim = new Date(dataToSubmit.data_fim);
@@ -141,6 +141,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         const horaInicio = fmt(dataInicio, "HH:mm");
         const horaFim = fmt(dataFim, "HH:mm");
         const organizador = user?.full_name || user?.email || "Organizador";
+
+        const baseUrl = window.location.origin;
+        const confirmUrl = `${baseUrl}/functions/confirmarPresenca?id=${compromisso.id}&action=confirmar`;
+        const recusarUrl = `${baseUrl}/functions/confirmarPresenca?id=${compromisso.id}&action=recusar`;
 
         await base44.functions.invoke('enviarEmailGmail', {
           to: participanteEmail,
@@ -158,8 +162,17 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                 <p><strong>📍 Modalidade:</strong> ${formData.modalidade === 'online' ? 'Online' : 'Presencial'}</p>
                 ${formData.endereco ? `<p><strong>📍 Endereço:</strong> ${formData.endereco}</p>` : ''}
               </div>
+              <div style="margin-top:24px;text-align:center;">
+                <p style="color:#475569;font-size:14px;margin-bottom:16px;font-weight:600;">Você confirma sua presença?</p>
+                <div>
+                  <a href="${confirmUrl}" style="display:inline-block;background:#10b981;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px;">✅ Sim, confirmo</a>
+                  <a href="${recusarUrl}" style="display:inline-block;background:#ef4444;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px;">❌ Não poderei ir</a>
+                </div>
+              </div>
               <p style="color:#64748b;margin-top:20px;">Organizado por: <strong>${organizador}</strong></p>
-              <p style="color:#64748b;margin-top:10px;font-size:13px;">Por favor, responda este email com <strong>"CONFIRMO"</strong> para confirmar sua presença.</p>
+            </div>
+            <div style="background:#f1f5f9;padding:15px;text-align:center;font-size:12px;color:#94a3b8;">
+              APEX SHIELD CRM - Gestão Profissional de Compromissos
             </div>
           </div>`
         });

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Settings, Mail, CheckCircle2 } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Settings, Mail, CheckCircle2, RefreshCw } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -33,6 +33,7 @@ export default function Compromissos() {
   const [pendingUpdateData, setPendingUpdateData] = useState(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [defaultMeetingLink, setDefaultMeetingLink] = useState("");
+  const [checkingConfirmations, setCheckingConfirmations] = useState(false);
 
   const getDefaultDates = () => {
     const now = new Date();
@@ -305,13 +306,19 @@ export default function Compromissos() {
             </div>
             <div className="flex gap-2">
               <Button onClick={async () => {
+                setCheckingConfirmations(true);
                 try {
                   const res = await base44.functions.invoke('verificarConfirmacoesGmail', {});
+                  const data = res.data;
                   queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-                  alert(`✅ Verificação concluída! ${res.data.confirmed || 0} confirmação(ões) encontrada(s).`);
-                } catch (e) { alert('Erro ao verificar: ' + e.message); }
-              }} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                <Mail className="w-4 h-4 mr-2" /> Verificar Confirmações
+                  alert(data.message || 'Verificação concluída');
+                } catch (e) {
+                  alert('Erro ao verificar: ' + e.message);
+                } finally {
+                  setCheckingConfirmations(false);
+                }
+              }} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20" disabled={checkingConfirmations}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${checkingConfirmations ? 'animate-spin' : ''}`} /> {checkingConfirmations ? 'Verificando...' : 'Verificar Confirmações'}
               </Button>
               <Button onClick={() => setShowLinkDialog(true)} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                 <Link2 className="w-4 h-4 mr-2" /> Link de Reunião Padrão

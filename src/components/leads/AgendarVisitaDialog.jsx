@@ -223,6 +223,62 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Tipo de Compromisso primeiro com destaque */}
+          <div className="bg-indigo-500/20 border-2 border-indigo-400/50 rounded-xl p-4 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">👆</span>
+              <Label className="text-indigo-200 font-bold text-sm">PRIMEIRO: Selecione o tipo de compromisso</Label>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Tipo de Compromisso *</Label>
+                <Select 
+                  value={tipoCompromisso} 
+                  onValueChange={(value) => {
+                    setTipoCompromisso(value);
+                    setSubTipoFechamento("");
+                    if (value !== "Fechamento") {
+                      atualizarTitulo(value, "");
+                    }
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white">
+                    <SelectValue placeholder="Selecione o tipo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AB Visita">AB Visita</SelectItem>
+                    <SelectItem value="Fechamento">Fechamento</SelectItem>
+                    <SelectItem value="Entrega de Apólice">Entrega de Apólice</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {tipoCompromisso === "Fechamento" && (
+                <div>
+                  <Label className="text-white">Fase do Fechamento *</Label>
+                  <Select 
+                    value={subTipoFechamento} 
+                    onValueChange={(value) => {
+                      setSubTipoFechamento(value);
+                      atualizarTitulo("Fechamento", value);
+                    }}
+                  >
+                    <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white">
+                      <SelectValue placeholder="Selecione a fase..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="F">F</SelectItem>
+                      <SelectItem value="F2">F2</SelectItem>
+                      <SelectItem value="F3">F3</SelectItem>
+                      <SelectItem value="F4">F4</SelectItem>
+                      <SelectItem value="F5">F5</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <Label className="text-white">Título *</Label>
             <Input
@@ -233,55 +289,6 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               required
               readOnly
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-white">Tipo de Compromisso *</Label>
-              <Select 
-                value={tipoCompromisso} 
-                onValueChange={(value) => {
-                  setTipoCompromisso(value);
-                  setSubTipoFechamento("");
-                  if (value !== "Fechamento") {
-                    atualizarTitulo(value, "");
-                  }
-                }}
-              >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Selecione o tipo..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="AB Visita">AB Visita</SelectItem>
-                  <SelectItem value="Fechamento">Fechamento</SelectItem>
-                  <SelectItem value="Entrega de Apólice">Entrega de Apólice</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {tipoCompromisso === "Fechamento" && (
-              <div>
-                <Label className="text-white">Fase do Fechamento *</Label>
-                <Select 
-                  value={subTipoFechamento} 
-                  onValueChange={(value) => {
-                    setSubTipoFechamento(value);
-                    atualizarTitulo("Fechamento", value);
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Selecione a fase..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="F">F</SelectItem>
-                    <SelectItem value="F2">F2</SelectItem>
-                    <SelectItem value="F3">F3</SelectItem>
-                    <SelectItem value="F4">F4</SelectItem>
-                    <SelectItem value="F5">F5</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -3,7 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
@@ -14,38 +13,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Campos obrigatórios: dataInicio, dataFim' }, { status: 400 });
     }
 
-    // Obter token diretamente
-    const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({ user_email: user.email });
-    if (!auths || auths.length === 0) {
-      return Response.json({ error: 'Usuário precisa conectar conta Google', needsAuth: true }, { status: 401 });
-    }
-
-    let accessToken = auths[0].access_token;
-    const tokenExpiry = new Date(auths[0].token_expiry);
-    if (tokenExpiry < new Date() && auths[0].refresh_token) {
-      const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: Deno.env.get("GOOGLE_OAUTH_CLIENT_ID"),
-          client_secret: Deno.env.get("google_oauth_client_secret"),
-          refresh_token: auths[0].refresh_token,
-          grant_type: 'refresh_token'
-        })
-      });
-      if (!refreshResponse.ok) {
-        return Response.json({ error: 'Token expirado. Reconecte Google.', needsAuth: true }, { status: 401 });
-      }
-      const newTokens = await refreshResponse.json();
-      await base44.asServiceRole.entities.UserGoogleAuth.update(auths[0].id, {
-        access_token: newTokens.access_token,
-        token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
-      });
-      accessToken = newTokens.access_token;
-    }
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
 
     const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
-      `timeMin=${encodeURIComponent(dataInicio)}&timeMax=${encodeURIComponent(dataFim)}&singleEvents=true&orderBy=startTime`;
+      `timeMin=${encodeURIComponent(dataInicio)}&timeMax=${encodeURIComponent(dataFim)}&singleEvents=true&orderBy=startTime&maxResults=250`;
 
     const calendarResponse = await fetch(calendarUrl, {
       headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -59,29 +30,29 @@ Deno.serve(async (req) => {
 
     const calendarData = await calendarResponse.json();
 
+    // Google Calendar color mapping to hex
     const colorMap = {
-      "1": "#0891b2", "2": "#10b981", "3": "#8b5cf6", "4": "#ec4899",
-      "5": "#fbbf24", "6": "#f97316", "7": "#0891b2", "8": "#6b7280",
-      "9": "#0891b2", "10": "#10b981", "11": "#ef4444"
+      "1": "#7986cb", "2": "#33b679", "3": "#8e24aa", "4": "#e67c73",
+      "5": "#f6bf26", "6": "#f4511e", "7": "#039be5", "8": "#616161",
+      "9": "#3f51b5", "10": "#0b8043", "11": "#d50000"
     };
 
     const eventos = (calendarData.items || []).map(event => {
-      const hexColor = colorMap[event.colorId || '9'] || '#0891b2';
+      const hexColor = colorMap[event.colorId] || '#4285f4'; // default Google blue
       const attendees = event.attendees || [];
       return {
-        id: event.id,
+        google_event_id: event.id,
         titulo: event.summary || 'Sem título',
         descricao: event.description || '',
         data_inicio: event.start?.dateTime || event.start?.date,
         data_fim: event.end?.dateTime || event.end?.date,
         cor: hexColor,
-        modalidade: event.location === 'Online' ? 'online' : 'presencial',
         endereco: event.location || '',
         meeting_link: event.hangoutLink || event.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri || '',
         participantes: attendees.map(att => ({ email: att.email, nome: att.displayName || att.email, status: att.responseStatus })),
-        confirmado: attendees.some(att => att.responseStatus === 'accepted'),
-        total_participantes: attendees.length,
-        htmlLink: event.htmlLink
+        htmlLink: event.htmlLink,
+        is_all_day: !event.start?.dateTime,
+        source: 'google'
       };
     });
 

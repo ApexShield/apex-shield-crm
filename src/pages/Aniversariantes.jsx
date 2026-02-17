@@ -14,7 +14,7 @@ import confetti from "canvas-confetti";
 export default function Aniversariantes() {
   const [filter, setFilter] = useState("hoje");
   const [showPopup, setShowPopup] = useState(false);
-  const [usuarioFiltro, setUsuarioFiltro] = useState("todos");
+  
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
@@ -234,23 +234,7 @@ ${nomeCorretor}`;
                 <p className="text-purple-600 font-medium">Celebre com seus clientes!</p>
               </div>
             </div>
-            {(user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
-              <Select value={usuarioFiltro} onValueChange={setUsuarioFiltro}>
-                <SelectTrigger className="w-[280px] bg-gradient-to-r from-pink-500 to-purple-600 border-2 border-white/30 text-white font-bold shadow-lg">
-                  <SelectValue placeholder="👥 Filtrar por usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos" className="font-bold">
-                    📊 Todos os usuários
-                  </SelectItem>
-                  {usuariosVisiveis.map(u => (
-                    <SelectItem key={u.id} value={u.email}>
-                      👤 {u.full_name || u.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            
           </div>
 
           {/* Filtros */}

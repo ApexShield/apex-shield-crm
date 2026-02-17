@@ -1,5 +1,49 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+async function getUserCalendarToken(base44, userEmail) {
+  const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+    user_email: userEmail
+  });
+
+  if (auths.length === 0) {
+    return { error: 'Google Calendar não conectado', needsAuth: true };
+  }
+
+  const auth = auths[0];
+  const tokenExpiry = new Date(auth.token_expiry);
+  const now = new Date();
+
+  if (tokenExpiry < now && auth.refresh_token) {
+    const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+    const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
+
+    const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        refresh_token: auth.refresh_token,
+        grant_type: 'refresh_token'
+      })
+    });
+
+    if (!refreshResponse.ok) {
+      return { error: 'Token expirado. Reconecte sua conta Google.', needsAuth: true };
+    }
+
+    const newTokens = await refreshResponse.json();
+    await base44.asServiceRole.entities.UserGoogleAuth.update(auth.id, {
+      access_token: newTokens.access_token,
+      token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
+    });
+
+    return { access_token: newTokens.access_token, google_email: auth.google_email };
+  }
+
+  return { access_token: auth.access_token, google_email: auth.google_email };
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,7 +57,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Campos obrigatórios: dataInicio, dataFim' }, { status: 400 });
     }
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    // Buscar token do usuário logado
+    const tokenResult = await getUserCalendarToken(base44, user.email);
+    if (tokenResult.error) {
+      return Response.json({ success: false, error: tokenResult.error, needsAuth: tokenResult.needsAuth, eventos: [] });
+    }
+    const accessToken = tokenResult.access_token;
 
     const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
       `timeMin=${encodeURIComponent(dataInicio)}&timeMax=${encodeURIComponent(dataFim)}&singleEvents=true&orderBy=startTime&maxResults=250`;
@@ -25,12 +74,11 @@ Deno.serve(async (req) => {
     if (!calendarResponse.ok) {
       const error = await calendarResponse.text();
       console.error('Erro ao buscar eventos:', error);
-      return Response.json({ success: false, error: 'Erro ao buscar eventos', details: error }, { status: calendarResponse.status });
+      return Response.json({ success: false, error: 'Erro ao buscar eventos', details: error, eventos: [] }, { status: calendarResponse.status });
     }
 
     const calendarData = await calendarResponse.json();
 
-    // Google Calendar color mapping to hex
     const colorMap = {
       "1": "#7986cb", "2": "#33b679", "3": "#8e24aa", "4": "#e67c73",
       "5": "#f6bf26", "6": "#f4511e", "7": "#039be5", "8": "#616161",
@@ -38,7 +86,7 @@ Deno.serve(async (req) => {
     };
 
     const eventos = (calendarData.items || []).map(event => {
-      const hexColor = colorMap[event.colorId] || '#4285f4'; // default Google blue
+      const hexColor = colorMap[event.colorId] || '#4285f4';
       const attendees = event.attendees || [];
       return {
         google_event_id: event.id,
@@ -56,10 +104,10 @@ Deno.serve(async (req) => {
       };
     });
 
-    return Response.json({ success: true, eventos, total: eventos.length });
+    return Response.json({ success: true, eventos, total: eventos.length, google_email: tokenResult.google_email });
 
   } catch (error) {
     console.error('Erro ao listar eventos:', error);
-    return Response.json({ success: false, error: error.message || 'Erro ao listar eventos' }, { status: 500 });
+    return Response.json({ success: false, error: error.message || 'Erro ao listar eventos', eventos: [] }, { status: 500 });
   }
 });

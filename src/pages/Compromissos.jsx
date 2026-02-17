@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Mail, CheckCircle2, RefreshCw, Repeat, Download } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, CheckCircle2, RefreshCw, Repeat, Download, List } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -38,6 +38,8 @@ export default function Compromissos() {
   const [showFixoDialog, setShowFixoDialog] = useState(false);
   const [savingFixo, setSavingFixo] = useState(false);
   const [syncingCalendar, setSyncingCalendar] = useState(false);
+  const [mobileView, setMobileView] = useState("week"); // "week" or "day"
+  const [mobileDayIndex, setMobileDayIndex] = useState(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
 
   const getDefaultDates = () => {
     const now = new Date();
@@ -361,29 +363,40 @@ export default function Compromissos() {
     });
   };
 
+  // Mobile day events for list view
+  const mobileDay = weekDays[mobileDayIndex] || weekDays[0];
+  const mobileDayEvents = useMemo(() => {
+    if (!mobileDay) return [];
+    return compromissos.filter(c => {
+      if (!c.data_inicio) return false;
+      const cs = new Date(c.data_inicio);
+      return !isNaN(cs.getTime()) && isSameDay(cs, mobileDay);
+    }).sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
+  }, [compromissos, mobileDay]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-[1800px] mx-auto">
-        <div className="mb-6 space-y-4">
+        <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">
           <ConexaoStatusBanner />
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <CalendarDays className="w-7 h-7 text-white" />
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <CalendarDays className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-black text-white">Agenda Profissional</h1>
-                <p className="text-indigo-300">Organize seus compromissos e reuniões</p>
+                <h1 className="text-xl md:text-3xl font-black text-white">Agenda</h1>
+                <p className="text-indigo-300 text-xs md:text-base">Compromissos e reuniões</p>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Button onClick={() => setShowFixoDialog(true)} variant="outline" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20">
-                <Repeat className="w-4 h-4 mr-2" /> Compromisso Fixo
+              <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20 text-xs md:text-sm">
+                <Repeat className="w-4 h-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Compromisso </span>Fixo
               </Button>
               <Button onClick={() => {
                 queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
-              }} variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20">
-                <Download className="w-4 h-4 mr-2" /> Sincronizar Google
+              }} variant="outline" size="sm" className="bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 text-xs md:text-sm">
+                <Download className="w-4 h-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Sincronizar </span>Google
               </Button>
               <Button onClick={async () => {
                 setCheckingConfirmations(true);
@@ -397,34 +410,87 @@ export default function Compromissos() {
                 } finally {
                   setCheckingConfirmations(false);
                 }
-              }} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20" disabled={checkingConfirmations}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${checkingConfirmations ? 'animate-spin' : ''}`} /> {checkingConfirmations ? 'Verificando...' : 'Verificar Confirmações'}
+              }} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs md:text-sm hidden md:flex" disabled={checkingConfirmations}>
+                <RefreshCw className={`w-4 h-4 mr-1 md:mr-2 ${checkingConfirmations ? 'animate-spin' : ''}`} /> {checkingConfirmations ? 'Verificando...' : 'Confirmações'}
               </Button>
-              <Button onClick={() => setShowLinkDialog(true)} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                <Link2 className="w-4 h-4 mr-2" /> Link de Reunião Padrão
+              <Button onClick={() => setShowLinkDialog(true)} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs md:text-sm hidden md:flex">
+                <Link2 className="w-4 h-4 mr-1 md:mr-2" /> Link Padrão
               </Button>
-              <Button onClick={() => { resetForm(); setShowDialog(true); }} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg">
-                <Plus className="w-5 h-5 mr-2" /> Criar Compromisso
+              <Button onClick={() => { resetForm(); setShowDialog(true); }} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-4 md:px-8 py-3 md:py-6 text-sm md:text-lg">
+                <Plus className="w-5 h-5 mr-1 md:mr-2" /> <span className="hidden md:inline">Criar </span>Novo
               </Button>
             </div>
           </div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20"><ChevronLeft className="w-5 h-5" /></Button>
-              <Button variant="outline" onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0 font-bold">Hoje</Button>
-              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20"><ChevronRight className="w-5 h-5" /></Button>
+          <div className="flex items-center justify-between p-3 md:p-6 border-b border-white/10">
+            <div className="flex items-center gap-2 md:gap-3">
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 w-8 md:h-9 md:w-9"><ChevronLeft className="w-4 h-4 md:w-5 md:h-5" /></Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0 font-bold text-xs md:text-sm">Hoje</Button>
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 w-8 md:h-9 md:w-9"><ChevronRight className="w-4 h-4 md:w-5 md:h-5" /></Button>
             </div>
-            <span className="text-xl font-bold text-white">{format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}</span>
+            <span className="text-sm md:text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
           </div>
 
-          <div className="flex">
-            <div className="w-80 border-r border-white/10 p-6 bg-white/5">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Clock className="w-5 h-5" /> Mini Calendário</h3>
+          {/* Mobile: Day selector + list view */}
+          <div className="md:hidden">
+            <div className="flex overflow-x-auto gap-1 p-2 border-b border-white/10">
+              {weekDays.map((day, i) => (
+                <button key={i} onClick={() => setMobileDayIndex(i)}
+                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg transition-all ${
+                    mobileDayIndex === i ? 'bg-indigo-600 text-white' : isSameDay(day, new Date()) ? 'bg-white/10 text-white' : 'text-indigo-300'
+                  }`}>
+                  <span className="text-[10px] font-bold uppercase">{format(day, "EEE", { locale: ptBR })}</span>
+                  <span className="text-lg font-black">{format(day, "d")}</span>
+                </button>
+              ))}
+            </div>
+            <div className="p-3 space-y-2 max-h-[60vh] overflow-y-auto">
+              {mobileDayEvents.length === 0 ? (
+                <div className="text-center py-8 text-indigo-300 text-sm">Nenhum compromisso neste dia</div>
+              ) : (
+                mobileDayEvents.map(event => {
+                  const start = new Date(event.data_inicio);
+                  const end = new Date(event.data_fim);
+                  return (
+                    <div key={event.id} onClick={() => handleEditEvent(event)}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer hover:bg-white/10 transition-all">
+                      <div className="w-1.5 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: event.cor || '#3b82f6' }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-bold text-sm truncate">{event.titulo}</span>
+                          {event.email_participante && event.convidado_confirmou && (
+                            <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-2.5 h-2.5 text-white" /></span>
+                          )}
+                          {event.email_participante && !event.convidado_confirmou && (
+                            <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><Clock className="w-2 h-2 text-white" /></span>
+                          )}
+                        </div>
+                        <div className="text-xs text-indigo-300 mt-0.5">
+                          {!isNaN(start.getTime()) && format(start, 'HH:mm')} - {!isNaN(end.getTime()) && format(end, 'HH:mm')}
+                          {event.modalidade && <span className="ml-2">{event.modalidade === 'online' ? '💻 Online' : '📍 Presencial'}</span>}
+                        </div>
+                        {event.endereco && <div className="text-[11px] text-indigo-400 truncate mt-0.5">{event.endereco}</div>}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                    </div>
+                  );
+                })
+              )}
+              <Button onClick={() => { const s = new Date(mobileDay); s.setHours(9,0,0,0); const e = new Date(s); e.setHours(10,0,0,0); setFormData({ titulo: "", descricao: "", data_inicio: s.toISOString(), data_fim: e.toISOString(), cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", email_participante: "", endereco: "" }); setShowDialog(true); }}
+                className="w-full bg-white/5 border border-dashed border-white/20 text-indigo-300 hover:bg-white/10 mt-2">
+                <Plus className="w-4 h-4 mr-2" /> Adicionar compromisso
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop: Full week grid */}
+          <div className="hidden md:flex">
+            <div className="w-72 lg:w-80 border-r border-white/10 p-4 lg:p-6 bg-white/5">
+              <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm"><Clock className="w-5 h-5" /> Mini Calendário</h3>
               <div className="bg-white rounded-xl p-2">
-                <CalendarComponent mode="single" selected={selectedDate} onSelect={(date) => { setSelectedDate(date); setCurrentWeekStart(startOfWeek(date, { weekStartsOn: 1 })); }} locale={ptBR} className="rounded-md" />
+                <CalendarComponent mode="single" selected={selectedDate} onSelect={(date) => { if (date) { setSelectedDate(date); setCurrentWeekStart(startOfWeek(date, { weekStartsOn: 1 })); }}} locale={ptBR} className="rounded-md" />
               </div>
               <div className="mt-6">
                 <h4 className="text-white font-bold mb-3 text-sm">Legenda</h4>
@@ -524,12 +590,12 @@ export default function Compromissos() {
 
       {/* Dialog Criar/Editar */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20">
+        <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">{editingEvent ? '✏️ Editar Compromisso' : '➕ Novo Compromisso'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><Label className="text-white">Título *</Label><Input value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} className="bg-white/10 border-white/20 text-white" required /></div>
               <div><Label className="text-white">Tipo</Label>
                 <Select value={formData.tipo} onValueChange={(v) => { const c = COLORS.find(x => x.tipo === v); setFormData({ ...formData, tipo: v, cor: c ? c.value : formData.cor }); }}>
@@ -538,7 +604,7 @@ export default function Compromissos() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><Label className="text-white">Modalidade</Label>
                 <Select value={formData.modalidade} onValueChange={(v) => setFormData({ ...formData, modalidade: v })}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -566,7 +632,7 @@ export default function Compromissos() {
             {formData.modalidade === "presencial" && (
               <div><Label className="text-white">Endereço (opcional)</Label><Input value={formData.endereco} onChange={(e) => setFormData({ ...formData, endereco: e.target.value })} placeholder="Endereço do compromisso" className="bg-white/10 border-white/20 text-white" /></div>
             )}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div><Label className="text-white mb-2 block">Data *</Label>
                 <Input type="date" value={formData.data_inicio ? (() => { const d = new Date(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "yyyy-MM-dd"); })() : ""}
                   onChange={(e) => { if (!e.target.value) return; const [y,m,d] = e.target.value.split('-').map(Number); const cur = new Date(formData.data_inicio || Date.now()); const nd = new Date(y, m-1, d, cur.getHours(), cur.getMinutes()); if (isNaN(nd.getTime())) return; const ne = new Date(nd); ne.setHours(ne.getHours()+1); setFormData({ ...formData, data_inicio: nd.toISOString(), data_fim: ne.toISOString() }); }}
@@ -584,7 +650,7 @@ export default function Compromissos() {
               </div>
             </div>
             <div><Label className="text-white mb-2 block">Cor do Compromisso</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {COLORS.map((c) => (
                   <button key={c.value} type="button" className={`flex items-center gap-2 p-2 rounded-lg border-2 hover:scale-105 transition-transform ${formData.cor === c.value ? "border-white bg-white/10" : "border-white/20 bg-white/5"}`} onClick={() => setFormData({ ...formData, cor: c.value, tipo: c.tipo })}>
                     <div className="w-5 h-5 rounded-full flex-shrink-0 shadow-lg" style={{ backgroundColor: c.value }} />

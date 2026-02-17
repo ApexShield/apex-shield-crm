@@ -60,9 +60,19 @@ export default function BoasVindas() {
   const [selectedHierarchy, setSelectedHierarchy] = useState("");
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(auth => {
+      setIsAuthenticated(auth);
+    }).catch(() => setIsAuthenticated(false));
+  }, []);
+
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    enabled: isAuthenticated === true,
+    retry: false
   });
 
   // Redirecionar para Leads se usuário já aceitou política

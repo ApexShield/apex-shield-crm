@@ -6,11 +6,16 @@ export default function ConexaoStatusBanner() {
   const { data: status, isLoading, isError } = useQuery({
     queryKey: ["conexao-status"],
     queryFn: async () => {
-      const res = await base44.functions.invoke("verificarConexaoGmail", {});
-      return res.data;
+      try {
+        const res = await base44.functions.invoke("verificarConexaoGmail", {});
+        return res.data;
+      } catch (e) {
+        console.warn("Erro ao verificar conexões:", e);
+        return null;
+      }
     },
     staleTime: 5 * 60 * 1000,
-    retry: 1
+    retry: 0
   });
 
   if (isLoading) {

@@ -176,10 +176,10 @@ export default function Organograma() {
           </div>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           {/* Usuários sem hierarquia - somente Admin */}
           {isAdmin && usuariosSemHierarquia.length > 0 && (
-            <div className="w-72 flex-shrink-0">
+            <div className="w-full md:w-72 flex-shrink-0">
               <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-yellow-400/30 p-4 sticky top-6">
                 <h3 className="text-yellow-300 font-bold mb-3 text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
@@ -222,8 +222,8 @@ export default function Organograma() {
                 </div>
               </Card>
             ) : arvoresVisiveis.length > 0 ? (
-              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-8 overflow-x-auto">
-                <div className="flex flex-col items-center gap-12 min-w-fit">
+              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-4 md:p-8 overflow-x-auto">
+                <div className="flex flex-col items-center gap-8 md:gap-12 min-w-fit">
                   {arvoresVisiveis.map(arvore => (
                     <OrgTree
                       key={arvore.id}

@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Testa o conector do Gmail
+    // Gmail permanece como conector global (admin envia emails pelo sistema)
     let gmailOk = false;
     try {
       const gmailToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
@@ -22,21 +22,49 @@ Deno.serve(async (req) => {
       console.error('Gmail check failed:', e.message);
     }
 
-    // Testa o conector do Google Calendar
+    // Calendar agora é por usuário - verificar conexão individual
     let calendarOk = false;
+    let calendarEmail = null;
     try {
-      const calToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
-      if (calToken) {
-        const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary', {
-          headers: { 'Authorization': `Bearer ${calToken}` }
-        });
-        calendarOk = res.ok;
+      const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+        user_email: user.email
+      });
+      if (auths.length > 0) {
+        const auth = auths[0];
+        const tokenExpiry = new Date(auth.token_expiry);
+        if (tokenExpiry > new Date()) {
+          calendarOk = true;
+          calendarEmail = auth.google_email;
+        } else if (auth.refresh_token) {
+          // Tentar renovar
+          const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+          const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
+          const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              client_id: CLIENT_ID,
+              client_secret: CLIENT_SECRET,
+              refresh_token: auth.refresh_token,
+              grant_type: 'refresh_token'
+            })
+          });
+          if (refreshResponse.ok) {
+            const newTokens = await refreshResponse.json();
+            await base44.asServiceRole.entities.UserGoogleAuth.update(auth.id, {
+              access_token: newTokens.access_token,
+              token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
+            });
+            calendarOk = true;
+            calendarEmail = auth.google_email;
+          }
+        }
       }
     } catch (e) {
-      console.error('Calendar check failed:', e.message);
+      console.error('Calendar user check failed:', e.message);
     }
 
-    return Response.json({ gmail: gmailOk, calendar: calendarOk });
+    return Response.json({ gmail: gmailOk, calendar: calendarOk, calendarEmail });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

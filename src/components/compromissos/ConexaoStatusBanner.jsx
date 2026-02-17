@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 export default function ConexaoStatusBanner() {
-  const { data: status, isLoading } = useQuery({
+  const { data: status, isLoading, isError } = useQuery({
     queryKey: ["conexao-status"],
     queryFn: async () => {
       const res = await base44.functions.invoke("verificarConexaoGmail", {});
@@ -21,7 +21,7 @@ export default function ConexaoStatusBanner() {
     );
   }
 
-  if (!status) return null;
+  if (isError || !status) return null;
 
   const gmailOk = status.gmail;
   const calendarOk = status.calendar;

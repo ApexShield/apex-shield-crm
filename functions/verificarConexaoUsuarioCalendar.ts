@@ -9,37 +9,69 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verificar se usuário tem Google Calendar conectado
-    const connections = await base44.asServiceRole.entities.UserGoogleCalendarAuth.filter({
+    // Verificar se usuário tem Google Calendar conectado via UserGoogleAuth
+    const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
       user_email: user.email
     });
 
-    if (connections.length === 0) {
+    if (auths.length === 0) {
       return Response.json({ 
         connected: false,
+        needsAuth: true,
         message: 'Google Calendar não conectado'
       });
     }
 
-    const connection = connections[0];
-    
-    // Verificar se token ainda é válido
-    const tokenExpiry = new Date(connection.token_expiry);
+    const auth = auths[0];
+    const tokenExpiry = new Date(auth.token_expiry);
     const now = new Date();
     
+    if (tokenExpiry < now && auth.refresh_token) {
+      const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+      const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
+
+      const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: CLIENT_ID,
+          client_secret: CLIENT_SECRET,
+          refresh_token: auth.refresh_token,
+          grant_type: 'refresh_token'
+        })
+      });
+
+      if (!refreshResponse.ok) {
+        return Response.json({ 
+          connected: false,
+          needsAuth: true,
+          message: 'Token expirado, reconecte sua conta'
+        });
+      }
+
+      const newTokens = await refreshResponse.json();
+      await base44.asServiceRole.entities.UserGoogleAuth.update(auth.id, {
+        access_token: newTokens.access_token,
+        token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
+      });
+
+      return Response.json({ 
+        connected: true,
+        google_email: auth.google_email
+      });
+    }
+
     if (tokenExpiry < now) {
-      // Token expirado - precisa renovar
       return Response.json({ 
         connected: false,
-        expired: true,
+        needsAuth: true,
         message: 'Token expirado, reconecte sua conta'
       });
     }
 
     return Response.json({ 
       connected: true,
-      google_email: connection.google_email,
-      connected_at: connection.connected_at
+      google_email: auth.google_email
     });
   } catch (error) {
     console.error('Erro ao verificar conexão:', error);

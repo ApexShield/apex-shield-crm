@@ -22,71 +22,12 @@ export default function Aniversariantes() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: allClientes = [] } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: () => base44.entities.Cliente.list()
+  // Cada proprietário vê SOMENTE seus próprios leads aniversariantes
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["meus-clientes-aniversario", user?.email],
+    queryFn: () => base44.entities.Cliente.filter({ created_by: user.email }),
+    enabled: !!user?.email
   });
-
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
-    enabled: !!user
-  });
-
-  // Usuários visíveis para filtro
-  const usuariosVisiveis = React.useMemo(() => {
-    if (!user || !allUsers.length) return [];
-    
-    if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
-      return allUsers.filter(u => 
-        u.agencia_id === user.agencia_id && 
-        u.tipo_hierarquia === "Corretor"
-      );
-    }
-    
-    if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
-      return allUsers.filter(u => 
-        u.unidade_id === user.unidade_id &&
-        u.tipo_hierarquia === "Corretor" &&
-        (u.lider_email === user.email || u.lider_id === user.id)
-      );
-    }
-    
-    return [];
-  }, [user, allUsers]);
-
-  // Filtrar clientes baseado em hierarquia e filtro de usuário
-  const clientes = React.useMemo(() => {
-    if (!user || !allClientes.length) return [];
-    
-    let leadsFiltrados = [];
-    
-    if (user.role === "admin") {
-      leadsFiltrados = allClientes;
-    }
-    else if (user.tipo_hierarquia === "Líder de Agência" && user.agencia_id) {
-      const usuariosDaAgencia = allUsers.filter(u => u.agencia_id === user.agencia_id);
-      const emailsDaAgencia = usuariosDaAgencia.map(u => u.email);
-      leadsFiltrados = allClientes.filter(c => emailsDaAgencia.includes(c.created_by));
-    }
-    else if (user.tipo_hierarquia === "Líder de Unidade" && user.unidade_id) {
-      const usuariosDaUnidade = allUsers.filter(u => 
-        u.unidade_id === user.unidade_id &&
-        (u.lider_email === user.email || u.lider_id === user.id || u.email === user.email)
-      );
-      const emailsDaUnidade = usuariosDaUnidade.map(u => u.email);
-      leadsFiltrados = allClientes.filter(c => emailsDaUnidade.includes(c.created_by));
-    }
-    else {
-      leadsFiltrados = allClientes.filter(c => c.created_by === user.email);
-    }
-    
-    if (usuarioFiltro && usuarioFiltro !== "todos") {
-      leadsFiltrados = leadsFiltrados.filter(c => c.created_by === usuarioFiltro);
-    }
-    
-    return leadsFiltrados;
-  }, [allClientes, user, allUsers, usuarioFiltro]);
 
   // Calcular aniversariantes (clientes + filhos + casamento)
   const aniversariantes = React.useMemo(() => {

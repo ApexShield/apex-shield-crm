@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Users, UserPlus, Network, Crown, Shield, AlertCircle } from "lucide-react";
 import OrgTree from "../components/organograma/OrgTree";
 import ConvidarEquipeDialog from "../components/organograma/ConvidarEquipeDialog";
+import VincularForm from "../components/organograma/VincularForm";
 
 export default function Organograma() {
   const queryClient = useQueryClient();

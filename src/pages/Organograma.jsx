@@ -137,7 +137,7 @@ export default function Organograma() {
   const semVinculo = !isAdmin && !isLiderAgencia && !isLiderUnidade && arvoresVisiveis.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 p-6 overflow-x-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 p-3 md:p-6 overflow-x-auto">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
@@ -272,75 +272,17 @@ export default function Organograma() {
       {/* Dialog Vincular/Editar Usuário (Admin only) */}
       {podeEditar && (
         <Dialog open={showVincularDialog} onOpenChange={setShowVincularDialog}>
-          <DialogContent className="bg-gradient-to-br from-slate-800 to-slate-900 border-indigo-500/30 max-w-xl">
+          <DialogContent className="bg-gradient-to-br from-slate-800 to-slate-900 border-indigo-500/30 max-w-[95vw] md:max-w-xl">
             <DialogHeader>
               <DialogTitle className="text-white text-xl">Editar Hierarquia</DialogTitle>
             </DialogHeader>
             {usuarioParaVincular && (
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const liderId = formData.get("lider_id");
-                const tipoHierarquia = formData.get("tipo_hierarquia");
-                const lider = allUsers.find(u => u.id === liderId);
-
-                vincularMutation.mutate({
-                  usuarioId: usuarioParaVincular.id,
-                  liderId: liderId || null,
-                  liderEmail: lider?.email || null,
-                  tipoHierarquia
-                });
-              }} className="space-y-5">
-                <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-400/30 p-4 rounded-xl">
-                  <p className="text-sm text-indigo-200 mb-1">Editando:</p>
-                  <p className="font-bold text-white text-lg">{usuarioParaVincular.full_name || usuarioParaVincular.email}</p>
-                  <p className="text-xs text-indigo-300">{usuarioParaVincular.email}</p>
-                </div>
-
-                <div>
-                  <Label className="text-indigo-200 font-semibold mb-2 block">Função *</Label>
-                  <Select name="tipo_hierarquia" defaultValue={usuarioParaVincular.tipo_hierarquia || ""} required>
-                    <SelectTrigger className="bg-slate-700/50 border-indigo-500/30 text-white">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-indigo-500/30">
-                      <SelectItem value="Líder de Agência" className="text-white">🟢 Líder de Agência</SelectItem>
-                      <SelectItem value="Líder de Unidade" className="text-white">🔵 Líder de Unidade</SelectItem>
-                      <SelectItem value="Corretor" className="text-white">🔷 Corretor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-indigo-200 font-semibold mb-2 block">Reporta para</Label>
-                  <Select name="lider_id" defaultValue={usuarioParaVincular.lider_id || ""}>
-                    <SelectTrigger className="bg-slate-700/50 border-indigo-500/30 text-white">
-                      <SelectValue placeholder="Sem líder (topo)" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-indigo-500/30">
-                      <SelectItem value="none" className="text-white">⭐ Sem líder (topo)</SelectItem>
-                      {allUsers
-                        .filter(u => u.id !== usuarioParaVincular.id && (u.tipo_hierarquia === "Líder de Agência" || u.tipo_hierarquia === "Líder de Unidade"))
-                        .map(u => (
-                          <SelectItem key={u.id} value={u.id} className="text-white">
-                            {u.full_name || u.email} - {u.tipo_hierarquia}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => { setShowVincularDialog(false); setUsuarioParaVincular(null); }}
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={vincularMutation.isPending}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 font-bold">
-                    {vincularMutation.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
-                </div>
-              </form>
+              <VincularForm
+                usuarioParaVincular={usuarioParaVincular}
+                allUsers={allUsers}
+                vincularMutation={vincularMutation}
+                onCancel={() => { setShowVincularDialog(false); setUsuarioParaVincular(null); }}
+              />
             )}
           </DialogContent>
         </Dialog>

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
@@ -276,6 +276,7 @@ export default function Organograma() {
           <DialogContent className="bg-gradient-to-br from-slate-800 to-slate-900 border-indigo-500/30 max-w-[95vw] md:max-w-xl">
             <DialogHeader>
               <DialogTitle className="text-white text-xl">Editar Hierarquia</DialogTitle>
+              <DialogDescription className="text-indigo-300">Altere a função e o líder do usuário</DialogDescription>
             </DialogHeader>
             {usuarioParaVincular && (
               <VincularForm

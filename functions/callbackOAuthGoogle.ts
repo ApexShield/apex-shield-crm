@@ -6,14 +6,12 @@ Deno.serve(async (req) => {
     const code = url.searchParams.get('code');
     const stateParam = url.searchParams.get('state');
 
-    // state contém o email do usuário
     if (!code || !stateParam) {
       return new Response(`
         <html>
           <body style="font-family: Arial; padding: 40px; text-align: center;">
             <h2 style="color: #ef4444;">❌ Erro na autenticação</h2>
-            <p>Parâmetros inválidos. Code: ${!!code}, State: ${!!stateParam}</p>
-            <p>URL: ${url.toString()}</p>
+            <p>Parâmetros inválidos</p>
             <button onclick="window.close()">Fechar</button>
           </body>
         </html>
@@ -27,9 +25,12 @@ Deno.serve(async (req) => {
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    const REDIRECT_URI = `https://early-seal-52-tv1vz1fde145.deno.dev/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    
+    // Usar app.base44.com — o proxy Base44 injeta o header Base44-App-Id automaticamente
+    const REDIRECT_URI = `https://app.base44.com/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
 
-    console.log("Callback recebido. Email:", userEmail, "APP_ID:", BASE44_APP_ID);
+    console.log("Callback OAuth recebido. Email:", userEmail);
+    console.log("Headers recebidos:", JSON.stringify(Object.fromEntries(req.headers.entries())));
 
     // 1. Trocar código por tokens do Google
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -60,15 +61,9 @@ Deno.serve(async (req) => {
     const googleUser = await userInfoResponse.json();
     console.log("Google user:", googleUser.email);
 
-    // 3. Criar o client Base44 com o header correto
-    // Construir um novo Request garantindo que o header Base44-App-Id esteja presente
-    const sdkRequest = new Request("https://app.base44.com/api/fake", {
-      method: "GET",
-      headers: {
-        "Base44-App-Id": BASE44_APP_ID
-      }
-    });
-    const base44 = createClientFromRequest(sdkRequest);
+    // 3. Criar o client Base44 direto do request original
+    // Quando chamado via app.base44.com, o proxy injeta Base44-App-Id no header
+    const base44 = createClientFromRequest(req);
 
     const authData = {
       user_email: userEmail,
@@ -82,34 +77,16 @@ Deno.serve(async (req) => {
     console.log("Salvando auth data para:", userEmail);
 
     // 4. Verificar se já existe autenticação e salvar
-    let saved = false;
-    try {
-      const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
-        user_email: userEmail
-      });
+    const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+      user_email: userEmail
+    });
 
-      if (existingAuths && existingAuths.length > 0) {
-        await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
-        console.log("Auth atualizado:", existingAuths[0].id);
-      } else {
-        await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
-        console.log("Auth criado");
-      }
-      saved = true;
-    } catch (sdkError) {
-      console.error("Erro SDK ao salvar auth:", sdkError.message, sdkError);
-      // Fallback: tentar salvar apenas criando novo registro
-      try {
-        await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
-        saved = true;
-        console.log("Auth criado via fallback");
-      } catch (fallbackError) {
-        console.error("Fallback também falhou:", fallbackError.message);
-      }
-    }
-
-    if (!saved) {
-      throw new Error("Não foi possível salvar os tokens de autenticação");
+    if (existingAuths && existingAuths.length > 0) {
+      await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
+      console.log("Auth atualizado:", existingAuths[0].id);
+    } else {
+      await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
+      console.log("Auth criado");
     }
 
     return new Response(`

@@ -26,8 +26,8 @@ Deno.serve(async (req) => {
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
     
-    // Usar app.base44.com — o proxy Base44 injeta o header Base44-App-Id automaticamente
-    const REDIRECT_URI = `https://app.base44.com/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    // Usar o subdomínio da app para o redirect
+    const REDIRECT_URI = `https://app--apex-shield-crm--69587402a43b69a04695a178.base44.app/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
 
     console.log("Callback OAuth recebido. Email:", userEmail);
     console.log("Headers recebidos:", JSON.stringify(Object.fromEntries(req.headers.entries())));

@@ -16,26 +16,11 @@ Deno.serve(async (req) => {
     
     console.log('Total compromissos found:', allCompromissos.length);
     
-    // Debug: check what fields we get
-    const withEmailField = allCompromissos.filter(c => c.email_participante);
-    console.log('Compromissos with email_participante:', withEmailField.length);
-    if (withEmailField.length > 0) {
-      console.log('First with email:', JSON.stringify({
-        id: withEmailField[0].id,
-        email_participante: withEmailField[0].email_participante,
-        email_enviado: withEmailField[0].email_enviado,
-        convidado_confirmou: withEmailField[0].convidado_confirmou,
-        google_event_id: withEmailField[0].google_event_id
-      }));
-    } else {
-      // Check raw data
-      const sample = allCompromissos.slice(0, 3);
-      console.log('Sample raw compromissos:', JSON.stringify(sample.map(c => ({
-        id: c.id,
-        keys: Object.keys(c),
-        email_participante: c.email_participante,
-        titulo: c.titulo
-      }))));
+    // Debug: check the raw structure
+    if (allCompromissos.length > 0) {
+      const sample = allCompromissos[0];
+      console.log('Sample keys:', JSON.stringify(Object.keys(sample)));
+      console.log('Sample item:', JSON.stringify(sample).substring(0, 500));
     }
 
     // Filter: has email participant and not yet confirmed

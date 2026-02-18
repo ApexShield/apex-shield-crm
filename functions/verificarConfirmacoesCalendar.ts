@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     console.log('Pending confirmation count:', pendingConfirmation.length);
 
     if (pendingConfirmation.length === 0) {
-      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0, totalChecked: allCompromissos.length, withEmail: withEmailField.length });
+      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0, totalChecked: allCompromissos.length });
     }
 
     // Separate: those with google_event_id and those without

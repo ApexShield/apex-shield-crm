@@ -16,27 +16,39 @@ Deno.serve(async (req) => {
     
     console.log('Total compromissos found:', allCompromissos.length);
     
+    // Debug: check what fields we get
+    const withEmailField = allCompromissos.filter(c => c.email_participante);
+    console.log('Compromissos with email_participante:', withEmailField.length);
+    if (withEmailField.length > 0) {
+      console.log('First with email:', JSON.stringify({
+        id: withEmailField[0].id,
+        email_participante: withEmailField[0].email_participante,
+        email_enviado: withEmailField[0].email_enviado,
+        convidado_confirmou: withEmailField[0].convidado_confirmou,
+        google_event_id: withEmailField[0].google_event_id
+      }));
+    } else {
+      // Check raw data
+      const sample = allCompromissos.slice(0, 3);
+      console.log('Sample raw compromissos:', JSON.stringify(sample.map(c => ({
+        id: c.id,
+        keys: Object.keys(c),
+        email_participante: c.email_participante,
+        titulo: c.titulo
+      }))));
+    }
+
     // Filter: has email participant and not yet confirmed
-    // Don't require email_enviado - just check if there's an email participant
     const pendingConfirmation = allCompromissos.filter(c => {
-      const hasEmail = c.email_participante && c.email_participante.trim().length > 0;
+      const hasEmail = c.email_participante && String(c.email_participante).trim().length > 0;
       const notConfirmed = c.convidado_confirmou !== true;
       return hasEmail && notConfirmed;
     });
 
     console.log('Pending confirmation count:', pendingConfirmation.length);
-    if (pendingConfirmation.length > 0) {
-      console.log('Sample pending:', JSON.stringify({
-        id: pendingConfirmation[0].id,
-        email: pendingConfirmation[0].email_participante,
-        google_event_id: pendingConfirmation[0].google_event_id,
-        email_enviado: pendingConfirmation[0].email_enviado,
-        convidado_confirmou: pendingConfirmation[0].convidado_confirmou
-      }));
-    }
 
     if (pendingConfirmation.length === 0) {
-      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0, totalChecked: allCompromissos.length });
+      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0, totalChecked: allCompromissos.length, withEmail: withEmailField.length });
     }
 
     // Separate: those with google_event_id and those without

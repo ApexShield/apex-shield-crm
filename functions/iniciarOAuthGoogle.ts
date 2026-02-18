@@ -11,8 +11,10 @@ Deno.serve(async (req) => {
 
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    // URI fixa usando o domínio Deno Deploy que já está cadastrado no Google Console
-    const REDIRECT_URI = `https://early-seal-52-tv1vz1fde145.deno.dev/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    
+    // IMPORTANTE: Usar app.base44.com como redirect_uri
+    // O proxy da Base44 adiciona o header Base44-App-Id automaticamente
+    const REDIRECT_URI = `https://app.base44.com/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
     
     const scopes = [
       'https://www.googleapis.com/auth/calendar.events',

@@ -10,67 +10,45 @@ Deno.serve(async (req) => {
 
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
 
-    // Get all compromissos with email_participante that haven't been confirmed yet
-    // Use asServiceRole to see ALL users' compromissos, not just the current user's
-    const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 500);
-    
-    console.log('Total compromissos found:', allCompromissos.length);
-    
-    // Debug: log raw structure from service role
-    if (allCompromissos.length > 0) {
-      console.log('Type:', typeof allCompromissos[0]);
-      console.log('Keys:', JSON.stringify(Object.keys(allCompromissos[0])));
-      // Find one that has email_participante
-      const withEmail = allCompromissos.find(c => 
-        c.email_participante || (c.data && c.data.email_participante)
-      );
-      if (withEmail) {
-        console.log('Found with email:', JSON.stringify(withEmail).substring(0, 800));
-      } else {
-        console.log('No compromisso with email found. First item:', JSON.stringify(allCompromissos[0]).substring(0, 800));
-      }
-    }
-
-    // Filter: has email participant and not yet confirmed
-    // The service role may return data differently - check both flat and nested structures
-    const pendingConfirmation = allCompromissos.filter(c => {
-      const email = c.email_participante || (c.data && c.data.email_participante);
-      const confirmed = c.convidado_confirmou || (c.data && c.data.convidado_confirmou);
-      const hasEmail = email && String(email).trim().length > 0;
-      const notConfirmed = confirmed !== true;
-      return hasEmail && notConfirmed;
-    }).map(c => {
-      // Normalize: flatten if data is nested
-      if (c.data && !c.email_participante) {
-        return { ...c, ...c.data };
-      }
-      return c;
-    });
+    // Use filter to find compromissos with email_participante that need confirmation checking
+    // The service role filter with email_enviado=true will find the right records
+    const pendingConfirmation = await base44.asServiceRole.entities.Compromisso.filter(
+      { email_enviado: true, convidado_confirmou: false },
+      '-created_date',
+      100
+    );
 
     console.log('Pending confirmation count:', pendingConfirmation.length);
 
     if (pendingConfirmation.length === 0) {
-      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0, totalChecked: allCompromissos.length });
+      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0 });
+    }
+
+    // Further filter: must have email_participante
+    const withEmail = pendingConfirmation.filter(c => c.email_participante && String(c.email_participante).trim().length > 0);
+    console.log('With email:', withEmail.length);
+
+    if (withEmail.length === 0) {
+      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0 });
     }
 
     // Separate: those with google_event_id and those without
-    const withGoogleId = pendingConfirmation.filter(c => c.google_event_id);
-    const withoutGoogleId = pendingConfirmation.filter(c => !c.google_event_id);
+    const withGoogleId = withEmail.filter(c => c.google_event_id);
+    const withoutGoogleId = withEmail.filter(c => !c.google_event_id);
 
     let confirmed = 0;
     let declined = 0;
     let synced = 0;
 
     // For compromissos WITHOUT google_event_id, try to find matching events in Google Calendar
-    // and link them
     for (const comp of withoutGoogleId) {
       try {
         const startDate = new Date(comp.data_inicio);
         const endDate = new Date(comp.data_fim);
         if (isNaN(startDate.getTime())) continue;
 
-        const timeMin = new Date(startDate.getTime() - 60000).toISOString(); // 1 min before
-        const timeMax = new Date(endDate.getTime() + 60000).toISOString(); // 1 min after
+        const timeMin = new Date(startDate.getTime() - 60000).toISOString();
+        const timeMax = new Date(endDate.getTime() + 60000).toISOString();
 
         const searchUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&maxResults=10`;
         const searchRes = await fetch(searchUrl, {
@@ -82,13 +60,10 @@ Deno.serve(async (req) => {
         const searchData = await searchRes.json();
         const events = searchData.items || [];
 
-        // Try to match by title or attendee email
         const participantEmail = comp.email_participante.toLowerCase().trim();
         const matchingEvent = events.find(evt => {
-          // Match by title
           const titleMatch = evt.summary && comp.titulo && 
             evt.summary.toLowerCase().includes(comp.titulo.toLowerCase().substring(0, 10));
-          // Match by attendee
           const attendeeMatch = evt.attendees?.some(a => 
             a.email && a.email.toLowerCase().trim() === participantEmail
           );
@@ -96,16 +71,14 @@ Deno.serve(async (req) => {
         });
 
         if (matchingEvent) {
-          // Link the google_event_id to the compromisso
-          await base44.entities.Compromisso.update(comp.id, { google_event_id: matchingEvent.id });
+          await base44.asServiceRole.entities.Compromisso.update(comp.id, { google_event_id: matchingEvent.id });
           synced++;
 
-          // Also check confirmation status
           const attendee = matchingEvent.attendees?.find(a => 
             a.email && a.email.toLowerCase().trim() === participantEmail
           );
           if (attendee?.responseStatus === 'accepted') {
-            await base44.entities.Compromisso.update(comp.id, { convidado_confirmou: true });
+            await base44.asServiceRole.entities.Compromisso.update(comp.id, { convidado_confirmou: true });
             confirmed++;
           } else if (attendee?.responseStatus === 'declined') {
             declined++;
@@ -136,7 +109,7 @@ Deno.serve(async (req) => {
         if (!attendee) continue;
 
         if (attendee.responseStatus === 'accepted') {
-          await base44.entities.Compromisso.update(comp.id, { convidado_confirmou: true });
+          await base44.asServiceRole.entities.Compromisso.update(comp.id, { convidado_confirmou: true });
           confirmed++;
         } else if (attendee.responseStatus === 'declined') {
           declined++;
@@ -156,7 +129,7 @@ Deno.serve(async (req) => {
       confirmed,
       declined,
       synced,
-      totalPending: pendingConfirmation.length,
+      totalPending: withEmail.length,
       withGoogleId: withGoogleId.length,
       withoutGoogleId: withoutGoogleId.length,
       message: parts.length > 0 ? parts.join(', ') : 'Nenhuma nova resposta encontrada nos convites do Google Calendar'

@@ -32,14 +32,8 @@ export default function ConexaoStatusBanner() {
   }, [refetch]);
 
   const handleConectar = async () => {
-    try {
-      const res = await base44.functions.invoke("iniciarOAuthGoogle", {});
-      if (res.data?.authUrl) {
-        window.open(res.data.authUrl, '_blank', 'width=500,height=700');
-      }
-    } catch (e) {
-      alert("Erro ao iniciar conexão: " + e.message);
-    }
+    // Forçar refetch - o conector já está autorizado pelo admin
+    refetch();
   };
 
   if (isLoading) {
@@ -67,7 +61,7 @@ export default function ConexaoStatusBanner() {
         <span>Google Calendar não conectado — conecte sua conta para sincronizar compromissos</span>
       </div>
       <Button onClick={handleConectar} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs">
-        <Link2 className="w-3 h-3 mr-1" /> Conectar Google
+        <Link2 className="w-3 h-3 mr-1" /> Verificar Novamente
       </Button>
     </div>
   );

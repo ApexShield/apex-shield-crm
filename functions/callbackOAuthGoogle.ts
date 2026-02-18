@@ -4,30 +4,34 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
-    const userEmail = url.searchParams.get('state');
+    const stateParam = url.searchParams.get('state');
 
-    if (!code || !userEmail) {
+    // state contém o email do usuário
+    if (!code || !stateParam) {
       return new Response(`
         <html>
           <body style="font-family: Arial; padding: 40px; text-align: center;">
             <h2 style="color: #ef4444;">❌ Erro na autenticação</h2>
-            <p>Parâmetros inválidos</p>
+            <p>Parâmetros inválidos. Code: ${!!code}, State: ${!!stateParam}</p>
+            <p>URL: ${url.toString()}</p>
             <button onclick="window.close()">Fechar</button>
           </body>
         </html>
       `, {
         status: 400,
-        headers: { 'Content-Type': 'text/html' }
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
     }
 
+    const userEmail = stateParam;
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    // URI fixa usando o domínio Deno Deploy que já está cadastrado no Google Console
     const REDIRECT_URI = `https://early-seal-52-tv1vz1fde145.deno.dev/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
 
-    // Trocar código por tokens
+    console.log("Callback recebido. Email:", userEmail, "APP_ID:", BASE44_APP_ID);
+
+    // 1. Trocar código por tokens do Google
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -43,45 +47,69 @@ Deno.serve(async (req) => {
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
       console.error('Erro ao trocar código por token:', error);
-      throw new Error('Falha ao obter tokens');
+      throw new Error('Falha ao obter tokens do Google');
     }
 
     const tokens = await tokenResponse.json();
+    console.log("Tokens obtidos com sucesso");
 
-    // Obter informações do usuário Google
+    // 2. Obter informações do usuário Google
     const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { 'Authorization': `Bearer ${tokens.access_token}` }
     });
-
     const googleUser = await userInfoResponse.json();
+    console.log("Google user:", googleUser.email);
 
-    // Usar o SDK com service role para salvar os tokens
-    // O callback do Google não traz o header Base44-App-Id, então criamos um request com ele
-    const fakeHeaders = new Headers(req.headers);
-    fakeHeaders.set('Base44-App-Id', BASE44_APP_ID);
-    const fakeReq = new Request(req.url, {
-      headers: fakeHeaders
+    // 3. Criar o client Base44 com o header correto
+    // Construir um novo Request garantindo que o header Base44-App-Id esteja presente
+    const sdkRequest = new Request("https://app.base44.com/api/fake", {
+      method: "GET",
+      headers: {
+        "Base44-App-Id": BASE44_APP_ID
+      }
     });
-    const base44 = createClientFromRequest(fakeReq);
+    const base44 = createClientFromRequest(sdkRequest);
 
     const authData = {
       user_email: userEmail,
       google_email: googleUser.email,
       access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+      refresh_token: tokens.refresh_token || "",
       token_expiry: new Date(Date.now() + (tokens.expires_in * 1000)).toISOString(),
       scopes: tokens.scope?.split(' ') || []
     };
 
-    // Verificar se já existe autenticação
-    const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
-      user_email: userEmail
-    });
+    console.log("Salvando auth data para:", userEmail);
 
-    if (existingAuths.length > 0) {
-      await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
-    } else {
-      await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
+    // 4. Verificar se já existe autenticação e salvar
+    let saved = false;
+    try {
+      const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+        user_email: userEmail
+      });
+
+      if (existingAuths && existingAuths.length > 0) {
+        await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
+        console.log("Auth atualizado:", existingAuths[0].id);
+      } else {
+        await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
+        console.log("Auth criado");
+      }
+      saved = true;
+    } catch (sdkError) {
+      console.error("Erro SDK ao salvar auth:", sdkError.message, sdkError);
+      // Fallback: tentar salvar apenas criando novo registro
+      try {
+        await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
+        saved = true;
+        console.log("Auth criado via fallback");
+      } catch (fallbackError) {
+        console.error("Fallback também falhou:", fallbackError.message);
+      }
+    }
+
+    if (!saved) {
+      throw new Error("Não foi possível salvar os tokens de autenticação");
     }
 
     return new Response(`
@@ -111,7 +139,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro no callback OAuth:', error);
+    console.error('Erro no callback OAuth:', error.message, error);
     return new Response(`
       <html>
         <body style="font-family: Arial; padding: 40px; text-align: center;">
@@ -122,7 +150,7 @@ Deno.serve(async (req) => {
       </html>
     `, {
       status: 500,
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
   }
 });

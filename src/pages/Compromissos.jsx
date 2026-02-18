@@ -656,7 +656,7 @@ export default function Compromissos() {
                     <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 4).map(h => <SelectItem key={h} value={String(h).padStart(2,'0')}>{String(h).padStart(2,'0')}</SelectItem>)}</SelectContent>
                   </Select>
                   <Select value={formData.data_fim ? (() => { const d = new Date(formData.data_fim); return isNaN(d.getTime()) ? "" : format(d, "mm"); })() : ""}
-                    onValueChange={(minute) => { const d = new Date(formData.data_fim || Date.now()); d.setMinutes(parseInt(minute)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
+                    onValueChange={(minute) => { const d = new Date(formData.data_fim || Date.now()); if (isNaN(d.getTime())) return; d.setMinutes(parseInt(minute)); if (isNaN(d.getTime())) return; setFormData({ ...formData, data_fim: d.toISOString() }); }}>
                     <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="M" /></SelectTrigger>
                     <SelectContent>{['00','15','30','45'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                   </Select>

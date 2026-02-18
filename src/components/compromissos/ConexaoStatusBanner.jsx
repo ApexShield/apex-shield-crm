@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { AlertCircle, CheckCircle2, Loader2, Link2 } from "lucide-react";

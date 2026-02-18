@@ -16,18 +16,35 @@ Deno.serve(async (req) => {
     
     console.log('Total compromissos found:', allCompromissos.length);
     
-    // Debug: check the raw structure
+    // Debug: log raw structure from service role
     if (allCompromissos.length > 0) {
-      const sample = allCompromissos[0];
-      console.log('Sample keys:', JSON.stringify(Object.keys(sample)));
-      console.log('Sample item:', JSON.stringify(sample).substring(0, 500));
+      console.log('Type:', typeof allCompromissos[0]);
+      console.log('Keys:', JSON.stringify(Object.keys(allCompromissos[0])));
+      // Find one that has email_participante
+      const withEmail = allCompromissos.find(c => 
+        c.email_participante || (c.data && c.data.email_participante)
+      );
+      if (withEmail) {
+        console.log('Found with email:', JSON.stringify(withEmail).substring(0, 800));
+      } else {
+        console.log('No compromisso with email found. First item:', JSON.stringify(allCompromissos[0]).substring(0, 800));
+      }
     }
 
     // Filter: has email participant and not yet confirmed
+    // The service role may return data differently - check both flat and nested structures
     const pendingConfirmation = allCompromissos.filter(c => {
-      const hasEmail = c.email_participante && String(c.email_participante).trim().length > 0;
-      const notConfirmed = c.convidado_confirmou !== true;
+      const email = c.email_participante || (c.data && c.data.email_participante);
+      const confirmed = c.convidado_confirmou || (c.data && c.data.convidado_confirmou);
+      const hasEmail = email && String(email).trim().length > 0;
+      const notConfirmed = confirmed !== true;
       return hasEmail && notConfirmed;
+    }).map(c => {
+      // Normalize: flatten if data is nested
+      if (c.data && !c.email_participante) {
+        return { ...c, ...c.data };
+      }
+      return c;
     });
 
     console.log('Pending confirmation count:', pendingConfirmation.length);

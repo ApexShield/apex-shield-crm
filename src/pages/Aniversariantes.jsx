@@ -109,17 +109,7 @@ export default function Aniversariantes() {
     return aniversariantes.filter(a => a.ehHoje);
   }, [aniversariantes]);
 
-  // Pop-up automático quando há aniversariantes do dia
-  useEffect(() => {
-    if (aniversariantesHoje.length > 0) {
-      setShowPopup(true);
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    }
-  }, [aniversariantesHoje.length]);
+  // Pop-up removido daqui - já existe no AniversariantesPopup do Layout
 
   const handleSendMessage = async (item) => {
     const nomeCorretor = prompt("Digite o nome da corretora que assina a mensagem:");
@@ -373,79 +363,7 @@ ${nomeCorretor}`;
         </AnimatePresence>
       </div>
 
-      {/* Pop-up de Aniversariantes do Dia */}
-      <Dialog open={showPopup} onOpenChange={setShowPopup}>
-        <DialogContent className="max-w-2xl bg-gradient-to-br from-pink-500 to-purple-600 border-0">
-          <DialogHeader>
-            <DialogTitle className="text-3xl font-black text-white text-center flex items-center justify-center gap-3">
-              <PartyPopper className="w-8 h-8" />
-              Aniversariantes de Hoje!
-              <Cake className="w-8 h-8" />
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {aniversariantesHoje.map((item, index) => (
-              <motion.div
-                key={`popup-${item.id}-${item.tipo_aniversario}-${index}`}
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.2 }}
-              >
-                <Card className="bg-white/20 backdrop-blur-md border-white/40 p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                      {item.tipo_aniversario === "casamento" ? (
-                        <Heart className="w-8 h-8 text-amber-500" />
-                      ) : item.tipo_aniversario === "filho" ? (
-                        <Users className="w-8 h-8 text-cyan-500" />
-                      ) : (
-                        <Cake className="w-8 h-8 text-pink-500" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-white/30 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                          {getBadge(item.tipo_aniversario)}
-                        </span>
-                      </div>
-                      <h4 className="text-xl font-bold text-white">{item.display_nome}</h4>
-                      <p className="text-white/90">{item.display_emoji} {item.display_info} hoje!</p>
-                      {item.telefone && (
-                        <p className="text-white/80 text-sm flex items-center gap-2 mt-1">
-                          <Phone className="w-4 h-4" />
-                          {item.telefone}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      onClick={() => {
-                        handleSendMessage(item);
-                        confetti({
-                          particleCount: 50,
-                          spread: 60,
-                          origin: { y: 0.8 }
-                        });
-                      }}
-                      className="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-bold"
-                    >
-                      <Gift className="w-4 h-4 mr-2" />
-                      Parabenizar
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          <Button
-            onClick={() => setShowPopup(false)}
-            className="w-full bg-white text-purple-700 hover:bg-purple-50 font-bold py-4 text-lg rounded-xl"
-          >
-            Fechar
-          </Button>
-        </DialogContent>
-      </Dialog>
+      {/* Pop-up removido - já existe no AniversariantesPopup do Layout */}
     </div>
   );
 }

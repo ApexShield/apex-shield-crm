@@ -56,11 +56,11 @@ Deno.serve(async (req) => {
     const googleUser = await userInfoResponse.json();
 
     // Usar o SDK com service role para salvar os tokens
-    // Criar um fake request com o header Base44-App-Id para inicializar o SDK
+    // O callback do Google não traz o header Base44-App-Id, então criamos um request com ele
+    const fakeHeaders = new Headers(req.headers);
+    fakeHeaders.set('Base44-App-Id', BASE44_APP_ID);
     const fakeReq = new Request(req.url, {
-      headers: new Headers({
-        'Base44-App-Id': BASE44_APP_ID
-      })
+      headers: fakeHeaders
     });
     const base44 = createClientFromRequest(fakeReq);
 

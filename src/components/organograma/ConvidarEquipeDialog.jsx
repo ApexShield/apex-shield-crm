@@ -145,7 +145,7 @@ export default function ConvidarEquipeDialog({ open, onClose, currentUser, allUs
     if (tipoHierarquia === "Líder de Unidade" && !agenciaId && isAdmin) {
       setErro("Selecione a agência para o Líder de Unidade"); return;
     }
-    if (tipoHierarquia === "Corretor" && !unidadeId && (isAdmin || isLiderAgencia)) {
+    if (tipoHierarquia === "Corretor" && !unidadeId && isAdmin) {
       setErro("Selecione a unidade para o Corretor"); return;
     }
 
@@ -213,7 +213,7 @@ export default function ConvidarEquipeDialog({ open, onClose, currentUser, allUs
           {/* Selecionar unidade para Corretores */}
           {((isAdmin || isLiderAgencia) && tipoHierarquia === "Corretor") && (
             <div>
-              <Label className="text-indigo-200 font-semibold">Unidade *</Label>
+              <Label className="text-indigo-200 font-semibold">Unidade {isAdmin ? "*" : "(opcional)"}</Label>
               <Select value={unidadeId} onValueChange={setUnidadeId}>
                 <SelectTrigger className="bg-slate-700/50 border-indigo-500/30 text-white">
                   <SelectValue placeholder="Selecione a unidade..." />

@@ -803,6 +803,9 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-blue-50 p-3 rounded space-y-2">
                 <h4 className="font-bold text-sm">Cirurgias</h4>
+                <p className="text-[10px] text-slate-600 leading-tight bg-blue-100 p-2 rounded">
+                  Garante indenização caso o Segurado passe por procedimento cirúrgico invasivo, por acidente pessoal ou doença, com internação pós-operatória de 48h. Carência de 90 dias. Cobre: cirurgia cardíaca, vascular, ortopédica, aparelho digestivo, neurocirurgia, entre outras.
+                </p>
                 <div>
                   <Label className="text-xs">Capital Segurado:</Label>
                   <Input value={formData.cirurgias_capital} onChange={(e) => handleCurrencyChange('cirurgias_capital', e.target.value)} />

@@ -46,7 +46,7 @@ export default function Organograma() {
   const isCorretor = currentUser?.tipo_hierarquia === "Corretor";
 
   const podeConvidar = isAdmin || isLiderAgencia || isLiderUnidade;
-  const podeEditar = isAdmin;
+  const podeEditar = isAdmin || isLiderAgencia || isLiderUnidade;
 
   // Construir árvore hierárquica
   const construirArvore = (usuario) => {
@@ -270,7 +270,7 @@ export default function Organograma() {
         unidades={unidades}
       />
 
-      {/* Dialog Vincular/Editar Usuário (Admin only) */}
+      {/* Dialog Vincular/Editar Usuário */}
       {podeEditar && (
         <Dialog open={showVincularDialog} onOpenChange={setShowVincularDialog}>
           <DialogContent className="bg-gradient-to-br from-slate-800 to-slate-900 border-indigo-500/30 max-w-[95vw] md:max-w-xl">
@@ -284,6 +284,7 @@ export default function Organograma() {
                 allUsers={allUsers}
                 vincularMutation={vincularMutation}
                 onCancel={() => { setShowVincularDialog(false); setUsuarioParaVincular(null); }}
+                currentUser={currentUser}
               />
             )}
           </DialogContent>

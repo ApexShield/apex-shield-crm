@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Loader2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ConexaoStatusBanner() {
-  const { data: status, isLoading } = useQuery({
+  const { data: status, isLoading, refetch } = useQuery({
     queryKey: ["conexao-calendar-usuario"],
     queryFn: async () => {
       try {
@@ -15,9 +15,20 @@ export default function ConexaoStatusBanner() {
         return null;
       }
     },
-    staleTime: 5 * 60 * 1000,
-    retry: 0
+    staleTime: 30 * 1000,
+    retry: 1
   });
+
+  // Listen for Google auth completion message
+  React.useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'google_auth_complete') {
+        refetch();
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [refetch]);
 
   const handleConectar = async () => {
     try {

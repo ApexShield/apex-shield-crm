@@ -212,7 +212,7 @@ export default function Compromissos() {
       const allDays = eachDayOfInterval({ start: inicio, end: fim });
       const diasFiltrados = allDays.filter(d => formFixo.dias.includes(getDay(d)));
 
-      const compromissos = diasFiltrados.map(dia => {
+      const compromissosList = diasFiltrados.map(dia => {
         const [hi, mi] = formFixo.hora_inicio.split(":").map(Number);
         const [hf, mf] = formFixo.hora_fim.split(":").map(Number);
         const di = new Date(dia); di.setHours(hi, mi, 0, 0);
@@ -233,35 +233,31 @@ export default function Compromissos() {
         };
       });
 
-      if (compromissos.length === 0) {
+      if (compromissosList.length === 0) {
         alert("Nenhum dia corresponde aos critérios selecionados.");
+        setSavingFixo(false);
         return;
       }
 
-      await base44.entities.Compromisso.bulkCreate(compromissos);
-
-      // Sync each to Google Calendar
-      for (const c of compromissos) {
-        try {
-          const res = await base44.functions.invoke('criarEventoCalendar', {
-            summary: c.titulo,
-            description: c.descricao,
-            startDateTime: c.data_inicio,
-            endDateTime: c.data_fim
-          });
-          // We don't save google_event_id for bulk, it's optional
-        } catch (err) {
-          console.error('Erro sync fixo:', err);
-        }
-      }
+      await base44.entities.Compromisso.bulkCreate(compromissosList);
 
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
       setShowFixoDialog(false);
-      alert(`✅ ${compromissos.length} compromissos fixos criados com sucesso!`);
-    } catch (err) {
-      alert("Erro ao criar compromissos fixos: " + err.message);
-    } finally {
       setSavingFixo(false);
+      alert(`✅ ${compromissosList.length} compromissos fixos criados com sucesso!`);
+
+      // Sync to Google Calendar in background (non-blocking)
+      for (const c of compromissosList) {
+        base44.functions.invoke('criarEventoCalendar', {
+          summary: c.titulo,
+          description: c.descricao,
+          startDateTime: c.data_inicio,
+          endDateTime: c.data_fim
+        }).catch(err => console.error('Erro sync fixo:', err));
+      }
+    } catch (err) {
+      setSavingFixo(false);
+      alert("Erro ao criar compromissos fixos: " + err.message);
     }
   };
 

@@ -16,17 +16,23 @@ Deno.serve(async (req) => {
     
     console.log('Total compromissos found:', allCompromissos.length);
     
-    // Filter: has email participant, was sent, not yet confirmed
+    // Filter: has email participant and not yet confirmed
+    // Don't require email_enviado - just check if there's an email participant
     const pendingConfirmation = allCompromissos.filter(c => {
       const hasEmail = c.email_participante && c.email_participante.trim().length > 0;
-      const wasSent = c.email_enviado === true;
       const notConfirmed = c.convidado_confirmou !== true;
-      return hasEmail && wasSent && notConfirmed;
+      return hasEmail && notConfirmed;
     });
 
     console.log('Pending confirmation count:', pendingConfirmation.length);
     if (pendingConfirmation.length > 0) {
-      console.log('Sample pending:', JSON.stringify(pendingConfirmation[0]));
+      console.log('Sample pending:', JSON.stringify({
+        id: pendingConfirmation[0].id,
+        email: pendingConfirmation[0].email_participante,
+        google_event_id: pendingConfirmation[0].google_event_id,
+        email_enviado: pendingConfirmation[0].email_enviado,
+        convidado_confirmou: pendingConfirmation[0].convidado_confirmou
+      }));
     }
 
     if (pendingConfirmation.length === 0) {

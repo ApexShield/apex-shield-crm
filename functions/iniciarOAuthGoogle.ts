@@ -12,9 +12,8 @@ Deno.serve(async (req) => {
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
     
-    // IMPORTANTE: Usar app.base44.com como redirect_uri
-    // O proxy da Base44 adiciona o header Base44-App-Id automaticamente
-    const REDIRECT_URI = `https://app.base44.com/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    // Usar o subdomínio da app para o redirect, não app.base44.com
+    const REDIRECT_URI = `https://app--apex-shield-crm--69587402a43b69a04695a178.base44.app/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
     
     const scopes = [
       'https://www.googleapis.com/auth/calendar.events',

@@ -866,6 +866,9 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
 
               <div className="bg-amber-50 p-3 rounded space-y-2">
                 <h4 className="font-bold text-sm">Fratura Óssea</h4>
+                <p className="text-[10px] text-slate-600 leading-tight bg-amber-100 p-2 rounded">
+                  Recurso destinado à manutenção do padrão de vida e despesas de reabilitação. Franquia de 4%. Indenização conforme % do capital segurado: Crânio/Vértebras 100% · Pelve/Quadril/Fêmur 50% · Mandíbula/Ossos da Face/Clavícula/Escápula/Braço/Antebraço/Perna/Calcâneo/Cóccix/Esterno 25% · Punho/Mão/Tornozelo/Pés/Costelas 5% · Dedos Mãos/Pés 2%.
+                </p>
                 <div>
                   <Label className="text-xs">Capital Segurado:</Label>
                   <Input value={formData.fratura_ossea_capital} onChange={(e) => handleCurrencyChange('fratura_ossea_capital', e.target.value)} />

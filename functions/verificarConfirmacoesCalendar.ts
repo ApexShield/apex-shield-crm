@@ -14,13 +14,23 @@ Deno.serve(async (req) => {
     // Use asServiceRole to see ALL users' compromissos, not just the current user's
     const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 500);
     
+    console.log('Total compromissos found:', allCompromissos.length);
+    
     // Filter: has email participant, was sent, not yet confirmed
-    const pendingConfirmation = allCompromissos.filter(c => 
-      c.email_enviado && !c.convidado_confirmou && c.email_participante
-    );
+    const pendingConfirmation = allCompromissos.filter(c => {
+      const hasEmail = c.email_participante && c.email_participante.trim().length > 0;
+      const wasSent = c.email_enviado === true;
+      const notConfirmed = c.convidado_confirmou !== true;
+      return hasEmail && wasSent && notConfirmed;
+    });
+
+    console.log('Pending confirmation count:', pendingConfirmation.length);
+    if (pendingConfirmation.length > 0) {
+      console.log('Sample pending:', JSON.stringify(pendingConfirmation[0]));
+    }
 
     if (pendingConfirmation.length === 0) {
-      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0 });
+      return Response.json({ success: true, message: 'Nenhum compromisso pendente de confirmação', confirmed: 0, totalChecked: allCompromissos.length });
     }
 
     // Separate: those with google_event_id and those without

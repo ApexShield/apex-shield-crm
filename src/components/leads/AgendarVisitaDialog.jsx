@@ -199,28 +199,6 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     setErro("");
   };
 
-  if (!isVIPOrAdmin) {
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Calendar className="w-5 h-5" style={{ color: '#AFCB3A' }} />
-              Agendamento de Visita
-            </DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
-            </div>
-            <p className="text-gray-700 font-semibold mb-2">Função Exclusiva VIP</p>
-            <p className="text-sm text-gray-600">Esta funcionalidade está disponível apenas para usuários VIP e Administradores.</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20 w-[95vw]">

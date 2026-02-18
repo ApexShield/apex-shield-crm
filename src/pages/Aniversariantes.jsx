@@ -22,12 +22,6 @@ export default function Aniversariantes() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
-    enabled: !!user
-  });
-
   // Cada proprietário vê SOMENTE seus próprios leads aniversariantes
   const { data: clientes = [] } = useQuery({
     queryKey: ["meus-clientes-aniversario", user?.email],

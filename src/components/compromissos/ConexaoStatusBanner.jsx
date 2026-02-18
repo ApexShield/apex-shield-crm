@@ -20,7 +20,6 @@ export default function ConexaoStatusBanner() {
     retry: 1
   });
 
-  // Listen for Google auth completion message
   React.useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === 'google_auth_complete') {
@@ -32,8 +31,21 @@ export default function ConexaoStatusBanner() {
   }, [refetch]);
 
   const handleConectar = async () => {
-    // Forçar refetch - o conector já está autorizado pelo admin
-    refetch();
+    try {
+      const res = await base44.functions.invoke("iniciarOAuthGoogle", {});
+      const authUrl = res.data?.authUrl;
+      if (authUrl) {
+        const popup = window.open(authUrl, 'google_auth', 'width=600,height=700');
+        const interval = setInterval(() => {
+          if (popup && popup.closed) {
+            clearInterval(interval);
+            refetch();
+          }
+        }, 1000);
+      }
+    } catch (e) {
+      console.error("Erro ao iniciar OAuth:", e);
+    }
   };
 
   if (isLoading) {
@@ -58,10 +70,10 @@ export default function ConexaoStatusBanner() {
     <div className="flex items-center justify-between gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-sm text-yellow-300">
       <div className="flex items-center gap-2">
         <AlertCircle className="w-4 h-4" />
-        <span>Google Calendar não conectado — conecte sua conta para sincronizar compromissos</span>
+        <span>Conecte sua conta Google para ver sua agenda pessoal</span>
       </div>
       <Button onClick={handleConectar} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs">
-        <Link2 className="w-3 h-3 mr-1" /> Verificar Novamente
+        <Link2 className="w-3 h-3 mr-1" /> Conectar Google Calendar
       </Button>
     </div>
   );

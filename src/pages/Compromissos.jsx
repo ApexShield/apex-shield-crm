@@ -637,7 +637,7 @@ export default function Compromissos() {
               <div><Label className="text-white mb-2 block">Início *</Label>
                 <div className="flex gap-2">
                   <Select value={formData.data_inicio ? (() => { const d = new Date(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "HH"); })() : ""}
-                    onValueChange={(hour) => { const d = new Date(formData.data_inicio || Date.now()); d.setHours(parseInt(hour)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
+                    onValueChange={(hour) => { const d = new Date(formData.data_inicio || Date.now()); if (isNaN(d.getTime())) return; d.setHours(parseInt(hour)); const ed = new Date(d); ed.setHours(ed.getHours()+1); if (isNaN(d.getTime()) || isNaN(ed.getTime())) return; setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
                     <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="H" /></SelectTrigger>
                     <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 4).map(h => <SelectItem key={h} value={String(h).padStart(2,'0')}>{String(h).padStart(2,'0')}</SelectItem>)}</SelectContent>
                   </Select>

@@ -11,22 +11,8 @@ Deno.serve(async (req) => {
 
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    
-    // Detectar o domínio correto a partir do header Origin/Referer do request
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-    let appHost = "";
-    try {
-      if (origin) {
-        const originUrl = new URL(origin);
-        appHost = originUrl.hostname;
-      }
-    } catch(e) {}
-    
-    // Se o host é um subdomínio .base44.app, usar ele; senão fallback
-    const baseUrl = appHost && appHost.endsWith(".base44.app") 
-      ? `https://${appHost}` 
-      : `https://app.base44.com`;
-    const REDIRECT_URI = `${baseUrl}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    // URI fixa usando o domínio Deno Deploy que já está cadastrado no Google Console
+    const REDIRECT_URI = `https://early-seal-52-tv1vz1fde145.deno.dev/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
     
     const scopes = [
       'https://www.googleapis.com/auth/calendar.events',

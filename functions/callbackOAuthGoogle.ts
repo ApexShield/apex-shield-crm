@@ -24,12 +24,8 @@ Deno.serve(async (req) => {
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
-    
-    // Usar o host real do request para construir o redirect_uri correto
-    const requestUrl = new URL(req.url);
-    const host = req.headers.get("host") || requestUrl.hostname;
-    const protocol = "https";
-    const REDIRECT_URI = `${protocol}://${host}/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    // URI fixa usando o domínio Deno Deploy que já está cadastrado no Google Console
+    const REDIRECT_URI = `https://early-seal-52-tv1vz1fde145.deno.dev/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
 
     // Trocar código por tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {

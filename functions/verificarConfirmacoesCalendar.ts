@@ -11,7 +11,8 @@ Deno.serve(async (req) => {
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
 
     // Get all compromissos with email_participante that haven't been confirmed yet
-    const allCompromissos = await base44.entities.Compromisso.list('-data_inicio', 500);
+    // Use asServiceRole to see ALL users' compromissos, not just the current user's
+    const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 500);
     
     // Filter: has email participant, was sent, not yet confirmed
     const pendingConfirmation = allCompromissos.filter(c => 

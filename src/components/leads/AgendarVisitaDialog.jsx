@@ -44,8 +44,6 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const [validando, setValidando] = useState(false);
   const [erro, setErro] = useState("");
 
-  const isVIPOrAdmin = user?.role === "admin" || user?.role_type === "UsuarioVIP";
-
   // Atualizar título automaticamente quando tipo de compromisso mudar
   const atualizarTitulo = (tipoComp, subTipo) => {
     let prefixo = "";

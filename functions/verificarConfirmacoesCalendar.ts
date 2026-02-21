@@ -8,7 +8,39 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    // Buscar token individual do usuário
+    const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+    const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
+    
+    const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({ user_email: user.email });
+    if (auths.length === 0) {
+      return Response.json({ success: false, error: 'Google Calendar não conectado. Conecte sua conta primeiro.', needsUserAuth: true });
+    }
+    
+    let auth = auths[0];
+    let accessToken = auth.access_token;
+    const tokenExpiry = new Date(auth.token_expiry);
+    
+    if (tokenExpiry <= new Date() && auth.refresh_token) {
+      const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
+          refresh_token: auth.refresh_token, grant_type: 'refresh_token'
+        })
+      });
+      if (refreshResponse.ok) {
+        const newTokens = await refreshResponse.json();
+        await base44.asServiceRole.entities.UserGoogleAuth.update(auth.id, {
+          access_token: newTokens.access_token,
+          token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
+        });
+        accessToken = newTokens.access_token;
+      } else {
+        return Response.json({ success: false, error: 'Falha ao renovar token Google. Reconecte sua conta.', needsUserAuth: true });
+      }
+    }
 
     // Get recent compromissos (last 100) and filter in memory
     const allCompromissos = await base44.entities.Compromisso.list('-created_date', 100);

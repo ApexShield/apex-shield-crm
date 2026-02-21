@@ -50,13 +50,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Campos obrigatórios: eventId, summary, startDateTime, endDateTime' }, { status: 400 });
     }
 
+    // Usar SOMENTE o token do próprio usuário
     const userToken = await getUserCalendarToken(base44, user);
-    let accessToken;
-    if (userToken) {
-      accessToken = userToken.access_token;
-    } else {
-      accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    if (!userToken) {
+      return Response.json({ error: 'Google Calendar não conectado. Conecte sua conta primeiro.', needsUserAuth: true }, { status: 400 });
     }
+    const accessToken = userToken.access_token;
 
     const event = {
       summary,

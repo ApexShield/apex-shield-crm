@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    return Response.json({ success: true, eventos, total: eventos.length, source: userToken ? 'user' : 'connector' });
+    return Response.json({ success: true, eventos, total: eventos.length, source: 'user' });
   } catch (error) {
     console.error('Erro ao listar eventos:', error);
     return Response.json({ success: false, error: error.message, eventos: [] }, { status: 500 });

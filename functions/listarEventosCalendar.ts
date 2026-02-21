@@ -51,20 +51,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Campos obrigatórios: dataInicio, dataFim' }, { status: 400 });
     }
 
-    // Tentar token do próprio usuário primeiro
+    // Usar SOMENTE o token do próprio usuário - nunca fallback para app connector
     const userToken = await getUserCalendarToken(base44, user);
     
-    let accessToken;
-    if (userToken) {
-      accessToken = userToken.access_token;
-    } else {
-      // Fallback: app connector (admin)
-      try {
-        accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
-      } catch (e) {
-        return Response.json({ success: false, error: 'Google Calendar não conectado', eventos: [], needsUserAuth: true });
-      }
+    if (!userToken) {
+      // Usuário não conectou seu Google Calendar - retornar lista vazia
+      return Response.json({ success: true, eventos: [], total: 0, needsUserAuth: true });
     }
+    
+    const accessToken = userToken.access_token;
 
     const calendarUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
       `timeMin=${encodeURIComponent(dataInicio)}&timeMax=${encodeURIComponent(dataFim)}&singleEvents=true&orderBy=startTime&maxResults=250`;

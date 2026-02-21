@@ -49,13 +49,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Campo obrigatório: eventId' }, { status: 400 });
     }
 
+    // Usar SOMENTE o token do próprio usuário
     const userToken = await getUserCalendarToken(base44, user);
-    let accessToken;
-    if (userToken) {
-      accessToken = userToken.access_token;
-    } else {
-      accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    if (!userToken) {
+      return Response.json({ error: 'Google Calendar não conectado. Conecte sua conta primeiro.', needsUserAuth: true }, { status: 400 });
     }
+    const accessToken = userToken.access_token;
 
     const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?sendUpdates=all`, {
       method: 'DELETE',

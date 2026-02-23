@@ -58,6 +58,7 @@ import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade';
 import TermosServico from './pages/TermosServico';
+import AgenteApex from './pages/AgenteApex';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +74,7 @@ export const PAGES = {
     "Organograma": Organograma,
     "PoliticaPrivacidade": PoliticaPrivacidade,
     "TermosServico": TermosServico,
+    "AgenteApex": AgenteApex,
 }
 
 export const pagesConfig = {

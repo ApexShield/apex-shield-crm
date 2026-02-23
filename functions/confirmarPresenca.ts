@@ -26,8 +26,10 @@ Deno.serve(async (req) => {
 
     // Use service role since the participant is not a logged-in user
     const confirmou = action === 'confirmar';
+    const recusou = action === 'recusar';
     await base44.asServiceRole.entities.Compromisso.update(compromisso_id, {
-      convidado_confirmou: confirmou
+      convidado_confirmou: confirmou,
+      convidado_recusou: recusou
     });
 
     const titulo = confirmou ? 'Presença Confirmada!' : 'Resposta Registrada';

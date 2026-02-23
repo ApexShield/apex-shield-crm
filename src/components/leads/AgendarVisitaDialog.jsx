@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, MapPin, Loader2, AlertCircle } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
 
 const COLORS = [
@@ -20,157 +19,82 @@ const COLORS = [
 ];
 
 export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSave }) {
-  const [tipoCompromisso, setTipoCompromisso] = useState(""); // AB Visita, Fechamento, Entrega de Apólice
-  const [subTipoFechamento, setSubTipoFechamento] = useState(""); // F, F2, F3, F4, F5
+  const [tipoCompromisso, setTipoCompromisso] = useState("");
+  const [subTipoFechamento, setSubTipoFechamento] = useState("");
   const [emailConvidado, setEmailConvidado] = useState("");
   const [formData, setFormData] = useState(() => {
     const now = new Date();
     now.setMinutes(0, 0, 0);
     const end = new Date(now);
     end.setHours(end.getHours() + 1);
-    
     return {
-      titulo: "",
-      descricao: "",
-      data_inicio: now.toISOString(),
-      data_fim: end.toISOString(),
-      cor: "#0891b2",
-      tipo: "agendado",
-      modalidade: "",
-      meeting_link: "",
-      endereco: ""
+      titulo: "", descricao: "",
+      data_inicio: now.toISOString(), data_fim: end.toISOString(),
+      cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", endereco: ""
     };
   });
   const [validando, setValidando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // Atualizar título automaticamente quando tipo de compromisso mudar
   const atualizarTitulo = (tipoComp, subTipo) => {
     let prefixo = "";
-    if (tipoComp === "AB Visita") {
-      prefixo = "AB";
-    } else if (tipoComp === "Fechamento" && subTipo) {
-      prefixo = subTipo;
-    } else if (tipoComp === "Entrega de Apólice") {
-      prefixo = "ENT APOLICE";
-    }
-    
+    if (tipoComp === "AB Visita") prefixo = "AB";
+    else if (tipoComp === "Fechamento" && subTipo) prefixo = subTipo;
+    else if (tipoComp === "Entrega de Apólice") prefixo = "ENT APOLICE";
     const novoTitulo = prefixo ? `${prefixo} - ${cliente?.nome || ''}` : "";
     setFormData(prev => ({ ...prev, titulo: novoTitulo }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!tipoCompromisso) {
-      setErro("Por favor, selecione o tipo de compromisso");
-      return;
-    }
+    if (!tipoCompromisso) { setErro("Selecione o tipo de compromisso"); return; }
+    if (tipoCompromisso === "Fechamento" && !subTipoFechamento) { setErro("Selecione a fase do fechamento"); return; }
+    if (!formData.titulo || !formData.data_inicio || !formData.data_fim) { setErro("Preencha todos os campos obrigatórios"); return; }
+    if (!formData.modalidade) { setErro("Selecione a modalidade"); return; }
 
-    if (tipoCompromisso === "Fechamento" && !subTipoFechamento) {
-      setErro("Por favor, selecione a fase do fechamento");
-      return;
-    }
-    
-    if (!formData.titulo || !formData.data_inicio || !formData.data_fim) {
-      setErro("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
-    // Validar se as datas são válidas
-    try {
-      const startDate = parseISO(formData.data_inicio);
-      const endDate = parseISO(formData.data_fim);
-      
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        setErro("Datas inválidas. Por favor, verifique os campos de data e hora.");
-        return;
-      }
-    } catch (error) {
-      setErro("Erro ao processar as datas. Por favor, verifique os campos.");
-      return;
-    }
-
-    if (!formData.modalidade) {
-      setErro("Por favor, selecione a modalidade (Online ou Presencial)");
-      return;
-    }
-
-    // Endereço não é obrigatório para presencial
+    const startDate = parseISO(formData.data_inicio);
+    const endDate = parseISO(formData.data_fim);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) { setErro("Datas inválidas"); return; }
 
     setValidando(true);
     setErro("");
 
     try {
       const dataToSubmit = { ...formData };
-      if (formData.modalidade === "online" && formData.titulo && !formData.titulo.includes("(Online)")) {
-        dataToSubmit.titulo = `${formData.titulo} (Online)`;
-      }
-
       const participanteEmail = emailConvidado || cliente?.email;
-      
-      const eventData = {
-        summary: dataToSubmit.titulo,
-        description: dataToSubmit.descricao || '',
-        startDateTime: dataToSubmit.data_inicio,
-        endDateTime: dataToSubmit.data_fim,
-        location: formData.modalidade === 'presencial' ? (formData.endereco || '') : 'Online'
-      };
 
-      if (participanteEmail) {
-        eventData.attendees = [{ email: participanteEmail }];
-      }
-
-      // Salvar compromisso localmente
       const compromisso = await base44.entities.Compromisso.create({
         ...dataToSubmit,
         cliente_id: cliente?.id || "",
         cliente_nome: cliente?.nome || "",
         email_participante: participanteEmail || "",
-        email_enviado: !!participanteEmail
+        owner_email: user?.email || ""
       });
 
-      // Sync to Google Calendar (this also adds the attendee to their calendar)
-      try {
-        const gcalPayload = {
-          summary: dataToSubmit.titulo,
-          description: dataToSubmit.descricao || '',
-          startDateTime: dataToSubmit.data_inicio,
-          endDateTime: dataToSubmit.data_fim,
-          location: formData.modalidade === 'presencial' ? (formData.endereco || '') : 'Online',
-          attendees: participanteEmail ? [{ email: participanteEmail }] : []
-        };
-        const gcalRes = await base44.functions.invoke('criarEventoCalendar', gcalPayload);
-        if (gcalRes.data?.eventId) {
-          await base44.entities.Compromisso.update(compromisso.id, { google_event_id: gcalRes.data.eventId });
-          if (gcalRes.data?.meetingLink && formData.modalidade === 'online' && !dataToSubmit.meeting_link) {
-            await base44.entities.Compromisso.update(compromisso.id, { meeting_link: gcalRes.data.meetingLink });
-          }
+      // Send invite email with .ics if participant email exists
+      if (participanteEmail) {
+        try {
+          await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: compromisso.id });
+        } catch (err) {
+          console.error('Erro ao enviar convite:', err);
         }
-      } catch (err) {
-        console.error('Erro ao sincronizar com Google Calendar:', err);
       }
 
-      // O Google Calendar já envia convite automaticamente com botão Sim/Não/Talvez (sendUpdates=all)
-
-      const agendamento = {
+      onSave({
         tipo: formData.tipo,
         dataHora: formData.data_inicio,
         endereco: formData.endereco,
         titulo: dataToSubmit.titulo,
         convidados: participanteEmail ? [participanteEmail] : [],
         meeting_link: dataToSubmit.meeting_link
-      };
+      });
 
-      onSave(agendamento);
       resetForm();
       onClose();
-      
-      alert('✅ Compromisso criado com sucesso!' + (participanteEmail ? ' Convite enviado por email.' : ''));
+      alert('✅ Compromisso criado!' + (participanteEmail ? ' Convite enviado por email com .ics.' : ''));
     } catch (error) {
-      console.error("Erro ao criar agendamento:", error);
       const msg = error.response?.data?.error || error.message || 'Tente novamente';
-      setErro(`Erro ao criar agendamento: ${msg}`);
+      setErro(`Erro: ${msg}`);
     } finally {
       setValidando(false);
     }
@@ -181,21 +105,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     now.setMinutes(0, 0, 0);
     const end = new Date(now);
     end.setHours(end.getHours() + 1);
-    
     setTipoCompromisso("");
     setSubTipoFechamento("");
     setEmailConvidado("");
-    setFormData({
-      titulo: "",
-      descricao: "",
-      data_inicio: now.toISOString(),
-      data_fim: end.toISOString(),
-      cor: "#0891b2",
-      tipo: "agendado",
-      modalidade: "",
-      meeting_link: "",
-      endereco: ""
-    });
+    setFormData({ titulo: "", descricao: "", data_inicio: now.toISOString(), data_fim: end.toISOString(), cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", endereco: "" });
     setErro("");
   };
 
@@ -203,12 +116,9 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20 w-[95vw]">
         <DialogHeader>
-          <DialogTitle className="text-white text-xl">
-            🗓️ Editar Compromisso
-          </DialogTitle>
+          <DialogTitle className="text-white text-xl">🗓️ Editar Compromisso</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tipo de Compromisso primeiro com destaque */}
           <div className="bg-indigo-500/20 border-2 border-indigo-400/50 rounded-xl p-4 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">👆</span>
@@ -217,19 +127,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-white">Tipo de Compromisso *</Label>
-                <Select 
-                  value={tipoCompromisso} 
-                  onValueChange={(value) => {
-                    setTipoCompromisso(value);
-                    setSubTipoFechamento("");
-                    if (value !== "Fechamento") {
-                      atualizarTitulo(value, "");
-                    }
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white">
-                    <SelectValue placeholder="Selecione o tipo..." />
-                  </SelectTrigger>
+                <Select value={tipoCompromisso} onValueChange={(value) => { setTipoCompromisso(value); setSubTipoFechamento(""); if (value !== "Fechamento") atualizarTitulo(value, ""); }}>
+                  <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white"><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="AB Visita">AB Visita</SelectItem>
                     <SelectItem value="Fechamento">Fechamento</SelectItem>
@@ -237,20 +136,11 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
                   </SelectContent>
                 </Select>
               </div>
-
               {tipoCompromisso === "Fechamento" && (
                 <div>
                   <Label className="text-white">Fase do Fechamento *</Label>
-                  <Select 
-                    value={subTipoFechamento} 
-                    onValueChange={(value) => {
-                      setSubTipoFechamento(value);
-                      atualizarTitulo("Fechamento", value);
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white">
-                      <SelectValue placeholder="Selecione a fase..." />
-                    </SelectTrigger>
+                  <Select value={subTipoFechamento} onValueChange={(value) => { setSubTipoFechamento(value); atualizarTitulo("Fechamento", value); }}>
+                    <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white"><SelectValue placeholder="Selecione a fase..." /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="F">F</SelectItem>
                       <SelectItem value="F2">F2</SelectItem>
@@ -266,53 +156,19 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
           <div>
             <Label className="text-white">Título *</Label>
-            <Input
-              value={formData.titulo}
-              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-              placeholder={`${cliente?.nome || 'Compromisso'}`}
-              className="bg-white/10 border-white/20 text-white"
-              required
-              readOnly
-            />
+            <Input value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} className="bg-white/10 border-white/20 text-white" required readOnly />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-white">Tipo</Label>
-              <Select 
-                value={formData.tipo} 
-                onValueChange={(value) => {
-                  const selectedColor = COLORS.find(c => c.tipo === value);
-                  setFormData({ 
-                    ...formData, 
-                    tipo: value,
-                    cor: selectedColor ? selectedColor.value : formData.cor
-                  });
-                }}
-              >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="agendado">Agendado</SelectItem>
-                  <SelectItem value="delay">Delay</SelectItem>
-                  <SelectItem value="reuniao_realizada">Reunião Realizada</SelectItem>
-                  <SelectItem value="venda_feita">Venda Feita</SelectItem>
-                  <SelectItem value="pessoal">Compromisso Pessoal</SelectItem>
-                  <SelectItem value="avanti">Compromisso da Avanti</SelectItem>
-                </SelectContent>
+            <div><Label className="text-white">Tipo</Label>
+              <Select value={formData.tipo} onValueChange={(value) => { const sc = COLORS.find(c => c.tipo === value); setFormData({ ...formData, tipo: value, cor: sc ? sc.value : formData.cor }); }}>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue /></SelectTrigger>
+                <SelectContent>{COLORS.map(c => <SelectItem key={c.tipo} value={c.tipo}>{c.label.split(' - ')[1]}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-
-            <div>
-              <Label className="text-white">Modalidade</Label>
-              <Select
-                value={formData.modalidade}
-                onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
-              >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Selecione a modalidade" />
-                </SelectTrigger>
+            <div><Label className="text-white">Modalidade</Label>
+              <Select value={formData.modalidade} onValueChange={(value) => setFormData({ ...formData, modalidade: value })}>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="presencial">📍 Presencial</SelectItem>
                   <SelectItem value="online">💻 Online</SelectItem>
@@ -323,280 +179,80 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
           <div>
             <Label className="text-white">Email do Participante (opcional)</Label>
-            <Input
-              type="email"
-              value={emailConvidado}
-              onChange={(e) => setEmailConvidado(e.target.value)}
-              placeholder={cliente?.email || "Digite o email do convidado"}
-              className="bg-white/10 border-white/20 text-white"
-            />
+            <Input type="email" value={emailConvidado} onChange={(e) => setEmailConvidado(e.target.value)} placeholder={cliente?.email || "Digite o email do convidado"} className="bg-white/10 border-white/20 text-white" />
             {(emailConvidado || cliente?.email) && (
               <div className="mt-2 bg-green-500/20 border border-green-500/50 px-3 py-2 rounded-lg text-sm text-green-100">
-                ✉️ Convite será enviado para: <strong>{emailConvidado || cliente.email}</strong>
+                ✉️ Convite com .ics será enviado para: <strong>{emailConvidado || cliente.email}</strong>
               </div>
             )}
           </div>
 
           {formData.modalidade === "presencial" && (
-            <div>
-              <Label className="text-white">Endereço (opcional)</Label>
-              <Input
-                value={formData.endereco}
-                onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                placeholder="Endereço do compromisso"
-                className="bg-white/10 border-white/20 text-white"
-              />
-            </div>
+            <div><Label className="text-white">Endereço (opcional)</Label><Input value={formData.endereco} onChange={(e) => setFormData({ ...formData, endereco: e.target.value })} placeholder="Endereço do compromisso" className="bg-white/10 border-white/20 text-white" /></div>
           )}
 
           <div>
             <Label className="text-white mb-2 block">Data *</Label>
-            <Input
-              type="date"
-              value={formData.data_inicio ? (() => {
-                try {
-                  const date = parseISO(formData.data_inicio);
-                  return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd");
-                } catch {
-                  return "";
-                }
-              })() : ""}
-              onChange={(e) => {
-                if (!e.target.value) return;
-                try {
-                  const [year, month, day] = e.target.value.split('-').map(Number);
-                  if (!year || !month || !day) return;
-                  
-                  let currentHour = 12;
-                  let currentMinute = 0;
-                  
-                  if (formData.data_inicio) {
-                    try {
-                      const currentStart = parseISO(formData.data_inicio);
-                      if (!isNaN(currentStart.getTime())) {
-                        currentHour = currentStart.getHours();
-                        currentMinute = currentStart.getMinutes();
-                      }
-                    } catch {}
-                  }
-                  
-                  const newDate = new Date(year, month - 1, day, currentHour, currentMinute);
-                  
-                  if (isNaN(newDate.getTime())) return;
-                  
-                  const newEnd = new Date(newDate);
-                  newEnd.setHours(newEnd.getHours() + 1);
-                  setFormData({ 
-                    ...formData, 
-                    data_inicio: newDate.toISOString(),
-                    data_fim: newEnd.toISOString()
-                  });
-                } catch (error) {
-                  console.error('Erro ao processar data:', error);
-                }
-              }}
-              className="bg-white/10 border-white/20 text-white w-full"
-              required
-            />
+            <Input type="date" value={formData.data_inicio ? (() => { try { const date = parseISO(formData.data_inicio); return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd"); } catch { return ""; } })() : ""}
+              onChange={(e) => { if (!e.target.value) return; const [year, month, day] = e.target.value.split('-').map(Number); let cH = 12, cM = 0; if (formData.data_inicio) { try { const cs = parseISO(formData.data_inicio); if (!isNaN(cs.getTime())) { cH = cs.getHours(); cM = cs.getMinutes(); } } catch {} } const nd = new Date(year, month-1, day, cH, cM); if (isNaN(nd.getTime())) return; const ne = new Date(nd); ne.setHours(ne.getHours()+1); setFormData({ ...formData, data_inicio: nd.toISOString(), data_fim: ne.toISOString() }); }}
+              className="bg-white/10 border-white/20 text-white w-full" required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-white mb-2 block">Horário Início *</Label>
+            <div><Label className="text-white mb-2 block">Horário Início *</Label>
               <div className="flex gap-2">
-                <Select
-                  value={formData.data_inicio ? (() => {
-                    try {
-                      const date = parseISO(formData.data_inicio);
-                      return isNaN(date.getTime()) ? "" : format(date, "HH");
-                    } catch {
-                      return "";
-                    }
-                  })() : ""}
-                  onValueChange={(hour) => {
-                    const date = new Date(formData.data_inicio || Date.now());
-                    if (isNaN(date.getTime())) return;
-                    date.setHours(parseInt(hour));
-                    if (isNaN(date.getTime())) return;
-                    const endDate = new Date(date);
-                    endDate.setHours(endDate.getHours() + 1);
-                    setFormData({ 
-                      ...formData, 
-                      data_inicio: date.toISOString(),
-                      data_fim: endDate.toISOString()
-                    });
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                    <SelectValue placeholder="H" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
-                      <SelectItem key={h} value={String(h).padStart(2, '0')}>
-                        {String(h).padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select value={formData.data_inicio ? (() => { try { const d = parseISO(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "HH"); } catch { return ""; } })() : ""}
+                  onValueChange={(hour) => { const d = new Date(formData.data_inicio || Date.now()); if (isNaN(d.getTime())) return; d.setHours(parseInt(hour)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="H" /></SelectTrigger>
+                  <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 4).map(h => <SelectItem key={h} value={String(h).padStart(2, '0')}>{String(h).padStart(2, '0')}</SelectItem>)}</SelectContent>
                 </Select>
-                <Select
-                  value={formData.data_inicio ? (() => {
-                    try {
-                      const date = parseISO(formData.data_inicio);
-                      return isNaN(date.getTime()) ? "" : format(date, "mm");
-                    } catch {
-                      return "";
-                    }
-                  })() : ""}
-                  onValueChange={(minute) => {
-                    const date = new Date(formData.data_inicio || Date.now());
-                    if (isNaN(date.getTime())) return;
-                    date.setMinutes(parseInt(minute));
-                    if (isNaN(date.getTime())) return;
-                    const endDate = new Date(date);
-                    endDate.setHours(endDate.getHours() + 1);
-                    setFormData({ 
-                      ...formData, 
-                      data_inicio: date.toISOString(),
-                      data_fim: endDate.toISOString()
-                    });
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                    <SelectValue placeholder="M" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['00', '15', '30', '45'].map(m => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select value={formData.data_inicio ? (() => { try { const d = parseISO(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "mm"); } catch { return ""; } })() : ""}
+                  onValueChange={(minute) => { const d = new Date(formData.data_inicio || Date.now()); if (isNaN(d.getTime())) return; d.setMinutes(parseInt(minute)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="M" /></SelectTrigger>
+                  <SelectContent>{['00', '15', '30', '45'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-            <div>
-              <Label className="text-white mb-2 block">Horário Fim *</Label>
+            <div><Label className="text-white mb-2 block">Horário Fim *</Label>
               <div className="flex gap-2">
-                <Select
-                  value={formData.data_fim ? (() => {
-                    try {
-                      const date = parseISO(formData.data_fim);
-                      return isNaN(date.getTime()) ? "" : format(date, "HH");
-                    } catch {
-                      return "";
-                    }
-                  })() : ""}
-                  onValueChange={(hour) => {
-                    const date = new Date(formData.data_fim || Date.now());
-                    if (isNaN(date.getTime())) return;
-                    date.setHours(parseInt(hour));
-                    if (isNaN(date.getTime())) return;
-                    setFormData({ ...formData, data_fim: date.toISOString() });
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                    <SelectValue placeholder="H" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 20 }, (_, i) => i + 4).map(h => (
-                      <SelectItem key={h} value={String(h).padStart(2, '0')}>
-                        {String(h).padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select value={formData.data_fim ? (() => { try { const d = parseISO(formData.data_fim); return isNaN(d.getTime()) ? "" : format(d, "HH"); } catch { return ""; } })() : ""}
+                  onValueChange={(hour) => { const d = new Date(formData.data_fim || Date.now()); if (isNaN(d.getTime())) return; d.setHours(parseInt(hour)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="H" /></SelectTrigger>
+                  <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 4).map(h => <SelectItem key={h} value={String(h).padStart(2, '0')}>{String(h).padStart(2, '0')}</SelectItem>)}</SelectContent>
                 </Select>
-                <Select
-                  value={formData.data_fim ? (() => {
-                    try {
-                      const date = parseISO(formData.data_fim);
-                      return isNaN(date.getTime()) ? "" : format(date, "mm");
-                    } catch {
-                      return "";
-                    }
-                  })() : ""}
-                  onValueChange={(minute) => {
-                    const date = new Date(formData.data_fim || Date.now());
-                    if (isNaN(date.getTime())) return;
-                    date.setMinutes(parseInt(minute));
-                    if (isNaN(date.getTime())) return;
-                    setFormData({ ...formData, data_fim: date.toISOString() });
-                  }}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1">
-                    <SelectValue placeholder="M" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['00', '15', '30', '45'].map(m => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select value={formData.data_fim ? (() => { try { const d = parseISO(formData.data_fim); return isNaN(d.getTime()) ? "" : format(d, "mm"); } catch { return ""; } })() : ""}
+                  onValueChange={(minute) => { const d = new Date(formData.data_fim || Date.now()); if (isNaN(d.getTime())) return; d.setMinutes(parseInt(minute)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="M" /></SelectTrigger>
+                  <SelectContent>{['00', '15', '30', '45'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
           </div>
 
-          <div>
-            <Label className="text-white mb-2 block">Cor do Compromisso</Label>
+          <div><Label className="text-white mb-2 block">Cor do Compromisso</Label>
             <div className="grid grid-cols-3 gap-2">
               {COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  className={`flex items-center gap-3 p-3 rounded-lg border-2 hover:scale-105 transition-transform ${
-                    formData.cor === color.value ? "border-white bg-white/10" : "border-white/20 bg-white/5"
-                  }`}
-                  onClick={() => setFormData({ ...formData, cor: color.value, tipo: color.tipo })}
-                >
-                  <div 
-                    className="w-6 h-6 rounded-full flex-shrink-0 shadow-lg"
-                    style={{ backgroundColor: color.value }}
-                  />
+                <button key={color.value} type="button" className={`flex items-center gap-3 p-3 rounded-lg border-2 hover:scale-105 transition-transform ${formData.cor === color.value ? "border-white bg-white/10" : "border-white/20 bg-white/5"}`}
+                  onClick={() => setFormData({ ...formData, cor: color.value, tipo: color.tipo })}>
+                  <div className="w-6 h-6 rounded-full flex-shrink-0 shadow-lg" style={{ backgroundColor: color.value }} />
                   <span className="text-xs text-left text-white font-medium">{color.label.split(' - ')[0]}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div>
-            <Label className="text-white">Descrição</Label>
-            <Textarea
-              value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              rows={3}
-              className="bg-white/10 border-white/20 text-white"
-            />
-          </div>
+          <div><Label className="text-white">Descrição</Label><Textarea value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={3} className="bg-white/10 border-white/20 text-white" /></div>
 
-          {erro && (
-            <div className="bg-red-500/20 border border-red-500/50 px-3 py-2 rounded-lg text-sm text-red-100">
-              {erro}
-            </div>
-          )}
+          {erro && <div className="bg-red-500/20 border border-red-500/50 px-3 py-2 rounded-lg text-sm text-red-100">{erro}</div>}
 
           <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg">
-            📅 Se informar email do participante, um convite do Google Calendar será enviado com botão de Sim/Não/Talvez
+            📧 Se informar email do participante, será enviado um convite com arquivo .ics e botões Sim/Não para confirmar presença
           </div>
 
           <div className="flex gap-2 justify-end pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => { resetForm(); onClose(); }}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={validando}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-            >
-              {validando ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                'Salvar'
-              )}
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onClose(); }} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Cancelar</Button>
+            <Button type="submit" disabled={validando} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
+              {validando ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : 'Salvar'}
             </Button>
           </div>
         </form>

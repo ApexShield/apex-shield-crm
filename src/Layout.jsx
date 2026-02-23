@@ -18,6 +18,7 @@ const navigation = [
   { name: "Calculadora Rápida", icon: Briefcase, page: "CalculadoraRapida" },
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
+  { name: "Agente Apex", icon: Bot, page: "AgenteApex" },
   { name: "Organograma", icon: Users, page: "Organograma" },
   { name: "Política de Privacidade", icon: Briefcase, page: "PoliticaPrivacidade" },
   { name: "Termos de Serviço", icon: Briefcase, page: "TermosServico" }

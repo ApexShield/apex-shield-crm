@@ -286,7 +286,54 @@ Deno.serve(async (req) => {
 
     await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
 
-    return Response.json({ success: true, message: `Convite enviado para ${comp.email_participante}` });
+    // Criar evento no Google Calendar do organizador
+    let googleEventId = null;
+    try {
+      const calendarToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+      
+      const calEvent = {
+        summary: comp.titulo,
+        description: comp.descricao || '',
+        location: comp.modalidade === 'online' ? (comp.meeting_link || 'Online') : (comp.endereco || ''),
+        start: { dateTime: comp.data_inicio, timeZone: 'America/Sao_Paulo' },
+        end: { dateTime: (comp.data_fim || new Date(new Date(comp.data_inicio).getTime() + 3600000).toISOString()), timeZone: 'America/Sao_Paulo' },
+        attendees: [{ email: comp.email_participante }],
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'popup', minutes: 60 },
+            { method: 'popup', minutes: 30 }
+          ]
+        }
+      };
+
+      const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${calendarToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(calEvent)
+      });
+
+      if (calRes.ok) {
+        const calData = await calRes.json();
+        googleEventId = calData.id;
+        await base44.entities.Compromisso.update(comp.id, { google_event_id: calData.id });
+        console.log('Evento criado no Google Calendar:', calData.id);
+      } else {
+        const calErr = await calRes.text();
+        console.error('Erro ao criar evento no Google Calendar:', calErr);
+      }
+    } catch (calError) {
+      console.error('Erro ao adicionar ao Google Calendar:', calError.message);
+    }
+
+    return Response.json({ 
+      success: true, 
+      message: `Convite enviado para ${comp.email_participante}`,
+      google_event_id: googleEventId
+    });
   } catch (error) {
     console.error('Error:', error);
     return Response.json({ error: error.message }, { status: 500 });

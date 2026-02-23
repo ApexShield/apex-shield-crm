@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -52,9 +52,17 @@ export default function Compromissos() {
   const queryClient = useQueryClient();
   const { data: user } = useQuery({ queryKey: ["user"], queryFn: () => base44.auth.me() });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user?.link_reuniao_padrao) setDefaultMeetingLink(user.link_reuniao_padrao);
   }, [user]);
+
+  // Real-time subscription for live status updates
+  useEffect(() => {
+    const unsubscribe = base44.entities.Compromisso.subscribe((event) => {
+      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+    });
+    return unsubscribe;
+  }, [queryClient]);
 
   const { data: allClientes = [] } = useQuery({
     queryKey: ["clientes"], queryFn: () => base44.entities.Cliente.list(), enabled: !!user
@@ -441,6 +449,10 @@ export default function Compromissos() {
                     <div className="flex items-center gap-2 mt-1">
                       <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center"><Clock className="w-2.5 h-2.5 text-white" /></span>
                       <span className="text-xs text-indigo-200">Aguardando confirmação</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"><XCircle className="w-2.5 h-2.5 text-white" /></span>
+                      <span className="text-xs text-indigo-200">Convite recusado</span>
                     </div>
                   </div>
                 </div>

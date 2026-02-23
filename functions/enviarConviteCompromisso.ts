@@ -178,9 +178,9 @@ Deno.serve(async (req) => {
   <!-- Meeting Button -->
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
     <tr><td align="center">
-      <a href="${meetLink}" style="display:inline-block;background:linear-gradient(135deg,#0077c8,#005fa3);color:white;padding:14px 48px;border-radius:12px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(0,119,200,0.4);">
-        💻 Entrar na Reunião
-      </a>
+      <table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" style="background:#0077c8;border-radius:12px;box-shadow:0 6px 20px rgba(0,119,200,0.4);">
+        <a href="${meetLink}" target="_blank" style="display:inline-block;padding:14px 48px;color:#ffffff;font-weight:800;font-size:15px;text-decoration:none;font-family:'Segoe UI',Roboto,Arial,sans-serif;">&#128187; Entrar na Reuni&atilde;o</a>
+      </td></tr></table>
     </td></tr>
   </table>` : ''}
 
@@ -193,15 +193,15 @@ Deno.serve(async (req) => {
     <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:18px;">Clique em uma das opções abaixo</div>
     <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
       <tr>
-        <td style="padding:0 6px;">
-          <a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#00af3f,#008a32);color:white;padding:14px 36px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;box-shadow:0 6px 20px rgba(0,175,63,0.4);">
-            ✓ Aceitar
-          </a>
+        <td style="padding:0 8px;">
+          <table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" style="background:#00af3f;border-radius:12px;box-shadow:0 6px 20px rgba(0,175,63,0.4);">
+            <a href="${confirmUrl}" target="_blank" style="display:inline-block;padding:14px 36px;color:#ffffff;font-weight:800;font-size:14px;text-decoration:none;font-family:'Segoe UI',Roboto,Arial,sans-serif;">&#10003; Aceitar</a>
+          </td></tr></table>
         </td>
-        <td style="padding:0 6px;">
-          <a href="${declineUrl}" style="display:inline-block;background:rgba(255,255,255,0.1);color:#ffffff;padding:14px 36px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;border:2px solid rgba(255,255,255,0.2);">
-            ✕ Recusar
-          </a>
+        <td style="padding:0 8px;">
+          <table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" style="background:#dc2626;border-radius:12px;box-shadow:0 6px 20px rgba(220,38,38,0.4);">
+            <a href="${declineUrl}" target="_blank" style="display:inline-block;padding:14px 36px;color:#ffffff;font-weight:800;font-size:14px;text-decoration:none;font-family:'Segoe UI',Roboto,Arial,sans-serif;">&#10005; Recusar</a>
+          </td></tr></table>
         </td>
       </tr>
     </table>
@@ -231,8 +231,13 @@ Deno.serve(async (req) => {
     const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2)}`;
     const icsBase64 = btoa(unescape(encodeURIComponent(icsContent)));
 
+    const recipients = [comp.email_participante];
+    if (organizerEmail && organizerEmail !== comp.email_participante) {
+      recipients.push(organizerEmail);
+    }
+
     const mimeMessage = [
-      `To: ${comp.email_participante}`,
+      `To: ${recipients.join(', ')}`,
       `From: ${organizerEmail}`,
       `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
       `MIME-Version: 1.0`,

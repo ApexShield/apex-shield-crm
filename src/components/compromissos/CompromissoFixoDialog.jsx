@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Repeat, Loader2 } from "lucide-react";
 
 const DIAS_SEMANA = [
@@ -20,8 +19,8 @@ const DIAS_SEMANA = [
 
 const TIPOS = [
   { value: "pessoal", label: "🧡 Pessoal", cor: "#f97316" },
-  { value: "avanti", label: "💗 Avanti", cor: "#ec4899" },
-  { value: "agendado", label: "🔵 Agendado", cor: "#0891b2" }
+  { value: "avanti", label: "🏢 Agência", cor: "#ec4899" },
+  { value: "agendado", label: "💼 Trabalho", cor: "#0891b2" }
 ];
 
 export default function CompromissoFixoDialog({ open, onClose, onSave, saving }) {

@@ -3,21 +3,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
 
-    // Get all compromissos in the next 90 minutes that have email_participante
+    // This is called by scheduled automation - use service role
     const now = new Date();
-    const in90min = new Date(now.getTime() + 90 * 60 * 1000);
-    const in60min = new Date(now.getTime() + 60 * 60 * 1000);
-    const in55min = new Date(now.getTime() + 55 * 60 * 1000);
-    const in30min = new Date(now.getTime() + 30 * 60 * 1000);
-    const in25min = new Date(now.getTime() + 25 * 60 * 1000);
 
-    // List upcoming compromissos
-    const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 200);
+    const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 300);
     
     const emailsSent = [];
 
@@ -27,87 +17,102 @@ Deno.serve(async (req) => {
       const startTime = new Date(comp.data_inicio);
       if (isNaN(startTime.getTime())) continue;
       
-      // Check if the event is coming up in ~60 min (between 55-65 min from now)
       const diffMs = startTime.getTime() - now.getTime();
       const diffMin = diffMs / (60 * 1000);
       
       let reminderType = null;
       
       if (diffMin > 55 && diffMin <= 65) {
-        // 1 hour reminder - check if we already sent it
         if (comp.lembrete_1h_enviado) continue;
         reminderType = '1h';
       } else if (diffMin > 25 && diffMin <= 35) {
-        // 30 min reminder - check if we already sent it
         if (comp.lembrete_30min_enviado) continue;
         reminderType = '30min';
       } else {
         continue;
       }
 
-      // Format dates
       const endTime = comp.data_fim ? new Date(comp.data_fim) : new Date(startTime.getTime() + 3600000);
-      const day = startTime.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const timeStart = startTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
-      const timeEnd = endTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+      const optsBR = { timeZone: 'America/Sao_Paulo' };
+      const day = startTime.toLocaleDateString('pt-BR', { ...optsBR, day: '2-digit', month: '2-digit', year: 'numeric' });
+      const dayFull = startTime.toLocaleDateString('pt-BR', { ...optsBR, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      const timeStart = startTime.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
+      const timeEnd = endTime.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
       
       const tempoRestante = reminderType === '1h' ? '1 hora' : '30 minutos';
-      const urgencyColor = reminderType === '1h' ? '#f59e0b' : '#ef4444';
-      const urgencyBg = reminderType === '1h' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #ef4444, #dc2626)';
+      const urgencyGradient = reminderType === '1h' 
+        ? 'linear-gradient(135deg,#f59e0b,#d97706)' 
+        : 'linear-gradient(135deg,#ef4444,#dc2626)';
+      const urgencyIcon = reminderType === '1h' ? '⏰' : '🔔';
 
       const locationInfo = comp.modalidade === 'online' 
-        ? (comp.meeting_link ? `<a href="${comp.meeting_link}" style="color:#6366f1;font-weight:600;text-decoration:none;">🔗 Acessar Reunião Online</a>` : '💻 Online')
+        ? (comp.meeting_link ? `<a href="${comp.meeting_link}" style="color:#4f46e5;font-weight:700;text-decoration:none;">💻 Acessar Reunião Online</a>` : '💻 Online')
         : (comp.endereco ? `📍 ${comp.endereco}` : '📍 Presencial');
 
+      const meetingButton = comp.meeting_link ? `
+      <div style="text-align:center;margin:28px 0 12px;">
+        <a href="${comp.meeting_link}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;padding:16px 52px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 6px 20px rgba(79,70,229,0.35);">
+          💻 Entrar na Reunião
+        </a>
+      </div>` : '';
+
       const emailBody = `
-<div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-  <div style="background:${urgencyBg};padding:32px;text-align:center;">
-    <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
-      <span style="font-size:28px;">⏰</span>
+<div style="font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
+  <div style="background:${urgencyGradient};padding:40px 32px;text-align:center;">
+    <div style="width:72px;height:72px;background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;border:2px solid rgba(255,255,255,0.25);">
+      <span style="font-size:32px;">${urgencyIcon}</span>
     </div>
-    <h1 style="color:white;margin:0;font-size:20px;font-weight:700;">Lembrete de Compromisso</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:14px;">Faltam <strong>${tempoRestante}</strong> para o seu compromisso</p>
+    <h1 style="color:white;margin:0;font-size:22px;font-weight:800;">Lembrete de Compromisso</h1>
+    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px;">Faltam <strong>${tempoRestante}</strong> para o seu compromisso</p>
   </div>
   
   <div style="padding:32px;">
-    <div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid ${urgencyColor};">
-      <h2 style="color:#1e293b;margin:0 0 16px;font-size:18px;font-weight:700;">${comp.titulo}</h2>
+    <div style="background:linear-gradient(135deg,#f8fafc,#fef3c7);border-radius:16px;padding:28px;border:1px solid #fde68a;">
+      <h2 style="color:#1e1b4b;margin:0 0 20px;font-size:20px;font-weight:800;">${comp.titulo}</h2>
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:6px 0;color:#64748b;font-size:14px;width:30px;vertical-align:top;">📅</td>
-          <td style="padding:6px 0;color:#334155;font-size:14px;font-weight:500;">${day}</td>
+          <td style="padding:10px 12px;font-size:18px;width:36px;vertical-align:top;">📅</td>
+          <td style="padding:10px 0;">
+            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Quando</div>
+            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${dayFull}</div>
+          </td>
         </tr>
         <tr>
-          <td style="padding:6px 0;color:#64748b;font-size:14px;vertical-align:top;">🕐</td>
-          <td style="padding:6px 0;color:#334155;font-size:14px;font-weight:500;">${timeStart} - ${timeEnd}</td>
+          <td style="padding:10px 12px;font-size:18px;vertical-align:top;">🕐</td>
+          <td style="padding:10px 0;">
+            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Horário</div>
+            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${timeStart} - ${timeEnd} (Horário de Brasília)</div>
+          </td>
         </tr>
         <tr>
-          <td style="padding:6px 0;color:#64748b;font-size:14px;vertical-align:top;">📍</td>
-          <td style="padding:6px 0;color:#334155;font-size:14px;font-weight:500;">${locationInfo}</td>
+          <td style="padding:10px 12px;font-size:18px;vertical-align:top;">📍</td>
+          <td style="padding:10px 0;">
+            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Local</div>
+            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${locationInfo}</div>
+          </td>
         </tr>
         ${comp.descricao ? `<tr>
-          <td style="padding:6px 0;color:#64748b;font-size:14px;vertical-align:top;">📝</td>
-          <td style="padding:6px 0;color:#334155;font-size:14px;">${comp.descricao}</td>
+          <td style="padding:10px 12px;font-size:18px;vertical-align:top;">📝</td>
+          <td style="padding:10px 0;">
+            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Descrição</div>
+            <div style="color:#334155;font-size:14px;margin-top:2px;">${comp.descricao}</div>
+          </td>
         </tr>` : ''}
       </table>
     </div>
 
-    ${comp.meeting_link ? `
-    <div style="text-align:center;margin-top:24px;">
-      <a href="${comp.meeting_link}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(79,70,229,0.3);">
-        💻 Entrar na Reunião
-      </a>
-    </div>` : ''}
+    ${meetingButton}
 
     <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
-      Este é um lembrete automático. Não é necessário responder este email.
+      Este é um lembrete automático do APEX SHIELD CRM.
     </p>
   </div>
   
-  <div style="background:#f8fafc;padding:16px;text-align:center;border-top:1px solid #e2e8f0;">
-    <p style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin:0;">
-      ● APEX SHIELD CRM
-    </p>
+  <div style="background:linear-gradient(135deg,#f8fafc,#eef2ff);padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
+    <div style="display:inline-flex;align-items:center;gap:8px;">
+      <div style="width:8px;height:8px;background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:50%;"></div>
+      <span style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">APEX SHIELD CRM</span>
+    </div>
   </div>
 </div>`;
 
@@ -115,7 +120,6 @@ Deno.serve(async (req) => {
         ? `⏰ Lembrete: ${comp.titulo} em 1 hora`
         : `🔔 Atenção: ${comp.titulo} em 30 minutos!`;
 
-      // Send the reminder via the app's Gmail integration
       const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
       
       const mimeMessage = [
@@ -123,8 +127,9 @@ Deno.serve(async (req) => {
         `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(assunto)))}?=`,
         `MIME-Version: 1.0`,
         `Content-Type: text/html; charset=UTF-8`,
+        `Content-Transfer-Encoding: base64`,
         ``,
-        emailBody
+        btoa(unescape(encodeURIComponent(emailBody)))
       ].join('\r\n');
 
       const encodedMessage = btoa(unescape(encodeURIComponent(mimeMessage)))
@@ -142,7 +147,6 @@ Deno.serve(async (req) => {
       });
 
       if (response.ok) {
-        // Mark that we sent the reminder
         const updateData = reminderType === '1h' 
           ? { lembrete_1h_enviado: true } 
           : { lembrete_30min_enviado: true };

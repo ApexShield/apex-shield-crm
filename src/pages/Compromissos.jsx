@@ -428,6 +428,7 @@ export default function Compromissos() {
                         <div className="p-2 text-xs font-bold text-indigo-300 text-right border-r border-white/10 bg-white/5">{String(hour).padStart(2, "0")}:00</div>
                         {weekDays.map((day, dayIndex) => {
                           const events = getEventsForSlot(day, hour).filter(e => { const s = new Date(e.data_inicio); return !isNaN(s.getTime()) && s.getHours() === hour; });
+                          // Note: events are filtered to only show in their START hour slot
                           return (
                             <Droppable key={`${dayIndex}_${hour}`} droppableId={`${dayIndex}_${hour}`}>
                               {(provided, snapshot) => (

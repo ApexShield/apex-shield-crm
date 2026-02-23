@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, CheckCircle2, Repeat, Mail } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, CheckCircle2, Repeat, Mail, XCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,6 +36,8 @@ export default function Compromissos() {
   const [savingFixo, setSavingFixo] = useState(false);
   const [mobileDayIndex, setMobileDayIndex] = useState(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
+  const [pendingUpdateData, setPendingUpdateData] = useState(null);
 
   const getDefaultDates = () => {
     const now = new Date();
@@ -112,9 +115,16 @@ export default function Compromissos() {
   });
 
   const atualizarMutation = useMutation({
-    mutationFn: async (data) => {
-      const { id, ...updateData } = data;
+    mutationFn: async ({ updatePayload, sendEmail }) => {
+      const { id, ...updateData } = updatePayload;
       await base44.entities.Compromisso.update(id, updateData);
+      if (sendEmail && updateData.email_participante) {
+        try {
+          await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: id });
+        } catch (err) {
+          console.error('Erro ao enviar email de atualização:', err);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
@@ -193,10 +203,24 @@ export default function Compromissos() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingEvent) {
-      atualizarMutation.mutate({ ...formData, id: editingEvent.id });
+      const updatePayload = { ...formData, id: editingEvent.id };
+      if (editingEvent.email_participante) {
+        setPendingUpdateData(updatePayload);
+        setShowEmailConfirm(true);
+      } else {
+        atualizarMutation.mutate({ updatePayload, sendEmail: false });
+      }
     } else {
       criarMutation.mutate(formData);
     }
+  };
+
+  const handleConfirmUpdate = (sendEmail) => {
+    if (pendingUpdateData) {
+      atualizarMutation.mutate({ updatePayload: pendingUpdateData, sendEmail });
+    }
+    setShowEmailConfirm(false);
+    setPendingUpdateData(null);
   };
 
   const handleDeleteEvent = () => {

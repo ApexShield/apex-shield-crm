@@ -313,9 +313,12 @@ export default function Compromissos() {
     const duration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();
     const newEnd = new Date(newStart.getTime() + duration);
     atualizarMutation.mutate({
-      id: event.id, titulo: event.titulo, descricao: event.descricao,
-      data_inicio: newStart.toISOString(), data_fim: newEnd.toISOString(),
-      cor: event.cor, modalidade: event.modalidade, email_participante: event.email_participante || ""
+      updatePayload: {
+        id: event.id, titulo: event.titulo, descricao: event.descricao,
+        data_inicio: newStart.toISOString(), data_fim: newEnd.toISOString(),
+        cor: event.cor, modalidade: event.modalidade, email_participante: event.email_participante || ""
+      },
+      sendEmail: false
     });
   };
 

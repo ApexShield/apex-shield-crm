@@ -238,13 +238,21 @@ export default function Compromissos() {
 
   const getEventsForSlot = (day, hour) => {
     return compromissos.filter(comp => {
-      if (!comp.data_inicio) return false;
+      if (!comp.data_inicio || !comp.data_fim) return false;
       const cs = new Date(comp.data_inicio);
       const ce = new Date(comp.data_fim);
       if (isNaN(cs.getTime()) || isNaN(ce.getTime())) return false;
+      // Compare using local date parts to avoid UTC offset issues
+      const csDay = cs.getDate();
+      const csMonth = cs.getMonth();
+      const csYear = cs.getFullYear();
+      const dayDate = day.getDate();
+      const dayMonth = day.getMonth();
+      const dayYear = day.getFullYear();
+      if (csDay !== dayDate || csMonth !== dayMonth || csYear !== dayYear) return false;
       const ss = new Date(day); ss.setHours(hour, 0, 0, 0);
       const se = new Date(ss); se.setHours(hour + 1, 0, 0, 0);
-      return isSameDay(cs, day) && cs < se && ce > ss;
+      return cs < se && ce > ss;
     });
   };
 
@@ -280,7 +288,8 @@ export default function Compromissos() {
     return compromissos.filter(c => {
       if (!c.data_inicio) return false;
       const cs = new Date(c.data_inicio);
-      return !isNaN(cs.getTime()) && isSameDay(cs, mobileDay);
+      if (isNaN(cs.getTime())) return false;
+      return cs.getDate() === mobileDay.getDate() && cs.getMonth() === mobileDay.getMonth() && cs.getFullYear() === mobileDay.getFullYear();
     }).sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
   }, [compromissos, mobileDay]);
 

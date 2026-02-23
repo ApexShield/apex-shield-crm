@@ -180,7 +180,8 @@ export default function AgentChat() {
                   "Criar um novo lead",
                   "Agendar um compromisso",
                   "Calcular proteção de seguro",
-                  "Registrar uma despesa"
+                  "Registrar uma despesa ou receita",
+                  "Enviar mensagem para aniversariantes do dia"
                 ].map(suggestion => (
                   <button
                     key={suggestion}

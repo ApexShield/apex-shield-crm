@@ -823,7 +823,11 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     {formData.agendar_visita ? (
                       <div className="space-y-2">
                         <p className="text-sm text-blue-600 font-bold">
-                          ✓ Visita agendada para: {format(new Date(formData.agendar_visita), "dd/MM/yyyy 'Horário' HH:mm")}
+                          ✓ Visita agendada para: {(() => {
+                            const d = new Date(formData.agendar_visita);
+                            if (isNaN(d.getTime())) return formData.agendar_visita;
+                            return format(d, "dd/MM/yyyy 'Horário' HH:mm");
+                          })()}
                         </p>
                         <Button
                           type="button"

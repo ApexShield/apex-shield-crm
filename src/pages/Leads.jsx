@@ -495,8 +495,9 @@ export default function Leads() {
                       </TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">
                         {cliente.agendar_visita ? (() => {
-                          const parts = cliente.agendar_visita.split('T')[0].split('-');
-                          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                          const d = new Date(cliente.agendar_visita);
+                          if (isNaN(d.getTime())) return <span className="text-white/50">—</span>;
+                          return format(d, "dd/MM/yyyy");
                         })() : <span className="text-white/50">—</span>}
                       </TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.status}</TableCell>

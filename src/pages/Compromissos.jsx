@@ -391,11 +391,14 @@ export default function Compromissos() {
                         <div className="flex items-center gap-2">
                           <span className="text-white font-bold text-sm truncate">{event.titulo}</span>
                           {event.email_participante && event.convidado_confirmou && (
-                            <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-2.5 h-2.5 text-white" /></span>
-                          )}
-                          {event.email_participante && !event.convidado_confirmou && (
-                            <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><Clock className="w-2 h-2 text-white" /></span>
-                          )}
+                                <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-2.5 h-2.5 text-white" /></span>
+                              )}
+                              {event.email_participante && event.convidado_recusou && (
+                                <span className="bg-red-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><XCircle className="w-2.5 h-2.5 text-white" /></span>
+                              )}
+                              {event.email_participante && !event.convidado_confirmou && !event.convidado_recusou && (
+                                <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><Clock className="w-2 h-2 text-white" /></span>
+                              )}
                         </div>
                         <div className="text-xs text-indigo-300 mt-0.5">
                           {!isNaN(start.getTime()) && format(start, 'HH:mm')} - {!isNaN(end.getTime()) && format(end, 'HH:mm')}
@@ -485,7 +488,12 @@ export default function Compromissos() {
                                                   <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                                                 </span>
                                               )}
-                                              {event.email_participante && !event.convidado_confirmou && (
+                                              {event.email_participante && event.convidado_recusou && (
+                                                <span className="flex-shrink-0 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Convite recusado">
+                                                  <XCircle className="w-3.5 h-3.5 text-white" />
+                                                </span>
+                                              )}
+                                              {event.email_participante && !event.convidado_confirmou && !event.convidado_recusou && (
                                                 <span className="flex-shrink-0 bg-yellow-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Aguardando confirmação">
                                                   <Clock className="w-3 h-3 text-white" />
                                                 </span>

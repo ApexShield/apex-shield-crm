@@ -242,17 +242,12 @@ export default function Compromissos() {
       const cs = new Date(comp.data_inicio);
       const ce = new Date(comp.data_fim);
       if (isNaN(cs.getTime()) || isNaN(ce.getTime())) return false;
-      // Compare using local date parts to avoid UTC offset issues
-      const csDay = cs.getDate();
-      const csMonth = cs.getMonth();
-      const csYear = cs.getFullYear();
-      const dayDate = day.getDate();
-      const dayMonth = day.getMonth();
-      const dayYear = day.getFullYear();
-      if (csDay !== dayDate || csMonth !== dayMonth || csYear !== dayYear) return false;
-      const ss = new Date(day); ss.setHours(hour, 0, 0, 0);
-      const se = new Date(ss); se.setHours(hour + 1, 0, 0, 0);
-      return cs < se && ce > ss;
+      // Check same day using local time
+      if (cs.getFullYear() !== day.getFullYear() || cs.getMonth() !== day.getMonth() || cs.getDate() !== day.getDate()) return false;
+      // Check if event overlaps this hour slot
+      const slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, 0, 0);
+      const slotEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour + 1, 0, 0);
+      return cs < slotEnd && ce > slotStart;
     });
   };
 

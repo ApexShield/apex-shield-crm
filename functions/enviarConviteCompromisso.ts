@@ -317,16 +317,34 @@ Deno.serve(async (req) => {
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
-    // Tentar usar token individual do usuário para Gmail, senão usa app connector
-    let gmailToken = null;
+    // Usar SOMENTE o token individual do usuário logado - NUNCA fallback para app connector
     const userAuth = await getUserGoogleToken(base44, user.email);
-    if (userAuth) {
-      gmailToken = userAuth.access_token;
-      console.log('Usando token Gmail do usuário:', userAuth.google_email);
-    } else {
-      gmailToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
-      console.log('Usando token Gmail do app connector (fallback)');
+    if (!userAuth) {
+      // Usuário não conectou Google - enviar via integração SendEmail do Base44 como alternativa
+      console.log('Usuário não conectou Google, usando SendEmail do Base44');
+      await base44.integrations.Core.SendEmail({
+        to: comp.email_participante,
+        subject: subject,
+        body: emailBody
+      });
+      // Também enviar para o organizador
+      if (organizerEmail !== comp.email_participante) {
+        await base44.integrations.Core.SendEmail({
+          to: organizerEmail,
+          subject: subject,
+          body: emailBody
+        });
+      }
+      await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+      return Response.json({ 
+        success: true, 
+        message: `Convite enviado para ${comp.email_participante} (via email padrão - conecte seu Google para enviar do seu Gmail)`,
+        google_event_id: null
+      });
     }
+
+    console.log('Usando token do usuário:', userAuth.google_email);
+    const gmailToken = userAuth.access_token;
 
     const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
       method: 'POST',
@@ -337,38 +355,16 @@ Deno.serve(async (req) => {
     if (!gmailRes.ok) {
       const errText = await gmailRes.text();
       console.error('Gmail send error:', errText);
-      // Se falhou com token do usuário, tentar app connector como fallback
-      if (userAuth) {
-        console.log('Tentando fallback com app connector Gmail...');
-        const fallbackToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
-        const fallbackRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${fallbackToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw: rawEncoded })
-        });
-        if (!fallbackRes.ok) {
-          const fallbackErr = await fallbackRes.text();
-          console.error('Gmail fallback error:', fallbackErr);
-          return Response.json({ error: 'Falha ao enviar email', details: fallbackErr }, { status: 500 });
-        }
-      } else {
-        return Response.json({ error: 'Falha ao enviar email', details: errText }, { status: 500 });
-      }
+      return Response.json({ error: 'Falha ao enviar email pelo seu Gmail. Verifique sua conexão Google.', details: errText }, { status: 500 });
     }
 
     await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
 
-    // Criar evento no Google Calendar do ORGANIZADOR (usando token individual do usuário)
+    // Criar evento no Google Calendar do ORGANIZADOR (usando token individual do usuário - NUNCA app connector)
     let googleEventId = null;
     try {
-      let calendarToken = null;
-      if (userAuth) {
-        calendarToken = userAuth.access_token;
-        console.log('Usando token Calendar do usuário:', userAuth.google_email);
-      } else {
-        calendarToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
-        console.log('Usando token Calendar do app connector (fallback)');
-      }
+      const calendarToken = userAuth.access_token;
+      console.log('Criando evento no Calendar do usuário:', userAuth.google_email);
       
       const calEvent = {
         summary: comp.titulo,

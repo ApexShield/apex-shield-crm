@@ -317,26 +317,58 @@ Deno.serve(async (req) => {
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+    // Tentar usar token individual do usuário para Gmail, senão usa app connector
+    let gmailToken = null;
+    const userAuth = await getUserGoogleToken(base44, user.email);
+    if (userAuth) {
+      gmailToken = userAuth.access_token;
+      console.log('Usando token Gmail do usuário:', userAuth.google_email);
+    } else {
+      gmailToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+      console.log('Usando token Gmail do app connector (fallback)');
+    }
 
     const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ raw: rawEncoded })
     });
 
     if (!gmailRes.ok) {
       const errText = await gmailRes.text();
       console.error('Gmail send error:', errText);
-      return Response.json({ error: 'Falha ao enviar email', details: errText }, { status: 500 });
+      // Se falhou com token do usuário, tentar app connector como fallback
+      if (userAuth) {
+        console.log('Tentando fallback com app connector Gmail...');
+        const fallbackToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+        const fallbackRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${fallbackToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw: rawEncoded })
+        });
+        if (!fallbackRes.ok) {
+          const fallbackErr = await fallbackRes.text();
+          console.error('Gmail fallback error:', fallbackErr);
+          return Response.json({ error: 'Falha ao enviar email', details: fallbackErr }, { status: 500 });
+        }
+      } else {
+        return Response.json({ error: 'Falha ao enviar email', details: errText }, { status: 500 });
+      }
     }
 
     await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
 
-    // Criar evento no Google Calendar do organizador
+    // Criar evento no Google Calendar do ORGANIZADOR (usando token individual do usuário)
     let googleEventId = null;
     try {
-      const calendarToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+      let calendarToken = null;
+      if (userAuth) {
+        calendarToken = userAuth.access_token;
+        console.log('Usando token Calendar do usuário:', userAuth.google_email);
+      } else {
+        calendarToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+        console.log('Usando token Calendar do app connector (fallback)');
+      }
       
       const calEvent = {
         summary: comp.titulo,

@@ -63,9 +63,23 @@ export default function Compromissos() {
     return allClientes.filter(c => c.created_by === user.email).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   }, [allClientes, user]);
 
+  // Calculate a wide date range for fetching (3 months before to 3 months after current week)
+  const fetchRange = useMemo(() => {
+    const rangeStart = new Date(currentWeekStart);
+    rangeStart.setMonth(rangeStart.getMonth() - 3);
+    const rangeEnd = new Date(currentWeekStart);
+    rangeEnd.setMonth(rangeEnd.getMonth() + 3);
+    return { start: rangeStart.toISOString(), end: rangeEnd.toISOString() };
+  }, [currentWeekStart]);
+
   const { data: compromissos = [], isLoading } = useQuery({
-    queryKey: ['compromissos'],
-    queryFn: () => base44.entities.Compromisso.list('-data_inicio', 500),
+    queryKey: ['compromissos', fetchRange.start, fetchRange.end],
+    queryFn: async () => {
+      const results = await base44.entities.Compromisso.filter({
+        data_inicio: { $gte: fetchRange.start, $lte: fetchRange.end }
+      }, '-data_inicio', 1000);
+      return results;
+    },
     enabled: !!user
   });
 

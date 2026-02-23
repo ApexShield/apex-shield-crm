@@ -328,7 +328,10 @@ export default function Compromissos() {
               <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0 font-bold text-xs md:text-sm">Hoje</Button>
               <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 w-8 md:h-9 md:w-9"><ChevronRight className="w-4 h-4 md:w-5 md:h-5" /></Button>
             </div>
-            <span className="text-sm md:text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm md:text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
+              {compromissos.length > 0 && <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-indigo-300">{compromissos.length} compromissos</span>}
+            </div>
           </div>
 
           {/* Mobile: Day selector + list view */}

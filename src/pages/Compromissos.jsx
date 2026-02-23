@@ -627,19 +627,20 @@ export default function Compromissos() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className={`w-5 h-5 ${editingEvent.convidado_confirmou ? 'text-green-400' : 'text-white/30'}`} />
-                    <span className="text-sm text-white">Convidado confirmou presença</span>
+                    {editingEvent.convidado_confirmou && <CheckCircle2 className="w-5 h-5 text-green-400" />}
+                    {editingEvent.convidado_recusou && <XCircle className="w-5 h-5 text-red-400" />}
+                    {!editingEvent.convidado_confirmou && !editingEvent.convidado_recusou && <Clock className="w-5 h-5 text-yellow-400" />}
+                    <span className="text-sm text-white">
+                      {editingEvent.convidado_confirmou ? 'Presença confirmada' : editingEvent.convidado_recusou ? 'Convite recusado' : 'Aguardando resposta'}
+                    </span>
                   </div>
-                  <Button type="button" size="sm" variant={editingEvent.convidado_confirmou ? "default" : "outline"}
-                    className={editingEvent.convidado_confirmou ? "bg-green-600 hover:bg-green-700 text-white" : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
-                    onClick={async () => {
-                      const newVal = !editingEvent.convidado_confirmou;
-                      await base44.entities.Compromisso.update(editingEvent.id, { convidado_confirmou: newVal });
-                      setEditingEvent({ ...editingEvent, convidado_confirmou: newVal });
-                      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-                    }}>
-                    {editingEvent.convidado_confirmou ? '✅ Confirmado' : 'Marcar como confirmado'}
-                  </Button>
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    editingEvent.convidado_confirmou ? 'bg-green-500/20 text-green-300' : 
+                    editingEvent.convidado_recusou ? 'bg-red-500/20 text-red-300' : 
+                    'bg-yellow-500/20 text-yellow-300'
+                  }`}>
+                    {editingEvent.convidado_confirmou ? '✅ Confirmado' : editingEvent.convidado_recusou ? '✕ Recusado' : '⏳ Pendente'}
+                  </span>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={handleSendInvite} disabled={sendingInvite}
                   className="bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 w-full">
@@ -677,6 +678,26 @@ export default function Compromissos() {
       </Dialog>
 
       <CompromissoFixoDialog open={showFixoDialog} onClose={() => setShowFixoDialog(false)} onSave={criarCompromissosFixos} saving={savingFixo} />
+
+      {/* Dialog confirmar envio de email na edição */}
+      <AlertDialog open={showEmailConfirm} onOpenChange={setShowEmailConfirm}>
+        <AlertDialogContent className="bg-slate-900 border-white/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Enviar email de atualização?</AlertDialogTitle>
+            <AlertDialogDescription className="text-indigo-200">
+              Deseja enviar um email informando o participante sobre as alterações feitas neste compromisso?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => handleConfirmUpdate(false)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+              Não, apenas salvar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleConfirmUpdate(true)} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white">
+              Sim, enviar email
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

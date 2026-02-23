@@ -13,31 +13,35 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'compromisso_id é obrigatório' }, { status: 400 });
     }
 
-    // Fetch the compromisso
     const compromissos = await base44.entities.Compromisso.filter({ id: compromisso_id });
     const comp = compromissos[0];
     if (!comp) {
       return Response.json({ error: 'Compromisso não encontrado' }, { status: 404 });
     }
-
     if (!comp.email_participante) {
       return Response.json({ error: 'Compromisso não possui email de participante' }, { status: 400 });
     }
 
+    // Also check if user has a default meeting link and comp is online without link
+    if (comp.modalidade === 'online' && !comp.meeting_link && user.link_reuniao_padrao) {
+      comp.meeting_link = user.link_reuniao_padrao;
+      await base44.entities.Compromisso.update(comp.id, { meeting_link: user.link_reuniao_padrao });
+    }
+
     const startDate = new Date(comp.data_inicio);
     const endDate = new Date(comp.data_fim || new Date(startDate.getTime() + 3600000));
-
     if (isNaN(startDate.getTime())) {
       return Response.json({ error: 'Data de início inválida' }, { status: 400 });
     }
 
-    // Format dates for display (BRT)
     const optsBR = { timeZone: 'America/Sao_Paulo' };
     const dayStr = startDate.toLocaleDateString('pt-BR', { ...optsBR, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    const dayShort = startDate.toLocaleDateString('pt-BR', { ...optsBR, day: '2-digit', month: 'short' });
     const timeStart = startDate.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
     const timeEnd = endDate.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
+    const weekdayShort = startDate.toLocaleDateString('pt-BR', { ...optsBR, weekday: 'short' }).toUpperCase();
 
-    // Generate ICS content
+    // ICS
     const formatICSDate = (d) => {
       const pad = (n) => String(n).padStart(2, '0');
       return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
@@ -47,145 +51,181 @@ Deno.serve(async (req) => {
     const now = new Date();
     const organizerName = user.full_name || 'Apex Shield CRM';
     const organizerEmail = user.email;
-    const location = comp.modalidade === 'online' 
-      ? (comp.meeting_link || 'Online') 
-      : (comp.endereco || 'A definir');
+    const location = comp.modalidade === 'online' ? (comp.meeting_link || 'Online') : (comp.endereco || 'A definir');
 
     const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Apex Shield CRM//PT',
-      'CALSCALE:GREGORIAN',
-      'METHOD:REQUEST',
-      'BEGIN:VEVENT',
-      `UID:${uid}`,
-      `DTSTAMP:${formatICSDate(now)}`,
-      `DTSTART:${formatICSDate(startDate)}`,
-      `DTEND:${formatICSDate(endDate)}`,
-      `SUMMARY:${comp.titulo}`,
-      `DESCRIPTION:${(comp.descricao || '').replace(/\n/g, '\\n')}`,
-      `LOCATION:${location}`,
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Apex Shield CRM//PT', 'CALSCALE:GREGORIAN', 'METHOD:REQUEST',
+      'BEGIN:VEVENT', `UID:${uid}`, `DTSTAMP:${formatICSDate(now)}`, `DTSTART:${formatICSDate(startDate)}`, `DTEND:${formatICSDate(endDate)}`,
+      `SUMMARY:${comp.titulo}`, `DESCRIPTION:${(comp.descricao || '').replace(/\n/g, '\\n')}`, `LOCATION:${location}`,
       `ORGANIZER;CN=${organizerName}:mailto:${organizerEmail}`,
       `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${comp.email_participante}:mailto:${comp.email_participante}`,
-      'STATUS:CONFIRMED',
-      'SEQUENCE:0',
-      'BEGIN:VALARM',
-      'TRIGGER:-PT1H',
-      'ACTION:DISPLAY',
-      'DESCRIPTION:Lembrete - 1 hora',
-      'END:VALARM',
-      'BEGIN:VALARM',
-      'TRIGGER:-PT30M',
-      'ACTION:DISPLAY',
-      'DESCRIPTION:Lembrete - 30 minutos',
-      'END:VALARM',
-      'END:VEVENT',
-      'END:VCALENDAR'
+      'STATUS:CONFIRMED', 'SEQUENCE:0',
+      'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Lembrete', 'END:VALARM',
+      'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', 'DESCRIPTION:Lembrete', 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'
     ].join('\r\n');
 
-    // Build confirm/decline URLs
     const funcBaseUrl = req.headers.get('x-base44-function-url') || '';
     const confirmUrl = funcBaseUrl.replace('enviarConviteCompromisso', 'confirmarPresenca') + `?id=${comp.id}&action=confirmar`;
     const declineUrl = funcBaseUrl.replace('enviarConviteCompromisso', 'confirmarPresenca') + `?id=${comp.id}&action=recusar`;
 
-    const locationInfo = comp.modalidade === 'online'
-      ? (comp.meeting_link 
-        ? `<a href="${comp.meeting_link}" style="color:#4f46e5;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">💻 Acessar Reunião Online</a>` 
-        : '💻 Online')
-      : (comp.endereco ? `📍 ${comp.endereco}` : '📍 Presencial');
+    const isOnline = comp.modalidade === 'online';
+    const meetLink = comp.meeting_link || '';
 
-    const meetingButton = comp.meeting_link ? `
-    <div style="text-align:center;margin:24px 0 8px;">
-      <a href="${comp.meeting_link}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;padding:14px 48px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 16px rgba(79,70,229,0.35);">
-        Entrar na Reunião
-      </a>
-    </div>` : '';
+    const emailBody = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#0f0e2a;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0e2a;padding:32px 16px;">
+<tr><td align="center">
+<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
 
-    const emailBody = `
-<div style="font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
-  <div style="background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);padding:40px 32px;text-align:center;">
-    <div style="width:72px;height:72px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;border:2px solid rgba(255,255,255,0.2);">
-      <span style="font-size:32px;">📅</span>
-    </div>
-    <h1 style="color:white;margin:0;font-size:22px;font-weight:800;letter-spacing:-0.02em;">Convite para Compromisso</h1>
-    <p style="color:rgba(199,210,254,0.9);margin:8px 0 0;font-size:14px;">Você recebeu um convite de <strong style="color:white;">${organizerName}</strong></p>
-  </div>
-  
-  <div style="padding:32px;">
-    <div style="background:linear-gradient(135deg,#f8fafc,#eef2ff);border-radius:16px;padding:28px;border:1px solid #e0e7ff;">
-      <h2 style="color:#1e1b4b;margin:0 0 20px;font-size:20px;font-weight:800;letter-spacing:-0.01em;">${comp.titulo}</h2>
-      <table style="width:100%;border-collapse:collapse;">
+<!-- HEADER with gradient -->
+<tr><td style="background:linear-gradient(135deg,#1a1640 0%,#2d2470 40%,#4338ca 100%);padding:0;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td style="padding:48px 40px 20px;text-align:center;">
+      <!-- Logo -->
+      <div style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;display:inline-block;line-height:56px;font-size:24px;margin-bottom:16px;">🛡️</div>
+      <div style="color:rgba(199,210,254,0.7);font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;">APEX SHIELD CRM</div>
+    </td></tr>
+    <!-- Date Card -->
+    <tr><td style="padding:0 40px 40px;text-align:center;">
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
         <tr>
-          <td style="padding:10px 12px;color:#6366f1;font-size:18px;width:36px;vertical-align:top;">📅</td>
-          <td style="padding:10px 0;">
-            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Quando</div>
-            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${dayStr}</div>
+          <td style="background:rgba(255,255,255,0.12);border-radius:16px;padding:20px 28px;text-align:center;border:1px solid rgba(255,255,255,0.15);">
+            <div style="color:rgba(199,210,254,0.8);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">${weekdayShort}</div>
+            <div style="color:white;font-size:42px;font-weight:900;line-height:1.1;margin:4px 0;">${startDate.toLocaleDateString('pt-BR', { ...optsBR, day: '2-digit' })}</div>
+            <div style="color:rgba(199,210,254,0.8);font-size:12px;font-weight:600;">${startDate.toLocaleDateString('pt-BR', { ...optsBR, month: 'short', year: 'numeric' })}</div>
+          </td>
+          <td style="padding:0 20px;">
+            <div style="width:40px;height:2px;background:rgba(255,255,255,0.2);"></div>
+          </td>
+          <td style="text-align:left;">
+            <div style="color:white;font-size:28px;font-weight:800;line-height:1.2;">${timeStart}</div>
+            <div style="color:rgba(199,210,254,0.6);font-size:13px;font-weight:500;margin-top:4px;">até ${timeEnd}</div>
+            <div style="color:rgba(167,139,250,0.9);font-size:11px;font-weight:600;margin-top:4px;">Horário de Brasília</div>
           </td>
         </tr>
-        <tr>
-          <td style="padding:10px 12px;color:#6366f1;font-size:18px;vertical-align:top;">🕐</td>
-          <td style="padding:10px 0;">
-            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Horário</div>
-            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${timeStart} - ${timeEnd} (Horário de Brasília)</div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:10px 12px;color:#6366f1;font-size:18px;vertical-align:top;">📍</td>
-          <td style="padding:10px 0;">
-            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Local</div>
-            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${locationInfo}</div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:10px 12px;color:#6366f1;font-size:18px;vertical-align:top;">👤</td>
-          <td style="padding:10px 0;">
-            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Organizador</div>
-            <div style="color:#1e293b;font-size:15px;font-weight:600;margin-top:2px;">${organizerName}</div>
-            <div style="color:#64748b;font-size:13px;">${organizerEmail}</div>
-          </td>
-        </tr>
-        ${comp.descricao ? `<tr>
-          <td style="padding:10px 12px;color:#6366f1;font-size:18px;vertical-align:top;">📝</td>
-          <td style="padding:10px 0;">
-            <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Descrição</div>
-            <div style="color:#334155;font-size:14px;margin-top:2px;line-height:1.5;">${comp.descricao}</div>
-          </td>
-        </tr>` : ''}
       </table>
-    </div>
+    </td></tr>
+  </table>
+</td></tr>
 
-    ${meetingButton}
-
-    <div style="margin:28px 0 20px;">
-      <p style="color:#64748b;font-size:13px;font-weight:600;text-align:center;margin-bottom:16px;">Responda ao convite:</p>
-      <div style="text-align:center;">
-        <a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin:0 6px;box-shadow:0 3px 12px rgba(5,150,105,0.3);">
-          ✓ Sim
-        </a>
-        <a href="${declineUrl}" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin:0 6px;box-shadow:0 3px 12px rgba(220,38,38,0.3);">
-          ✕ Não
-        </a>
-      </div>
-    </div>
-
-    <div style="background:#fef3c7;border-radius:10px;padding:14px 18px;margin-top:20px;border:1px solid #fde68a;">
-      <p style="color:#92400e;font-size:12px;margin:0;text-align:center;">📎 Em anexo: arquivo <strong>invite.ics</strong> - abra para adicionar ao seu calendário</p>
-    </div>
+<!-- BODY -->
+<tr><td style="padding:40px;">
+  <!-- Event Title -->
+  <div style="margin-bottom:28px;">
+    <div style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">📋 COMPROMISSO</div>
+    <div style="color:#0f172a;font-size:22px;font-weight:800;line-height:1.3;">${comp.titulo}</div>
   </div>
-  
-  <div style="background:linear-gradient(135deg,#f8fafc,#eef2ff);padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
-    <div style="display:inline-flex;align-items:center;gap:8px;">
-      <div style="width:8px;height:8px;background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:50%;"></div>
-      <span style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">APEX SHIELD CRM</span>
-    </div>
+
+  <!-- Info Cards -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <!-- Organizer -->
+    <tr><td style="padding:14px 16px;background:#f8fafc;border-radius:12px;margin-bottom:8px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:40px;vertical-align:top;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#4338ca,#6366f1);border-radius:10px;text-align:center;line-height:36px;font-size:16px;">👤</div>
+          </td>
+          <td style="padding-left:12px;">
+            <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Organizador</div>
+            <div style="color:#1e293b;font-size:14px;font-weight:700;margin-top:2px;">${organizerName}</div>
+            <div style="color:#6366f1;font-size:12px;font-weight:500;">${organizerEmail}</div>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+    <tr><td style="height:8px;"></td></tr>
+    <!-- Location/Meeting -->
+    <tr><td style="padding:14px 16px;background:${isOnline ? '#eef2ff' : '#f0fdf4'};border-radius:12px;border:1px solid ${isOnline ? '#c7d2fe' : '#bbf7d0'};">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:40px;vertical-align:top;">
+            <div style="width:36px;height:36px;background:${isOnline ? 'linear-gradient(135deg,#4338ca,#6366f1)' : 'linear-gradient(135deg,#059669,#10b981)'};border-radius:10px;text-align:center;line-height:36px;font-size:16px;">${isOnline ? '💻' : '📍'}</div>
+          </td>
+          <td style="padding-left:12px;">
+            <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">${isOnline ? 'Reunião Online' : 'Local'}</div>
+            <div style="color:#1e293b;font-size:14px;font-weight:700;margin-top:2px;">${isOnline ? (meetLink ? 'Sala de reunião virtual' : 'Online') : (comp.endereco || 'Presencial')}</div>
+            ${meetLink ? `<div style="margin-top:4px;"><a href="${meetLink}" style="color:#4338ca;font-size:12px;font-weight:600;text-decoration:none;">🔗 ${meetLink.length > 45 ? meetLink.substring(0, 45) + '...' : meetLink}</a></div>` : ''}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+    ${comp.descricao ? `
+    <tr><td style="height:8px;"></td></tr>
+    <tr><td style="padding:14px 16px;background:#fffbeb;border-radius:12px;border:1px solid #fde68a;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:40px;vertical-align:top;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:10px;text-align:center;line-height:36px;font-size:16px;">📝</div>
+          </td>
+          <td style="padding-left:12px;">
+            <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Observações</div>
+            <div style="color:#44403c;font-size:13px;margin-top:4px;line-height:1.5;">${comp.descricao}</div>
+          </td>
+        </tr>
+      </table>
+    </td></tr>` : ''}
+  </table>
+
+  ${meetLink ? `
+  <!-- Meeting Button -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+    <tr><td align="center">
+      <a href="${meetLink}" style="display:inline-block;background:linear-gradient(135deg,#4338ca,#6366f1);color:white;padding:16px 52px;border-radius:14px;text-decoration:none;font-weight:800;font-size:15px;box-shadow:0 8px 24px rgba(67,56,202,0.35);letter-spacing:0.02em;">
+        💻 Entrar na Reunião
+      </a>
+    </td></tr>
+  </table>` : ''}
+
+  <!-- Divider -->
+  <div style="height:1px;background:linear-gradient(to right,transparent,#e2e8f0,transparent);margin:4px 0 28px;"></div>
+
+  <!-- RSVP Section -->
+  <div style="text-align:center;margin-bottom:28px;">
+    <div style="color:#0f172a;font-size:16px;font-weight:800;margin-bottom:6px;">Confirme sua presença</div>
+    <div style="color:#94a3b8;font-size:12px;margin-bottom:20px;">Clique em uma das opções abaixo para responder</div>
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+      <tr>
+        <td style="padding:0 6px;">
+          <a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;box-shadow:0 6px 20px rgba(5,150,105,0.35);">
+            ✓ Aceitar
+          </a>
+        </td>
+        <td style="padding:0 6px;">
+          <a href="${declineUrl}" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;box-shadow:0 6px 20px rgba(220,38,38,0.3);">
+            ✕ Recusar
+          </a>
+        </td>
+      </tr>
+    </table>
   </div>
-</div>`;
+
+  <!-- ICS notice -->
+  <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border-radius:12px;padding:16px 20px;border:1px solid #bbf7d0;text-align:center;">
+    <div style="font-size:14px;margin-bottom:4px;">📎</div>
+    <div style="color:#166534;font-size:12px;font-weight:600;">Arquivo <strong>invite.ics</strong> em anexo</div>
+    <div style="color:#4ade80;font-size:11px;margin-top:2px;">Abra para adicionar automaticamente ao seu calendário</div>
+  </div>
+</td></tr>
+
+<!-- FOOTER -->
+<tr><td style="background:linear-gradient(135deg,#0f0e2a,#1a1640);padding:28px 40px;text-align:center;">
+  <div style="display:inline-block;">
+    <div style="display:inline-block;width:8px;height:8px;background:linear-gradient(135deg,#6366f1,#a78bfa);border-radius:50%;vertical-align:middle;margin-right:8px;"></div>
+    <span style="color:rgba(148,163,184,0.8);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;vertical-align:middle;">APEX SHIELD CRM</span>
+  </div>
+  <div style="color:rgba(100,116,139,0.5);font-size:10px;margin-top:10px;">Proteção inteligente para o seu futuro</div>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
 
     const subject = `Convite: ${comp.titulo} - ${dayStr} ${timeStart} - ${timeEnd} (BRT)`;
 
-    // Build multipart MIME with ICS attachment
     const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-    
     const icsBase64 = btoa(unescape(encodeURIComponent(icsContent)));
 
     const mimeMessage = [
@@ -227,15 +267,11 @@ Deno.serve(async (req) => {
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
-    // Send via Gmail
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
 
     const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ raw: rawEncoded })
     });
 
@@ -245,15 +281,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Falha ao enviar email', details: errText }, { status: 500 });
     }
 
-    // Mark email as sent
     await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
 
-    return Response.json({ 
-      success: true, 
-      message: `Convite enviado para ${comp.email_participante} com arquivo .ics anexo`
-    });
+    return Response.json({ success: true, message: `Convite enviado para ${comp.email_participante}` });
   } catch (error) {
-    console.error('Error in enviarConviteCompromisso:', error);
+    console.error('Error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

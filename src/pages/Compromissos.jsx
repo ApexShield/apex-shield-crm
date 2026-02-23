@@ -8,12 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, CheckCircle2, RefreshCw, Repeat, Download, List } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, CheckCircle2, Repeat, Mail } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay, endOfWeek } from "date-fns";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { motion } from "framer-motion";
-import ConexaoStatusBanner from "../components/compromissos/ConexaoStatusBanner";
 import CompromissoFixoDialog from "../components/compromissos/CompromissoFixoDialog";
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
@@ -31,15 +29,12 @@ export default function Compromissos() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDialog, setShowDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  // Removed: email confirmation dialog no longer needed - Google Calendar handles notifications
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [defaultMeetingLink, setDefaultMeetingLink] = useState("");
-  const [checkingConfirmations, setCheckingConfirmations] = useState(false);
   const [showFixoDialog, setShowFixoDialog] = useState(false);
   const [savingFixo, setSavingFixo] = useState(false);
-  const [syncingCalendar, setSyncingCalendar] = useState(false);
-  const [mobileView, setMobileView] = useState("week"); // "week" or "day"
   const [mobileDayIndex, setMobileDayIndex] = useState(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   const getDefaultDates = () => {
     const now = new Date();
@@ -52,10 +47,8 @@ export default function Compromissos() {
   });
 
   const queryClient = useQueryClient();
-
   const { data: user } = useQuery({ queryKey: ["user"], queryFn: () => base44.auth.me() });
 
-  // Carregar link padrão do perfil do usuário
   React.useEffect(() => {
     if (user?.link_reuniao_padrao) setDefaultMeetingLink(user.link_reuniao_padrao);
   }, [user]);
@@ -70,91 +63,30 @@ export default function Compromissos() {
     return allClientes.filter(c => c.created_by === user.email).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   }, [allClientes, user]);
 
-  // Buscar compromissos da entidade local
-  const { data: localCompromissos = [], isLoading } = useQuery({
+  const { data: compromissos = [], isLoading } = useQuery({
     queryKey: ['compromissos'],
     queryFn: () => base44.entities.Compromisso.list('-data_inicio', 500),
     enabled: !!user
   });
-
-  // Buscar eventos do Google Calendar para a semana atual
-  const weekEnd = useMemo(() => endOfWeek(currentWeekStart, { weekStartsOn: 1 }), [currentWeekStart]);
-  const { data: googleEvents = [] } = useQuery({
-    queryKey: ['google-calendar-events', currentWeekStart.toISOString()],
-    queryFn: async () => {
-      const dataInicio = new Date(currentWeekStart);
-      dataInicio.setHours(0, 0, 0, 0);
-      const dataFim = new Date(weekEnd);
-      dataFim.setHours(23, 59, 59, 999);
-      const res = await base44.functions.invoke('listarEventosCalendar', {
-        dataInicio: dataInicio.toISOString(),
-        dataFim: dataFim.toISOString()
-      });
-      return res.data?.eventos || [];
-    },
-    enabled: !!user,
-    staleTime: 60000,
-  });
-
-  // Merge: local compromissos + google events (avoid duplicates by google_event_id)
-  const compromissos = useMemo(() => {
-    const localGoogleIds = new Set(localCompromissos.filter(c => c.google_event_id).map(c => c.google_event_id));
-    const googleOnly = googleEvents
-      .filter(ge => !ge.is_all_day && !localGoogleIds.has(ge.google_event_id))
-      .map(ge => ({ ...ge, id: `gcal_${ge.google_event_id}`, _isGoogleOnly: true }));
-    return [...localCompromissos, ...googleOnly];
-  }, [localCompromissos, googleEvents]);
-
-  // Não enviamos mais email separado - o Google Calendar já envia convite com botão de Sim/Não/Talvez
-  // A confirmação é verificada diretamente pelo attendee status no Google Calendar
-
-  const syncToGoogleCalendar = async (compromissoData, compromissoId, existingGoogleEventId = null) => {
-    try {
-      const attendees = compromissoData.email_participante ? [{ email: compromissoData.email_participante }] : [];
-      const payload = {
-        summary: compromissoData.titulo,
-        description: compromissoData.descricao || '',
-        startDateTime: compromissoData.data_inicio,
-        endDateTime: compromissoData.data_fim,
-        location: compromissoData.endereco || '',
-        attendees
-      };
-
-      let googleEventId = existingGoogleEventId;
-      if (existingGoogleEventId) {
-        const res = await base44.functions.invoke('atualizarEventoCalendar', { ...payload, eventId: existingGoogleEventId });
-        googleEventId = res.data?.eventId || existingGoogleEventId;
-      } else {
-        const res = await base44.functions.invoke('criarEventoCalendar', payload);
-        googleEventId = res.data?.eventId;
-        if (res.data?.meetingLink && compromissoData.modalidade === 'online' && !compromissoData.meeting_link) {
-          await base44.entities.Compromisso.update(compromissoId, { meeting_link: res.data.meetingLink });
-        }
-      }
-      if (googleEventId) {
-        await base44.entities.Compromisso.update(compromissoId, { google_event_id: googleEventId });
-      }
-    } catch (err) {
-      console.error('Erro ao sincronizar com Google Calendar:', err);
-    }
-  };
 
   const criarMutation = useMutation({
     mutationFn: async (data) => {
       if (!data.meeting_link && defaultMeetingLink && data.modalidade === "online") {
         data.meeting_link = defaultMeetingLink;
       }
-      if (data.email_participante) {
-        data.email_enviado = true;
-      }
       const result = await base44.entities.Compromisso.create(data);
-      // O Google Calendar envia o convite automaticamente ao participante (sendUpdates=all)
-      await syncToGoogleCalendar(data, result.id);
+      // Send invite email if participant email is provided
+      if (data.email_participante) {
+        try {
+          await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: result.id });
+        } catch (err) {
+          console.error('Erro ao enviar convite:', err);
+        }
+      }
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
       setShowDialog(false);
       resetForm();
       alert('✅ Compromisso criado com sucesso!');
@@ -163,18 +95,11 @@ export default function Compromissos() {
 
   const atualizarMutation = useMutation({
     mutationFn: async (data) => {
-      const { id, sendEmail, ...updateData } = data;
-      if (updateData.email_participante) {
-        updateData.email_enviado = true;
-      }
+      const { id, ...updateData } = data;
       await base44.entities.Compromisso.update(id, updateData);
-      // O Google Calendar envia atualização automaticamente ao participante (sendUpdates=all)
-      const existing = localCompromissos.find(c => c.id === id);
-      await syncToGoogleCalendar(updateData, id, existing?.google_event_id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
       setShowDialog(false);
       setEditingEvent(null);
       resetForm();
@@ -184,19 +109,10 @@ export default function Compromissos() {
 
   const deletarMutation = useMutation({
     mutationFn: async (id) => {
-      const existing = localCompromissos.find(c => c.id === id);
-      if (existing?.google_event_id) {
-        try {
-          await base44.functions.invoke('deletarEventoCalendar', { eventId: existing.google_event_id });
-        } catch (err) {
-          console.error('Erro ao deletar do Google Calendar:', err);
-        }
-      }
       await base44.entities.Compromisso.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
       setShowDialog(false);
       setEditingEvent(null);
       resetForm();
@@ -240,21 +156,10 @@ export default function Compromissos() {
       }
 
       await base44.entities.Compromisso.bulkCreate(compromissosList);
-
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
       setShowFixoDialog(false);
       setSavingFixo(false);
       alert(`✅ ${compromissosList.length} compromissos fixos criados com sucesso!`);
-
-      // Sync to Google Calendar in background (non-blocking)
-      for (const c of compromissosList) {
-        base44.functions.invoke('criarEventoCalendar', {
-          summary: c.titulo,
-          description: c.descricao,
-          startDateTime: c.data_inicio,
-          endDateTime: c.data_fim
-        }).catch(err => console.error('Erro sync fixo:', err));
-      }
     } catch (err) {
       setSavingFixo(false);
       alert("Erro ao criar compromissos fixos: " + err.message);
@@ -270,14 +175,11 @@ export default function Compromissos() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingEvent) {
-      // O Google Calendar já notifica automaticamente ao atualizar (sendUpdates=all)
       atualizarMutation.mutate({ ...formData, id: editingEvent.id });
     } else {
       criarMutation.mutate(formData);
     }
   };
-
-  // Removed: Google Calendar handles email notifications automatically
 
   const handleDeleteEvent = () => {
     if (editingEvent && confirm('Tem certeza que deseja deletar este compromisso?')) {
@@ -285,12 +187,21 @@ export default function Compromissos() {
     }
   };
 
-  const handleEditEvent = (event) => {
-    // If it's a Google-only event, open the Google Calendar link
-    if (event._isGoogleOnly && event.htmlLink) {
-      window.open(event.htmlLink, '_blank');
-      return;
+  const handleSendInvite = async () => {
+    if (!editingEvent) return;
+    setSendingInvite(true);
+    try {
+      await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: editingEvent.id });
+      alert('✅ Convite reenviado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+    } catch (err) {
+      alert('Erro ao enviar convite: ' + err.message);
+    } finally {
+      setSendingInvite(false);
     }
+  };
+
+  const handleEditEvent = (event) => {
     setEditingEvent(event);
     const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
     const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
@@ -347,7 +258,7 @@ export default function Compromissos() {
     const eventId = result.draggableId.split('_')[0];
     const [newDay, newHour] = result.destination.droppableId.split('_').map(Number);
     const event = compromissos.find(e => e.id === eventId);
-    if (!event || event._isGoogleOnly) return;
+    if (!event) return;
     const newDate = addDays(currentWeekStart, newDay);
     const newStart = new Date(newDate); newStart.setHours(newHour, 0, 0, 0);
     const duration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();
@@ -359,7 +270,6 @@ export default function Compromissos() {
     });
   };
 
-  // Mobile day events for list view
   const mobileDay = weekDays[mobileDayIndex] || weekDays[0];
   const mobileDayEvents = useMemo(() => {
     if (!mobileDay) return [];
@@ -374,7 +284,6 @@ export default function Compromissos() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-[1800px] mx-auto">
         <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">
-          <ConexaoStatusBanner />
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
@@ -388,26 +297,6 @@ export default function Compromissos() {
             <div className="flex gap-2 flex-wrap">
               <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20 text-xs md:text-sm">
                 <Repeat className="w-4 h-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Compromisso </span>Fixo
-              </Button>
-              <Button onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
-              }} variant="outline" size="sm" className="bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 text-xs md:text-sm">
-                <Download className="w-4 h-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Sincronizar </span>Google
-              </Button>
-              <Button onClick={async () => {
-                setCheckingConfirmations(true);
-                try {
-                  const res = await base44.functions.invoke('verificarConfirmacoesCalendar', {});
-                  const data = res.data;
-                  queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-                  alert(data.message || 'Verificação concluída');
-                } catch (e) {
-                  alert('Erro ao verificar: ' + e.message);
-                } finally {
-                  setCheckingConfirmations(false);
-                }
-              }} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs md:text-sm hidden md:flex" disabled={checkingConfirmations}>
-                <RefreshCw className={`w-4 h-4 mr-1 md:mr-2 ${checkingConfirmations ? 'animate-spin' : ''}`} /> {checkingConfirmations ? 'Verificando...' : 'Confirmações'}
               </Button>
               <Button onClick={() => setShowLinkDialog(true)} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs md:text-sm hidden md:flex">
                 <Link2 className="w-4 h-4 mr-1 md:mr-2" /> Link Padrão
@@ -467,7 +356,6 @@ export default function Compromissos() {
                           {!isNaN(start.getTime()) && format(start, 'HH:mm')} - {!isNaN(end.getTime()) && format(end, 'HH:mm')}
                           {event.modalidade && <span className="ml-2">{event.modalidade === 'online' ? '💻 Online' : '📍 Presencial'}</span>}
                         </div>
-                        {event.endereco && <div className="text-[11px] text-indigo-400 truncate mt-0.5">{event.endereco}</div>}
                       </div>
                       <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                     </div>
@@ -557,7 +445,6 @@ export default function Compromissos() {
                                                   <Clock className="w-3 h-3 text-white" />
                                                 </span>
                                               )}
-                                              {event._isGoogleOnly && <Calendar className="w-3 h-3 text-white/70 flex-shrink-0" />}
                                             </div>
                                             {!isNaN(start.getTime()) && <div className="text-[9px] opacity-75">{format(start, 'HH:mm')}</div>}
                                             {event.endereco && <div className="text-[9px] opacity-80 truncate">{event.endereco.split(',')[0]}</div>}
@@ -612,13 +499,10 @@ export default function Compromissos() {
                   <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>{clientes.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.email ? ` (${c.email})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
-                {formData.cliente_id && !clientes.find(c => c.id === formData.cliente_id)?.email && (
-                  <p className="text-xs text-yellow-300 mt-1">⚠️ Este cliente não possui email cadastrado</p>
-                )}
               </div>
             </div>
             <div><Label className="text-white">Email do Participante (opcional)</Label><Input type="email" value={formData.email_participante} onChange={(e) => setFormData({ ...formData, email_participante: e.target.value })} placeholder="participante@email.com" className="bg-white/10 border-white/20 text-white" />
-              <p className="text-xs text-indigo-300 mt-1">📅 Um convite do Google Calendar será enviado para este endereço</p>
+              <p className="text-xs text-indigo-300 mt-1">📧 Um convite com arquivo .ics será enviado para este endereço, com botões Sim/Não para confirmar presença</p>
             </div>
             {formData.modalidade === "online" && (
               <div><Label className="text-white">Link da Reunião</Label><Input value={formData.meeting_link || defaultMeetingLink} onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })} placeholder="https://meet.google.com/..." className="bg-white/10 border-white/20 text-white" />
@@ -675,24 +559,29 @@ export default function Compromissos() {
             </div>
             <div><Label className="text-white">Descrição</Label><Textarea value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} className="bg-white/10 border-white/20 text-white" /></div>
             {editingEvent && editingEvent.email_participante && (
-              <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className={`w-5 h-5 ${editingEvent.convidado_confirmou ? 'text-green-400' : 'text-white/30'}`} />
-                  <span className="text-sm text-white">Convidado confirmou presença</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className={`w-5 h-5 ${editingEvent.convidado_confirmou ? 'text-green-400' : 'text-white/30'}`} />
+                    <span className="text-sm text-white">Convidado confirmou presença</span>
+                  </div>
+                  <Button type="button" size="sm" variant={editingEvent.convidado_confirmou ? "default" : "outline"}
+                    className={editingEvent.convidado_confirmou ? "bg-green-600 hover:bg-green-700 text-white" : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
+                    onClick={async () => {
+                      const newVal = !editingEvent.convidado_confirmou;
+                      await base44.entities.Compromisso.update(editingEvent.id, { convidado_confirmou: newVal });
+                      setEditingEvent({ ...editingEvent, convidado_confirmou: newVal });
+                      queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+                    }}>
+                    {editingEvent.convidado_confirmou ? '✅ Confirmado' : 'Marcar como confirmado'}
+                  </Button>
                 </div>
-                <Button type="button" size="sm" variant={editingEvent.convidado_confirmou ? "default" : "outline"}
-                  className={editingEvent.convidado_confirmou ? "bg-green-600 hover:bg-green-700 text-white" : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
-                  onClick={async () => {
-                    const newVal = !editingEvent.convidado_confirmou;
-                    await base44.entities.Compromisso.update(editingEvent.id, { convidado_confirmou: newVal });
-                    setEditingEvent({ ...editingEvent, convidado_confirmou: newVal });
-                    queryClient.invalidateQueries({ queryKey: ['compromissos'] });
-                  }}>
-                  {editingEvent.convidado_confirmou ? '✅ Confirmado' : 'Marcar como confirmado'}
+                <Button type="button" variant="outline" size="sm" onClick={handleSendInvite} disabled={sendingInvite}
+                  className="bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 w-full">
+                  <Mail className="w-4 h-4 mr-2" /> {sendingInvite ? 'Enviando...' : 'Reenviar Convite por Email'}
                 </Button>
               </div>
             )}
-            <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg"><Calendar className="w-4 h-4" /> Se informar um email de participante, um convite do Google Calendar será enviado com opções Sim/Não/Talvez</div>
             <div className="flex justify-between pt-2">
               <div>{editingEvent && <Button type="button" variant="outline" onClick={handleDeleteEvent} disabled={deletarMutation.isPending} className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20">{deletarMutation.isPending ? 'Deletando...' : 'Deletar'}</Button>}</div>
               <div className="flex gap-2">
@@ -706,14 +595,12 @@ export default function Compromissos() {
         </DialogContent>
       </Dialog>
 
-      {/* Removido: Google Calendar envia notificações automaticamente */}
-
       {/* Dialog Link Padrão */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
         <DialogContent className="max-w-md bg-slate-900 border-white/20">
           <DialogHeader><DialogTitle className="text-white text-xl flex items-center gap-2"><Link2 className="w-5 h-5 text-cyan-400" /> Link de Reunião Padrão</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-indigo-200 text-sm">Configure o link de reunião que será incluído automaticamente nos emails de convite para compromissos online.</p>
+            <p className="text-indigo-200 text-sm">Configure o link de reunião que será incluído automaticamente nos compromissos online e nos emails de convite.</p>
             <div><Label className="text-white">Link da Reunião</Label><Input value={defaultMeetingLink} onChange={(e) => setDefaultMeetingLink(e.target.value)} placeholder="https://meet.google.com/abc-defg-hij" className="bg-white/10 border-white/20 text-white" /></div>
             <p className="text-xs text-indigo-300">Pode ser Google Meet, Zoom, Teams ou qualquer plataforma de videoconferência.</p>
             <div className="flex gap-2 justify-end">

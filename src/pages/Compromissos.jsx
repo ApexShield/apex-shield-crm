@@ -74,6 +74,10 @@ export default function Compromissos() {
       if (!data.meeting_link && defaultMeetingLink && data.modalidade === "online") {
         data.meeting_link = defaultMeetingLink;
       }
+      // Ensure owner_email is set for RLS
+      if (user?.email) {
+        data.owner_email = user.email;
+      }
       const result = await base44.entities.Compromisso.create(data);
       // Send invite email if participant email is provided
       if (data.email_participante) {

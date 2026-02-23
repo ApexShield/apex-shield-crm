@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Clock, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 const COLORS = [
   { value: "#0891b2", label: "Azul Pavão - Agendado", tipo: "agendado" },
@@ -36,6 +37,13 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   const [validando, setValidando] = useState(false);
   const [erro, setErro] = useState("");
 
+  // Fetch default meeting link from user profile
+  const { data: currentUser } = useQuery({
+    queryKey: ["user-for-link"],
+    queryFn: () => base44.auth.me(),
+  });
+  const defaultMeetingLink = currentUser?.link_reuniao_padrao || "";
+
   const atualizarTitulo = (tipoComp, subTipo) => {
     let prefixo = "";
     if (tipoComp === "AB Visita") prefixo = "AB";
@@ -61,6 +69,10 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
     try {
       const dataToSubmit = { ...formData };
+      // Auto-fill meeting link from default if online and not set
+      if (dataToSubmit.modalidade === "online" && !dataToSubmit.meeting_link && defaultMeetingLink) {
+        dataToSubmit.meeting_link = defaultMeetingLink;
+      }
       const participanteEmail = emailConvidado || cliente?.email;
 
       const compromisso = await base44.entities.Compromisso.create({
@@ -186,6 +198,14 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               </div>
             )}
           </div>
+
+          {formData.modalidade === "online" && (
+            <div>
+              <Label className="text-white">Link da Reunião</Label>
+              <Input value={formData.meeting_link || defaultMeetingLink} onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })} placeholder="https://meet.google.com/..." className="bg-white/10 border-white/20 text-white" />
+              {defaultMeetingLink && !formData.meeting_link && <p className="text-xs text-green-300 mt-1">✅ Usando link padrão configurado</p>}
+            </div>
+          )}
 
           {formData.modalidade === "presencial" && (
             <div><Label className="text-white">Endereço (opcional)</Label><Input value={formData.endereco} onChange={(e) => setFormData({ ...formData, endereco: e.target.value })} placeholder="Endereço do compromisso" className="bg-white/10 border-white/20 text-white" /></div>

@@ -2,6 +2,48 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 const LOGO_URL = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/4163a1b7d_Gemini_Generated_Image_qu3wkyqu3wkyqu3w-removebg.png';
 
+async function getUserGoogleToken(base44, userEmail) {
+  const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+    user_email: userEmail
+  });
+  if (auths.length === 0) return null;
+  
+  const auth = auths[0];
+  const tokenExpiry = new Date(auth.token_expiry);
+  const now = new Date();
+
+  if (tokenExpiry > now) {
+    return { access_token: auth.access_token, google_email: auth.google_email };
+  }
+
+  if (auth.refresh_token) {
+    const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+    const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
+
+    const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        refresh_token: auth.refresh_token,
+        grant_type: 'refresh_token'
+      })
+    });
+
+    if (refreshResponse.ok) {
+      const newTokens = await refreshResponse.json();
+      await base44.asServiceRole.entities.UserGoogleAuth.update(auth.id, {
+        access_token: newTokens.access_token,
+        token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
+      });
+      return { access_token: newTokens.access_token, google_email: auth.google_email };
+    }
+  }
+
+  return null;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);

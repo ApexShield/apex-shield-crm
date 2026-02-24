@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Cake, Phone, Mail, Calendar, Gift, Sparkles, Users, Heart } from "lucide-react";
+import { Cake, Phone, Mail, Calendar, Gift, Sparkles, Users, Heart, PartyPopper } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, parseISO, isSameDay, isWithinInterval, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";

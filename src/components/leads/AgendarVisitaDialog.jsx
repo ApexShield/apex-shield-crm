@@ -83,6 +83,29 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         owner_email: user?.email || ""
       });
 
+      // Atualizar status do lead conforme tipo de compromisso
+      if (cliente?.id) {
+        let novoStatus = null;
+        if (tipoCompromisso === "AB Visita") {
+          novoStatus = "AB Visita";
+        } else if (tipoCompromisso === "Fechamento") {
+          novoStatus = "AB Fechamento";
+        } else if (tipoCompromisso === "Entrega de Apólice") {
+          novoStatus = "Entrega de Apólice";
+        }
+
+        if (novoStatus && cliente.status !== novoStatus) {
+          const historicoAtual = cliente.historico_status || [];
+          await base44.entities.Cliente.update(cliente.id, {
+            status: novoStatus,
+            historico_status: [
+              ...historicoAtual,
+              { de: cliente.status, para: novoStatus, data: new Date().toISOString(), timestamp: Date.now() }
+            ]
+          });
+        }
+      }
+
       // Send invite email with .ics if participant email exists
       if (participanteEmail) {
         try {

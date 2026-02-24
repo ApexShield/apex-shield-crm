@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2, Plus, MessageSquare, Trash2 } from "lucide-react";
+import { Send, Loader2, Plus, MessageSquare, Trash2, Phone } from "lucide-react";
 import AgentMessageBubble from "./AgentMessageBubble";
 import { cn } from "@/lib/utils";
 
@@ -157,10 +157,19 @@ export default function AgentChat() {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
             <span className="text-white font-bold text-sm">AS</span>
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-bold text-slate-800">Agente Apex Shield</h2>
             <p className="text-xs text-slate-500">Especialista em Seguros de Vida e Gestão Financeira</p>
           </div>
+          <a
+            href={base44.agents.getWhatsAppConnectURL('apex_shield')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md"
+          >
+            <Phone className="w-4 h-4" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </a>
         </div>
 
         {/* Messages */}

@@ -74,14 +74,14 @@ Deno.serve(async (req) => {
           membros[m.email] = {
             nome: m.full_name || m.email,
             email: m.email,
-            tipo: m.tipo_hierarquia || "Corretor",
+            tipo: getUserField(m, 'tipo_hierarquia') || "Corretor",
             records: memberRecords
           };
         }
 
         unidades[leader.id] = {
           id: leader.id,
-          nome: leader.unidade_nome || `Unidade de ${leader.full_name || leader.email}`,
+          nome: getUserField(leader, 'unidade_nome') || `Unidade de ${leader.full_name || leader.email}`,
           lider_nome: leader.full_name || leader.email,
           lider_email: leader.email,
           totalRecords: unitRecords,

@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       // Find all direct subordinates (Líderes de Unidade)
       const directSubs = findSubordinates(user.email, user.id);
       const unitLeaders = directSubs.filter(u => getUserField(u, 'tipo_hierarquia') === "Líder de Unidade");
-      const directBrokers = directSubs.filter(u => u.tipo_hierarquia !== "Líder de Unidade");
+      const directBrokers = directSubs.filter(u => getUserField(u, 'tipo_hierarquia') !== "Líder de Unidade");
 
       // Build units from unit leaders
       const unidades = {};

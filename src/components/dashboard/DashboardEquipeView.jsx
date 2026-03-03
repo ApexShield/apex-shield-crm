@@ -158,6 +158,7 @@ export default function DashboardEquipeView({ teamData, ano }) {
     if (!teamData) return {};
     if (teamData.tipo === "LiderAgencia") {
       const map = {};
+      // Add all members from all units
       Object.values(teamData.unidades || {}).forEach(u => {
         Object.values(u.membros || {}).forEach(m => {
           map[m.email] = m;
@@ -166,15 +167,11 @@ export default function DashboardEquipeView({ teamData, ano }) {
       return map;
     }
     if (teamData.tipo === "LiderUnidade") {
-      const map = { ...teamData.membros };
-      if (teamData.meus_dados) {
-        map["__lider__"] = {
-          nome: "Meus Dados (Líder)",
-          email: "__lider__",
-          tipo: "LiderUnidade",
-          records: teamData.meus_dados
-        };
-      }
+      const map = {};
+      // Add all subordinates
+      Object.values(teamData.membros || {}).forEach(m => {
+        map[m.email] = m;
+      });
       return map;
     }
     return {};

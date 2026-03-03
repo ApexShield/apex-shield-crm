@@ -80,11 +80,12 @@ export default function DashboardAtividades() {
         </div>
       ) : (
         <div className="space-y-4">
-          <DashboardKPICards data={records} />
-          <DashboardCharts data={records} />
-          <DashboardConversion data={records} />
-          <DashboardWeeklyTable data={records} maxWeeks={52} />
-          <DashboardRecordsList data={records} onEdit={handleEdit} />
+          <DashboardFilters data={records} onFilteredData={setFilteredData} ano={ano} />
+          <DashboardKPICards data={filteredData || records} />
+          <DashboardCharts data={filteredData || records} />
+          <DashboardConversion data={filteredData || records} />
+          <DashboardWeeklyTable data={filteredData || records} maxWeeks={52} />
+          <DashboardRecordsList data={filteredData || records} onEdit={handleEdit} />
         </div>
       )}
 

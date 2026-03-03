@@ -151,14 +151,33 @@ function UnitSection({ unidade, isExpanded, onToggle, expandedMembers, setExpand
 export default function DashboardEquipeView({ teamData, ano }) {
   const [expandedUnits, setExpandedUnits] = useState({});
   const [expandedMembers, setExpandedMembers] = useState({});
+  const [selectedMember, setSelectedMember] = useState("__todos__");
 
   if (!teamData) return null;
 
   if (teamData.tipo === "LiderAgencia") {
     const unidades = Object.values(teamData.unidades || {});
 
-    // Calculate agency totals
-    const allRecords = unidades.flatMap(u => u.totalRecords || []);
+    // Collect all members across all units for the filter
+    const allMembros = {};
+    unidades.forEach(u => {
+      Object.values(u.membros || {}).forEach(m => {
+        allMembros[m.email] = m;
+      });
+    });
+
+    // Filtered records based on selected member
+    const filteredRecords = useMemo(() => {
+      if (selectedMember === "__todos__") {
+        return teamData.totalRecords || unidades.flatMap(u => u.totalRecords || []);
+      }
+      const member = allMembros[selectedMember];
+      return member ? member.records : [];
+    }, [selectedMember, teamData, unidades]);
+
+    const filterLabel = selectedMember !== "__todos__" 
+      ? `Exibindo: ${allMembros[selectedMember]?.nome || selectedMember}`
+      : "Exibindo: Toda a Agência";
 
     return (
       <div className="space-y-4">
@@ -173,42 +192,85 @@ export default function DashboardEquipeView({ teamData, ano }) {
           </div>
         </div>
 
-        {/* Agency KPIs */}
+        {/* Filter */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <DashboardMemberFilter
+            membros={allMembros}
+            selectedMember={selectedMember}
+            onSelect={setSelectedMember}
+            label="Filtrar por membro"
+          />
+          <span className="text-xs text-slate-500">{filterLabel}</span>
+        </div>
+
+        {/* KPIs */}
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-indigo-600" />
-            <span className="text-sm font-bold text-indigo-700">Visão Geral da Agência</span>
+            <span className="text-sm font-bold text-indigo-700">
+              {selectedMember === "__todos__" ? "Visão Geral da Agência" : `Dados de ${allMembros[selectedMember]?.nome || selectedMember}`}
+            </span>
           </div>
-          <DashboardKPICards data={allRecords} />
+          <DashboardKPICards data={filteredRecords} />
         </div>
 
-        <DashboardCharts data={allRecords} />
-        <DashboardConversion data={allRecords} />
+        <DashboardCharts data={filteredRecords} />
+        <DashboardConversion data={filteredRecords} />
 
         {/* Units */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-600" />
-            <h3 className="font-bold text-slate-800">Unidades</h3>
+        {selectedMember === "__todos__" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-bold text-slate-800">Unidades</h3>
+            </div>
+            {unidades.map(u => (
+              <UnitSection
+                key={u.id}
+                unidade={u}
+                isExpanded={expandedUnits[u.id]}
+                onToggle={() => setExpandedUnits(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                expandedMembers={expandedMembers}
+                setExpandedMembers={setExpandedMembers}
+              />
+            ))}
           </div>
-          {unidades.map(u => (
-            <UnitSection
-              key={u.id}
-              unidade={u}
-              isExpanded={expandedUnits[u.id]}
-              onToggle={() => setExpandedUnits(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
-              expandedMembers={expandedMembers}
-              setExpandedMembers={setExpandedMembers}
-            />
-          ))}
-        </div>
+        )}
       </div>
     );
   }
 
   if (teamData.tipo === "LiderUnidade") {
-    const membros = Object.values(teamData.membros || {});
-    const totalRecords = teamData.totalRecords || [];
+    const membros = teamData.membros || {};
+    const membrosList = Object.values(membros);
+
+    // Add the leader's own data as an option
+    const allMembrosWithLeader = { ...membros };
+    if (teamData.meus_dados) {
+      allMembrosWithLeader["__lider__"] = {
+        nome: "Meus Dados (Líder)",
+        email: "__lider__",
+        tipo: "LiderUnidade",
+        records: teamData.meus_dados
+      };
+    }
+
+    const filteredRecords = useMemo(() => {
+      if (selectedMember === "__todos__") {
+        return teamData.totalRecords || [];
+      }
+      if (selectedMember === "__lider__") {
+        return teamData.meus_dados || [];
+      }
+      const member = membros[selectedMember];
+      return member ? member.records : [];
+    }, [selectedMember, teamData, membros]);
+
+    const filterLabel = selectedMember === "__todos__"
+      ? "Exibindo: Toda a Equipe"
+      : selectedMember === "__lider__"
+        ? "Exibindo: Meus Dados"
+        : `Exibindo: ${membros[selectedMember]?.nome || selectedMember}`;
 
     return (
       <div className="space-y-4">
@@ -218,44 +280,59 @@ export default function DashboardEquipeView({ teamData, ano }) {
             <Users className="w-6 h-6" />
             <div>
               <h2 className="text-lg font-bold">Unidade: {teamData.unidade_nome}</h2>
-              <p className="text-purple-100 text-sm">{membros.length} corretor(es)</p>
+              <p className="text-purple-100 text-sm">{membrosList.length} corretor(es)</p>
             </div>
           </div>
         </div>
 
-        {/* Team totals */}
+        {/* Filter */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <DashboardMemberFilter
+            membros={allMembrosWithLeader}
+            selectedMember={selectedMember}
+            onSelect={setSelectedMember}
+            label="Filtrar por membro"
+          />
+          <span className="text-xs text-slate-500">{filterLabel}</span>
+        </div>
+
+        {/* Team totals / filtered */}
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-bold text-purple-700">Total da Equipe</span>
+            <span className="text-sm font-bold text-purple-700">
+              {selectedMember === "__todos__" ? "Total da Equipe" : filterLabel.replace("Exibindo: ", "")}
+            </span>
           </div>
-          <DashboardKPICards data={totalRecords} />
+          <DashboardKPICards data={filteredRecords} />
         </div>
 
-        <DashboardCharts data={totalRecords} />
-        <DashboardConversion data={totalRecords} />
+        <DashboardCharts data={filteredRecords} />
+        <DashboardConversion data={filteredRecords} />
 
-        {/* Members */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-purple-600" />
-            <h3 className="font-bold text-slate-800">Corretores</h3>
+        {/* Members list */}
+        {selectedMember === "__todos__" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-purple-600" />
+              <h3 className="font-bold text-slate-800">Corretores</h3>
+            </div>
+            {membrosList.length === 0 && (
+              <p className="text-sm text-slate-400 italic p-4 bg-white rounded-xl border">Nenhum corretor com dados registrados</p>
+            )}
+            {membrosList.map(m => (
+              <MemberCard
+                key={m.email}
+                nome={m.nome}
+                email={m.email}
+                tipo={m.tipo}
+                records={m.records}
+                isExpanded={expandedMembers[m.email]}
+                onToggle={() => setExpandedMembers(prev => ({ ...prev, [m.email]: !prev[m.email] }))}
+              />
+            ))}
           </div>
-          {membros.length === 0 && (
-            <p className="text-sm text-slate-400 italic p-4 bg-white rounded-xl border">Nenhum corretor com dados registrados</p>
-          )}
-          {membros.map(m => (
-            <MemberCard
-              key={m.email}
-              nome={m.nome}
-              email={m.email}
-              tipo={m.tipo}
-              records={m.records}
-              isExpanded={expandedMembers[m.email]}
-              onToggle={() => setExpandedMembers(prev => ({ ...prev, [m.email]: !prev[m.email] }))}
-            />
-          ))}
-        </div>
+        )}
       </div>
     );
   }

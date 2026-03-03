@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, BarChart3, Loader2 } from "lucide-react";
+import { Plus, BarChart3, Loader2, Users, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 import DashboardInputForm from "../components/dashboard/DashboardInputForm";
@@ -15,12 +15,14 @@ import DashboardRecordsList from "../components/dashboard/DashboardRecordsList";
 import DashboardExport from "../components/dashboard/DashboardExport";
 import DashboardImport from "../components/dashboard/DashboardImport";
 import DashboardFilters from "../components/dashboard/DashboardFilters";
+import DashboardEquipeView from "../components/dashboard/DashboardEquipeView";
 
 export default function DashboardAtividades() {
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [ano, setAno] = useState(new Date().getFullYear());
   const [filteredData, setFilteredData] = useState(null);
+  const [viewMode, setViewMode] = useState("meus"); // "meus" or "equipe"
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["dashboard-diario", ano],

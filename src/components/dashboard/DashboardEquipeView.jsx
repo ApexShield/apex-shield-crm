@@ -202,7 +202,7 @@ export default function DashboardEquipeView({ teamData, ano }) {
     const unidades = Object.values(teamData.unidades || {});
 
     const filterLabel = selectedMember !== "__todos__" 
-      ? `Exibindo: ${allMembros[selectedMember]?.nome || selectedMember}`
+      ? `Exibindo: ${allMembrosMap[selectedMember]?.nome || selectedMember}`
       : "Exibindo: Toda a Agência";
 
     return (

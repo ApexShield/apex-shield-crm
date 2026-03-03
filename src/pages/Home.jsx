@@ -212,12 +212,14 @@ export default function Home() {
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { icon: ShieldCheck, title: "Organização Total", desc: "Funil visual com 9 etapas e cores inteligentes", color: "from-blue-400 to-cyan-400" },
-                { icon: Rocket, title: "Produtividade 10x", desc: "Ações em 2 cliques e automações poderosas", color: "from-purple-400 to-pink-400" },
-                { icon: Globe, title: "Agenda Inteligente", desc: "Compromissos com envio automático de convites por email", color: "from-green-400 to-emerald-400" },
-                { icon: Phone, title: "Comunicação Integrada", desc: "WhatsApp, Email e telefone em 1 clique", color: "from-orange-400 to-red-400" },
-                { icon: Lock, title: "Dados Protegidos", desc: "Criptografia, LGPD e controle de acesso", color: "from-slate-400 to-slate-500" },
-                { icon: Award, title: "100% Gratuito", desc: "Todas as funcionalidades sem custo algum", color: "from-yellow-400 to-orange-400" },
+                { icon: ShieldCheck, title: "Organização Total", desc: "Funil visual com 9 etapas, cores inteligentes e transições automáticas", color: "from-blue-400 to-cyan-400" },
+                { icon: Sparkles, title: "IA que Trabalha por Você", desc: "Agente IA cria leads, agenda compromissos e gerencia finanças via chat ou WhatsApp", color: "from-violet-400 to-purple-400" },
+                { icon: Globe, title: "Agenda com Convites", desc: "Compromissos com convites por email, ICS, confirmação e lembretes automáticos", color: "from-green-400 to-emerald-400" },
+                { icon: BarChart3, title: "Dashboards Completos", desc: "KPIs, evolução semanal, funil de conversão e visão de equipe para líderes", color: "from-purple-400 to-pink-400" },
+                { icon: Phone, title: "Comunicação Integrada", desc: "WhatsApp, Email e telefone em 1 clique com templates prontos", color: "from-orange-400 to-red-400" },
+                { icon: Lock, title: "Dados Protegidos", desc: "Criptografia, LGPD e controle de acesso granular por hierarquia", color: "from-slate-400 to-slate-500" },
+                { icon: Network, title: "Gestão de Equipe", desc: "Organograma com agências, unidades, convites e permissões hierárquicas", color: "from-indigo-400 to-blue-400" },
+                { icon: Award, title: "100% Gratuito", desc: "Todas as 30+ funcionalidades sem custo algum, para sempre", color: "from-yellow-400 to-orange-400" },
               ].map((b, idx) => (
                 <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                   transition={{ delay: idx * 0.05 }}

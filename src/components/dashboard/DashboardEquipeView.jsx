@@ -153,27 +153,53 @@ export default function DashboardEquipeView({ teamData, ano }) {
   const [expandedMembers, setExpandedMembers] = useState({});
   const [selectedMember, setSelectedMember] = useState("__todos__");
 
+  // Pre-compute all members map (works for both types)
+  const allMembrosMap = useMemo(() => {
+    if (!teamData) return {};
+    if (teamData.tipo === "LiderAgencia") {
+      const map = {};
+      Object.values(teamData.unidades || {}).forEach(u => {
+        Object.values(u.membros || {}).forEach(m => {
+          map[m.email] = m;
+        });
+      });
+      return map;
+    }
+    if (teamData.tipo === "LiderUnidade") {
+      const map = { ...teamData.membros };
+      if (teamData.meus_dados) {
+        map["__lider__"] = {
+          nome: "Meus Dados (Líder)",
+          email: "__lider__",
+          tipo: "LiderUnidade",
+          records: teamData.meus_dados
+        };
+      }
+      return map;
+    }
+    return {};
+  }, [teamData]);
+
+  // Pre-compute filtered records
+  const filteredRecords = useMemo(() => {
+    if (!teamData) return [];
+    if (selectedMember === "__todos__") {
+      if (teamData.tipo === "LiderAgencia") {
+        return teamData.totalRecords || Object.values(teamData.unidades || {}).flatMap(u => u.totalRecords || []);
+      }
+      return teamData.totalRecords || [];
+    }
+    if (selectedMember === "__lider__") {
+      return teamData.meus_dados || [];
+    }
+    const member = allMembrosMap[selectedMember];
+    return member ? member.records : [];
+  }, [selectedMember, teamData, allMembrosMap]);
+
   if (!teamData) return null;
 
   if (teamData.tipo === "LiderAgencia") {
     const unidades = Object.values(teamData.unidades || {});
-
-    // Collect all members across all units for the filter
-    const allMembros = {};
-    unidades.forEach(u => {
-      Object.values(u.membros || {}).forEach(m => {
-        allMembros[m.email] = m;
-      });
-    });
-
-    // Filtered records based on selected member
-    const filteredRecords = useMemo(() => {
-      if (selectedMember === "__todos__") {
-        return teamData.totalRecords || unidades.flatMap(u => u.totalRecords || []);
-      }
-      const member = allMembros[selectedMember];
-      return member ? member.records : [];
-    }, [selectedMember, teamData, unidades]);
 
     const filterLabel = selectedMember !== "__todos__" 
       ? `Exibindo: ${allMembros[selectedMember]?.nome || selectedMember}`

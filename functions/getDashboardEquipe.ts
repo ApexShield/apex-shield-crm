@@ -44,6 +44,17 @@ Deno.serve(async (req) => {
       return undefined;
     }
 
+    // Debug: log the current user and a sample to understand field structure
+    console.log("CURRENT USER email:", user.email, "tipo:", user.tipo_hierarquia, "tipo from data:", user.data?.tipo_hierarquia);
+    const dbgUser = allUsers.find(u => u.email === "suportegugananotech@gmail.com");
+    if (dbgUser) {
+      console.log("UNIT LEADER FULL:", JSON.stringify(dbgUser).substring(0, 500));
+    }
+    const dbgUser2 = allUsers.find(u => u.email === "gustavo_almeida_19@hotmail.com");
+    if (dbgUser2) {
+      console.log("HOTMAIL USER FULL:", JSON.stringify(dbgUser2).substring(0, 500));
+    }
+
     let result = {};
 
     if (tipoHierarquia === "Líder de Agência") {

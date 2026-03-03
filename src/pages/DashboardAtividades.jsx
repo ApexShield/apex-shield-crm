@@ -29,7 +29,8 @@ export default function DashboardAtividades() {
     queryFn: () => base44.auth.me(),
   });
 
-  const isLider = user?.tipo_hierarquia === "LiderAgencia" || user?.tipo_hierarquia === "LiderUnidade";
+  const isLider = user?.tipo_hierarquia === "LiderAgencia" || user?.tipo_hierarquia === "LiderUnidade" || 
+    user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade";
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["dashboard-diario", ano],

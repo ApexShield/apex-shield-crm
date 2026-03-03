@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
         membros[u.email] = {
           nome: u.full_name || u.email,
           email: u.email,
-          tipo: u.tipo_hierarquia || "Corretor",
+          tipo: getUserField(u, 'tipo_hierarquia') || "Corretor",
           records: userRecords
         };
       }
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
 
       result = {
         tipo: "LiderUnidade",
-        unidade_nome: user.unidade_nome || "Minha Unidade",
+        unidade_nome: getUserField(user, 'unidade_nome') || "Minha Unidade",
         totalRecords,
         membros,
         meus_dados: allRecords.filter(r => r.created_by === user.email)

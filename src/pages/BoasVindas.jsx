@@ -93,6 +93,11 @@ export default function BoasVindas() {
   });
 
   const handleStartClick = () => {
+    if (!isAuthenticated) {
+      // Redirecionar para login e depois voltar para BoasVindas
+      base44.auth.redirectToLogin(createPageUrl("BoasVindas"));
+      return;
+    }
     // Mostrar diálogo de aceite da política
     setShowPrivacyDialog(true);
   };

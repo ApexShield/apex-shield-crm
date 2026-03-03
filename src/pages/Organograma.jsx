@@ -114,6 +114,36 @@ export default function Organograma() {
     return lideresAgencia.map(l => construirArvore(l));
   }, [currentUser, allUsers, isAdmin, isLiderAgencia, isLiderUnidade, isCorretor]);
 
+  // Coletar todos os IDs que aparecem na árvore recursivamente
+  const coletarIdsNaArvore = (arvore) => {
+    const ids = new Set();
+    const percorrer = (node) => {
+      ids.add(node.id);
+      (node.subordinados || []).forEach(s => percorrer(s));
+    };
+    percorrer(arvore);
+    return ids;
+  };
+
+  // IDs de todos que estão visíveis na árvore
+  const idsNaArvore = useMemo(() => {
+    const ids = new Set();
+    arvoresVisiveis.forEach(arvore => {
+      coletarIdsNaArvore(arvore).forEach(id => ids.add(id));
+    });
+    return ids;
+  }, [arvoresVisiveis]);
+
+  // Usuários "órfãos": têm hierarquia definida mas não aparecem na árvore
+  const usuariosOrfaos = useMemo(() => {
+    if (!isAdmin) return [];
+    return allUsers.filter(u =>
+      u.tipo_hierarquia && 
+      u.tipo_hierarquia !== "Sem Hierarquia" && 
+      !idsNaArvore.has(u.id)
+    );
+  }, [allUsers, isAdmin, idsNaArvore]);
+
   // Vincular mutation
   const vincularMutation = useMutation({
     mutationFn: async ({ usuarioId, liderId, liderEmail, tipoHierarquia }) => {

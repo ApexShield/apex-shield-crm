@@ -121,7 +121,7 @@ export default function Home() {
             </motion.div>
 
             {/* CTA Login */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex flex-col items-center gap-3">
               <Button
                 onClick={() => base44.auth.redirectToLogin(createPageUrl("BoasVindas"))}
                 size="lg"
@@ -130,9 +130,14 @@ export default function Home() {
                 <motion.div animate={{ x: [-1000, 1000] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12" />
                 <Rocket className="w-8 h-8 mr-3 group-hover:rotate-12 transition-transform" />
-                ENTRAR NO CRM
+                ENTRAR NO CRM — É GRÁTIS!
                 <Sparkles className="w-8 h-8 ml-3 group-hover:scale-125 transition-transform" />
               </Button>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+                className="flex items-center gap-2 bg-green-500/20 border border-green-400/40 rounded-full px-5 py-1.5">
+                <Gift className="w-4 h-4 text-green-400" />
+                <span className="text-green-300 text-sm font-bold">100% Gratuito • Sem cartão de crédito • Acesso imediato</span>
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>

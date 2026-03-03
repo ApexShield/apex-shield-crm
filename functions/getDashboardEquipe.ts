@@ -16,11 +16,14 @@ Deno.serve(async (req) => {
     const allRecords = await base44.asServiceRole.entities.DashboardDiario.filter({ ano }, "-data", 5000);
 
     // Helper: find all subordinates recursively using lider_email/lider_id
+    // User custom fields may be at root or inside .data depending on SDK behavior
     function findSubordinates(leaderEmail, leaderId) {
-      return allUsers.filter(u => 
-        u.email !== leaderEmail && 
-        (u.lider_email === leaderEmail || (leaderId && u.lider_id === leaderId))
-      );
+      return allUsers.filter(u => {
+        if (u.email === leaderEmail) return false;
+        const lEmail = u.lider_email || (u.data && u.data.lider_email);
+        const lId = u.lider_id || (u.data && u.data.lider_id);
+        return (lEmail === leaderEmail || (leaderId && lId === leaderId));
+      });
     }
 
     // Helper: find ALL descendants recursively (subordinates of subordinates)

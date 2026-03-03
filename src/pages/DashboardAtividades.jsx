@@ -73,7 +73,29 @@ export default function DashboardAtividades() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {isLider && (
+            <div className="flex bg-slate-100 rounded-lg p-0.5">
+              <Button
+                variant={viewMode === "meus" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("meus")}
+                className={`gap-1.5 text-xs h-8 ${viewMode === "meus" ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
+              >
+                <User className="w-3.5 h-3.5" />
+                Meus Dados
+              </Button>
+              <Button
+                variant={viewMode === "equipe" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("equipe")}
+                className={`gap-1.5 text-xs h-8 ${viewMode === "equipe" ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                Equipe
+              </Button>
+            </div>
+          )}
           <Select value={String(ano)} onValueChange={v => setAno(parseInt(v))}>
             <SelectTrigger className="w-[100px]">
               <SelectValue />
@@ -82,12 +104,16 @@ export default function DashboardAtividades() {
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          <DashboardImport data={records} ano={ano} />
-          <DashboardExport data={records} ano={ano} />
-          <Button onClick={() => { setEditingRecord(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            <Plus className="w-4 h-4" />
-            Novo Registro
-          </Button>
+          {viewMode === "meus" && (
+            <>
+              <DashboardImport data={records} ano={ano} />
+              <DashboardExport data={records} ano={ano} />
+              <Button onClick={() => { setEditingRecord(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+                <Plus className="w-4 h-4" />
+                Novo Registro
+              </Button>
+            </>
+          )}
         </div>
       </motion.div>
 

@@ -101,7 +101,11 @@ function parseSheelData(sheetData, ano) {
       const dateObj = getDateForWeekDay(ano, semana, diaIdx);
       if (dateObj.getFullYear() !== ano) continue;
       
-      record.data = dateObj.toISOString().split("T")[0];
+      // Format as YYYY-MM-DD using UTC to avoid timezone issues
+      const yyyy = dateObj.getUTCFullYear();
+      const mm = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(dateObj.getUTCDate()).padStart(2, "0");
+      record.data = `${yyyy}-${mm}-${dd}`;
 
       // Only include if we have any data OR if this week has data in any other day
       const weekHasData = DIAS.some(d => 

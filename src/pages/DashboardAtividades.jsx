@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, BarChart3, Loader2, Users, User } from "lucide-react";
+import { Plus, BarChart3, Loader2, Users, User, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 import DashboardInputForm from "../components/dashboard/DashboardInputForm";
 import DashboardKPICards from "../components/dashboard/DashboardKPICards";
@@ -40,8 +41,22 @@ export default function DashboardAtividades() {
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ["dashboard-equipe", ano],
     queryFn: () => base44.functions.invoke("getDashboardEquipe", { ano }).then(r => r.data),
-    enabled: viewMode === "equipe" && isLider,
+    enabled: isLider,
   });
+
+  const queryClient = useQueryClient();
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearAllData = async () => {
+    setIsClearing(true);
+    const allRecords = await base44.entities.DashboardDiario.filter({ ano }, "-data", 5000);
+    for (const record of allRecords) {
+      await base44.entities.DashboardDiario.delete(record.id);
+    }
+    queryClient.invalidateQueries({ queryKey: ["dashboard-diario"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-equipe"] });
+    setIsClearing(false);
+  };
 
   const handleEdit = (record) => {
     setEditingRecord(record);
@@ -109,6 +124,29 @@ export default function DashboardAtividades() {
             <>
               <DashboardImport data={records} ano={ano} />
               <DashboardExport data={records} ano={ano} />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="gap-1.5" disabled={isClearing || records.length === 0}>
+                    {isClearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    Limpar Dados
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Limpar todos os dados de {ano}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação irá excluir permanentemente todos os {records.length} registros do Dashboard de Atividades do ano {ano}. 
+                      Recomendamos exportar um relatório antes de prosseguir. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearAllData} className="bg-red-600 hover:bg-red-700">
+                      {isClearing ? "Limpando..." : "Sim, limpar tudo"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button onClick={() => { setEditingRecord(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
                 <Plus className="w-4 h-4" />
                 Novo Registro
@@ -118,7 +156,7 @@ export default function DashboardAtividades() {
         </div>
       </motion.div>
 
-      {isLoading || (viewMode === "equipe" && isLoadingTeam) ? (
+      {isLoading || (isLider && isLoadingTeam) ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
@@ -126,12 +164,26 @@ export default function DashboardAtividades() {
         <DashboardEquipeView teamData={teamData} ano={ano} />
       ) : (
         <div className="space-y-4">
-          <DashboardFilters data={records} onFilteredData={setFilteredData} ano={ano} />
-          <DashboardKPICards data={filteredData || records} />
-          <DashboardCharts data={filteredData || records} />
-          <DashboardConversion data={filteredData || records} />
-          <DashboardWeeklyTable data={filteredData || records} maxWeeks={52} />
-          <DashboardRecordsList data={filteredData || records} onEdit={handleEdit} />
+          {/* Para líderes em "Meus Dados", mostra dados da equipe toda */}
+          {isLider && teamData ? (
+            <>
+              <DashboardFilters data={teamData.totalRecords || records} onFilteredData={setFilteredData} ano={ano} />
+              <DashboardKPICards data={filteredData || teamData.totalRecords || records} />
+              <DashboardCharts data={filteredData || teamData.totalRecords || records} />
+              <DashboardConversion data={filteredData || teamData.totalRecords || records} />
+              <DashboardWeeklyTable data={filteredData || teamData.totalRecords || records} maxWeeks={52} />
+              <DashboardRecordsList data={filteredData || teamData.totalRecords || records} onEdit={handleEdit} />
+            </>
+          ) : (
+            <>
+              <DashboardFilters data={records} onFilteredData={setFilteredData} ano={ano} />
+              <DashboardKPICards data={filteredData || records} />
+              <DashboardCharts data={filteredData || records} />
+              <DashboardConversion data={filteredData || records} />
+              <DashboardWeeklyTable data={filteredData || records} maxWeeks={52} />
+              <DashboardRecordsList data={filteredData || records} onEdit={handleEdit} />
+            </>
+          )}
         </div>
       )}
 

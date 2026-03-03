@@ -186,9 +186,6 @@ export default function DashboardEquipeView({ teamData, ano }) {
       }
       return teamData.totalRecords || [];
     }
-    if (selectedMember === "__lider__") {
-      return teamData.meus_dados || [];
-    }
     const member = allMembrosMap[selectedMember];
     return member ? member.records : [];
   }, [selectedMember, teamData, allMembrosMap]);

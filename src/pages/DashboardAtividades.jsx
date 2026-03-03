@@ -13,6 +13,7 @@ import DashboardCharts from "../components/dashboard/DashboardCharts";
 import DashboardConversion from "../components/dashboard/DashboardConversion";
 import DashboardRecordsList from "../components/dashboard/DashboardRecordsList";
 import DashboardExport from "../components/dashboard/DashboardExport";
+import DashboardImport from "../components/dashboard/DashboardImport";
 import DashboardFilters from "../components/dashboard/DashboardFilters";
 
 export default function DashboardAtividades() {
@@ -66,6 +67,7 @@ export default function DashboardAtividades() {
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
+          <DashboardImport data={records} ano={ano} />
           <DashboardExport data={records} ano={ano} />
           <Button onClick={() => { setEditingRecord(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
             <Plus className="w-4 h-4" />

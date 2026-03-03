@@ -52,6 +52,7 @@ import Aniversariantes from './pages/Aniversariantes';
 import BoasVindas from './pages/BoasVindas';
 import CalculadoraRapida from './pages/CalculadoraRapida';
 import Compromissos from './pages/Compromissos';
+import DashboardAtividades from './pages/DashboardAtividades';
 import GestaoCustos from './pages/GestaoCustos';
 import GestaoUsuarios from './pages/GestaoUsuarios';
 import Home from './pages/Home';
@@ -59,7 +60,6 @@ import Leads from './pages/Leads';
 import Organograma from './pages/Organograma';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade';
 import TermosServico from './pages/TermosServico';
-import DashboardAtividades from './pages/DashboardAtividades';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +69,7 @@ export const PAGES = {
     "BoasVindas": BoasVindas,
     "CalculadoraRapida": CalculadoraRapida,
     "Compromissos": Compromissos,
+    "DashboardAtividades": DashboardAtividades,
     "GestaoCustos": GestaoCustos,
     "GestaoUsuarios": GestaoUsuarios,
     "Home": Home,
@@ -76,7 +77,6 @@ export const PAGES = {
     "Organograma": Organograma,
     "PoliticaPrivacidade": PoliticaPrivacidade,
     "TermosServico": TermosServico,
-    "DashboardAtividades": DashboardAtividades,
 }
 
 export const pagesConfig = {

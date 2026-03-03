@@ -292,7 +292,7 @@ export default function DashboardEquipeView({ teamData, ano }) {
         {/* Filter */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <DashboardMemberFilter
-            membros={allMembrosWithLeader}
+            membros={allMembrosMap}
             selectedMember={selectedMember}
             onSelect={setSelectedMember}
             label="Filtrar por membro"

@@ -221,7 +221,7 @@ export default function DashboardEquipeView({ teamData, ano }) {
         {/* Filter */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <DashboardMemberFilter
-            membros={allMembros}
+            membros={allMembrosMap}
             selectedMember={selectedMember}
             onSelect={setSelectedMember}
             label="Filtrar por membro"
@@ -234,7 +234,7 @@ export default function DashboardEquipeView({ teamData, ano }) {
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-indigo-600" />
             <span className="text-sm font-bold text-indigo-700">
-              {selectedMember === "__todos__" ? "Visão Geral da Agência" : `Dados de ${allMembros[selectedMember]?.nome || selectedMember}`}
+              {selectedMember === "__todos__" ? "Visão Geral da Agência" : `Dados de ${allMembrosMap[selectedMember]?.nome || selectedMember}`}
             </span>
           </div>
           <DashboardKPICards data={filteredRecords} />

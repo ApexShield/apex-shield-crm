@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, User, Building2, ChevronDown, ChevronRight, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DashboardKPICards from "./DashboardKPICards";
 import DashboardCharts from "./DashboardCharts";
 import DashboardConversion from "./DashboardConversion";
+import DashboardMemberFilter from "./DashboardMemberFilter";
 
 function MemberCard({ nome, email, tipo, records, isExpanded, onToggle }) {
   const tipoLabel = {

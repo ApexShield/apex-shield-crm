@@ -13,11 +13,13 @@ import DashboardCharts from "../components/dashboard/DashboardCharts";
 import DashboardConversion from "../components/dashboard/DashboardConversion";
 import DashboardRecordsList from "../components/dashboard/DashboardRecordsList";
 import DashboardExport from "../components/dashboard/DashboardExport";
+import DashboardFilters from "../components/dashboard/DashboardFilters";
 
 export default function DashboardAtividades() {
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [ano, setAno] = useState(new Date().getFullYear());
+  const [filteredData, setFilteredData] = useState(null);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["dashboard-diario", ano],

@@ -59,6 +59,26 @@ export default function Organograma() {
     };
   };
 
+  // Coletar todos os IDs que aparecem na árvore recursivamente
+  const coletarIdsNaArvore = (arvore) => {
+    const ids = new Set();
+    const percorrer = (node) => {
+      ids.add(node.id);
+      (node.subordinados || []).forEach(s => percorrer(s));
+    };
+    percorrer(arvore);
+    return ids;
+  };
+
+  // IDs de todos que estão visíveis na árvore
+  const idsNaArvore = useMemo(() => {
+    const ids = new Set();
+    arvoresVisiveis.forEach(arvore => {
+      coletarIdsNaArvore(arvore).forEach(id => ids.add(id));
+    });
+    return ids;
+  }, [arvoresVisiveis]);
+
   // Usuários sem hierarquia (apenas para admin)
   const usuariosSemHierarquia = useMemo(() => {
     if (!isAdmin) return [];
@@ -66,6 +86,16 @@ export default function Organograma() {
       !u.tipo_hierarquia || u.tipo_hierarquia === "Sem Hierarquia"
     );
   }, [allUsers, isAdmin]);
+
+  // Usuários "órfãos": têm hierarquia definida mas não aparecem na árvore
+  const usuariosOrfaos = useMemo(() => {
+    if (!isAdmin) return [];
+    return allUsers.filter(u =>
+      u.tipo_hierarquia && 
+      u.tipo_hierarquia !== "Sem Hierarquia" && 
+      !idsNaArvore.has(u.id)
+    );
+  }, [allUsers, isAdmin, idsNaArvore]);
 
   // Árvores de agências visíveis conforme hierarquia do usuário
   const arvoresVisiveis = useMemo(() => {

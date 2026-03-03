@@ -44,17 +44,6 @@ Deno.serve(async (req) => {
       return undefined;
     }
 
-    // Log all subordinates for debugging
-    const subs = findSubordinates(user.email, user.id);
-    console.log("SUBORDINATES COUNT:", subs.length);
-    for (const s of subs) {
-      const tipo = getUserField(s, 'tipo_hierarquia');
-      const lEmail = getUserField(s, 'lider_email');
-      const lId = getUserField(s, 'lider_id');
-      const recs = allRecords.filter(r => r.created_by === s.email);
-      console.log(`SUB: ${s.email} | tipo: ${tipo} | lider_email: ${lEmail} | lider_id: ${lId} | records: ${recs.length}`);
-    }
-
     let result = {};
 
     if (tipoHierarquia === "Líder de Agência") {

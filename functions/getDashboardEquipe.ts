@@ -34,11 +34,11 @@ Deno.serve(async (req) => {
       return all;
     }
 
-    // Debug: log full user object to understand structure
-    const sampleUser = allUsers.find(u => u.email === "gustavo_almeida_19@hotmail.com");
-    if (sampleUser) {
-      console.log("FULL USER KEYS:", JSON.stringify(Object.keys(sampleUser)));
-      console.log("FULL USER:", JSON.stringify(sampleUser));
+    // Normalize user fields: the SDK may return custom fields at root level or inside .data
+    function getUserField(u, field) {
+      if (u[field] !== undefined && u[field] !== null && u[field] !== '') return u[field];
+      if (u.data && u.data[field] !== undefined && u.data[field] !== null && u.data[field] !== '') return u.data[field];
+      return undefined;
     }
 
     let result = {};
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     if (tipoHierarquia === "Líder de Agência") {
       // Find all direct subordinates (Líderes de Unidade)
       const directSubs = findSubordinates(user.email, user.id);
-      const unitLeaders = directSubs.filter(u => u.tipo_hierarquia === "Líder de Unidade");
+      const unitLeaders = directSubs.filter(u => getUserField(u, 'tipo_hierarquia') === "Líder de Unidade");
       const directBrokers = directSubs.filter(u => u.tipo_hierarquia !== "Líder de Unidade");
 
       // Build units from unit leaders

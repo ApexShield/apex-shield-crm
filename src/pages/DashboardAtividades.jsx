@@ -117,10 +117,12 @@ export default function DashboardAtividades() {
         </div>
       </motion.div>
 
-      {isLoading ? (
+      {isLoading || (viewMode === "equipe" && isLoadingTeam) ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
+      ) : viewMode === "equipe" && isLider ? (
+        <DashboardEquipeView teamData={teamData} ano={ano} />
       ) : (
         <div className="space-y-4">
           <DashboardFilters data={records} onFilteredData={setFilteredData} ano={ano} />

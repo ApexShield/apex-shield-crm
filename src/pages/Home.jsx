@@ -265,8 +265,8 @@ export default function Home() {
             </div>
             
             <p className="text-cyan-200/70 text-sm max-w-2xl mx-auto">
-              O APEX SHIELD CRM possui agenda profissional integrada para gerenciamento de 
-              compromissos. Seus dados são protegidos e nunca compartilhados com terceiros.
+              O APEX SHIELD CRM é uma plataforma completa para corretores de seguros com 30+ funcionalidades, 
+              incluindo Agente IA, agenda com convites, dashboard de equipe e muito mais. 100% gratuito.
             </p>
 
             <div className="flex items-center justify-center gap-6 flex-wrap">

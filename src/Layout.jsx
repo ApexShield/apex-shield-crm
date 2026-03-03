@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -13,6 +13,7 @@ import AniversariantesPopup from "./components/AniversariantesPopup";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
+  { name: "Dashboard Atividades", icon: BarChart3, page: "DashboardAtividades" },
   { name: "Compromissos", icon: CalendarIcon, page: "Compromissos" },
   { name: "Aniversariantes", icon: Users, page: "Aniversariantes" },
   { name: "Calculadora Rápida", icon: Briefcase, page: "CalculadoraRapida" },

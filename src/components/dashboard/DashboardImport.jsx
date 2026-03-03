@@ -26,12 +26,15 @@ function getWeekNumber(date) {
 
 function getDateForWeekDay(ano, semana, diaDaSemana) {
   // diaDaSemana: 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
-  const jan4 = new Date(ano, 0, 4);
-  const dayOfWeek = jan4.getDay() || 7;
+  // ISO 8601: Week 1 is the week containing January 4th
+  // Find the Monday of ISO week 1
+  const jan4 = new Date(Date.UTC(ano, 0, 4));
+  const dayOfWeek = jan4.getUTCDay() || 7; // 1=Mon, 7=Sun
   const mondayWeek1 = new Date(jan4);
-  mondayWeek1.setDate(jan4.getDate() - dayOfWeek + 1);
+  mondayWeek1.setUTCDate(jan4.getUTCDate() - (dayOfWeek - 1));
+  // Calculate target date
   const target = new Date(mondayWeek1);
-  target.setDate(mondayWeek1.getDate() + (semana - 1) * 7 + (diaDaSemana - 1));
+  target.setUTCDate(mondayWeek1.getUTCDate() + (semana - 1) * 7 + (diaDaSemana - 1));
   return target;
 }
 

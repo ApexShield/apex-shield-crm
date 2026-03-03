@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
           membros[b.email] = {
             nome: b.full_name || b.email,
             email: b.email,
-            tipo: b.tipo_hierarquia || "Corretor",
+            tipo: getUserField(b, 'tipo_hierarquia') || "Corretor",
             records: bRecords
           };
         }

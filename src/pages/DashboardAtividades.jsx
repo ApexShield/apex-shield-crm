@@ -24,9 +24,22 @@ export default function DashboardAtividades() {
   const [filteredData, setFilteredData] = useState(null);
   const [viewMode, setViewMode] = useState("meus"); // "meus" or "equipe"
 
+  const { data: user } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const isLider = user?.tipo_hierarquia === "LiderAgencia" || user?.tipo_hierarquia === "LiderUnidade";
+
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["dashboard-diario", ano],
     queryFn: () => base44.entities.DashboardDiario.filter({ ano }, "-data"),
+  });
+
+  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
+    queryKey: ["dashboard-equipe", ano],
+    queryFn: () => base44.functions.invoke("getDashboardEquipe", { ano }).then(r => r.data),
+    enabled: viewMode === "equipe" && isLider,
   });
 
   const handleEdit = (record) => {

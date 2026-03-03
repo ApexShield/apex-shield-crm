@@ -34,33 +34,11 @@ Deno.serve(async (req) => {
       return all;
     }
 
-    // Debug: log user structure to understand field access
+    // Debug: log full user object to understand structure
     const sampleUser = allUsers.find(u => u.email === "gustavo_almeida_19@hotmail.com");
     if (sampleUser) {
-      console.log("SAMPLE USER hotmail:", JSON.stringify({
-        email: sampleUser.email,
-        lider_email: sampleUser.lider_email,
-        lider_id: sampleUser.lider_id,
-        tipo_hierarquia: sampleUser.tipo_hierarquia,
-        keys: Object.keys(sampleUser)
-      }));
-    }
-    const sampleUser2 = allUsers.find(u => u.email === "gustavo_almeida_19@live.com");
-    if (sampleUser2) {
-      console.log("SAMPLE USER live:", JSON.stringify({
-        email: sampleUser2.email,
-        lider_email: sampleUser2.lider_email,
-        lider_id: sampleUser2.lider_id,
-        tipo_hierarquia: sampleUser2.tipo_hierarquia,
-        keys: Object.keys(sampleUser2)
-      }));
-    }
-
-    // Debug: check subordinates of unit leader
-    const unitLeaderUser = allUsers.find(u => u.email === "suportegugananotech@gmail.com");
-    if (unitLeaderUser) {
-      const subs = findSubordinates(unitLeaderUser.email, unitLeaderUser.id);
-      console.log("SUBORDINATES of unit leader:", JSON.stringify(subs.map(s => ({ email: s.email, lider_email: s.lider_email, lider_id: s.lider_id }))));
+      console.log("FULL USER KEYS:", JSON.stringify(Object.keys(sampleUser)));
+      console.log("FULL USER:", JSON.stringify(sampleUser));
     }
 
     let result = {};

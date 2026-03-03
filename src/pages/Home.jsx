@@ -154,17 +154,19 @@ export default function Home() {
             <p>
               O <strong className="text-cyan-300">APEX SHIELD CRM</strong> é um sistema de gestão de relacionamento com clientes 
               desenvolvido pela <strong className="text-cyan-300">APEX SHIELD Corretora de Seguros</strong> para ajudar corretores 
-              de seguros a organizarem sua operação de vendas de forma profissional.
+              de seguros a organizarem sua operação de vendas de forma profissional e escalável.
             </p>
             <p>
               O sistema oferece <strong>funil de vendas em 9 etapas</strong>, agenda profissional com envio de 
-              convites por email, gestão de apólices, documentos, relatórios em PDF, comunicação integrada 
-              via WhatsApp e Email, gestão financeira, organograma de equipe com hierarquia e muito mais.
+              convites por email e confirmação de presença, dashboard de atividades com KPIs e gráficos de evolução, 
+              dashboard de equipe para líderes, gestão de apólices, documentos, relatórios em PDF, 
+              comunicação integrada via WhatsApp e Email, gestão financeira completa, organograma de equipe 
+              com hierarquia e um <strong>Agente IA inteligente</strong> que automatiza tarefas por conversa.
             </p>
             <p>
-              Nossa <strong>agenda profissional integrada</strong> permite que corretores agendem reuniões, 
-              visitas e compromissos com envio automático de convites personalizados por email aos participantes. 
-              Os dados são protegidos com criptografia e nunca compartilhados com terceiros.
+              Nossa <strong>agenda profissional integrada</strong> permite agendar reuniões, visitas e compromissos 
+              com envio automático de convites por email com arquivo ICS, confirmação de presença dos participantes 
+              e lembretes automáticos. Os dados são protegidos com criptografia e controle de acesso granular.
             </p>
           </div>
         </motion.div>

@@ -211,44 +211,77 @@ export default function DashboardImport({ data, ano }) {
       </Button>
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-indigo-700">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              Importar Dados
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <p className="text-sm text-slate-600">
-              Arquivo: <span className="font-semibold">{fileName}</span>
-            </p>
-            <p className="text-sm text-slate-600">
-              Foram encontrados <span className="font-bold text-indigo-600">{parsedRecords.length} registros</span> para importar.
-            </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-sm text-amber-800 font-medium">
-                ⚠️ Esta ação irá sobrepor todos os dados existentes do ano {ano}.
-              </p>
-              <p className="text-sm text-amber-700 mt-1">
-                Deseja fazer um backup dos dados atuais antes de importar?
-              </p>
+        <DialogContent className="max-w-lg p-0 overflow-hidden border-slate-200 shadow-2xl">
+          {/* Header com gradiente */}
+          <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Upload className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Importar Dados</h2>
+                <p className="text-indigo-200 text-sm">{fileName}</p>
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={() => setShowConfirm(false)} disabled={importing}>
-              Cancelar
-            </Button>
-            <Button variant="outline" onClick={handleExportBackup} disabled={importing} className="gap-2">
-              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Sim, fazer backup e importar
-            </Button>
-            <Button onClick={doImport} disabled={importing} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              Não, apenas importar
-            </Button>
-          </DialogFooter>
+          <div className="px-6 py-5 space-y-4">
+            {/* Info de registros */}
+            <div className="flex items-center gap-3 bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl font-black text-indigo-600">{parsedRecords.length}</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Registros encontrados</p>
+                <p className="text-xs text-slate-500">Prontos para importação no ano {ano}</p>
+              </div>
+            </div>
+
+            {/* Aviso */}
+            <div className="bg-amber-50 rounded-xl p-4 border border-amber-200/60">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">Atenção: dados serão substituídos</p>
+                  <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                    Todos os dados existentes do ano {ano} serão sobrescritos. Recomendamos fazer um backup antes de continuar.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleExportBackup} 
+                  disabled={importing} 
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-11 rounded-xl font-semibold"
+                >
+                  {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  Backup + Importar
+                </Button>
+                <Button 
+                  onClick={doImport} 
+                  disabled={importing} 
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11 rounded-xl font-semibold"
+                >
+                  {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  Apenas Importar
+                </Button>
+              </div>
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowConfirm(false)} 
+                disabled={importing}
+                className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl h-10"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

@@ -270,28 +270,6 @@ export default function DashboardEquipeView({ teamData, ano }) {
     const membros = teamData.membros || {};
     const membrosList = Object.values(membros);
 
-    // Add the leader's own data as an option
-    const allMembrosWithLeader = { ...membros };
-    if (teamData.meus_dados) {
-      allMembrosWithLeader["__lider__"] = {
-        nome: "Meus Dados (Líder)",
-        email: "__lider__",
-        tipo: "LiderUnidade",
-        records: teamData.meus_dados
-      };
-    }
-
-    const filteredRecords = useMemo(() => {
-      if (selectedMember === "__todos__") {
-        return teamData.totalRecords || [];
-      }
-      if (selectedMember === "__lider__") {
-        return teamData.meus_dados || [];
-      }
-      const member = membros[selectedMember];
-      return member ? member.records : [];
-    }, [selectedMember, teamData, membros]);
-
     const filterLabel = selectedMember === "__todos__"
       ? "Exibindo: Toda a Equipe"
       : selectedMember === "__lider__"

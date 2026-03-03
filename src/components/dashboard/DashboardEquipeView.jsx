@@ -266,9 +266,7 @@ export default function DashboardEquipeView({ teamData, ano }) {
 
     const filterLabel = selectedMember === "__todos__"
       ? "Exibindo: Toda a Equipe"
-      : selectedMember === "__lider__"
-        ? "Exibindo: Meus Dados"
-        : `Exibindo: ${membros[selectedMember]?.nome || selectedMember}`;
+      : `Exibindo: ${membros[selectedMember]?.nome || allMembrosMap[selectedMember]?.nome || selectedMember}`;
 
     return (
       <div className="space-y-4">

@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
       result = {
         tipo: "LiderAgencia",
-        agencia_nome: user.agencia_nome || "Minha Agência",
+        agencia_nome: getUserField(user, 'agencia_nome') || "Minha Agência",
         unidades,
         totalRecords: allTeamRecords,
         meus_dados: allRecords.filter(r => r.created_by === user.email)

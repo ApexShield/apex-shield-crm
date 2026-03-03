@@ -106,7 +106,7 @@ export default function Home() {
             {/* Stats */}
             <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-10">
               {[
-                { num: "24+", label: "Funcionalidades", icon: Zap, color: "from-yellow-400 to-orange-500" },
+                { num: "30+", label: "Funcionalidades", icon: Zap, color: "from-yellow-400 to-orange-500" },
                 { num: "9", label: "Etapas Funil", icon: Target, color: "from-blue-400 to-cyan-500" },
                 { num: "100%", label: "Gratuito", icon: Gift, color: "from-green-400 to-emerald-500" },
                 { num: "∞", label: "Leads Ilimitados", icon: TrendingUp, color: "from-purple-400 to-pink-500" }

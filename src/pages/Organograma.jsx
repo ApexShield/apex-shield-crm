@@ -207,35 +207,70 @@ export default function Organograma() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-          {/* Usuários sem hierarquia - somente Admin */}
-          {isAdmin && usuariosSemHierarquia.length > 0 && (
-            <div className="w-full md:w-72 flex-shrink-0">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-yellow-400/30 p-4 sticky top-6">
-                <h3 className="text-yellow-300 font-bold mb-3 text-sm flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  Sem Hierarquia ({usuariosSemHierarquia.length})
-                </h3>
-                <div className="space-y-2 max-h-[70vh] overflow-y-auto">
-                  {usuariosSemHierarquia.map(u => (
-                    <div
-                      key={u.id}
-                      onClick={() => {
-                        setUsuarioParaVincular(u);
-                        setShowVincularDialog(true);
-                      }}
-                      className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-yellow-400/30"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-white font-bold text-xs">
-                        {u.full_name?.charAt(0) || u.email?.charAt(0)}
+          {/* Painel lateral - somente Admin */}
+          {isAdmin && (usuariosSemHierarquia.length > 0 || usuariosOrfaos.length > 0) && (
+            <div className="w-full md:w-72 flex-shrink-0 space-y-4">
+              {/* Usuários sem hierarquia */}
+              {usuariosSemHierarquia.length > 0 && (
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-yellow-400/30 p-4 sticky top-6">
+                  <h3 className="text-yellow-300 font-bold mb-3 text-sm flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Sem Hierarquia ({usuariosSemHierarquia.length})
+                  </h3>
+                  <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                    {usuariosSemHierarquia.map(u => (
+                      <div
+                        key={u.id}
+                        onClick={() => {
+                          setUsuarioParaVincular(u);
+                          setShowVincularDialog(true);
+                        }}
+                        className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-yellow-400/30"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-white font-bold text-xs">
+                          {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
+                          <p className="text-white/50 text-[10px] truncate">{u.email}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
-                        <p className="text-white/50 text-[10px] truncate">{u.email}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Usuários órfãos - têm hierarquia mas não aparecem na árvore */}
+              {usuariosOrfaos.length > 0 && (
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-orange-400/30 p-4">
+                  <h3 className="text-orange-300 font-bold mb-1 text-sm flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Sem Vínculo na Árvore ({usuariosOrfaos.length})
+                  </h3>
+                  <p className="text-orange-200/60 text-[10px] mb-3">Têm hierarquia mas não estão conectados a nenhum líder</p>
+                  <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                    {usuariosOrfaos.map(u => (
+                      <div
+                        key={u.id}
+                        onClick={() => {
+                          setUsuarioParaVincular(u);
+                          setShowVincularDialog(true);
+                        }}
+                        className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-orange-400/30"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xs">
+                          {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
+                          <p className="text-white/50 text-[10px] truncate">{u.email}</p>
+                          <p className="text-orange-300/70 text-[10px]">{u.tipo_hierarquia}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

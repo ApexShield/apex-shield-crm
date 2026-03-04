@@ -67,51 +67,86 @@ export default function Organograma() {
     );
   }, [allUsers, isAdmin]);
 
+  // Encontrar líder de agência subindo na hierarquia
+  const encontrarLiderAgencia = (usuario) => {
+    if (!usuario) return null;
+    if (usuario.tipo_hierarquia === "Líder de Agência") return usuario;
+    const lider = allUsers.find(u => u.id === usuario.lider_id || u.email === usuario.lider_email);
+    return encontrarLiderAgencia(lider);
+  };
+
+  // Filtrar árvore para mostrar apenas a cadeia de um usuário
+  const filtrarArvorePorUsuario = (arvore, userIds) => {
+    if (!arvore) return null;
+    if (userIds.has(arvore.id)) {
+      // Este nó faz parte da cadeia — incluir mas filtrar sub-árvores também
+      return {
+        ...arvore,
+        subordinados: (arvore.subordinados || [])
+          .map(s => filtrarArvorePorUsuario(s, userIds))
+          .filter(Boolean)
+      };
+    }
+    // Verificar se algum descendente faz parte da cadeia
+    const subsFiltrados = (arvore.subordinados || [])
+      .map(s => filtrarArvorePorUsuario(s, userIds))
+      .filter(Boolean);
+    if (subsFiltrados.length > 0) {
+      return { ...arvore, subordinados: subsFiltrados };
+    }
+    return null;
+  };
+
   // Árvores de agências visíveis conforme hierarquia do usuário
   const arvoresVisiveis = useMemo(() => {
     if (!currentUser || !allUsers.length) return [];
 
-    // Encontrar Líderes de Agência relevantes
-    let lideresAgencia = [];
-
     if (isAdmin) {
-      // Admin vê todas as agências
-      lideresAgencia = allUsers.filter(u => u.tipo_hierarquia === "Líder de Agência");
-    } else if (isLiderAgencia) {
-      // Líder de Agência vê apenas sua agência
-      lideresAgencia = [currentUser];
-    } else if (isLiderUnidade) {
-      // Líder de Unidade vê a agência que está alocado
+      // Admin vê tudo
+      const lideresAgencia = allUsers.filter(u => u.tipo_hierarquia === "Líder de Agência");
+      return lideresAgencia.map(l => construirArvore(l));
+    }
+    
+    if (isLiderAgencia) {
+      // Líder de Agência vê toda a sua árvore
+      return [construirArvore(currentUser)];
+    }
+    
+    if (isLiderUnidade) {
+      // Líder de Unidade vê: Líder de Agência > ele + sua equipe
+      const liderAgencia = encontrarLiderAgencia(currentUser);
+      if (!liderAgencia) return [];
+      const arvoreCompleta = construirArvore(liderAgencia);
+      
+      // Coletar IDs relevantes: líder de agência + current user + subordinados diretos
+      const idsRelevantes = new Set([liderAgencia.id, currentUser.id]);
+      const meusSubordinados = allUsers.filter(u =>
+        u.lider_id === currentUser.id || u.lider_email === currentUser.email
+      );
+      meusSubordinados.forEach(s => idsRelevantes.add(s.id));
+      
+      const arvoreFiltrada = filtrarArvorePorUsuario(arvoreCompleta, idsRelevantes);
+      return arvoreFiltrada ? [arvoreFiltrada] : [];
+    }
+    
+    if (isCorretor) {
+      // Corretor vê: Líder de Agência > seu Líder de Unidade > ele próprio
+      const liderAgencia = encontrarLiderAgencia(currentUser);
+      if (!liderAgencia) return [];
+      const arvoreCompleta = construirArvore(liderAgencia);
+      
+      // Cadeia: líder de agência > líder direto > eu
+      const idsRelevantes = new Set([liderAgencia.id, currentUser.id]);
       const meuLider = allUsers.find(u =>
         u.id === currentUser.lider_id || u.email === currentUser.lider_email
       );
-      if (meuLider?.tipo_hierarquia === "Líder de Agência") {
-        lideresAgencia = [meuLider];
-      } else if (meuLider) {
-        // Se o líder é outro Líder de Unidade, buscar o Líder de Agência acima
-        const liderAgencia = allUsers.find(u =>
-          u.id === meuLider.lider_id || u.email === meuLider.lider_email
-        );
-        if (liderAgencia) lideresAgencia = [liderAgencia];
-      }
-    } else if (isCorretor) {
-      // Corretor vê a agência se tiver vínculo
-      const meuLider = allUsers.find(u =>
-        u.id === currentUser.lider_id || u.email === currentUser.lider_email
-      );
-      if (meuLider) {
-        if (meuLider.tipo_hierarquia === "Líder de Agência") {
-          lideresAgencia = [meuLider];
-        } else {
-          const liderAgencia = allUsers.find(u =>
-            u.id === meuLider.lider_id || u.email === meuLider.lider_email
-          );
-          if (liderAgencia) lideresAgencia = [liderAgencia];
-        }
-      }
+      if (meuLider) idsRelevantes.add(meuLider.id);
+      
+      const arvoreFiltrada = filtrarArvorePorUsuario(arvoreCompleta, idsRelevantes);
+      return arvoreFiltrada ? [arvoreFiltrada] : [];
     }
 
-    return lideresAgencia.map(l => construirArvore(l));
+    return [];
   }, [currentUser, allUsers, isAdmin, isLiderAgencia, isLiderUnidade, isCorretor]);
 
   // Coletar todos os IDs que aparecem na árvore recursivamente

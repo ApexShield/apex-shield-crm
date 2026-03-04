@@ -37,14 +37,12 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
           unidade_nome: unidade?.nome || convite.unidade_nome || ""
         };
 
-        // Definir líder baseado no tipo de hierarquia
+        // Definir líder — sempre usa o lider_id/lider_email do convite como referência direta
         if (convite.tipo_hierarquia === "Líder de Agência") {
-          // Líder de Agência não tem líder acima
           updateData.lider_id = "";
           updateData.lider_email = "";
           updateData.lider_nome = "";
           
-          // Atualizar a agência com este líder
           if (agencia) {
             await base44.entities.Agencia.update(agencia.id, {
               lider_agencia_id: me.id,
@@ -53,11 +51,11 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
             });
           }
         } else if (convite.tipo_hierarquia === "Líder de Unidade") {
+          // Líder de Unidade reporta ao Líder de Agência
           updateData.lider_id = agencia?.lider_agencia_id || convite.lider_id || "";
           updateData.lider_email = agencia?.lider_agencia_email || convite.lider_email || "";
           updateData.lider_nome = agencia?.lider_agencia_nome || convite.lider_nome || "";
           
-          // Atualizar unidade com o líder
           if (unidade) {
             await base44.entities.Unidade.update(unidade.id, {
               lider_unidade_id: me.id,
@@ -66,18 +64,13 @@ export default function ConvitesDialog({ open, onClose, userEmail }) {
             });
           }
         } else if (convite.tipo_hierarquia === "Corretor") {
-          if (convite.unidade_id && unidade) {
-            updateData.lider_id = unidade.lider_unidade_id || "";
-            updateData.lider_email = unidade.lider_unidade_email || "";
-            updateData.lider_nome = unidade.lider_unidade_nome || "";
-          } else {
-            updateData.lider_id = agencia?.lider_agencia_id || convite.lider_id || "";
-            updateData.lider_email = agencia?.lider_agencia_email || convite.lider_email || "";
-            updateData.lider_nome = agencia?.lider_agencia_nome || convite.lider_nome || "";
-          }
+          // Corretor reporta diretamente a quem o convidou (lider do convite)
+          updateData.lider_id = convite.lider_id || "";
+          updateData.lider_email = convite.lider_email || "";
+          updateData.lider_nome = convite.lider_nome || "";
         }
 
-        // Atualizar usuário atual via updateMe
+        // Atualizar usuário atual via updateMe — imediato
         await base44.auth.updateMe(updateData);
       }
       

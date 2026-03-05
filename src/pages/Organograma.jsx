@@ -23,8 +23,11 @@ export default function Organograma() {
   });
 
   const { data: allUsers = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
+    queryKey: ["users-organograma"],
+    queryFn: async () => {
+      const response = await base44.functions.invoke("getOrganogramaData", {});
+      return response.data.users || [];
+    },
     enabled: !!currentUser
   });
 

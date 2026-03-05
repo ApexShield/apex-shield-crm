@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Loader2, Users, Crown, Shield } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
+import { getHierarchyConfig } from "../UserHierarchyConfig";
 
 export default function ConvidarEquipeDialog({ open, onClose, currentUser, allUsers, agencias, unidades }) {
   const queryClient = useQueryClient();
@@ -33,20 +34,16 @@ export default function ConvidarEquipeDialog({ open, onClose, currentUser, allUs
       : unidades.filter(u => u.lider_unidade_email === currentUser?.email);
 
   // Tipos que cada hierarquia pode convidar
-  const tiposDisponiveis = isAdmin
-    ? [
-        { value: "Líder de Agência", label: "🟢 Líder de Agência", icon: Crown },
-        { value: "Líder de Unidade", label: "🔵 Líder de Unidade", icon: Shield },
-        { value: "Corretor", label: "🔷 Corretor", icon: Users }
-      ]
+  const tiposBase = isAdmin
+    ? ["Líder de Agência", "Líder de Unidade", "Corretor"]
     : isLiderAgencia
-      ? [
-          { value: "Líder de Unidade", label: "🔵 Líder de Unidade", icon: Shield },
-          { value: "Corretor", label: "🔷 Corretor", icon: Users }
-        ]
-      : [
-          { value: "Corretor", label: "🔷 Corretor", icon: Users }
-        ];
+      ? ["Líder de Unidade", "Corretor"]
+      : ["Corretor"];
+  
+  const tiposDisponiveis = tiposBase.map(t => {
+    const cfg = getHierarchyConfig(t);
+    return { value: t, label: t, icon: cfg.icon };
+  });
 
   const conviteMutation = useMutation({
     mutationFn: async () => {
@@ -182,11 +179,17 @@ export default function ConvidarEquipeDialog({ open, onClose, currentUser, allUs
                 <SelectValue placeholder="Selecione a função..." />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-indigo-500/30">
-                {tiposDisponiveis.map(t => (
-                  <SelectItem key={t.value} value={t.value} className="text-white">
-                    {t.label}
-                  </SelectItem>
-                ))}
+                {tiposDisponiveis.map(t => {
+                  const Icon = t.icon;
+                  return (
+                    <SelectItem key={t.value} value={t.value} className="text-white">
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4" />
+                        <span>{t.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

@@ -286,25 +286,32 @@ export default function Organograma() {
                   </h3>
                   <p className="text-orange-200/60 text-[10px] mb-3">Têm hierarquia mas não estão conectados a nenhum líder</p>
                   <div className="space-y-2 max-h-[35vh] overflow-y-auto">
-                    {usuariosOrfaos.map(u => (
-                      <div
-                        key={u.id}
-                        onClick={() => {
-                          setUsuarioParaVincular(u);
-                          setShowVincularDialog(true);
-                        }}
-                        className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-orange-400/30"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-xs">
-                          {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                    {usuariosOrfaos.map(u => {
+                      const oCfg = getHierarchyConfig(u.tipo_hierarquia);
+                      const OIcon = oCfg.icon;
+                      return (
+                        <div
+                          key={u.id}
+                          onClick={() => {
+                            setUsuarioParaVincular(u);
+                            setShowVincularDialog(true);
+                          }}
+                          className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-orange-400/30"
+                        >
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${oCfg.avatarBg} flex items-center justify-center text-white font-bold text-xs`}>
+                            {u.full_name?.charAt(0) || u.email?.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
+                            <p className="text-white/50 text-[10px] truncate">{u.email}</p>
+                            <div className="flex items-center gap-1">
+                              <OIcon className={`w-3 h-3 ${oCfg.legendIcon}`} />
+                              <p className={`text-[10px] ${oCfg.legendText}`}>{u.tipo_hierarquia}</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
-                          <p className="text-white/50 text-[10px] truncate">{u.email}</p>
-                          <p className="text-orange-300/70 text-[10px]">{u.tipo_hierarquia}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

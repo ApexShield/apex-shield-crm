@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3
 } from "lucide-react";
+import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -146,9 +147,14 @@ export default function Layout({ children, currentPageName }) {
 
           <div className="p-4 border-t border-slate-100">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-semibold">
-                {user?.full_name?.charAt(0) || user?.email?.charAt(0) || "U"}
-              </div>
+              {(() => {
+                const cfg = getHierarchyConfig(user?.tipo_hierarquia);
+                return (
+                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${cfg.avatarBg} flex items-center justify-center text-white font-semibold`}>
+                    {user?.full_name?.charAt(0) || user?.email?.charAt(0) || "U"}
+                  </div>
+                );
+              })()}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-800 truncate text-sm">
                   {user?.full_name || "Usuário"}

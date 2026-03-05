@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Users, UserPlus, Network, Crown, Shield, AlertCircle } from "lucide-react";
+import { Users, UserPlus, Network, AlertCircle } from "lucide-react";
+import { getHierarchyConfig } from "../components/UserHierarchyConfig";
 import OrgTree from "../components/organograma/OrgTree";
 import ConvidarEquipeDialog from "../components/organograma/ConvidarEquipeDialog";
 import VincularForm from "../components/organograma/VincularForm";
@@ -230,18 +231,16 @@ export default function Organograma() {
 
         {/* Legenda */}
         <div className="flex gap-4 mb-6 flex-wrap">
-          <div className="flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 rounded-lg">
-            <Crown className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs text-emerald-200 font-medium">Líder de Agência</span>
-          </div>
-          <div className="flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 px-3 py-1.5 rounded-lg">
-            <Shield className="w-4 h-4 text-blue-400" />
-            <span className="text-xs text-blue-200 font-medium">Líder de Unidade</span>
-          </div>
-          <div className="flex items-center gap-2 bg-cyan-500/20 border border-cyan-400/30 px-3 py-1.5 rounded-lg">
-            <Users className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs text-cyan-200 font-medium">Corretor</span>
-          </div>
+          {["Líder de Agência", "Líder de Unidade", "Corretor"].map(tipo => {
+            const cfg = getHierarchyConfig(tipo);
+            const Icon = cfg.icon;
+            return (
+              <div key={tipo} className={`flex items-center gap-2 ${cfg.legendBg} border px-3 py-1.5 rounded-lg`}>
+                <Icon className={`w-4 h-4 ${cfg.legendIcon}`} />
+                <span className={`text-xs ${cfg.legendText} font-medium`}>{tipo}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">

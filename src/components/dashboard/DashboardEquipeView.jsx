@@ -6,19 +6,17 @@ import DashboardKPICards from "./DashboardKPICards";
 import DashboardCharts from "./DashboardCharts";
 import DashboardConversion from "./DashboardConversion";
 import DashboardMemberFilter from "./DashboardMemberFilter";
+import { getHierarchyConfig, UserAvatar } from "../UserHierarchyConfig";
 
-function MemberCard({ nome, email, tipo, records, isExpanded, onToggle }) {
-  const tipoLabel = {
+function MemberCard({ nome, email, tipo, tipoHierarquia, records, isExpanded, onToggle }) {
+  const tipoLabel = tipoHierarquia || ({
     LiderUnidade: "Líder de Unidade",
     LiderAgencia: "Líder de Agência",
     UsuarioVIP: "Corretor",
-  }[tipo] || "Corretor";
+  }[tipo] || "Corretor");
 
-  const tipoColor = {
-    LiderUnidade: "bg-purple-100 text-purple-700",
-    LiderAgencia: "bg-indigo-100 text-indigo-700",
-    UsuarioVIP: "bg-slate-100 text-slate-700",
-  }[tipo] || "bg-slate-100 text-slate-700";
+  const config = getHierarchyConfig(tipoLabel);
+  const Icon = config.icon;
 
   const totalLigacoes = records.reduce((s, r) => s + (r.ligacoes_realizadas || 0), 0);
   const totalAgend = records.reduce((s, r) => s + (r.agendamentos_feitos || 0), 0);
@@ -32,14 +30,13 @@ function MemberCard({ nome, email, tipo, records, isExpanded, onToggle }) {
         onClick={onToggle}
         className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors text-left"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-          {nome?.charAt(0) || "?"}
-        </div>
+        <UserAvatar tipoHierarquia={tipoLabel} name={nome} email={email} size="w-9 h-9" textSize="text-sm" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-slate-800 text-sm truncate">{nome}</div>
           <div className="text-xs text-slate-500 truncate">{email}</div>
         </div>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${tipoColor} flex-shrink-0`}>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.badgeBg} flex items-center gap-1 flex-shrink-0`}>
+          <Icon className="w-3 h-3" />
           {tipoLabel}
         </span>
         <div className="hidden md:flex items-center gap-4 text-xs text-slate-500 flex-shrink-0">

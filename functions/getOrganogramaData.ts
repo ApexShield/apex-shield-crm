@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
     }
 
     // Use service role to fetch all users (bypasses RLS)
-    const allUsers = await base44.asServiceRole.entities.User.list();
+    // Fetch in batches to avoid timeout
+    const allUsers = await base44.asServiceRole.entities.User.filter({}, '-created_date', 500);
     
     // Map users to safe data (no sensitive fields)
     const safeUsers = allUsers.map(u => ({

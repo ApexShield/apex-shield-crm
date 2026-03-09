@@ -146,8 +146,13 @@ Deno.serve(async (req) => {
       ].join('\r\n');
 
       // Encode the entire MIME message for Gmail API (web-safe base64)
+      // Use chunked approach to avoid stack overflow with large messages
       const rawBytes = new TextEncoder().encode(mimeMessage);
-      const rawBase64 = btoa(String.fromCharCode(...rawBytes))
+      let binaryStr = '';
+      for (let i = 0; i < rawBytes.length; i++) {
+        binaryStr += String.fromCharCode(rawBytes[i]);
+      }
+      const rawBase64 = btoa(binaryStr)
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');

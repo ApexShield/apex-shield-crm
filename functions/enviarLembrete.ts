@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     });
 
     if (candidatos.length === 0) {
-      return Response.json({ success: true, message: '0 lembrete(s) enviado(s)', details: [] });
+      return new Response(JSON.stringify({ success: true, message: '0 lembrete(s) enviado(s)', details: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Get Gmail connection once
@@ -179,13 +179,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ 
+    return new Response(JSON.stringify({ 
       success: true, 
       message: `${emailsSent.length} lembrete(s) enviado(s)`,
       details: emailsSent 
-    });
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Error in enviarLembrete:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 });

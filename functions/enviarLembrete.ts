@@ -2,40 +2,33 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
 
   const now = new Date();
+  console.log('Inicio enviarLembrete:', now.toISOString());
 
-  let allCompromissos;
+  // Buscar apenas compromissos futuros com participante
+  const windowStart = new Date(now.getTime() + 20 * 60000).toISOString();
+  const windowEnd = new Date(now.getTime() + 70 * 60000).toISOString();
+
+  let compromissos;
   try {
-    allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 200);
+    compromissos = await base44.asServiceRole.entities.Compromisso.filter(
+      { data_inicio: { $gte: windowStart, $lte: windowEnd } },
+      '-data_inicio',
+      50
+    );
+    console.log('Compromissos na janela:', compromissos.length);
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error('Erro ao buscar compromissos:', e.message);
+    return Response.json({ error: e.message }, { status: 500 });
   }
 
-  const candidatos = allCompromissos.filter(comp => {
-    if (!comp.email_participante || !comp.data_inicio) return false;
-    const st = new Date(comp.data_inicio);
-    if (isNaN(st.getTime())) return false;
-    const diffMin = (st.getTime() - now.getTime()) / 60000;
-    return diffMin > 20 && diffMin <= 70;
-  });
+  // Filtrar apenas os que têm email de participante
+  const candidatos = compromissos.filter(c => c.email_participante);
 
   if (candidatos.length === 0) {
-    return new Response(JSON.stringify({ success: true, message: '0 lembrete(s) enviado(s)', details: [] }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.log('Nenhum candidato para lembrete');
+    return Response.json({ success: true, message: '0 lembrete(s) enviado(s)', details: [] });
   }
 
   let accessToken;
@@ -43,10 +36,8 @@ Deno.serve(async (req) => {
     const conn = await base44.asServiceRole.connectors.getConnection("gmail");
     accessToken = conn.accessToken;
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Gmail: ' + e.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error('Erro Gmail connector:', e.message);
+    return Response.json({ error: 'Gmail: ' + e.message }, { status: 500 });
   }
 
   const emailsSent = [];
@@ -71,7 +62,6 @@ Deno.serve(async (req) => {
 
     const tempoRestante = reminderType === '1h' ? '1 hora' : '30 minutos';
     const grad = reminderType === '1h' ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#ef4444,#dc2626)';
-    const icon = reminderType === '1h' ? '&#9200;' : '&#128276;';
 
     const locationInfo = comp.modalidade === 'online'
       ? (comp.meeting_link ? '<a href="' + comp.meeting_link + '" style="color:#4f46e5;font-weight:700;">Acessar Reuniao Online</a>' : 'Online')
@@ -87,7 +77,7 @@ Deno.serve(async (req) => {
       + '<p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px;">Faltam <strong>' + tempoRestante + '</strong></p>'
       + '</div>'
       + '<div style="padding:32px;">'
-      + '<h2 style="color:#1e1b4b;font-size:20px;">' + comp.titulo + '</h2>'
+      + '<h2 style="color:#1e1b4b;font-size:20px;">' + (comp.titulo || '') + '</h2>'
       + '<p style="color:#1e293b;font-size:15px;">' + dayFull + '</p>'
       + '<p style="color:#1e293b;font-size:15px;">' + tStart + ' - ' + tEnd + ' (Horario de Brasilia)</p>'
       + '<p style="color:#1e293b;font-size:15px;">Local: ' + locationInfo + '</p>'
@@ -97,8 +87,8 @@ Deno.serve(async (req) => {
       + '</div></div>';
 
     const assunto = reminderType === '1h'
-      ? 'Lembrete: ' + comp.titulo + ' em 1 hora'
-      : 'Atencao: ' + comp.titulo + ' em 30 minutos!';
+      ? 'Lembrete: ' + (comp.titulo || 'Compromisso') + ' em 1 hora'
+      : 'Atencao: ' + (comp.titulo || 'Compromisso') + ' em 30 minutos!';
 
     const bodyB64 = btoa(unescape(encodeURIComponent(html)));
     const subjectB64 = btoa(unescape(encodeURIComponent(assunto)));
@@ -122,24 +112,27 @@ Deno.serve(async (req) => {
       const resp = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw: raw })
+        body: JSON.stringify({ raw })
       });
 
       if (resp.ok) {
         const upd = reminderType === '1h' ? { lembrete_1h_enviado: true } : { lembrete_30min_enviado: true };
         await base44.asServiceRole.entities.Compromisso.update(comp.id, upd);
         emailsSent.push({ id: comp.id, titulo: comp.titulo, tipo: reminderType, email: comp.email_participante });
+        console.log('Lembrete enviado:', comp.titulo, reminderType, comp.email_participante);
       } else {
-        console.error('Gmail error for ' + comp.id + ':', await resp.text());
+        const errText = await resp.text();
+        console.error('Gmail error ' + comp.id + ':', errText);
       }
     } catch (sendErr) {
-      console.error('Send error for ' + comp.id + ':', sendErr.message);
+      console.error('Send error ' + comp.id + ':', sendErr.message);
     }
   }
 
-  return new Response(JSON.stringify({
+  console.log('Fim enviarLembrete. Enviados:', emailsSent.length);
+  return Response.json({
     success: true,
     message: emailsSent.length + ' lembrete(s) enviado(s)',
     details: emailsSent
-  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  });
 });

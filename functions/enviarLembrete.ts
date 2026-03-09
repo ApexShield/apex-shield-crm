@@ -1,24 +1,40 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // This is called by scheduled automation - use service role
     const now = new Date();
+    
+    // Only fetch compromissos in the next ~70 minutes window
+    const windowStart = new Date(now.getTime() + 20 * 60000); // +20min
+    const windowEnd = new Date(now.getTime() + 70 * 60000);   // +70min
 
-    const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 300);
+    // Fetch upcoming compromissos (use a reasonable limit)
+    const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 200);
+    
+    // Filter to only those in the reminder window
+    const candidatos = allCompromissos.filter(comp => {
+      if (!comp.email_participante || !comp.data_inicio) return false;
+      const startTime = new Date(comp.data_inicio);
+      if (isNaN(startTime.getTime())) return false;
+      const diffMin = (startTime.getTime() - now.getTime()) / 60000;
+      // Only consider compromissos between 20min and 70min from now
+      return diffMin > 20 && diffMin <= 70;
+    });
+
+    if (candidatos.length === 0) {
+      return Response.json({ success: true, message: '0 lembrete(s) enviado(s)', details: [] });
+    }
+
+    // Get Gmail connection once
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection("gmail");
     
     const emailsSent = [];
 
-    for (const comp of allCompromissos) {
-      if (!comp.email_participante || !comp.data_inicio) continue;
-      
+    for (const comp of candidatos) {
       const startTime = new Date(comp.data_inicio);
-      if (isNaN(startTime.getTime())) continue;
-      
-      const diffMs = startTime.getTime() - now.getTime();
-      const diffMin = diffMs / (60 * 1000);
+      const diffMin = (startTime.getTime() - now.getTime()) / 60000;
       
       let reminderType = null;
       
@@ -34,7 +50,6 @@ Deno.serve(async (req) => {
 
       const endTime = comp.data_fim ? new Date(comp.data_fim) : new Date(startTime.getTime() + 3600000);
       const optsBR = { timeZone: 'America/Sao_Paulo' };
-      const day = startTime.toLocaleDateString('pt-BR', { ...optsBR, day: '2-digit', month: '2-digit', year: 'numeric' });
       const dayFull = startTime.toLocaleDateString('pt-BR', { ...optsBR, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
       const timeStart = startTime.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
       const timeEnd = endTime.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
@@ -59,13 +74,12 @@ Deno.serve(async (req) => {
       const emailBody = `
 <div style="font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
   <div style="background:${urgencyGradient};padding:40px 32px;text-align:center;">
-    <div style="width:72px;height:72px;background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;border:2px solid rgba(255,255,255,0.25);">
+    <div style="width:72px;height:72px;background:rgba(255,255,255,0.2);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;border:2px solid rgba(255,255,255,0.25);">
       <span style="font-size:32px;">${urgencyIcon}</span>
     </div>
     <h1 style="color:white;margin:0;font-size:22px;font-weight:800;">Lembrete de Compromisso</h1>
     <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px;">Faltam <strong>${tempoRestante}</strong> para o seu compromisso</p>
   </div>
-  
   <div style="padding:32px;">
     <div style="background:linear-gradient(135deg,#f8fafc,#fef3c7);border-radius:16px;padding:28px;border:1px solid #fde68a;">
       <h2 style="color:#1e1b4b;margin:0 0 20px;font-size:20px;font-weight:800;">${comp.titulo}</h2>
@@ -100,14 +114,11 @@ Deno.serve(async (req) => {
         </tr>` : ''}
       </table>
     </div>
-
     ${meetingButton}
-
     <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:24px;">
       Este é um lembrete automático do APEX SHIELD CRM.
     </p>
   </div>
-  
   <div style="background:linear-gradient(135deg,#f8fafc,#eef2ff);padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
     <div style="display:inline-flex;align-items:center;gap:8px;">
       <div style="width:8px;height:8px;background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:50%;"></div>
@@ -120,19 +131,23 @@ Deno.serve(async (req) => {
         ? `⏰ Lembrete: ${comp.titulo} em 1 hora`
         : `🔔 Atenção: ${comp.titulo} em 30 minutos!`;
 
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+      // Build RFC 2822 MIME message
+      const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(assunto)))}?=`;
+      const bodyBase64 = btoa(unescape(encodeURIComponent(emailBody)));
       
       const mimeMessage = [
         `To: ${comp.email_participante}`,
-        `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(assunto)))}?=`,
+        `Subject: ${encodedSubject}`,
         `MIME-Version: 1.0`,
         `Content-Type: text/html; charset=UTF-8`,
         `Content-Transfer-Encoding: base64`,
         ``,
-        btoa(unescape(encodeURIComponent(emailBody)))
+        bodyBase64
       ].join('\r\n');
 
-      const encodedMessage = btoa(unescape(encodeURIComponent(mimeMessage)))
+      // Encode the entire MIME message for Gmail API (web-safe base64)
+      const rawBytes = new TextEncoder().encode(mimeMessage);
+      const rawBase64 = btoa(String.fromCharCode(...rawBytes))
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
@@ -143,7 +158,7 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ raw: encodedMessage })
+        body: JSON.stringify({ raw: rawBase64 })
       });
 
       if (response.ok) {
@@ -152,8 +167,10 @@ Deno.serve(async (req) => {
           : { lembrete_30min_enviado: true };
         await base44.asServiceRole.entities.Compromisso.update(comp.id, updateData);
         emailsSent.push({ id: comp.id, titulo: comp.titulo, tipo: reminderType, email: comp.email_participante });
+        console.log(`Lembrete ${reminderType} enviado para ${comp.email_participante} - ${comp.titulo}`);
       } else {
-        console.error(`Failed to send reminder for ${comp.id}:`, await response.text());
+        const errText = await response.text();
+        console.error(`Failed to send reminder for ${comp.id}:`, errText);
       }
     }
 

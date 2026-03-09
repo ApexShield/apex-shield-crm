@@ -3,15 +3,19 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    
+    // Quick auth check
+    const user = await base44.auth.me();
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    }
 
     const now = new Date();
+    console.log('enviarLembrete started at:', now.toISOString());
     
-    // Only fetch compromissos in the next ~70 minutes window
-    const windowStart = new Date(now.getTime() + 20 * 60000); // +20min
-    const windowEnd = new Date(now.getTime() + 70 * 60000);   // +70min
-
-    // Fetch upcoming compromissos (use a reasonable limit)
+    // Fetch upcoming compromissos
     const allCompromissos = await base44.asServiceRole.entities.Compromisso.list('-data_inicio', 200);
+    console.log('Total compromissos fetched:', allCompromissos.length);
     
     // Filter to only those in the reminder window
     const candidatos = allCompromissos.filter(comp => {

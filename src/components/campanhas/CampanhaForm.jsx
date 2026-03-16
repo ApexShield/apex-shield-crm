@@ -86,10 +86,10 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
     }
 
     if (tipo === "whatsapp" || tipo === "ambos") {
-      // Gerar links WhatsApp e abrir
-      let gerados = 0;
+      // Gerar links WhatsApp para exibição (não abre automaticamente)
+      const links = [];
       const whatsLogs = [];
-      for (const cliente of clientesComTelefone.slice(0, 20)) {
+      for (const cliente of clientesComTelefone.slice(0, 50)) {
         const primeiroNome = (cliente.nome || '').split(' ')[0];
         let msg = mensagem
           .replace(/\[NOME\]/gi, primeiroNome)
@@ -104,8 +104,8 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
         const tel = cliente.telefone.replace(/\D/g, '');
         const telFormatado = tel.startsWith('55') ? tel : '55' + tel;
         const url = `https://wa.me/${telFormatado}?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
-        gerados++;
+
+        links.push({ nome: cliente.nome, telefone: cliente.telefone, url });
 
         whatsLogs.push({
           campanha_id: campanha.id,
@@ -116,8 +116,6 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
           status: 'enviado',
           mensagem_enviada: msg.substring(0, 500)
         });
-
-        await new Promise(r => setTimeout(r, 500));
       }
 
       // Save WhatsApp envio logs
@@ -126,17 +124,19 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
       }
 
       await base44.entities.Campanha.update(campanha.id, {
-        whatsapp_gerados: gerados,
+        whatsapp_gerados: links.length,
         total_destinatarios: (tipo === "whatsapp") ? clientesComTelefone.length : undefined,
         status: tipo === "whatsapp" ? "concluida" : undefined
       });
 
-      toast.success(`${gerados} conversa(s) WhatsApp aberta(s)!`);
+      setWhatsappLinks(links);
+      setShowWhatsappLinks(true);
+      toast.success(`${links.length} link(s) WhatsApp gerado(s)! Clique em cada um para enviar.`);
     }
 
     queryClient.invalidateQueries({ queryKey: ["campanhas"] });
     setEnviando(false);
-    onClose();
+    if (tipo === "email") onClose();
   };
 
   return (

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import SubscriptionInfo from "../components/assinatura/SubscriptionInfo";
+import SubscriptionManagement from "../components/assinatura/SubscriptionManagement";
 import PlanSelector, { PLANS } from "../components/assinatura/PlanSelector";
 
 const FEATURES = [
@@ -42,10 +43,10 @@ export default function Assinatura() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: subInfo } = useQuery({
+  const { data: subInfo, isLoading: subLoading } = useQuery({
     queryKey: ["subscription-info"],
     queryFn: () => base44.functions.invoke("getSubscriptionInfo", {}).then(r => r.data),
-    enabled: !!user?.stripe_subscription_id,
+    enabled: !!user,
   });
 
   const isActive = user?.subscription_status === "active";
@@ -127,10 +128,17 @@ export default function Assinatura() {
       </motion.div>
 
       {/* Subscription Info (for active users) */}
-      {isActive && subInfo && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      {isActive && subInfo?.active && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
           <SubscriptionInfo subInfo={subInfo} />
+          <SubscriptionManagement subInfo={subInfo} />
         </motion.div>
+      )}
+      {isActive && subLoading && (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+          <span className="ml-2 text-sm text-slate-500">Carregando dados da assinatura...</span>
+        </div>
       )}
 
       {/* Pricing Card */}

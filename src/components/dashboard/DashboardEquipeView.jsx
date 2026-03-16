@@ -269,12 +269,9 @@ export default function DashboardEquipeView({ teamData, ano }) {
       <div className="space-y-4">
         {/* Unit header */}
         <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-5 text-white">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
             <Users className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">Unidade: {teamData.unidade_nome}</h2>
-              <p className="text-purple-100 text-sm">{membrosList.length} corretor(es)</p>
-            </div>
+            <h2 className="text-lg font-bold">Equipe - {membrosList.length} Corretor(es)</h2>
           </div>
         </div>
 

@@ -291,7 +291,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           {erro && <div className="bg-red-500/20 border border-red-500/50 px-3 py-2 rounded-lg text-sm text-red-100">{erro}</div>}
 
           <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg">
-            📧 Se informar email do participante, será enviado um convite com arquivo .ics e botões Sim/Não para confirmar presença
+            📧 Se informar email, o participante receberá um convite de calendário com opções nativas de Aceitar/Recusar no app de email
           </div>
 
           <div className="flex gap-2 justify-end pt-4">

@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Campanhas from './pages/Campanhas';
 import Assinatura from './pages/Assinatura';
+import GerenciarCupons from './pages/GerenciarCupons';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -68,6 +69,11 @@ const AuthenticatedApp = () => {
       <Route path="/Assinatura" element={
         <LayoutWrapper currentPageName="Assinatura">
           <Assinatura />
+        </LayoutWrapper>
+      } />
+      <Route path="/GerenciarCupons" element={
+        <LayoutWrapper currentPageName="GerenciarCupons">
+          <GerenciarCupons />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

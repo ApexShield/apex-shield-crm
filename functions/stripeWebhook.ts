@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
             stripe_customer_id: session.customer,
             stripe_subscription_id: session.subscription,
             subscription_date: new Date().toISOString(),
+            subscription_plan: session.metadata?.plan_interval || 'month',
           });
           console.log('User subscription activated:', email);
         }

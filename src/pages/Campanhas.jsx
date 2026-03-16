@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,15 @@ export default function Campanhas() {
     queryFn: () => base44.entities.Campanha.list("-created_date", 50),
   });
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => base44.auth.me(),
+  });
+
   const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes-campanha"],
-    queryFn: () => base44.entities.Cliente.list("-created_date", 1000),
+    queryKey: ["clientes-campanha", user?.email],
+    queryFn: () => base44.entities.Cliente.filter({ created_by: user.email }, "-created_date", 5000),
+    enabled: !!user?.email,
   });
 
   return (

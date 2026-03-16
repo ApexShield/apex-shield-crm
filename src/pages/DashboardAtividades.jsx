@@ -138,9 +138,9 @@ export default function DashboardAtividades() {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Limpar todos os dados de {ano}?</AlertDialogTitle>
+                    <AlertDialogTitle>Limpar todos os dados{ano !== "todos" ? ` de ${ano}` : ""}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta ação irá excluir permanentemente todos os {records.length} registros do Dashboard de Atividades do ano {ano}. 
+                      Esta ação irá excluir permanentemente todos os {records.length} registros do Dashboard de Atividades{ano !== "todos" ? ` do ano ${ano}` : ""}. 
                       Recomendamos exportar um relatório antes de prosseguir. Esta ação não pode ser desfeita.
                     </AlertDialogDescription>
                   </AlertDialogHeader>

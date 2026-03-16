@@ -35,12 +35,14 @@ export default function DashboardAtividades() {
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["dashboard-diario", ano],
-    queryFn: () => base44.entities.DashboardDiario.filter({ ano }, "-data"),
+    queryFn: () => ano === "todos"
+      ? base44.entities.DashboardDiario.list("-data", 5000)
+      : base44.entities.DashboardDiario.filter({ ano: parseInt(ano) }, "-data"),
   });
 
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ["dashboard-equipe", ano],
-    queryFn: () => base44.functions.invoke("getDashboardEquipe", { ano }).then(r => r.data),
+    queryFn: () => base44.functions.invoke("getDashboardEquipe", { ano: ano === "todos" ? null : parseInt(ano) }).then(r => r.data),
     enabled: isLider,
   });
 

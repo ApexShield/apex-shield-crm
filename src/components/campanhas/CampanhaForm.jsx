@@ -144,8 +144,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
     if (tipo === "email") onClose();
   };
 
-  return (
-    <>
+  return (<>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-slate-200">
         {/* Header */}

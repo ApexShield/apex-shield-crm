@@ -21,7 +21,7 @@ import DashboardEquipeView from "../components/dashboard/DashboardEquipeView";
 export default function DashboardAtividades() {
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [ano, setAno] = useState(new Date().getFullYear());
+  const [ano, setAno] = useState("todos");
   const [filteredData, setFilteredData] = useState(null);
   const [viewMode, setViewMode] = useState("meus"); // "meus" or "equipe"
 

@@ -4,10 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
 import { 
   Crown, Check, Loader2, CreditCard, Shield, Sparkles, 
-  CheckCircle2, XCircle, Star
+  CheckCircle2, XCircle, Star, Ticket, X
 } from "lucide-react";
+import { toast } from "sonner";
 
 const PRICE_ID = "price_1TBPWELVnpTd5qx7tTvZK0to";
 
@@ -28,6 +30,9 @@ const FEATURES = [
 
 export default function Assinatura() {
   const [loading, setLoading] = useState(false);
+  const [cupomCode, setCupomCode] = useState("");
+  const [cupomValidating, setCupomValidating] = useState(false);
+  const [cupomApplied, setCupomApplied] = useState(null); // { desconto, promotion_code_id }
   const urlParams = new URLSearchParams(window.location.search);
   const status = urlParams.get("status");
 
@@ -37,6 +42,25 @@ export default function Assinatura() {
   });
 
   const isActive = user?.subscription_status === "active";
+
+  const handleValidateCupom = async () => {
+    if (!cupomCode.trim()) return;
+    setCupomValidating(true);
+    const res = await base44.functions.invoke("validarCupom", { codigo: cupomCode.trim() });
+    if (res.data?.valid) {
+      setCupomApplied({ desconto: res.data.desconto, promotion_code_id: res.data.promotion_code_id });
+      toast.success(res.data.message);
+    } else {
+      toast.error(res.data?.message || "Cupom inválido");
+      setCupomApplied(null);
+    }
+    setCupomValidating(false);
+  };
+
+  const handleRemoveCupom = () => {
+    setCupomApplied(null);
+    setCupomCode("");
+  };
 
   const handleSubscribe = async () => {
     if (window.self !== window.top) {
@@ -48,6 +72,7 @@ export default function Assinatura() {
       priceId: PRICE_ID,
       successUrl: window.location.origin + "/Assinatura?status=success",
       cancelUrl: window.location.origin + "/Assinatura?status=cancel",
+      promotionCodeId: cupomApplied?.promotion_code_id || null,
     });
     if (response.data?.url) {
       window.location.href = response.data.url;
@@ -127,18 +152,69 @@ export default function Assinatura() {
                 <p className="text-sm text-emerald-600">Você tem acesso completo a todos os recursos.</p>
               </div>
             ) : (
-              <Button
-                onClick={handleSubscribe}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-6 text-lg rounded-xl gap-2"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <CreditCard className="w-5 h-5" />
+              <div className="space-y-4">
+                {/* Cupom de Desconto */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Ticket className="w-4 h-4 text-violet-600" />
+                    <span className="text-sm font-semibold text-slate-700">Tem um cupom de desconto?</span>
+                  </div>
+                  {cupomApplied ? (
+                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span className="font-mono font-bold text-emerald-700">{cupomCode.toUpperCase()}</span>
+                        <span className="text-sm text-emerald-600">— {cupomApplied.desconto}% OFF</span>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={handleRemoveCupom} className="h-7 w-7">
+                        <X className="w-4 h-4 text-slate-400" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        value={cupomCode}
+                        onChange={e => setCupomCode(e.target.value.toUpperCase())}
+                        placeholder="Digite o código"
+                        className="font-mono uppercase"
+                        onKeyDown={e => e.key === "Enter" && handleValidateCupom()}
+                      />
+                      <Button
+                        onClick={handleValidateCupom}
+                        disabled={cupomValidating || !cupomCode.trim()}
+                        variant="outline"
+                        className="gap-1 flex-shrink-0"
+                      >
+                        {cupomValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aplicar"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Preço com desconto */}
+                {cupomApplied && (
+                  <div className="bg-violet-50 border border-violet-200 rounded-xl p-3 text-center">
+                    <span className="text-sm text-slate-500 line-through mr-2">R$ 29,90</span>
+                    <span className="text-lg font-black text-violet-700">
+                      R$ {(29.90 * (1 - cupomApplied.desconto / 100)).toFixed(2).replace(".", ",")}
+                    </span>
+                    <span className="text-violet-500 text-sm">/mês</span>
+                  </div>
                 )}
-                {loading ? "Redirecionando..." : "Assinar Agora"}
-              </Button>
+
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-6 text-lg rounded-xl gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <CreditCard className="w-5 h-5" />
+                  )}
+                  {loading ? "Redirecionando..." : "Assinar Agora"}
+                </Button>
+              </div>
             )}
 
             <div className="flex items-center justify-center gap-4 mt-4 text-xs text-slate-400">

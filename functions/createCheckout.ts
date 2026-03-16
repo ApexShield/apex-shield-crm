@@ -12,23 +12,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { priceId, successUrl, cancelUrl } = await req.json();
+    const { priceId, successUrl, cancelUrl, promotionCodeId } = await req.json();
 
-    console.log('Creating checkout session for:', user.email, 'priceId:', priceId);
+    console.log('Creating checkout session for:', user.email, 'priceId:', priceId, 'promoCode:', promotionCodeId);
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
       customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl || 'https://apexshield.com.br/Assinatura?status=success',
       cancel_url: cancelUrl || 'https://apexshield.com.br/Assinatura?status=cancel',
+      allow_promotion_codes: !promotionCodeId,
       metadata: {
         base44_app_id: Deno.env.get("BASE44_APP_ID"),
         user_email: user.email,
         user_id: user.id,
       },
-    });
+    };
+
+    if (promotionCodeId) {
+      sessionParams.discounts = [{ promotion_code: promotionCodeId }];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     console.log('Checkout session created:', session.id);
 

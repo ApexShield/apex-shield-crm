@@ -270,6 +270,8 @@ export default function Leads() {
         await createMutation.mutateAsync(data);
         alert("Cliente criado com sucesso!");
       }
+      setShowForm(false);
+      setEditingLead(null);
     } catch (error) {
       alert("Erro ao salvar: " + error.message);
     }

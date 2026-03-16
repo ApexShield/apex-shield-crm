@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ const navigation = [
   { name: "Campanhas", icon: Megaphone, page: "Campanhas" },
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
-  { name: "Gerenciar Cupons", icon: Users, page: "GerenciarCupons", adminOnly: true },
+  { name: "Gerenciar Cupons", icon: Ticket, page: "GerenciarCupons", adminOnly: true },
   { name: "Agente Apex", icon: Bot, page: "AgenteApex" },
   { name: "Organograma", icon: Users, page: "Organograma" },
   { name: "Assinatura", icon: Crown, page: "Assinatura" },

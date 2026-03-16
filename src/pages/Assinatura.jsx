@@ -10,8 +10,8 @@ import {
   CheckCircle2, XCircle, Star, Ticket, X
 } from "lucide-react";
 import { toast } from "sonner";
-
-const PRICE_ID = "price_1TBPWELVnpTd5qx7tTvZK0to";
+import SubscriptionInfo from "../components/assinatura/SubscriptionInfo";
+import PlanSelector, { PLANS } from "../components/assinatura/PlanSelector";
 
 const FEATURES = [
   "Gestão ilimitada de leads",
@@ -32,13 +32,20 @@ export default function Assinatura() {
   const [loading, setLoading] = useState(false);
   const [cupomCode, setCupomCode] = useState("");
   const [cupomValidating, setCupomValidating] = useState(false);
-  const [cupomApplied, setCupomApplied] = useState(null); // { desconto, promotion_code_id }
+  const [cupomApplied, setCupomApplied] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(PLANS[0]);
   const urlParams = new URLSearchParams(window.location.search);
   const status = urlParams.get("status");
 
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: () => base44.auth.me(),
+  });
+
+  const { data: subInfo } = useQuery({
+    queryKey: ["subscription-info"],
+    queryFn: () => base44.functions.invoke("getSubscriptionInfo", {}).then(r => r.data),
+    enabled: !!user?.stripe_subscription_id,
   });
 
   const isActive = user?.subscription_status === "active";
@@ -69,7 +76,7 @@ export default function Assinatura() {
     }
     setLoading(true);
     const response = await base44.functions.invoke("createCheckout", {
-      priceId: PRICE_ID,
+      priceId: selectedPlan.priceId,
       successUrl: window.location.origin + "/Assinatura?status=success",
       cancelUrl: window.location.origin + "/Assinatura?status=cancel",
       promotionCodeId: cupomApplied?.promotion_code_id || null,
@@ -79,6 +86,9 @@ export default function Assinatura() {
     }
     setLoading(false);
   };
+
+  const basePrice = selectedPlan.priceNum;
+  const discountedPrice = cupomApplied ? basePrice * (1 - cupomApplied.desconto / 100) : null;
 
   return (
     <div className="p-4 md:p-6 max-w-[800px] mx-auto space-y-6">
@@ -116,6 +126,13 @@ export default function Assinatura() {
         </div>
       </motion.div>
 
+      {/* Subscription Info (for active users) */}
+      {isActive && subInfo && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <SubscriptionInfo subInfo={subInfo} />
+        </motion.div>
+      )}
+
       {/* Pricing Card */}
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
         <Card className="relative overflow-hidden border-2 border-indigo-200">
@@ -125,16 +142,17 @@ export default function Assinatura() {
               <span className="text-sm font-bold uppercase tracking-wider text-indigo-200">Plano Premium</span>
               <Star className="w-5 h-5 text-yellow-300" />
             </div>
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-sm text-indigo-200">R$</span>
-              <span className="text-5xl font-black">29</span>
-              <span className="text-2xl font-bold">,90</span>
-              <span className="text-indigo-200 ml-1">/mês</span>
-            </div>
+            <p className="text-indigo-200 text-sm">Escolha o melhor plano para você</p>
           </div>
 
-          <div className="p-6">
-            <div className="grid gap-3 mb-6">
+          <div className="p-6 space-y-5">
+            {/* Plan selector */}
+            {!isActive && (
+              <PlanSelector selected={selectedPlan} onSelect={setSelectedPlan} />
+            )}
+
+            {/* Features */}
+            <div className="grid gap-3">
               {FEATURES.map((f, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
@@ -194,11 +212,15 @@ export default function Assinatura() {
                 {/* Preço com desconto */}
                 {cupomApplied && (
                   <div className="bg-violet-50 border border-violet-200 rounded-xl p-3 text-center">
-                    <span className="text-sm text-slate-500 line-through mr-2">R$ 29,90</span>
-                    <span className="text-lg font-black text-violet-700">
-                      R$ {(29.90 * (1 - cupomApplied.desconto / 100)).toFixed(2).replace(".", ",")}
+                    <span className="text-sm text-slate-500 line-through mr-2">
+                      R$ {basePrice.toFixed(2).replace(".", ",")}
                     </span>
-                    <span className="text-violet-500 text-sm">/mês</span>
+                    <span className="text-lg font-black text-violet-700">
+                      R$ {discountedPrice.toFixed(2).replace(".", ",")}
+                    </span>
+                    <span className="text-violet-500 text-sm">
+                      {selectedPlan.id === "anual" ? "/ano" : "/mês"}
+                    </span>
                   </div>
                 )}
 
@@ -212,7 +234,7 @@ export default function Assinatura() {
                   ) : (
                     <CreditCard className="w-5 h-5" />
                   )}
-                  {loading ? "Redirecionando..." : "Assinar Agora"}
+                  {loading ? "Redirecionando..." : `Assinar ${selectedPlan.label} — R$ ${(discountedPrice || basePrice).toFixed(2).replace(".", ",")}`}
                 </Button>
               </div>
             )}

@@ -40,6 +40,8 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
   const [assuntoEmail, setAssuntoEmail] = useState("");
   const [filtroClientes, setFiltroClientes] = useState("todos");
   const [enviando, setEnviando] = useState(false);
+  const [whatsappLinks, setWhatsappLinks] = useState([]);
+  const [showWhatsappLinks, setShowWhatsappLinks] = useState(false);
   const queryClient = useQueryClient();
 
   const inserirVariavel = (variavel) => {

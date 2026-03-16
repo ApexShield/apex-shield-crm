@@ -103,63 +103,70 @@ Deno.serve(async (req) => {
         .replace(/\[CORRETOR\]/gi, corretorNome)
         .replace(/\[CATEGORIA\]/gi, cliente.status || '');
 
+      const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/apex-shield-logo.png';
+
       const ctaButton = campanha.link_conteudo
         ? `<div style="text-align:center;margin:32px 0 16px;">
-            <a href="${campanha.link_conteudo}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#ffffff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(99,102,241,0.4);mso-padding-alt:0;">
+            <a href="${campanha.link_conteudo}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#00e676,#00c853);color:#0a1628;padding:16px 52px;border-radius:50px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:0.5px;box-shadow:0 4px 20px rgba(0,230,118,0.35);mso-padding-alt:0;">
               &#9654;&nbsp; VER PUBLICAÇÃO
             </a>
           </div>
-          <p style="text-align:center;color:#94a3b8;font-size:11px;margin:8px 0 0;">Clique no botão acima para conferir</p>`
+          <p style="text-align:center;color:#64b5f6;font-size:11px;margin:8px 0 0;">Clique no botão acima para conferir</p>`
         : '';
 
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#f0f0f5;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
-<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#0a1628;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
+<div style="max-width:600px;margin:0 auto;padding:0;">
 
-  <!-- Card Principal -->
-  <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(99,102,241,0.12);">
+  <!-- Fundo azul escuro completo -->
+  <div style="background:linear-gradient(180deg,#0d1f3c 0%,#0a1628 100%);padding:32px 20px;">
 
-    <!-- Header com gradiente -->
-    <div style="background:linear-gradient(135deg,#4338ca 0%,#6366f1 40%,#8b5cf6 70%,#a78bfa 100%);padding:40px 32px 48px;text-align:center;position:relative;">
-      <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 20px;margin-bottom:16px;">
-        <span style="color:#e0e7ff;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">&#128640; Nova Publicação</span>
-      </div>
-      <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:800;line-height:1.3;text-shadow:0 2px 4px rgba(0,0,0,0.1);">${campanha.titulo || 'Novidade para você!'}</h1>
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="${logoUrl}" alt="Apex Shield" style="height:56px;width:auto;" />
     </div>
 
-    <!-- Seta decorativa -->
-    <div style="text-align:center;margin-top:-16px;">
-      <div style="display:inline-block;width:32px;height:32px;background:#ffffff;transform:rotate(45deg);box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
-    </div>
+    <!-- Card Principal -->
+    <div style="background:linear-gradient(145deg,#111d35 0%,#162544 50%,#1a2d52 100%);border-radius:20px;overflow:hidden;border:1px solid rgba(100,181,246,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.3);">
 
-    <!-- Corpo -->
-    <div style="padding:24px 32px 32px;">
-
-      <!-- Saudação destacada -->
-      <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-radius:14px;padding:20px 24px;margin-bottom:24px;border-left:4px solid #6366f1;">
-        <p style="color:#1e293b;font-size:15px;line-height:1.8;margin:0;white-space:pre-line;">${msg}</p>
-      </div>
-
-      <!-- CTA -->
-      ${ctaButton}
-
-      <!-- Divider -->
-      <div style="margin:28px 0 20px;border-top:1px solid #e2e8f0;"></div>
-
-      <!-- Footer do card -->
-      <div style="text-align:center;">
-        <div style="display:inline-block;background:linear-gradient(135deg,#4338ca,#6366f1);width:36px;height:36px;border-radius:10px;line-height:36px;margin-bottom:8px;">
-          <span style="color:white;font-size:16px;font-weight:800;">${(corretorNome.charAt(0) || 'A').toUpperCase()}</span>
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#0d47a1 0%,#1565c0 40%,#1e88e5 100%);padding:36px 28px 40px;text-align:center;">
+        <div style="display:inline-block;background:rgba(0,230,118,0.15);border:1px solid rgba(0,230,118,0.3);border-radius:20px;padding:6px 18px;margin-bottom:14px;">
+          <span style="color:#69f0ae;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">&#128640; Nova Publicação</span>
         </div>
-        <p style="color:#334155;font-size:13px;font-weight:700;margin:4px 0 2px;">${corretorNome}</p>
-        <p style="color:#94a3b8;font-size:11px;margin:0;">Seu consultor de proteção financeira</p>
+        <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:800;line-height:1.3;">${campanha.titulo || 'Novidade para você!'}</h1>
+      </div>
+
+      <!-- Corpo -->
+      <div style="padding:28px 28px 32px;">
+
+        <!-- Mensagem -->
+        <div style="background:rgba(13,71,161,0.2);border-radius:14px;padding:20px 22px;margin-bottom:24px;border-left:4px solid #42a5f5;">
+          <p style="color:#90caf9;font-size:15px;line-height:1.8;margin:0;white-space:pre-line;">${msg}</p>
+        </div>
+
+        <!-- CTA -->
+        ${ctaButton}
+
+        <!-- Divider -->
+        <div style="margin:28px 0 20px;border-top:1px solid rgba(100,181,246,0.15);"></div>
+
+        <!-- Footer do card -->
+        <div style="text-align:center;">
+          <div style="display:inline-block;background:linear-gradient(135deg,#1565c0,#1e88e5);width:40px;height:40px;border-radius:50%;line-height:40px;margin-bottom:8px;border:2px solid rgba(0,230,118,0.4);">
+            <span style="color:#69f0ae;font-size:17px;font-weight:800;">${(corretorNome.charAt(0) || 'A').toUpperCase()}</span>
+          </div>
+          <p style="color:#e3f2fd;font-size:13px;font-weight:700;margin:4px 0 2px;">${corretorNome}</p>
+          <p style="color:#64b5f6;font-size:11px;margin:0;">Seu consultor de proteção financeira</p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Rodapé externo -->
-  <div style="text-align:center;padding:20px 16px 8px;">
-    <p style="color:#94a3b8;font-size:10px;margin:0 0 4px;">Enviado via APEX SHIELD CRM</p>
-    <p style="color:#cbd5e1;font-size:9px;margin:0;">Você recebeu este email porque é cliente de ${corretorNome}.</p>
+    <!-- Rodapé -->
+    <div style="text-align:center;padding:24px 16px 8px;">
+      <p style="color:#42a5f5;font-size:10px;margin:0 0 4px;font-weight:600;">APEX SHIELD CRM</p>
+      <p style="color:#37474f;font-size:9px;margin:0;">Você recebeu este email porque é cliente de ${corretorNome}.</p>
+    </div>
+
   </div>
 
 </div>
@@ -177,7 +184,8 @@ Deno.serve(async (req) => {
           // Send via Gmail
           const bodyB64 = btoa(unescape(encodeURIComponent(html)));
           const subjectB64 = btoa(unescape(encodeURIComponent(assunto)));
-          const mime = `To: ${cliente.email}\r\nSubject: =?UTF-8?B?${subjectB64}?=\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${bodyB64}`;
+          const fromHeader = userAuth.google_email ? `From: "${corretorNome}" <${userAuth.google_email}>\r\n` : '';
+          const mime = `${fromHeader}To: ${cliente.email}\r\nSubject: =?UTF-8?B?${subjectB64}?=\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${bodyB64}`;
           const rawBytes = new TextEncoder().encode(mime);
           let bin = '';
           for (let i = 0; i < rawBytes.length; i++) {

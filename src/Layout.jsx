@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const navigation = [
   { name: "Compromissos", icon: CalendarIcon, page: "Compromissos" },
   { name: "Aniversariantes", icon: Users, page: "Aniversariantes" },
   { name: "Calculadora Rápida", icon: Briefcase, page: "CalculadoraRapida" },
+  { name: "Campanhas", icon: Megaphone, page: "Campanhas" },
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
   { name: "Agente Apex", icon: Bot, page: "AgenteApex" },

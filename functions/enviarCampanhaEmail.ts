@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
         .replace(/\[CORRETOR\]/gi, corretorNome)
         .replace(/\[CATEGORIA\]/gi, cliente.status || '');
 
-      const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/apex-shield-logo.png';
+      const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/74301f2d2_generated_image.png';
 
       const ctaButton = campanha.link_conteudo
         ? `<div style="text-align:center;margin:32px 0 16px;">

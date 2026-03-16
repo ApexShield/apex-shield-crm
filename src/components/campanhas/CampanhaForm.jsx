@@ -9,6 +9,7 @@ import { Send, Link, MessageSquare, Mail, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import WhatsAppLinksDialog from "./WhatsAppLinksDialog";
 
 const VARIAVEIS = [
   { label: "+ Primeiro Nome", value: "[NOME]" },

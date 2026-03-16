@@ -77,11 +77,16 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
 
     if (tipo === "email" || tipo === "ambos") {
       // Enviar emails via backend
-      const res = await base44.functions.invoke("enviarCampanhaEmail", { campanha_id: campanha.id });
-      if (res.data?.success) {
-        toast.success(`${res.data.enviados} email(s) enviado(s) com sucesso!`);
-      } else {
-        toast.error("Erro ao enviar emails: " + (res.data?.error || "desconhecido"));
+      try {
+        const res = await base44.functions.invoke("enviarCampanhaEmail", { campanha_id: campanha.id });
+        if (res.data?.success) {
+          toast.success(`${res.data.enviados} email(s) enviado(s) com sucesso!` + (res.data.erros > 0 ? ` (${res.data.erros} erro(s))` : ''));
+        } else {
+          toast.error("Erro ao enviar emails: " + (res.data?.error || "desconhecido"));
+        }
+      } catch (emailErr) {
+        console.error("Erro na chamada enviarCampanhaEmail:", emailErr);
+        toast.error("Erro ao enviar emails. Verifique se o Google está conectado nas configurações.");
       }
     }
 

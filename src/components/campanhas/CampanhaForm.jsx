@@ -85,6 +85,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
     if (tipo === "whatsapp" || tipo === "ambos") {
       // Gerar links WhatsApp e abrir
       let gerados = 0;
+      const whatsLogs = [];
       for (const cliente of clientesComTelefone.slice(0, 20)) {
         const primeiroNome = (cliente.nome || '').split(' ')[0];
         let msg = mensagem
@@ -102,13 +103,28 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
         const url = `https://wa.me/${telFormatado}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
         gerados++;
-        // Pequeno delay para não travar o navegador
+
+        whatsLogs.push({
+          campanha_id: campanha.id,
+          cliente_id: cliente.id,
+          cliente_nome: cliente.nome || '',
+          canal: 'whatsapp',
+          destino: cliente.telefone,
+          status: 'enviado',
+          mensagem_enviada: msg.substring(0, 500)
+        });
+
         await new Promise(r => setTimeout(r, 500));
+      }
+
+      // Save WhatsApp envio logs
+      if (whatsLogs.length > 0) {
+        try { await base44.entities.CampanhaEnvio.bulkCreate(whatsLogs); } catch (e) { console.error(e); }
       }
 
       await base44.entities.Campanha.update(campanha.id, {
         whatsapp_gerados: gerados,
-        total_destinatarios: clientesComTelefone.length,
+        total_destinatarios: (tipo === "whatsapp") ? clientesComTelefone.length : undefined,
         status: tipo === "whatsapp" ? "concluida" : undefined
       });
 

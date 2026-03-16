@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { Mail, MessageSquare, Send, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, MessageSquare, Send, Clock, CheckCircle2, AlertCircle, Loader2, ChevronRight } from "lucide-react";
 
 const statusConfig = {
   rascunho: { label: "Rascunho", icon: Clock, bg: "bg-slate-100 text-slate-600" },
@@ -16,7 +16,7 @@ const tipoConfig = {
   ambos: { label: "Email + WhatsApp", icon: Send, bg: "bg-purple-100 text-purple-700" },
 };
 
-export default function CampanhaHistorico({ campanhas = [] }) {
+export default function CampanhaHistorico({ campanhas = [], onSelectCampanha }) {
   if (campanhas.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
@@ -36,7 +36,11 @@ export default function CampanhaHistorico({ campanhas = [] }) {
         const TpIcon = tp.icon;
 
         return (
-          <div key={c.id} className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition-shadow">
+          <button
+            key={c.id}
+            onClick={() => onSelectCampanha?.(c)}
+            className="w-full text-left bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md hover:border-indigo-200 transition-all group"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-slate-800 truncate">{c.titulo}</h3>
@@ -53,6 +57,7 @@ export default function CampanhaHistorico({ campanhas = [] }) {
                   <StIcon className={`w-3 h-3 ${c.status === 'enviando' ? 'animate-spin' : ''}`} />
                   {st.label}
                 </Badge>
+                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
               </div>
             </div>
 
@@ -60,13 +65,13 @@ export default function CampanhaHistorico({ campanhas = [] }) {
               {c.emails_enviados > 0 && (
                 <span className="flex items-center gap-1">
                   <Mail className="w-3 h-3 text-indigo-500" />
-                  {c.emails_enviados} email(s) enviado(s)
+                  {c.emails_enviados} email(s)
                 </span>
               )}
               {c.whatsapp_gerados > 0 && (
                 <span className="flex items-center gap-1">
                   <MessageSquare className="w-3 h-3 text-green-500" />
-                  {c.whatsapp_gerados} WhatsApp gerado(s)
+                  {c.whatsapp_gerados} WhatsApp
                 </span>
               )}
               {c.total_destinatarios > 0 && (
@@ -75,11 +80,11 @@ export default function CampanhaHistorico({ campanhas = [] }) {
             </div>
 
             {c.link_conteudo && (
-              <a href={c.link_conteudo} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-500 hover:underline mt-2 inline-block truncate max-w-full">
+              <p className="text-xs text-indigo-500 mt-2 truncate max-w-full">
                 🔗 {c.link_conteudo}
-              </a>
+              </p>
             )}
-          </div>
+          </button>
         );
       })}
     </div>

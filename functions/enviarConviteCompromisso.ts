@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 const LOGO_URL = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69587402a43b69a04695a178/4163a1b7d_Gemini_Generated_Image_qu3wkyqu3wkyqu3w-removebg.png';
 
@@ -321,21 +321,24 @@ Deno.serve(async (req) => {
     const userAuth = await getUserGoogleToken(base44, user.email);
     if (!userAuth) {
       // Usuário não conectou Google - enviar via integração SendEmail do Base44 como alternativa
-      console.log('Usuário não conectou Google, usando SendEmail do Base44');
+      console.log('Usuário não conectou Google, usando SendEmail do Base44 para:', comp.email_participante);
       await base44.integrations.Core.SendEmail({
         to: comp.email_participante,
         subject: subject,
         body: emailBody
       });
+      console.log('Email enviado com sucesso para participante:', comp.email_participante);
       // Também enviar para o organizador
-      if (organizerEmail !== comp.email_participante) {
+      if (organizerEmail && organizerEmail !== comp.email_participante) {
         await base44.integrations.Core.SendEmail({
           to: organizerEmail,
           subject: subject,
           body: emailBody
         });
+        console.log('Email enviado com sucesso para organizador:', organizerEmail);
       }
       await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+      console.log('Compromisso atualizado com email_enviado=true');
       return Response.json({ 
         success: true, 
         message: `Convite enviado para ${comp.email_participante} (via email padrão - conecte seu Google para enviar do seu Gmail)`,

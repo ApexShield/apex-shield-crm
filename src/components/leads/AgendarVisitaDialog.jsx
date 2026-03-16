@@ -159,9 +159,9 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
               <span className="text-lg">👆</span>
               <Label className="text-indigo-200 font-bold text-sm">PRIMEIRO: Selecione o tipo de compromisso</Label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="text-white">Tipo de Compromisso *</Label>
+                  <Label className="text-white block mb-1">Tipo de Compromisso *</Label>
                 <Select value={tipoCompromisso} onValueChange={(value) => { setTipoCompromisso(value); setSubTipoFechamento(""); if (value !== "Fechamento") atualizarTitulo(value, ""); }}>
                   <SelectTrigger className="bg-white/10 border-indigo-400/50 text-white"><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
                   <SelectContent>
@@ -194,16 +194,18 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             <Input value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} className="bg-white/10 border-white/20 text-white" required readOnly />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div><Label className="text-white">Tipo</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-white block mb-1">Tipo do Evento</Label>
               <Select value={formData.tipo} onValueChange={(value) => { const sc = COLORS.find(c => c.tipo === value); setFormData({ ...formData, tipo: value, cor: sc ? sc.value : formData.cor }); }}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue /></SelectTrigger>
                 <SelectContent>{COLORS.map(c => <SelectItem key={c.tipo} value={c.tipo}>{c.label.split(' - ')[1]}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label className="text-white">Modalidade</Label>
+            <div>
+              <Label className="text-white block mb-1">Modalidade</Label>
               <Select value={formData.modalidade} onValueChange={(value) => setFormData({ ...formData, modalidade: value })}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione uma modalidade" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="presencial">📍 Presencial</SelectItem>
                   <SelectItem value="online">💻 Online</SelectItem>
@@ -235,13 +237,13 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           )}
 
           <div>
-            <Label className="text-white mb-2 block">Data *</Label>
+            <Label className="text-white mb-2 block">Data do Compromisso *</Label>
             <Input type="date" value={formData.data_inicio ? (() => { try { const date = parseISO(formData.data_inicio); return isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd"); } catch { return ""; } })() : ""}
               onChange={(e) => { if (!e.target.value) return; const [year, month, day] = e.target.value.split('-').map(Number); let cH = 12, cM = 0; if (formData.data_inicio) { try { const cs = parseISO(formData.data_inicio); if (!isNaN(cs.getTime())) { cH = cs.getHours(); cM = cs.getMinutes(); } } catch {} } const nd = new Date(year, month-1, day, cH, cM); if (isNaN(nd.getTime())) return; const ne = new Date(nd); ne.setHours(ne.getHours()+1); setFormData({ ...formData, data_inicio: nd.toISOString(), data_fim: ne.toISOString() }); }}
               className="bg-white/10 border-white/20 text-white w-full" required />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><Label className="text-white mb-2 block">Horário Início *</Label>
               <div className="flex gap-2">
                 <Select value={formData.data_inicio ? (() => { try { const d = parseISO(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "HH"); } catch { return ""; } })() : ""}

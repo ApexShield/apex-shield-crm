@@ -217,8 +217,9 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
       return;
     }
     
-    // Limpar campos vazios para evitar problemas
+    // Limpar campos vazios para evitar problemas (preservar arrays)
     Object.keys(dataToSave).forEach(key => {
+      if (Array.isArray(dataToSave[key])) return; // preservar arrays mesmo vazios
       if (dataToSave[key] === "" || dataToSave[key] === null || dataToSave[key] === undefined) {
         delete dataToSave[key];
       }
@@ -265,6 +266,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     }
     
     Object.keys(dataToSave).forEach(key => {
+      if (Array.isArray(dataToSave[key])) return; // preservar arrays mesmo vazios
       if (dataToSave[key] === "" || dataToSave[key] === null || dataToSave[key] === undefined) {
         delete dataToSave[key];
       }

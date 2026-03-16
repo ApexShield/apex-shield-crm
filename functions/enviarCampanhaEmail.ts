@@ -1,5 +1,47 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
+async function getUserGoogleToken(base44, userEmail) {
+  const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+    user_email: userEmail
+  });
+  if (auths.length === 0) return null;
+  
+  const auth = auths[0];
+  const tokenExpiry = new Date(auth.token_expiry);
+  const now = new Date();
+
+  if (tokenExpiry > now) {
+    return { access_token: auth.access_token, google_email: auth.google_email };
+  }
+
+  if (auth.refresh_token) {
+    const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
+    const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
+
+    const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        refresh_token: auth.refresh_token,
+        grant_type: 'refresh_token'
+      })
+    });
+
+    if (refreshResponse.ok) {
+      const newTokens = await refreshResponse.json();
+      await base44.asServiceRole.entities.UserGoogleAuth.update(auth.id, {
+        access_token: newTokens.access_token,
+        token_expiry: new Date(Date.now() + (newTokens.expires_in * 1000)).toISOString()
+      });
+      return { access_token: newTokens.access_token, google_email: auth.google_email };
+    }
+  }
+
+  return null;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -35,15 +77,13 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, message: 'Nenhum cliente com email encontrado', enviados: 0 });
     }
 
-    // Get Gmail token
-    let accessToken;
-    try {
-      const conn = await base44.asServiceRole.connectors.getConnection("gmail");
-      accessToken = conn.accessToken;
-    } catch (e) {
-      console.error('Gmail connection error:', e.message);
-      // Fallback to SendEmail
-      accessToken = null;
+    // Get user's OWN Google token (not the app admin's)
+    const userAuth = await getUserGoogleToken(base44, user.email);
+    const accessToken = userAuth?.access_token || null;
+    if (accessToken) {
+      console.log(`Usando Gmail do usuário: ${userAuth.google_email}`);
+    } else {
+      console.log(`Usuário ${user.email} não conectou Google, usando SendEmail como fallback`);
     }
 
     const corretorNome = user.full_name || 'Corretor';

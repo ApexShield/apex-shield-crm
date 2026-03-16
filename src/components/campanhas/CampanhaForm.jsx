@@ -299,5 +299,12 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
         </div>
       </DialogContent>
     </Dialog>
+
+    <WhatsAppLinksDialog
+      open={showWhatsappLinks}
+      onClose={() => { setShowWhatsappLinks(false); onClose(); }}
+      links={whatsappLinks}
+    />
+    </>
   );
 }

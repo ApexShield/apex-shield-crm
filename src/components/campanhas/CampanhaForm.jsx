@@ -118,7 +118,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
           cliente_nome: cliente.nome || '',
           canal: 'whatsapp',
           destino: cliente.telefone,
-          status: 'enviado',
+          status: 'pendente',
           mensagem_enviada: msg.substring(0, 500)
         });
       }

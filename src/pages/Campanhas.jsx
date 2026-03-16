@@ -1,14 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Send, Plus, Loader2, Megaphone } from "lucide-react";
+import { Plus, Loader2, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import CampanhaForm from "../components/campanhas/CampanhaForm";
 import CampanhaHistorico from "../components/campanhas/CampanhaHistorico";
+import CampanhaDetalhe from "../components/campanhas/CampanhaDetalhe";
 
 export default function Campanhas() {
   const [showForm, setShowForm] = useState(false);
+  const [selectedCampanha, setSelectedCampanha] = useState(null);
 
   const { data: campanhas = [], isLoading } = useQuery({
     queryKey: ["campanhas"],
@@ -55,7 +57,7 @@ export default function Campanhas() {
           { label: "Total Campanhas", value: campanhas.length, color: "from-indigo-500 to-indigo-600" },
           { label: "Emails Enviados", value: campanhas.reduce((s, c) => s + (c.emails_enviados || 0), 0), color: "from-blue-500 to-blue-600" },
           { label: "WhatsApp Enviados", value: campanhas.reduce((s, c) => s + (c.whatsapp_gerados || 0), 0), color: "from-green-500 to-green-600" },
-          { label: "Clientes Cadastrados", value: clientes.length, color: "from-purple-500 to-purple-600" },
+          { label: "Seus Clientes", value: clientes.length, color: "from-purple-500 to-purple-600" },
         ].map((stat, i) => (
           <div key={i} className={`bg-gradient-to-br ${stat.color} rounded-xl p-4 text-white`}>
             <p className="text-white/70 text-xs font-medium">{stat.label}</p>
@@ -70,13 +72,20 @@ export default function Campanhas() {
           <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
       ) : (
-        <CampanhaHistorico campanhas={campanhas} />
+        <CampanhaHistorico campanhas={campanhas} onSelectCampanha={setSelectedCampanha} />
       )}
 
       {/* Form */}
       {showForm && (
         <CampanhaForm open={showForm} onClose={() => setShowForm(false)} clientes={clientes} />
       )}
+
+      {/* Detalhe */}
+      <CampanhaDetalhe 
+        campanha={selectedCampanha} 
+        open={!!selectedCampanha} 
+        onClose={() => setSelectedCampanha(null)} 
+      />
     </div>
   );
 }

@@ -116,11 +116,12 @@ export default function DashboardAtividades() {
               </Button>
             </div>
           )}
-          <Select value={String(ano)} onValueChange={v => setAno(parseInt(v))}>
-            <SelectTrigger className="w-[100px]">
+          <Select value={String(ano)} onValueChange={v => setAno(v)}>
+            <SelectTrigger className="w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>

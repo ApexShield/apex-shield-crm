@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   Mail, MessageSquare, CheckCircle2, XCircle, Clock, Send, 
-  Users, ArrowLeft, Loader2, Link as LinkIcon, Eye
+  Users, ArrowLeft, Loader2, Link as LinkIcon, Eye, Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 const statusEnvio = {
   enviado: { label: "Enviado", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
@@ -20,6 +22,9 @@ const statusEnvio = {
 export default function CampanhaDetalhe({ campanha, open, onClose }) {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroCanal, setFiltroCanal] = useState("todos");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: envios = [], isLoading } = useQuery({
     queryKey: ["campanha-envios", campanha?.id],
@@ -29,10 +34,25 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
 
   if (!campanha) return null;
 
-  const emailsEnviados = envios.filter(e => e.canal === "email" && e.status === "enviado").length;
-  const emailsErro = envios.filter(e => e.canal === "email" && e.status === "erro").length;
+  // Stats baseadas nos registros reais de envio
+  const emailEnviados = envios.filter(e => e.canal === "email" && e.status === "enviado").length;
+  const emailErro = envios.filter(e => e.canal === "email" && e.status === "erro").length;
+  const emailTotal = envios.filter(e => e.canal === "email").length;
+
   const whatsEnviados = envios.filter(e => e.canal === "whatsapp" && e.status === "enviado").length;
+  const whatsPendente = envios.filter(e => e.canal === "whatsapp" && e.status === "pendente").length;
   const whatsErro = envios.filter(e => e.canal === "whatsapp" && e.status === "erro").length;
+  const whatsTotal = envios.filter(e => e.canal === "whatsapp").length;
+
+  const totalDestinatarios = envios.length;
+  const totalEnviados = emailEnviados + whatsEnviados;
+  const totalErros = emailErro + whatsErro;
+  const totalPendentes = whatsPendente;
+
+  // Taxa baseada apenas em enviados confirmados vs total de destinatários
+  const taxaEntrega = totalDestinatarios > 0 
+    ? Math.round((totalEnviados / totalDestinatarios) * 100) 
+    : 0;
 
   const enviosFiltrados = envios.filter(e => {
     if (filtroStatus !== "todos" && e.status !== filtroStatus) return false;
@@ -40,7 +60,22 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
     return true;
   });
 
-  return (
+  const handleDelete = async () => {
+    setDeleting(true);
+    // Delete envios first
+    for (const envio of envios) {
+      try { await base44.entities.CampanhaEnvio.delete(envio.id); } catch (e) {}
+    }
+    // Delete campanha
+    await base44.entities.Campanha.delete(campanha.id);
+    queryClient.invalidateQueries({ queryKey: ["campanhas"] });
+    toast.success("Campanha excluída com sucesso");
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+    onClose();
+  };
+
+  return (<>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
         {/* Header */}
@@ -71,56 +106,58 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Stats - Baseado nos registros reais */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="bg-white rounded-xl p-3 border border-slate-200 text-center">
               <Users className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-              <p className="text-xl font-bold text-slate-800">{campanha.total_destinatarios || envios.length}</p>
-              <p className="text-[11px] text-slate-500">Total Destinatários</p>
+              <p className="text-xl font-bold text-slate-800">{totalDestinatarios}</p>
+              <p className="text-[11px] text-slate-500">Destinatários</p>
             </div>
             <div className="bg-white rounded-xl p-3 border border-green-200 text-center">
               <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto mb-1" />
-              <p className="text-xl font-bold text-green-700">{emailsEnviados + whatsEnviados}</p>
-              <p className="text-[11px] text-slate-500">Enviados com Sucesso</p>
+              <p className="text-xl font-bold text-green-700">{totalEnviados}</p>
+              <p className="text-[11px] text-slate-500">Entregues</p>
+            </div>
+            <div className="bg-white rounded-xl p-3 border border-amber-200 text-center">
+              <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1" />
+              <p className="text-xl font-bold text-amber-700">{totalPendentes}</p>
+              <p className="text-[11px] text-slate-500">Pendentes</p>
             </div>
             <div className="bg-white rounded-xl p-3 border border-red-200 text-center">
               <XCircle className="w-5 h-5 text-red-500 mx-auto mb-1" />
-              <p className="text-xl font-bold text-red-700">{emailsErro + whatsErro}</p>
+              <p className="text-xl font-bold text-red-700">{totalErros}</p>
               <p className="text-[11px] text-slate-500">Com Erro</p>
             </div>
             <div className="bg-white rounded-xl p-3 border border-indigo-200 text-center">
               <Send className="w-5 h-5 text-indigo-500 mx-auto mb-1" />
-              <p className="text-xl font-bold text-indigo-700">
-                {campanha.total_destinatarios > 0 
-                  ? Math.round(((emailsEnviados + whatsEnviados) / campanha.total_destinatarios) * 100) 
-                  : 0}%
-              </p>
+              <p className="text-xl font-bold text-indigo-700">{taxaEntrega}%</p>
               <p className="text-[11px] text-slate-500">Taxa de Entrega</p>
             </div>
           </div>
 
           {/* Channel breakdown */}
           <div className="grid grid-cols-2 gap-3">
-            {(campanha.tipo === "email" || campanha.tipo === "ambos") && (
+            {emailTotal > 0 && (
               <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-200">
                 <div className="flex items-center gap-2 mb-2">
                   <Mail className="w-4 h-4 text-indigo-600" />
                   <span className="font-semibold text-indigo-700 text-sm">Email</span>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-green-600">{emailsEnviados} enviado(s)</span>
-                  {emailsErro > 0 && <span className="text-red-600">{emailsErro} erro(s)</span>}
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="text-green-600">{emailEnviados} entregue(s)</span>
+                  {emailErro > 0 && <span className="text-red-600">{emailErro} erro(s)</span>}
                 </div>
               </div>
             )}
-            {(campanha.tipo === "whatsapp" || campanha.tipo === "ambos") && (
+            {whatsTotal > 0 && (
               <div className="bg-green-50 rounded-xl p-3 border border-green-200">
                 <div className="flex items-center gap-2 mb-2">
                   <MessageSquare className="w-4 h-4 text-green-600" />
                   <span className="font-semibold text-green-700 text-sm">WhatsApp</span>
                 </div>
-                <div className="flex justify-between text-xs">
+                <div className="flex flex-wrap gap-2 text-xs">
                   <span className="text-green-600">{whatsEnviados} enviado(s)</span>
+                  {whatsPendente > 0 && <span className="text-amber-600">{whatsPendente} pendente(s)</span>}
                   {whatsErro > 0 && <span className="text-red-600">{whatsErro} erro(s)</span>}
                 </div>
               </div>
@@ -135,7 +172,8 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
               className="text-xs border rounded-lg px-3 py-1.5 bg-white"
             >
               <option value="todos">Todos os status</option>
-              <option value="enviado">Enviados</option>
+              <option value="enviado">Entregues</option>
+              <option value="pendente">Pendentes</option>
               <option value="erro">Com erro</option>
             </select>
             <select 
@@ -160,8 +198,6 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
           ) : envios.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-sm">
               Nenhum registro de envio encontrado para esta campanha.
-              <br />
-              <span className="text-xs">(Registros só aparecem para campanhas criadas a partir de agora)</span>
             </div>
           ) : (
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -192,11 +228,40 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
             </div>
           )}
 
-          <Button variant="outline" onClick={onClose} className="w-full">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-          </Button>
+          {/* Ações */}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" /> Excluir
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
-  );
+
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir Campanha?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir a campanha "{campanha.titulo}"? Esta ação não pode ser desfeita.
+            Todos os registros de envio também serão removidos.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700">
+            {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>);
 }

@@ -103,25 +103,67 @@ Deno.serve(async (req) => {
         .replace(/\[CORRETOR\]/gi, corretorNome)
         .replace(/\[CATEGORIA\]/gi, cliente.status || '');
 
-      const linkHtml = campanha.link_conteudo
-        ? `<div style="text-align:center;margin:24px 0;">
-            <a href="${campanha.link_conteudo}" style="display:inline-block;background:#4f46e5;color:white;padding:14px 40px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">
-              Ver Conteúdo
+      const ctaButton = campanha.link_conteudo
+        ? `<div style="text-align:center;margin:32px 0 16px;">
+            <a href="${campanha.link_conteudo}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#ffffff;padding:16px 48px;border-radius:50px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(99,102,241,0.4);mso-padding-alt:0;">
+              &#9654;&nbsp; VER PUBLICAÇÃO
             </a>
-          </div>`
+          </div>
+          <p style="text-align:center;color:#94a3b8;font-size:11px;margin:8px 0 0;">Clique no botão acima para conferir</p>`
         : '';
 
-      const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-        <div style="background:#4f46e5;padding:32px;text-align:center;">
-          <h1 style="color:white;margin:0;font-size:20px;">${campanha.titulo || 'Novidade para você!'}</h1>
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#f0f0f5;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
+<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+
+  <!-- Card Principal -->
+  <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(99,102,241,0.12);">
+
+    <!-- Header com gradiente -->
+    <div style="background:linear-gradient(135deg,#4338ca 0%,#6366f1 40%,#8b5cf6 70%,#a78bfa 100%);padding:40px 32px 48px;text-align:center;position:relative;">
+      <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 20px;margin-bottom:16px;">
+        <span style="color:#e0e7ff;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">&#128640; Nova Publicação</span>
+      </div>
+      <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:800;line-height:1.3;text-shadow:0 2px 4px rgba(0,0,0,0.1);">${campanha.titulo || 'Novidade para você!'}</h1>
+    </div>
+
+    <!-- Seta decorativa -->
+    <div style="text-align:center;margin-top:-16px;">
+      <div style="display:inline-block;width:32px;height:32px;background:#ffffff;transform:rotate(45deg);box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
+    </div>
+
+    <!-- Corpo -->
+    <div style="padding:24px 32px 32px;">
+
+      <!-- Saudação destacada -->
+      <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-radius:14px;padding:20px 24px;margin-bottom:24px;border-left:4px solid #6366f1;">
+        <p style="color:#1e293b;font-size:15px;line-height:1.8;margin:0;white-space:pre-line;">${msg}</p>
+      </div>
+
+      <!-- CTA -->
+      ${ctaButton}
+
+      <!-- Divider -->
+      <div style="margin:28px 0 20px;border-top:1px solid #e2e8f0;"></div>
+
+      <!-- Footer do card -->
+      <div style="text-align:center;">
+        <div style="display:inline-block;background:linear-gradient(135deg,#4338ca,#6366f1);width:36px;height:36px;border-radius:10px;line-height:36px;margin-bottom:8px;">
+          <span style="color:white;font-size:16px;font-weight:800;">${(corretorNome.charAt(0) || 'A').toUpperCase()}</span>
         </div>
-        <div style="padding:28px;">
-          <p style="color:#334155;font-size:15px;line-height:1.7;white-space:pre-line;">${msg}</p>
-          ${linkHtml}
-          <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
-          <p style="color:#94a3b8;font-size:12px;text-align:center;">Enviado por ${corretorNome}</p>
-        </div>
-      </div>`;
+        <p style="color:#334155;font-size:13px;font-weight:700;margin:4px 0 2px;">${corretorNome}</p>
+        <p style="color:#94a3b8;font-size:11px;margin:0;">Seu consultor de proteção financeira</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rodapé externo -->
+  <div style="text-align:center;padding:20px 16px 8px;">
+    <p style="color:#94a3b8;font-size:10px;margin:0 0 4px;">Enviado via APEX SHIELD CRM</p>
+    <p style="color:#cbd5e1;font-size:9px;margin:0;">Você recebeu este email porque é cliente de ${corretorNome}.</p>
+  </div>
+
+</div>
+</body></html>`;
 
       const assunto = (campanha.assunto_email || campanha.titulo || 'Novidade para você!')
         .replace(/\[NOME\]/gi, primeiroNome)

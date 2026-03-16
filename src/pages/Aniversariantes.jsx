@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Cake, Phone, Mail, Calendar, Gift, Sparkles, Users, Heart, PartyPopper } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -340,7 +341,27 @@ export default function Aniversariantes() {
         </AnimatePresence>
       </div>
 
-      {/* Pop-up removido - já existe no AniversariantesPopup do Layout */}
+      {/* Dialog nome do corretor */}
+      <Dialog open={nomeCorretorDialog} onOpenChange={setNomeCorretorDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nome do Corretor(a)</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-500">Digite o nome que assinará a mensagem:</p>
+          <Input
+            value={nomeCorretor}
+            onChange={e => setNomeCorretor(e.target.value)}
+            placeholder="Seu nome"
+            onKeyDown={e => e.key === "Enter" && confirmarEnvio()}
+          />
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setNomeCorretorDialog(false)}>Cancelar</Button>
+            <Button onClick={confirmarEnvio} disabled={!nomeCorretor.trim()} className="bg-indigo-600 hover:bg-indigo-700">
+              Enviar Parabéns
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

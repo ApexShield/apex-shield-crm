@@ -13,6 +13,9 @@ import confetti from "canvas-confetti";
 
 export default function Aniversariantes() {
   const [filter, setFilter] = useState("hoje");
+  const [nomeCorretorDialog, setNomeCorretorDialog] = useState(false);
+  const [nomeCorretor, setNomeCorretor] = useState("");
+  const [itemParaEnviar, setItemParaEnviar] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
@@ -109,78 +112,54 @@ export default function Aniversariantes() {
 
   // Pop-up removido daqui - já existe no AniversariantesPopup do Layout
 
-  const handleSendMessage = async (item) => {
-    const nomeCorretor = prompt("Digite o nome da corretora que assina a mensagem:");
-    
-    if (!nomeCorretor) {
-      alert("É necessário informar o nome da corretora para enviar a mensagem.");
-      return;
-    }
-    
+  const handleSendMessage = (item) => {
+    setItemParaEnviar(item);
+    setNomeCorretor(user?.full_name || "");
+    setNomeCorretorDialog(true);
+  };
+
+  const confirmarEnvio = async () => {
+    const item = itemParaEnviar;
+    if (!item || !nomeCorretor.trim()) return;
+
+    setNomeCorretorDialog(false);
+
     let mensagem = "";
-    
+
     if (item.tipo_aniversario === "filho") {
-      mensagem = `Olá, ${item.nome}!
-
-Hoje é um dia muito especial para a sua família! ${item.filho_nome} está completando ${item.idade} anos!
-
-Desejamos muita saúde, alegria e felicidade para ${item.filho_nome}. Que este novo ano de vida seja repleto de conquistas e momentos inesquecíveis!
-
-Parabéns para ${item.filho_nome} e para toda a família!
-
-Com carinho,
-${nomeCorretor}`;
+      mensagem = `Olá, ${item.nome}!\n\nHoje é um dia muito especial para a sua família! ${item.filho_nome} está completando ${item.idade} anos!\n\nDesejamos muita saúde, alegria e felicidade para ${item.filho_nome}. Que este novo ano de vida seja repleto de conquistas e momentos inesquecíveis!\n\nParabéns para ${item.filho_nome} e para toda a família!\n\nCom carinho,\n${nomeCorretor}`;
     } else if (item.tipo_aniversario === "casamento") {
-      mensagem = `Olá, ${item.nome}!
-
-Hoje é um dia muito especial — seu aniversário de casamento! Parabéns por ${item.idade} anos de união, amor e companheirismo!
-
-Que esta data seja comemorada com muita alegria ao lado de quem você ama. Desejamos que o amor de vocês continue crescendo a cada dia!
-
-Feliz aniversário de casamento!
-
-Com carinho,
-${nomeCorretor}`;
+      mensagem = `Olá, ${item.nome}!\n\nHoje é um dia muito especial — seu aniversário de casamento! Parabéns por ${item.idade} anos de união, amor e companheirismo!\n\nQue esta data seja comemorada com muita alegria ao lado de quem você ama. Desejamos que o amor de vocês continue crescendo a cada dia!\n\nFeliz aniversário de casamento!\n\nCom carinho,\n${nomeCorretor}`;
     } else {
-      mensagem = `Olá, ${item.nome}!
-
-Hoje é um dia muito especial e nós não poderíamos deixar passar em branco! Queremos te desejar um feliz aniversário repleto de alegrias, saúde e realizações.
-
-Que este novo ciclo seja iluminado por momentos felizes ao lado de quem você ama. Agradecemos por fazer parte da nossa história e por confiar em nós.
-
-Parabéns pelo seu dia!
-
-Com carinho,
-${nomeCorretor}`;
+      mensagem = `Olá, ${item.nome}!\n\nHoje é um dia muito especial e nós não poderíamos deixar passar em branco! Queremos te desejar um feliz aniversário repleto de alegrias, saúde e realizações.\n\nQue este novo ciclo seja iluminado por momentos felizes ao lado de quem você ama. Agradecemos por fazer parte da nossa história e por confiar em nós.\n\nParabéns pelo seu dia!\n\nCom carinho,\n${nomeCorretor}`;
     }
-    
+
     if (item.telefone) {
       const telefone = item.telefone.replace(/\D/g, '');
-      window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank');
-      
-      try {
-        const observacoes = item.observacoes || [];
-        const tipoMsg = item.tipo_aniversario === "filho" 
-          ? `aniversário do filho(a) ${item.filho_nome}` 
-          : item.tipo_aniversario === "casamento" 
-            ? "aniversário de casamento" 
-            : "aniversário pessoal";
-        observacoes.push({
-          data: new Date().toISOString(),
-          texto: `Parabéns (${tipoMsg}) enviados via WhatsApp por ${nomeCorretor}`
-        });
-        
-        await base44.entities.Cliente.update(item.id, {
-          observacoes,
-          mensagem_aniversario_enviada: true,
-          data_ultima_mensagem: new Date().toISOString()
-        });
-        
-        queryClient.invalidateQueries({ queryKey: ["clientes"] });
-      } catch (error) {
-        console.error("Erro ao atualizar status:", error);
-      }
+      const telFormatado = telefone.startsWith('55') ? telefone : '55' + telefone;
+      window.open(`https://wa.me/${telFormatado}?text=${encodeURIComponent(mensagem)}`, '_blank');
+
+      const observacoes = item.observacoes || [];
+      const tipoMsg = item.tipo_aniversario === "filho"
+        ? `aniversário do filho(a) ${item.filho_nome}`
+        : item.tipo_aniversario === "casamento"
+          ? "aniversário de casamento"
+          : "aniversário pessoal";
+      observacoes.push({
+        data: new Date().toISOString(),
+        texto: `Parabéns (${tipoMsg}) enviados via WhatsApp por ${nomeCorretor}`
+      });
+
+      await base44.entities.Cliente.update(item.id, {
+        observacoes,
+        mensagem_aniversario_enviada: true,
+        data_ultima_mensagem: new Date().toISOString()
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
     }
+
+    setItemParaEnviar(null);
   };
 
   const getGradient = (item) => {

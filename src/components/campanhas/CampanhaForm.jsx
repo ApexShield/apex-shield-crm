@@ -123,10 +123,17 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
         });
       }
 
-      // Save WhatsApp envio logs
+      // Save WhatsApp envio logs as "pendente"
+      let savedLogs = [];
       if (whatsLogs.length > 0) {
-        try { await base44.entities.CampanhaEnvio.bulkCreate(whatsLogs); } catch (e) { console.error(e); }
+        try { savedLogs = await base44.entities.CampanhaEnvio.bulkCreate(whatsLogs); } catch (e) { console.error(e); }
       }
+
+      // Attach envio IDs to links for tracking
+      const linksWithIds = links.map((l, i) => ({
+        ...l,
+        envio_id: savedLogs[i]?.id || null
+      }));
 
       await base44.entities.Campanha.update(campanha.id, {
         whatsapp_gerados: links.length,
@@ -134,7 +141,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
         status: tipo === "whatsapp" ? "concluida" : undefined
       });
 
-      setWhatsappLinks(links);
+      setWhatsappLinks(linksWithIds);
       setShowWhatsappLinks(true);
       toast.success(`${links.length} link(s) WhatsApp gerado(s)! Clique em cada um para enviar.`);
     }

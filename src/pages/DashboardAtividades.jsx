@@ -51,7 +51,9 @@ export default function DashboardAtividades() {
 
   const handleClearAllData = async () => {
     setIsClearing(true);
-    const allRecords = await base44.entities.DashboardDiario.filter({ ano }, "-data", 5000);
+    const allRecords = ano === "todos"
+      ? await base44.entities.DashboardDiario.list("-data", 5000)
+      : await base44.entities.DashboardDiario.filter({ ano: parseInt(ano) }, "-data", 5000);
     for (const record of allRecords) {
       await base44.entities.DashboardDiario.delete(record.id);
     }

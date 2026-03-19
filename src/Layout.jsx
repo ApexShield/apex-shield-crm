@@ -24,7 +24,7 @@ const navigation = [
   { name: "Gerenciar Cupons", icon: Ticket, page: "GerenciarCupons", adminOnly: true },
   { name: "Agente Apex", icon: Bot, page: "AgenteApex" },
   { name: "Organograma", icon: Users, page: "Organograma" },
-  { name: "Assinatura", icon: Crown, page: "Assinatura" },
+  // { name: "Assinatura", icon: Crown, page: "Assinatura" },
   { name: "Política de Privacidade", icon: Briefcase, page: "PoliticaPrivacidade" },
   { name: "Termos de Serviço", icon: Briefcase, page: "TermosServico" }
 ];

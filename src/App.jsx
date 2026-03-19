@@ -66,11 +66,7 @@ const AuthenticatedApp = () => {
           <Campanhas />
         </LayoutWrapper>
       } />
-      <Route path="/Assinatura" element={
-        <LayoutWrapper currentPageName="Assinatura">
-          <Assinatura />
-        </LayoutWrapper>
-      } />
+      {/* Assinatura desabilitada temporariamente */}
       <Route path="/GerenciarCupons" element={
         <LayoutWrapper currentPageName="GerenciarCupons">
           <GerenciarCupons />

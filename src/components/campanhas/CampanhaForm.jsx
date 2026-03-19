@@ -5,11 +5,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Send, Link, MessageSquare, Mail, Loader2 } from "lucide-react";
+import { Send, Link, MessageSquare, Mail, Loader2, Users, UserCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import WhatsAppLinksDialog from "./WhatsAppLinksDialog";
+import ClienteSelectorDialog from "./ClienteSelectorDialog";
 
 const VARIAVEIS = [
   { label: "+ Primeiro Nome", value: "[NOME]" },
@@ -42,6 +43,8 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
   const [enviando, setEnviando] = useState(false);
   const [whatsappLinks, setWhatsappLinks] = useState([]);
   const [showWhatsappLinks, setShowWhatsappLinks] = useState(false);
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
+  const [showClientSelector, setShowClientSelector] = useState(false);
   const queryClient = useQueryClient();
 
   const inserirVariavel = (variavel) => {
@@ -50,6 +53,11 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
 
   // Clientes filtrados para preview
   const clientesFiltrados = (() => {
+    // Se há seleção manual, usa ela (ignora filtro por status)
+    if (selectedClientIds.length > 0) {
+      const idSet = new Set(selectedClientIds);
+      return clientes.filter(c => idSet.has(c.id));
+    }
     const statusMap = {
       novo: "Novo", ab_fone: "AB Fone", ab_visita: "AB Visita",
       ab_fechamento: "AB Fechamento", delay: "Delay", analise: "Análise",
@@ -214,16 +222,34 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
           {/* Filtro de clientes */}
           <div>
             <Label className="text-slate-700 font-semibold">Destinatários</Label>
-            <Select value={filtroClientes} onValueChange={setFiltroClientes}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_FILTROS.map(f => (
-                  <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 mt-1">
+              <div className="flex-1">
+                <Select value={selectedClientIds.length > 0 ? "manual" : filtroClientes} onValueChange={(v) => {
+                  if (v !== "manual") { setFiltroClientes(v); setSelectedClientIds([]); }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedClientIds.length > 0 ? `${selectedClientIds.length} selecionado(s) manualmente` : undefined} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedClientIds.length > 0 && (
+                      <SelectItem value="manual">{selectedClientIds.length} selecionado(s) manualmente</SelectItem>
+                    )}
+                    {STATUS_FILTROS.map(f => (
+                      <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowClientSelector(true)}
+                className="gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              >
+                <UserCheck className="w-4 h-4" />
+                Selecionar
+              </Button>
+            </div>
             <div className="flex gap-3 mt-2 text-xs text-slate-500">
               {(tipo === "email" || tipo === "ambos") && (
                 <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {clientesComEmail.length} com email</span>
@@ -231,6 +257,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
               {(tipo === "whatsapp" || tipo === "ambos") && (
                 <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {clientesComTelefone.length} com telefone</span>
               )}
+              <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {clientesFiltrados.length} total</span>
             </div>
           </div>
 
@@ -315,6 +342,13 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
       open={showWhatsappLinks}
       onClose={() => { setShowWhatsappLinks(false); onClose(); }}
       links={whatsappLinks}
+    />
+    <ClienteSelectorDialog
+      open={showClientSelector}
+      onClose={() => setShowClientSelector(false)}
+      clientes={clientes}
+      selectedIds={selectedClientIds}
+      onConfirm={(ids) => setSelectedClientIds(ids)}
     />
   </>);
 }

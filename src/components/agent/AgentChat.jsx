@@ -29,7 +29,9 @@ export default function AgentChat() {
     const loadConversations = async () => {
       setLoading(true);
       const convs = await base44.agents.listConversations({ agent_name: "apex_shield" });
-      setConversations(convs || []);
+      // Ordenar mais recentes primeiro
+      const sorted = (convs || []).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      setConversations(sorted);
       setLoading(false);
     };
     loadConversations();
@@ -100,10 +102,10 @@ export default function AgentChat() {
     <div className="flex h-[calc(100vh-80px)] lg:h-[calc(100vh-20px)] bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-lg">
       {/* Sidebar de conversas */}
       <div className={cn(
-        "w-72 bg-white border-r border-slate-200 flex flex-col transition-all",
+        "w-72 bg-white border-r border-slate-200 flex flex-col transition-all min-h-0",
         showSidebar ? "block" : "hidden lg:block"
       )}>
-        <div className="p-4 border-b border-slate-100">
+        <div className="p-4 border-b border-slate-100 flex-shrink-0">
           <Button 
             onClick={createNewConversation} 
             className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
@@ -112,7 +114,7 @@ export default function AgentChat() {
             Nova Conversa
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
@@ -145,9 +147,9 @@ export default function AgentChat() {
       </div>
 
       {/* Área principal do chat */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3 flex-shrink-0">
           <button 
             onClick={() => setShowSidebar(!showSidebar)} 
             className="lg:hidden p-1 hover:bg-slate-100 rounded"
@@ -165,7 +167,7 @@ export default function AgentChat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
           {messages.length === 0 && !currentConversation && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-6">
@@ -218,7 +220,7 @@ export default function AgentChat() {
         </div>
 
         {/* Input */}
-        <div className="bg-white border-t border-slate-200 p-4">
+        <div className="bg-white border-t border-slate-200 p-4 flex-shrink-0">
           <div className="flex gap-3 max-w-4xl mx-auto">
             <Input
               value={input}

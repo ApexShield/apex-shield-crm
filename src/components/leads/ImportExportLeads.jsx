@@ -14,40 +14,16 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
   const [importResults, setImportResults] = useState(null);
 
   const handleDownloadTemplate = () => {
-    // Template com exemplo
     const templateData = [
       {
         'Nome': 'João Silva',
-        'Status': 'AB Fone',
         'Telefone': '(11) 98765-4321',
         'Email': 'joao@email.com',
-        'Empresa': 'Empresa ABC',
-        'Cargo': 'Gerente',
-        'Fonte Prospecção': 'Indicação',
-        'Renda': 'R$ 10.000',
-        'Patrimônio': 'R$ 500.000',
-        'Idade': '35',
-        'Profissão': 'Empresário',
-        'Estado Civil': 'Casado(a)',
-        'Regime Casamento': 'Comunhão parcial',
-        'Filhos': '2',
-        'Data Nascimento': '1990-01-15',
-        'Altura': '175',
-        'Peso': '80',
-        'IMC': '26.1',
-        'Fuma': 'Não',
-        'Anda Moto': 'Não',
-        'Plano Saúde': 'Sim',
-        'Nome Plano Saúde': 'Unimed',
-        'Valor Plano Saúde': 'R$ 800',
-        'Seguro Vida': 'Não',
-        'Seguradora': '',
-        'Valor Seguro Vida': '',
-        'Custo Mensal Fixo': 'R$ 5.000',
-        'Data Contato': '2025-02-01',
-        'Agendar Visita': '',
-        'Data Cadastro': '2025-01-24',
-        'Número Indicações': '0'
+      },
+      {
+        'Nome': 'Maria Santos',
+        'Telefone': '(21) 91234-5678',
+        'Email': 'maria@email.com',
       }
     ];
 
@@ -133,39 +109,13 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         return;
       }
 
-      // Mapear dados do Excel para o formato do sistema
+      // Mapear dados do Excel para o formato do sistema (apenas Nome, Telefone, Email)
       const leadsToImport = jsonData.map(row => ({
         nome: row['Nome'] || '',
-        status: row['Status'] || 'AB Fone',
-        telefone: row['Telefone'] || '',
+        status: 'AB Fone',
+        telefone: row['Telefone'] ? String(row['Telefone']) : '',
         email: row['Email'] || '',
-        empresa: row['Empresa'] || '',
-        cargo: row['Cargo'] || '',
-        fonte_prospeccao: row['Fonte Prospecção'] || '',
-        renda: row['Renda'] || '',
-        patrimonio: row['Patrimônio'] || '',
-        idade: row['Idade'] || '',
-        profissao: row['Profissão'] || '',
-        estado_civil: row['Estado Civil'] || '',
-        regime_casamento: row['Regime Casamento'] || '',
-        filhos: row['Filhos'] || '',
-        data_nascimento: row['Data Nascimento'] || '',
-        altura: row['Altura'] || '',
-        peso: row['Peso'] || '',
-        imc: row['IMC'] || '',
-        fuma: row['Fuma'] || '',
-        anda_moto: row['Anda Moto'] || '',
-        plano_saude: row['Plano Saúde'] || '',
-        plano_saude_nome: row['Nome Plano Saúde'] || '',
-        valor_plano_saude: row['Valor Plano Saúde'] || '',
-        seguro_vida: row['Seguro Vida'] || '',
-        seguro_vida_seguradora: row['Seguradora'] || '',
-        valor_seguro_vida: row['Valor Seguro Vida'] || '',
-        custo_mensal_fixo: row['Custo Mensal Fixo'] || '',
-        data_contato: row['Data Contato'] || '',
-        agendar_visita: row['Agendar Visita'] || '',
-        data_cadastro: row['Data Cadastro'] || new Date().toISOString().split('T')[0],
-        num_indicacoes: row['Número Indicações'] || '0'
+        data_cadastro: new Date().toISOString().split('T')[0],
       })).filter(lead => lead.nome); // Obrigatório: apenas nome
 
       // Obter leads existentes e usuário atual
@@ -308,9 +258,9 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               <div className="flex items-start gap-3">
                 <FileSpreadsheet className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="font-bold text-indigo-900 mb-1">Template de Importação Desperte</h4>
+                  <h4 className="font-bold text-indigo-900 mb-1">Template de Importação</h4>
                   <p className="text-sm text-gray-700 mb-3">
-                    Use nosso template padronizado para importar seus contatos de forma rápida e sem erros. Baixe, preencha com seus dados e faça o upload.
+                   Baixe o template com as 3 colunas: <strong>Nome</strong>, <strong>Telefone</strong> e <strong>Email</strong>. Preencha com seus dados e faça o upload.
                   </p>
                   <Button
                     onClick={handleDownloadTemplate}
@@ -328,7 +278,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-gray-700">
-                  <strong>Importante:</strong> O arquivo deve ter as colunas: <strong className="text-red-600">Nome é obrigatório</strong>. Outros campos como Telefone, Email, etc são opcionais.
+                  <strong>Importante:</strong> O arquivo deve ter apenas 3 colunas: <strong className="text-red-600">Nome</strong> (obrigatório), <strong>Telefone</strong> e <strong>Email</strong>. Todos os leads serão importados com status "AB Fone".
                 </div>
               </div>
             </div>

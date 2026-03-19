@@ -5,16 +5,15 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { 
-  Shield, Target, BarChart3, Calendar, Clock, FileText, Users, Zap,
+  Shield, Target, BarChart3, Clock, FileText, Users, Zap,
   TrendingUp, Sparkles, Rocket, Gift, Star, DollarSign, LineChart,
-  ShieldCheck, Bell, Mail, Phone, Globe, Lock, Layers, Award,
-  MessageCircle, Network, Cake, FolderOpen, Upload, UserPlus, Activity
+  ShieldCheck, Bell, Mail, Phone, Lock, Layers, Award,
+  MessageCircle, Network, Cake, FolderOpen, Upload, UserPlus, Activity, Megaphone, Bot
 } from "lucide-react";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
-  // Google Site Verification meta tag
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'google-site-verification';
@@ -26,7 +25,6 @@ export default function Home() {
   useEffect(() => {
     base44.auth.isAuthenticated().then(auth => {
       if (auth) {
-        // Usuário logado → redirecionar para BoasVindas (que redireciona para Leads se já aceitou)
         window.location.href = createPageUrl("BoasVindas");
       } else {
         setIsAuthenticated(false);
@@ -44,25 +42,25 @@ export default function Home() {
 
   const features = [
     { icon: Target, title: "Funil de Vendas em 9 Etapas", desc: "Do primeiro contato até entrega da apólice com cores visuais distintas e transições automáticas", gradient: "from-blue-500 to-cyan-500" },
-    { icon: Calendar, title: "Agenda Profissional", desc: "Calendário visual com compromissos fixos, convites por email, confirmação de presença e lembretes automáticos", gradient: "from-green-500 to-emerald-500" },
+    { icon: Bot, title: "Agente IA Apex Shield", desc: "Assistente inteligente que cria leads, agenda compromissos, gerencia finanças e responde dúvidas por chat", gradient: "from-violet-500 to-purple-600" },
     { icon: BarChart3, title: "Dashboard de Atividades", desc: "KPIs, gráficos de evolução semanal, funil de conversão, taxas de conversão e comparativos detalhados", gradient: "from-purple-500 to-pink-500" },
     { icon: Users, title: "Dashboard de Equipe", desc: "Líderes visualizam métricas de toda a equipe por unidade e corretor com drill-down completo", gradient: "from-blue-600 to-indigo-600" },
-    { icon: Sparkles, title: "Agente IA Apex", desc: "Assistente virtual inteligente que cria leads, agenda compromissos e gerencia finanças por conversa", gradient: "from-violet-500 to-purple-600" },
-    { icon: Clock, title: "Agendamento Inteligente", desc: "Visitas, fechamentos e entregas com modalidade online/presencial e link de reunião integrado", gradient: "from-orange-500 to-red-500" },
+    { icon: Megaphone, title: "Campanhas de Divulgação", desc: "Envie campanhas por Email e WhatsApp para seus clientes com templates personalizados e relatórios de entrega", gradient: "from-indigo-500 to-purple-500" },
+    { icon: Clock, title: "Agenda Profissional", desc: "Calendário visual com compromissos fixos, convites por email com ICS e lembretes automáticos", gradient: "from-green-500 to-emerald-500" },
     { icon: Cake, title: "Aniversariantes Automático", desc: "Alerta de aniversários com envio de mensagem WhatsApp personalizada em 1 clique", gradient: "from-pink-500 to-rose-500" },
     { icon: DollarSign, title: "Gestão Financeira Completa", desc: "Despesas, receitas, parcelamentos em cartão de crédito, gráficos por categoria e relatórios mensais", gradient: "from-emerald-500 to-green-600" },
     { icon: Network, title: "Organograma e Hierarquia", desc: "Agências, unidades, líderes e corretores com convites, permissões e visualização em árvore", gradient: "from-indigo-500 to-purple-500" },
     { icon: Shield, title: "Gestão de Apólices", desc: "Produtos, coberturas, beneficiários, valores detalhados e acompanhamento pós-venda", gradient: "from-cyan-500 to-blue-500" },
     { icon: FolderOpen, title: "Gestão de Documentos", desc: "Upload e organização de documentos por cliente com visualização rápida", gradient: "from-yellow-500 to-orange-500" },
     { icon: Upload, title: "Import/Export Excel", desc: "Importe leads e dados do dashboard em massa e exporte relatórios Excel profissionais", gradient: "from-green-600 to-lime-500" },
-    { icon: MessageCircle, title: "WhatsApp Integrado", desc: "Envio direto de mensagens com templates prontos e acesso pelo Agente IA via WhatsApp", gradient: "from-green-500 to-teal-500" },
-    { icon: Mail, title: "Email com Convites", desc: "Envio de convites de reunião por email com ICS, confirmação de presença e lembretes", gradient: "from-blue-500 to-indigo-500" },
+    { icon: MessageCircle, title: "WhatsApp Integrado", desc: "Envio direto de mensagens com templates prontos para clientes e aniversariantes", gradient: "from-green-500 to-teal-500" },
+    { icon: Mail, title: "Email Profissional", desc: "Envio de convites de reunião e campanhas por email com design profissional e confirmação de presença", gradient: "from-blue-500 to-indigo-500" },
     { icon: UserPlus, title: "Sistema de Indicações", desc: "Registre indicações de cada cliente com nome, profissão, telefone e conexão", gradient: "from-purple-500 to-indigo-500" },
     { icon: Activity, title: "Perfil 360° do Cliente", desc: "Dados pessoais, profissionais, saúde, patrimônio, histórico de status e observações", gradient: "from-cyan-500 to-blue-500" },
     { icon: LineChart, title: "Relatórios em PDF", desc: "Relatórios diários, HOT40, leads por status e customizados com design profissional", gradient: "from-red-500 to-pink-500" },
     { icon: Layers, title: "Calculadora Rápida", desc: "Simule cálculos de seguros diretamente no CRM com praticidade", gradient: "from-teal-500 to-cyan-500" },
     { icon: Lock, title: "Segurança RLS", desc: "Cada usuário vê apenas seus leads e líderes veem dados da equipe com permissões granulares", gradient: "from-slate-600 to-slate-700" },
-    { icon: Bell, title: "Lembretes Automáticos", desc: "Lembretes de 1h e 30min antes de compromissos, alertas de aniversário e notificações", gradient: "from-red-500 to-orange-500" },
+    { icon: Bell, title: "Lembretes Automáticos", desc: "Lembretes antes de compromissos, alertas de aniversário e notificações inteligentes", gradient: "from-red-500 to-orange-500" },
   ];
 
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
@@ -84,7 +82,7 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center mb-10">
             <motion.div whileHover={{ scale: 1.1, rotate: 5 }}
               className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-3xl mb-6 shadow-2xl shadow-blue-500/50">
-              <Sparkles className="w-14 h-14 text-white" />
+              <Shield className="w-14 h-14 text-white" />
             </motion.div>
 
             <h1 className="text-5xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4 tracking-tight">
@@ -98,17 +96,16 @@ export default function Home() {
             </p>
 
             <p className="text-cyan-200 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed mb-8">
-              O APEX SHIELD CRM é uma plataforma profissional de gestão de relacionamento com clientes (CRM) 
-              desenvolvida especificamente para <strong>corretores de seguros</strong>. Gerencie leads, compromissos, 
-              apólices, documentos e equipe — tudo em um só lugar.
+              Plataforma profissional com <strong>Agente IA</strong>, campanhas de marketing, funil de vendas em 9 etapas, 
+              agenda, gestão financeira, organograma de equipe e muito mais — tudo em um só lugar.
             </p>
 
             {/* Stats */}
             <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-10">
               {[
-                { num: "30+", label: "Funcionalidades", icon: Zap, color: "from-yellow-400 to-orange-500" },
+                { num: "20+", label: "Funcionalidades", icon: Zap, color: "from-yellow-400 to-orange-500" },
                 { num: "9", label: "Etapas Funil", icon: Target, color: "from-blue-400 to-cyan-500" },
-                { num: "100%", label: "Gratuito", icon: Gift, color: "from-green-400 to-emerald-500" },
+                { num: "IA", label: "Agente Inteligente", icon: Bot, color: "from-violet-400 to-purple-500" },
                 { num: "∞", label: "Leads Ilimitados", icon: TrendingUp, color: "from-purple-400 to-pink-500" }
               ].map((stat, idx) => (
                 <motion.div key={idx} variants={item} whileHover={{ scale: 1.05, y: -5 }}
@@ -143,7 +140,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Sobre o App - Seção para Google */}
+      {/* Sobre o App */}
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 relative z-10">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-3xl p-8 sm:p-12 border border-white/20 mb-16">
@@ -159,14 +156,13 @@ export default function Home() {
             <p>
               O sistema oferece <strong>funil de vendas em 9 etapas</strong>, agenda profissional com envio de 
               convites por email e confirmação de presença, dashboard de atividades com KPIs e gráficos de evolução, 
-              dashboard de equipe para líderes, gestão de apólices, documentos, relatórios em PDF, 
-              comunicação integrada via WhatsApp e Email, gestão financeira completa, organograma de equipe 
+              dashboard de equipe para líderes, campanhas de divulgação por Email e WhatsApp, gestão de apólices, 
+              documentos, relatórios em PDF, gestão financeira completa, organograma de equipe 
               com hierarquia e um <strong>Agente IA inteligente</strong> que automatiza tarefas por conversa.
             </p>
             <p>
-              Nossa <strong>agenda profissional integrada</strong> permite agendar reuniões, visitas e compromissos 
-              com envio automático de convites por email com arquivo ICS, confirmação de presença dos participantes 
-              e lembretes automáticos. Os dados são protegidos com criptografia e controle de acesso granular.
+              O <strong>Agente IA Apex Shield</strong> é um assistente especializado que pode criar leads, agendar 
+              compromissos, registrar despesas e receitas, calcular seguros e muito mais — tudo por conversa natural.
             </p>
           </div>
         </motion.div>
@@ -213,13 +209,13 @@ export default function Home() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 { icon: ShieldCheck, title: "Organização Total", desc: "Funil visual com 9 etapas, cores inteligentes e transições automáticas", color: "from-blue-400 to-cyan-400" },
-                { icon: Sparkles, title: "IA que Trabalha por Você", desc: "Agente IA cria leads, agenda compromissos e gerencia finanças via chat ou WhatsApp", color: "from-violet-400 to-purple-400" },
-                { icon: Globe, title: "Agenda com Convites", desc: "Compromissos com convites por email, ICS, confirmação e lembretes automáticos", color: "from-green-400 to-emerald-400" },
+                { icon: Bot, title: "IA que Trabalha por Você", desc: "Agente IA cria leads, agenda compromissos e gerencia finanças via chat", color: "from-violet-400 to-purple-400" },
+                { icon: Megaphone, title: "Campanhas Integradas", desc: "Envie campanhas de Email e WhatsApp com templates e relatórios de entrega", color: "from-indigo-400 to-purple-400" },
                 { icon: BarChart3, title: "Dashboards Completos", desc: "KPIs, evolução semanal, funil de conversão e visão de equipe para líderes", color: "from-purple-400 to-pink-400" },
                 { icon: Phone, title: "Comunicação Integrada", desc: "WhatsApp, Email e telefone em 1 clique com templates prontos", color: "from-orange-400 to-red-400" },
                 { icon: Lock, title: "Dados Protegidos", desc: "Criptografia, LGPD e controle de acesso granular por hierarquia", color: "from-slate-400 to-slate-500" },
                 { icon: Network, title: "Gestão de Equipe", desc: "Organograma com agências, unidades, convites e permissões hierárquicas", color: "from-indigo-400 to-blue-400" },
-                { icon: Award, title: "100% Gratuito", desc: "Todas as 30+ funcionalidades sem custo algum, para sempre", color: "from-yellow-400 to-orange-400" },
+                { icon: Award, title: "100% Gratuito", desc: "Todas as funcionalidades sem custo algum, para sempre", color: "from-yellow-400 to-orange-400" },
               ].map((b, idx) => (
                 <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                   transition={{ delay: idx * 0.05 }}
@@ -254,7 +250,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Footer com links obrigatórios */}
+        {/* Footer */}
         <footer className="border-t border-white/10 pt-8 pb-12">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -265,33 +261,23 @@ export default function Home() {
             </div>
             
             <p className="text-cyan-200/70 text-sm max-w-2xl mx-auto">
-              O APEX SHIELD CRM é uma plataforma completa para corretores de seguros com 30+ funcionalidades, 
-              incluindo Agente IA, agenda com convites, dashboard de equipe e muito mais. 100% gratuito.
+              O APEX SHIELD CRM é uma plataforma completa para corretores de seguros com 20+ funcionalidades, 
+              incluindo Agente IA, campanhas de marketing, dashboard de equipe e muito mais. 100% gratuito.
             </p>
 
             <div className="flex items-center justify-center gap-6 flex-wrap">
-              <Link
-                to={createPageUrl("PoliticaPrivacidade")}
-                className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1"
-              >
-                <Shield className="w-4 h-4" />
-                Política de Privacidade
+              <Link to={createPageUrl("PoliticaPrivacidade")}
+                className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1">
+                <Shield className="w-4 h-4" /> Política de Privacidade
               </Link>
-              <Link
-                to={createPageUrl("TermosServico")}
-                className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1"
-              >
-                <FileText className="w-4 h-4" />
-                Termos de Serviço
+              <Link to={createPageUrl("TermosServico")}
+                className="text-cyan-300 hover:text-cyan-200 underline text-sm font-medium inline-flex items-center gap-1">
+                <FileText className="w-4 h-4" /> Termos de Serviço
               </Link>
             </div>
 
-            <p className="text-cyan-200/50 text-xs">
-              Contato: apexshieldcorretoradeseguros@gmail.com
-            </p>
-            <p className="text-cyan-200/40 text-xs">
-              © {new Date().getFullYear()} APEX SHIELD Corretora de Seguros. Todos os direitos reservados.
-            </p>
+            <p className="text-cyan-200/50 text-xs">Contato: apexshieldcorretoradeseguros@gmail.com</p>
+            <p className="text-cyan-200/40 text-xs">© {new Date().getFullYear()} APEX SHIELD Corretora de Seguros. Todos os direitos reservados.</p>
           </div>
         </footer>
       </div>

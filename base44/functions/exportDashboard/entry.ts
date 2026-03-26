@@ -263,7 +263,8 @@ Deno.serve(async (req) => {
       setCell(ws, currentRow, 1, total, metricDataStyle(bg));
       setCell(ws, currentRow, 2, avg, metricDataStyle(bg));
       if (typeof c.conv === "number") {
-        setCell(ws, currentRow, 3, Math.round(c.conv * 1e10) / 1e10, metricDataStyle(bg));
+        const pctStyle = { ...metricDataStyle(bg), numFmt: "0.00%" };
+        setCell(ws, currentRow, 3, c.conv, pctStyle);
       } else {
         setCell(ws, currentRow, 3, c.conv, metricDataStyle(bg));
       }
@@ -289,7 +290,7 @@ Deno.serve(async (req) => {
         fill: { fgColor: { rgb: "FFEB9C" }, patternType: "solid" },
         font: { sz: 10, name: "Calibri" },
         border: allBorders,
-        numFmt: "0.0000000000"
+        numFmt: "0.00%"
       });
       currentRow++;
     });

@@ -95,8 +95,30 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     anda_moto: "",
     fonte_prospeccao: "",
     custo_mensal_fixo: "",
+    custo_agua: "",
+    custo_energia: "",
+    custo_internet: "",
+    custo_gas: "",
+    custo_aluguel: "",
+    custo_escola: "",
+    custo_plano_saude_fixo: "",
+    custo_transporte: "",
+    custo_alimentacao: "",
+    custo_outros_fixos: "",
+    custo_variavel_total: "",
+    custo_lazer: "",
+    custo_hobbies: "",
+    custo_vestuario: "",
+    custo_viagens: "",
+    custo_outros_variaveis: "",
     renda: "",
     patrimonio: "",
+    patrimonio_imoveis: "",
+    patrimonio_veiculos: "",
+    patrimonio_investimentos: "",
+    patrimonio_poupanca: "",
+    patrimonio_previdencia: "",
+    patrimonio_outros: "",
     data_contato: "",
     agendar_visita: "",
     endereco: "",
@@ -153,8 +175,30 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         anda_moto: "",
         fonte_prospeccao: "",
         custo_mensal_fixo: "",
+        custo_agua: "",
+        custo_energia: "",
+        custo_internet: "",
+        custo_gas: "",
+        custo_aluguel: "",
+        custo_escola: "",
+        custo_plano_saude_fixo: "",
+        custo_transporte: "",
+        custo_alimentacao: "",
+        custo_outros_fixos: "",
+        custo_variavel_total: "",
+        custo_lazer: "",
+        custo_hobbies: "",
+        custo_vestuario: "",
+        custo_viagens: "",
+        custo_outros_variaveis: "",
         renda: "",
         patrimonio: "",
+        patrimonio_imoveis: "",
+        patrimonio_veiculos: "",
+        patrimonio_investimentos: "",
+        patrimonio_poupanca: "",
+        patrimonio_previdencia: "",
+        patrimonio_outros: "",
         data_contato: "",
         agendar_visita: "",
         endereco: "",
@@ -673,30 +717,165 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
 
                   <div>
-                    <Label className="text-xs">Custo Mensal Fixo Total:</Label>
-                    <Input 
-                      tabIndex={17}
-                      value={formData.custo_mensal_fixo} 
-                      onChange={(e) => handleCurrencyChange('custo_mensal_fixo', e.target.value)}
-                    />
-                  </div>
-
-                  <div>
                     <Label className="text-xs">Renda Mensal Estimada:</Label>
                     <Input 
-                      tabIndex={18}
+                      tabIndex={17}
                       value={formData.renda} 
                       onChange={(e) => handleCurrencyChange('renda', e.target.value)}
                     />
                   </div>
 
-                  <div>
-                    <Label className="text-xs">Patrimônio:</Label>
-                    <Input 
-                      tabIndex={19}
-                      value={formData.patrimonio} 
-                      onChange={(e) => handleCurrencyChange('patrimonio', e.target.value)}
-                    />
+                  {/* CUSTOS FIXOS */}
+                  <div className="border-t border-green-300/50 pt-2 mt-2">
+                    <Label className="text-xs font-black text-white">💰 CUSTOS FIXOS MENSAIS:</Label>
+                  </div>
+                  {[
+                    { field: 'custo_agua', label: 'Água' },
+                    { field: 'custo_energia', label: 'Energia' },
+                    { field: 'custo_internet', label: 'Internet' },
+                    { field: 'custo_gas', label: 'Gás' },
+                    { field: 'custo_aluguel', label: 'Aluguel/Financiamento' },
+                    { field: 'custo_escola', label: 'Escola dos Filhos' },
+                    { field: 'custo_plano_saude_fixo', label: 'Plano de Saúde' },
+                    { field: 'custo_transporte', label: 'Transporte/Combustível' },
+                    { field: 'custo_alimentacao', label: 'Alimentação' },
+                    { field: 'custo_outros_fixos', label: 'Outros Fixos' },
+                  ].map(item => (
+                    <div key={item.field}>
+                      <Label className="text-xs">{item.label}:</Label>
+                      <Input 
+                        value={formData[item.field]} 
+                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+                  ))}
+                  <div className="bg-white/30 rounded-lg p-2">
+                    <Label className="text-xs font-bold">Total Custos Fixos:</Label>
+                    <div className="text-sm font-black text-green-900">
+                      {(() => {
+                        const fields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos'];
+                        const total = fields.reduce((sum, f) => {
+                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                          return sum + val;
+                        }, 0);
+                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* CUSTOS VARIÁVEIS */}
+                  <div className="border-t border-green-300/50 pt-2 mt-2">
+                    <Label className="text-xs font-black text-white">🎯 CUSTOS VARIÁVEIS (Supérfluos):</Label>
+                  </div>
+                  {[
+                    { field: 'custo_lazer', label: 'Lazer' },
+                    { field: 'custo_hobbies', label: 'Hobbies' },
+                    { field: 'custo_vestuario', label: 'Vestuário' },
+                    { field: 'custo_viagens', label: 'Viagens' },
+                    { field: 'custo_outros_variaveis', label: 'Outros Variáveis' },
+                  ].map(item => (
+                    <div key={item.field}>
+                      <Label className="text-xs">{item.label}:</Label>
+                      <Input 
+                        value={formData[item.field]} 
+                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+                  ))}
+                  <div className="bg-white/30 rounded-lg p-2">
+                    <Label className="text-xs font-bold">Total Custos Variáveis:</Label>
+                    <div className="text-sm font-black text-green-900">
+                      {(() => {
+                        const fields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+                        const total = fields.reduce((sum, f) => {
+                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                          return sum + val;
+                        }, 0);
+                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* TOTAL GERAL DE CUSTOS */}
+                  <div className="bg-green-800/30 rounded-lg p-2">
+                    <Label className="text-xs font-bold text-white">CUSTO MENSAL TOTAL (Fixo + Variável):</Label>
+                    <div className="text-base font-black text-white">
+                      {(() => {
+                        const allFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos','custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+                        const total = allFields.reduce((sum, f) => {
+                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                          return sum + val;
+                        }, 0);
+                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* PATRIMÔNIO DETALHADO */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.27 }}
+                className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-2xl shadow-lg border-2 border-emerald-400"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Briefcase className="w-5 h-5 text-white" />
+                  <h3 className="font-black text-base text-white">PATRIMÔNIO</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="border-b border-emerald-400/50 pb-1 mb-1">
+                    <Label className="text-xs font-black text-white">🏠 PATRIMÔNIO FÍSICO:</Label>
+                  </div>
+                  {[
+                    { field: 'patrimonio_imoveis', label: 'Imóveis (Casa, Apto, Lotes)' },
+                    { field: 'patrimonio_veiculos', label: 'Veículos' },
+                    { field: 'patrimonio_outros', label: 'Outros Bens Físicos' },
+                  ].map(item => (
+                    <div key={item.field}>
+                      <Label className="text-xs">{item.label}:</Label>
+                      <Input 
+                        value={formData[item.field]} 
+                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+                  ))}
+
+                  <div className="border-t border-emerald-400/50 pt-2 mt-2">
+                    <Label className="text-xs font-black text-white">📊 APLICAÇÕES FINANCEIRAS:</Label>
+                  </div>
+                  {[
+                    { field: 'patrimonio_investimentos', label: 'Investimentos/Aplicações' },
+                    { field: 'patrimonio_poupanca', label: 'Poupança' },
+                    { field: 'patrimonio_previdencia', label: 'Previdência Privada' },
+                  ].map(item => (
+                    <div key={item.field}>
+                      <Label className="text-xs">{item.label}:</Label>
+                      <Input 
+                        value={formData[item.field]} 
+                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+                  ))}
+
+                  <div className="bg-emerald-800/30 rounded-lg p-2">
+                    <Label className="text-xs font-bold text-white">PATRIMÔNIO TOTAL:</Label>
+                    <div className="text-base font-black text-white">
+                      {(() => {
+                        const fields = ['patrimonio_imoveis','patrimonio_veiculos','patrimonio_outros','patrimonio_investimentos','patrimonio_poupanca','patrimonio_previdencia'];
+                        const total = fields.reduce((sum, f) => {
+                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                          return sum + val;
+                        }, 0);
+                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                      })()}
+                    </div>
                   </div>
                 </div>
               </motion.div>

@@ -89,9 +89,9 @@ Deno.serve(async (req) => {
 
     let data;
     if (anoNum) {
-      data = await base44.entities.DashboardDiario.filter({ ano: anoNum, created_by: user.email }, '-data', 5000);
+      data = await base44.entities.DashboardDiario.filter({ ano: anoNum }, '-data', 5000);
     } else {
-      data = await base44.entities.DashboardDiario.filter({ created_by: user.email }, '-data', 5000);
+      data = await base44.entities.DashboardDiario.list('-data', 5000);
     }
     console.log('Data found:', data.length, 'records');
     if (data.length > 0) {

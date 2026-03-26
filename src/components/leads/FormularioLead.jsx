@@ -507,99 +507,6 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 </div>
               </div>
 
-              {/* SAÚDE + SEGUROS */}
-              <div className="bg-gradient-to-br from-pink-400 to-pink-500 p-3 rounded-2xl shadow-lg border-2 border-pink-300">
-                <div className="flex items-center gap-2 mb-3">
-                  <Heart className="w-4 h-4 text-white" />
-                  <h3 className="font-black text-sm text-white">SAÚDE E SEGUROS</h3>
-                </div>
-                <div className="space-y-1.5">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-[11px]">Fuma:</Label>
-                      <Select value={formData.fuma} onValueChange={(v) => setFormData({...formData, fuma: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="SIM">SIM</SelectItem>
-                          <SelectItem value="NÃO">NÃO</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-[11px]">Moto:</Label>
-                      <Select value={formData.anda_moto} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="SIM">SIM</SelectItem>
-                          <SelectItem value="NÃO">NÃO</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">Plano de Saúde:</Label>
-                    <Select value={formData.plano_saude} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SIM">SIM</SelectItem>
-                        <SelectItem value="NÃO">NÃO</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {formData.plano_saude === "SIM" && (
-                    <div>
-                      <Label className="text-[11px]">Qual Plano:</Label>
-                      <Select value={formData.plano_saude_nome} onValueChange={(v) => setFormData({...formData, plano_saude_nome: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="UNIMED">UNIMED</SelectItem>
-                          <SelectItem value="BRADESCO">BRADESCO</SelectItem>
-                          <SelectItem value="IPASGO">IPASGO</SelectItem>
-                          <SelectItem value="HAPVIDA">HAPVIDA</SelectItem>
-                          <SelectItem value="OUTROS">OUTROS</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div>
-                    <Label className="text-[11px]">Valor Plano Saúde:</Label>
-                    <Input tabIndex={12} value={formData.valor_plano_saude} onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value)} className="h-8 text-xs" />
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">Seguro de Vida:</Label>
-                    <Select value={formData.seguro_vida} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SIM">SIM</SelectItem>
-                        <SelectItem value="NÃO">NÃO</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {formData.seguro_vida === "SIM" && (
-                    <div>
-                      <Label className="text-[11px]">Seguradora:</Label>
-                      <Select value={formData.seguro_vida_seguradora} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PRUDENTIAL">PRUDENTIAL</SelectItem>
-                          <SelectItem value="MONGERAL">MONGERAL</SelectItem>
-                          <SelectItem value="PORTO SEGURO">PORTO SEGURO</SelectItem>
-                          <SelectItem value="ITAÚ">ITAÚ</SelectItem>
-                          <SelectItem value="BRADESCO">BRADESCO</SelectItem>
-                          <SelectItem value="BANCO DO BRASIL">BANCO DO BRASIL</SelectItem>
-                          <SelectItem value="AZOS">AZOS</SelectItem>
-                          <SelectItem value="TOKIO MARINE">TOKIO MARINE</SelectItem>
-                          <SelectItem value="OUTROS">OUTROS</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div>
-                    <Label className="text-[11px]">Valor Seguro Vida:</Label>
-                    <Input tabIndex={15} value={formData.valor_seguro_vida} onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value)} className="h-8 text-xs" />
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* COLUNA 2 - Dados Pessoais + Agendamento + Observações */}
@@ -811,7 +718,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               </div>
             </div>
 
-            {/* COLUNA 4 - Patrimônio */}
+            {/* COLUNA 4 - Patrimônio + Saúde */}
             <div className="space-y-3">
               <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl shadow-lg border-2 border-emerald-400">
                 <div className="flex items-center gap-2 mb-3">
@@ -855,6 +762,100 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                         })()}
                       </span>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SAÚDE E SEGUROS */}
+              <div className="bg-gradient-to-br from-pink-400 to-pink-500 p-3 rounded-2xl shadow-lg border-2 border-pink-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <Heart className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">SAÚDE E SEGUROS</h3>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px]">Fuma:</Label>
+                      <Select value={formData.fuma} onValueChange={(v) => setFormData({...formData, fuma: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SIM">SIM</SelectItem>
+                          <SelectItem value="NÃO">NÃO</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Moto:</Label>
+                      <Select value={formData.anda_moto} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SIM">SIM</SelectItem>
+                          <SelectItem value="NÃO">NÃO</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Plano de Saúde:</Label>
+                    <Select value={formData.plano_saude} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SIM">SIM</SelectItem>
+                        <SelectItem value="NÃO">NÃO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.plano_saude === "SIM" && (
+                    <div>
+                      <Label className="text-[11px]">Qual Plano:</Label>
+                      <Select value={formData.plano_saude_nome} onValueChange={(v) => setFormData({...formData, plano_saude_nome: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UNIMED">UNIMED</SelectItem>
+                          <SelectItem value="BRADESCO">BRADESCO</SelectItem>
+                          <SelectItem value="IPASGO">IPASGO</SelectItem>
+                          <SelectItem value="HAPVIDA">HAPVIDA</SelectItem>
+                          <SelectItem value="OUTROS">OUTROS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-[11px]">Valor Plano Saúde:</Label>
+                    <Input value={formData.valor_plano_saude} onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Seguro de Vida:</Label>
+                    <Select value={formData.seguro_vida} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SIM">SIM</SelectItem>
+                        <SelectItem value="NÃO">NÃO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.seguro_vida === "SIM" && (
+                    <div>
+                      <Label className="text-[11px]">Seguradora:</Label>
+                      <Select value={formData.seguro_vida_seguradora} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PRUDENTIAL">PRUDENTIAL</SelectItem>
+                          <SelectItem value="MONGERAL">MONGERAL</SelectItem>
+                          <SelectItem value="PORTO SEGURO">PORTO SEGURO</SelectItem>
+                          <SelectItem value="ITAÚ">ITAÚ</SelectItem>
+                          <SelectItem value="BRADESCO">BRADESCO</SelectItem>
+                          <SelectItem value="BANCO DO BRASIL">BANCO DO BRASIL</SelectItem>
+                          <SelectItem value="AZOS">AZOS</SelectItem>
+                          <SelectItem value="TOKIO MARINE">TOKIO MARINE</SelectItem>
+                          <SelectItem value="OUTROS">OUTROS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-[11px]">Valor Seguro Vida:</Label>
+                    <Input value={formData.valor_seguro_vida} onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value)} className="h-8 text-xs" />
                   </div>
                 </div>
               </div>

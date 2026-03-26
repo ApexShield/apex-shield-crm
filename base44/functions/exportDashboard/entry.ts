@@ -84,11 +84,18 @@ Deno.serve(async (req) => {
     const { ano } = await req.json();
     if (!ano) return Response.json({ error: 'ano obrigatório' }, { status: 400 });
 
-    console.log('Fetching data for ano:', ano, 'user:', user.email);
-    const data = await base44.entities.DashboardDiario.filter({ ano, created_by: user.email });
+    const anoNum = (ano === "todos" || ano === null) ? null : parseInt(ano);
+    console.log('Fetching data for ano:', anoNum, 'user:', user.email);
+
+    let data;
+    if (anoNum) {
+      data = await base44.entities.DashboardDiario.filter({ ano: anoNum, created_by: user.email }, '-data', 5000);
+    } else {
+      data = await base44.entities.DashboardDiario.filter({ created_by: user.email }, '-data', 5000);
+    }
     console.log('Data found:', data.length, 'records');
     if (data.length > 0) {
-      console.log('Sample record:', JSON.stringify(data[0]));
+      console.log('Sample record keys:', Object.keys(data[0]), 'semana:', data[0].semana, 'dia_semana:', data[0].dia_semana);
     }
 
     const ws = {};
@@ -297,11 +304,11 @@ Deno.serve(async (req) => {
     ws["!cols"] = colWidths;
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, String(ano));
+    XLSX.utils.book_append_sheet(wb, ws, anoNum ? String(anoNum) : "Todos");
 
     const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
 
-    return Response.json({ base64: buf, filename: `relatorio_dashboard_${ano}.xlsx` });
+    return Response.json({ base64: buf, filename: `relatorio_dashboard_${anoNum || 'todos'}.xlsx` });
   } catch (error) {
     console.error('Export error:', error.message, error.stack);
     return Response.json({ error: error.message }, { status: 500 });

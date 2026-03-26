@@ -249,15 +249,9 @@ Deno.serve(async (req) => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, String(ano));
 
-  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
 
-  return new Response(buf, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename=relatorio_dashboard_${ano}.xlsx`
-    }
-  });
+  return Response.json({ base64: buf, filename: `relatorio_dashboard_${ano}.xlsx` });
   } catch (error) {
     console.error('Export error:', error.message, error.stack);
     return Response.json({ error: error.message }, { status: 500 });

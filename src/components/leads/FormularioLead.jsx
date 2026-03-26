@@ -617,25 +617,6 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-cyan-400 to-cyan-500 p-3 rounded-2xl shadow-lg border-2 border-cyan-300">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="w-4 h-4 text-white" />
-                  <h3 className="font-black text-sm text-white">OBSERVAÇÕES</h3>
-                </div>
-                <div className="space-y-1.5">
-                  {formData.observacoes && formData.observacoes.length > 0 && (
-                    <div className="bg-white p-1.5 rounded max-h-24 overflow-y-auto text-[11px] space-y-1">
-                      {formData.observacoes.map((obs, idx) => (
-                        <div key={idx} className="border-b pb-0.5">
-                          <div className="font-bold text-blue-600">{obs.data}</div>
-                          <div>{obs.texto}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <Textarea tabIndex={30} rows={2} value={formData.novaObservacao} onChange={(e) => setFormData({...formData, novaObservacao: e.target.value.toUpperCase()})} className="text-xs" placeholder="Nova observação..." />
-                </div>
-              </div>
             </div>
 
             {/* COLUNA 3 - Custos Fixos e Variáveis */}
@@ -862,116 +843,143 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
             </div>
           </div>
 
-          {/* INDICAÇÕES */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="mt-4 bg-gradient-to-br from-yellow-400 to-yellow-500 p-4 rounded-2xl shadow-lg border-2 border-yellow-300"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <UserPlus className="w-5 h-5 text-white" />
-              <h3 className="font-black text-base text-white">INDICAÇÕES</h3>
-            </div>
-            
-            <div className="mb-3">
-              <Label className="text-xs">Quantidade de Indicações:</Label>
-              <Select value={formData.num_indicacoes} onValueChange={handleIndicacoesChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* INDICAÇÕES + OBSERVAÇÕES lado a lado */}
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* INDICAÇÕES - 2/3 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="lg:col-span-2 bg-gradient-to-br from-yellow-400 to-yellow-500 p-3 rounded-2xl shadow-lg border-2 border-yellow-300"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <UserPlus className="w-4 h-4 text-white" />
+                <h3 className="font-black text-sm text-white">INDICAÇÕES</h3>
+              </div>
+              
+              <div className="mb-2">
+                <Label className="text-[11px]">Qtd Indicações:</Label>
+                <Select value={formData.num_indicacoes} onValueChange={handleIndicacoesChange}>
+                  <SelectTrigger className="w-24 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {parseInt(formData.num_indicacoes) > 0 && (
-              <>
-                <div className="grid grid-cols-4 gap-2 text-xs font-bold mb-2">
-                  <div>Nome:</div>
-                  <div>Profissão:</div>
-                  <div>Telefone:</div>
-                  <div>Conexão:</div>
-                </div>
+              {parseInt(formData.num_indicacoes) > 0 && (
+                <>
+                  <div className="grid grid-cols-4 gap-1.5 text-[10px] font-bold mb-1">
+                    <div>Nome:</div>
+                    <div>Profissão:</div>
+                    <div>Telefone:</div>
+                    <div>Conexão:</div>
+                  </div>
 
-                {formData.indicacoes.map((indicacao, idx) => (
-                  <div key={idx} className="grid grid-cols-4 gap-2 mb-2">
-                    <Input 
-                      className="h-8 text-xs"
-                      value={indicacao.nome} 
-                      onChange={(e) => {
-                        const newIndicacoes = [...formData.indicacoes];
-                        newIndicacoes[idx].nome = e.target.value.toUpperCase();
-                        setFormData({ ...formData, indicacoes: newIndicacoes });
-                      }}
-                    />
-                    <Input 
-                      className="h-8 text-xs"
-                      value={indicacao.profissao} 
-                      onChange={(e) => {
-                        const newIndicacoes = [...formData.indicacoes];
-                        newIndicacoes[idx].profissao = e.target.value.toUpperCase();
-                        setFormData({ ...formData, indicacoes: newIndicacoes });
-                      }}
-                    />
-                    <Input 
-                      className="h-8 text-xs"
-                      value={indicacao.telefone} 
-                      onChange={(e) => {
-                        const newIndicacoes = [...formData.indicacoes];
-                        newIndicacoes[idx].telefone = formatPhone(e.target.value);
-                        setFormData({ ...formData, indicacoes: newIndicacoes });
-                      }}
-                      maxLength={14}
-                    />
-                    <div className="flex gap-1">
+                  {formData.indicacoes.map((indicacao, idx) => (
+                    <div key={idx} className="grid grid-cols-4 gap-1.5 mb-1.5">
                       <Input 
-                        className="h-8 text-xs flex-1"
-                        value={indicacao.conexao} 
+                        className="h-7 text-xs"
+                        value={indicacao.nome} 
                         onChange={(e) => {
                           const newIndicacoes = [...formData.indicacoes];
-                          newIndicacoes[idx].conexao = e.target.value.toUpperCase();
+                          newIndicacoes[idx].nome = e.target.value.toUpperCase();
                           setFormData({ ...formData, indicacoes: newIndicacoes });
                         }}
                       />
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="h-8 px-2 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                        onClick={async () => {
-                          if (!indicacao.nome || !indicacao.telefone) {
-                            alert('Preencha o nome e telefone da indicação antes de criar o lead');
-                            return;
-                          }
-                          
-                          const nomeNovoLead = `${indicacao.nome} IND ${formData.nome}`;
-                          const telefoneNovoLead = indicacao.telefone;
-                          
-                          try {
-                            await base44.entities.Cliente.create({
-                              nome: nomeNovoLead,
-                              telefone: telefoneNovoLead,
-                              status: "Novo",
-                              data_cadastro: new Date().toISOString().split('T')[0]
-                            });
-                            alert('✅ Lead criado com sucesso!');
-                          } catch (error) {
-                            console.error('Erro ao criar lead:', error);
-                            alert('❌ Erro ao criar lead: ' + error.message);
-                          }
+                      <Input 
+                        className="h-7 text-xs"
+                        value={indicacao.profissao} 
+                        onChange={(e) => {
+                          const newIndicacoes = [...formData.indicacoes];
+                          newIndicacoes[idx].profissao = e.target.value.toUpperCase();
+                          setFormData({ ...formData, indicacoes: newIndicacoes });
                         }}
-                      >
-                        <UserPlus className="w-3 h-3" />
-                      </Button>
+                      />
+                      <Input 
+                        className="h-7 text-xs"
+                        value={indicacao.telefone} 
+                        onChange={(e) => {
+                          const newIndicacoes = [...formData.indicacoes];
+                          newIndicacoes[idx].telefone = formatPhone(e.target.value);
+                          setFormData({ ...formData, indicacoes: newIndicacoes });
+                        }}
+                        maxLength={14}
+                      />
+                      <div className="flex gap-1">
+                        <Input 
+                          className="h-7 text-xs flex-1"
+                          value={indicacao.conexao} 
+                          onChange={(e) => {
+                            const newIndicacoes = [...formData.indicacoes];
+                            newIndicacoes[idx].conexao = e.target.value.toUpperCase();
+                            setFormData({ ...formData, indicacoes: newIndicacoes });
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-7 px-1.5 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                          onClick={async () => {
+                            if (!indicacao.nome || !indicacao.telefone) {
+                              alert('Preencha o nome e telefone da indicação antes de criar o lead');
+                              return;
+                            }
+                            const nomeNovoLead = `${indicacao.nome} IND ${formData.nome}`;
+                            const telefoneNovoLead = indicacao.telefone;
+                            try {
+                              await base44.entities.Cliente.create({
+                                nome: nomeNovoLead,
+                                telefone: telefoneNovoLead,
+                                status: "Novo",
+                                data_cadastro: new Date().toISOString().split('T')[0]
+                              });
+                              alert('✅ Lead criado com sucesso!');
+                            } catch (error) {
+                              console.error('Erro ao criar lead:', error);
+                              alert('❌ Erro ao criar lead: ' + error.message);
+                            }
+                          }}
+                        >
+                          <UserPlus className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
+                  ))}
+                </>
+              )}
+            </motion.div>
+
+            {/* OBSERVAÇÕES - 1/3 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.47 }}
+              className="bg-gradient-to-br from-cyan-400 to-cyan-500 p-3 rounded-2xl shadow-lg border-2 border-cyan-300 flex flex-col"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-white" />
+                <h3 className="font-black text-sm text-white">OBSERVAÇÕES</h3>
+              </div>
+              <div className="flex-1 flex flex-col space-y-1.5">
+                {formData.observacoes && formData.observacoes.length > 0 && (
+                  <div className="bg-white p-1.5 rounded max-h-28 overflow-y-auto text-[11px] space-y-1">
+                    {formData.observacoes.map((obs, idx) => (
+                      <div key={idx} className="border-b pb-0.5">
+                        <div className="font-bold text-blue-600">{obs.data}</div>
+                        <div>{obs.texto}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </>
-            )}
-          </motion.div>
+                )}
+                <Textarea tabIndex={30} value={formData.novaObservacao} onChange={(e) => setFormData({...formData, novaObservacao: e.target.value.toUpperCase()})} className="text-xs flex-1 min-h-[80px]" placeholder="Nova observação..." />
+              </div>
+            </motion.div>
+          </div>
 
           {/* BOTÕES */}
           <motion.div 

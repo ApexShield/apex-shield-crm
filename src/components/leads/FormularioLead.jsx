@@ -424,30 +424,23 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-x-auto">
-            {/* COLUNA 1 */}
-            <div className="space-y-4">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-gradient-to-br from-orange-400 to-orange-500 p-4 rounded-2xl shadow-lg border-2 border-orange-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <User className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">CADASTRO DE LEAD</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* COLUNA 1 - Cadastro + Contato */}
+            <div className="space-y-3">
+              <div className="bg-gradient-to-br from-orange-400 to-orange-500 p-3 rounded-2xl shadow-lg border-2 border-orange-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">CADASTRO DE LEAD</h3>
                 </div>
-                
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div>
-                    <Label className="text-xs">Código</Label>
-                    <Input tabIndex={1} value={formData.codigo} disabled className="bg-gray-100" />
+                    <Label className="text-[11px]">Código</Label>
+                    <Input tabIndex={1} value={formData.codigo} disabled className="bg-gray-100 h-8 text-xs" />
                   </div>
-                  
                   <div>
-                    <Label className="text-xs">Status:</Label>
+                    <Label className="text-[11px]">Status:</Label>
                     <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
-                      <SelectTrigger tabIndex={2}><SelectValue /></SelectTrigger>
+                      <SelectTrigger tabIndex={2} className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Novo">Novo</SelectItem>
                         <SelectItem value="AB Fone">AB Fone</SelectItem>
@@ -461,182 +454,103 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   <div>
-                    <Label className="text-xs">Data de:</Label>
-                    <Input tabIndex={3} type="date" value={formData.data_cadastro} onChange={(e) => setFormData({...formData, data_cadastro: e.target.value})} />
+                    <Label className="text-[11px]">Data de Cadastro:</Label>
+                    <Input tabIndex={3} type="date" value={formData.data_cadastro} onChange={(e) => setFormData({...formData, data_cadastro: e.target.value})} className="h-8 text-xs" />
                   </div>
-                  
                   <div>
-                    <Label className="text-xs">Nome Completo:</Label>
-                    <Input 
-                      tabIndex={4} 
-                      autoFocus={!lead}
-                      value={formData.nome} 
-                      onChange={(e) => handleUpperCase('nome', e.target.value)} 
-                    />
+                    <Label className="text-[11px]">Nome Completo:</Label>
+                    <Input tabIndex={4} autoFocus={!lead} value={formData.nome} onChange={(e) => handleUpperCase('nome', e.target.value)} className="h-8 text-xs" />
                   </div>
-
                   <div>
-                    <Label className="text-xs">CPF:</Label>
-                    <Input 
-                      tabIndex={4.5}
-                      value={formData.cpf} 
-                      onChange={(e) => handleCPFChange(e.target.value)} 
-                      maxLength={14}
-                      placeholder="000.000.000-00"
-                    />
+                    <Label className="text-[11px]">CPF:</Label>
+                    <Input tabIndex={4.5} value={formData.cpf} onChange={(e) => handleCPFChange(e.target.value)} maxLength={14} placeholder="000.000.000-00" className="h-8 text-xs" />
                   </div>
-                  
                   <div>
-                    <Label className="text-xs">Filhos:</Label>
+                    <Label className="text-[11px]">Telefone:</Label>
+                    <Input tabIndex={6} value={formData.telefone} onChange={(e) => handlePhoneChange('telefone', e.target.value)} maxLength={15} className="h-8 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">E-mail:</Label>
+                    <Input tabIndex={7} type="email" value={formData.email} onChange={(e) => handleUpperCase('email', e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Empresa:</Label>
+                    <Input tabIndex={8} value={formData.empresa} onChange={(e) => handleUpperCase('empresa', e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Cargo:</Label>
+                    <Input tabIndex={9} value={formData.cargo} onChange={(e) => handleUpperCase('cargo', e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Filhos:</Label>
                     <Select value={formData.filhos} onValueChange={handleFilhosChange}>
-                      <SelectTrigger tabIndex={5}><SelectValue /></SelectTrigger>
+                      <SelectTrigger tabIndex={5} className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">0</SelectItem>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
+                        {[0,1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
-
                   {numFilhos > 0 && (
-                    <div className="border-t pt-2 space-y-2">
-                      <Label className="text-xs font-bold">Informações dos Filhos:</Label>
+                    <div className="border-t pt-1.5 space-y-1.5">
+                      <Label className="text-[11px] font-bold">Info Filhos:</Label>
                       {formData.filhos_info.map((filho, idx) => (
                         <div key={idx} className="space-y-1 border-l-2 border-orange-400 pl-2">
-                          <Label className="text-xs">Filho {idx + 1} - Nome:</Label>
-                          <Input
-                            value={filho.nome}
-                            onChange={(e) => {
-                              const newInfo = [...formData.filhos_info];
-                              newInfo[idx] = { ...newInfo[idx], nome: e.target.value.toUpperCase() };
-                              setFormData({ ...formData, filhos_info: newInfo });
-                            }}
-                          />
-                          <Label className="text-xs">Data de Nascimento:</Label>
-                          <Input
-                            type="date"
-                            value={filho.data_nascimento || ""}
-                            onChange={(e) => {
-                              const newInfo = [...formData.filhos_info];
-                              newInfo[idx] = { ...newInfo[idx], data_nascimento: e.target.value };
-                              setFormData({ ...formData, filhos_info: newInfo });
-                            }}
-                            max={new Date().toISOString().split('T')[0]}
-                          />
-                          {filho.data_nascimento && (
-                            <div className="text-xs font-semibold bg-white/50 rounded px-2 py-1">
-                              Idade atual: {calculateAge(filho.data_nascimento)} anos
-                            </div>
-                          )}
+                          <Label className="text-[11px]">Filho {idx + 1}:</Label>
+                          <Input value={filho.nome} onChange={(e) => { const n = [...formData.filhos_info]; n[idx] = { ...n[idx], nome: e.target.value.toUpperCase() }; setFormData({ ...formData, filhos_info: n }); }} className="h-7 text-xs" />
+                          <Input type="date" value={filho.data_nascimento || ""} onChange={(e) => { const n = [...formData.filhos_info]; n[idx] = { ...n[idx], data_nascimento: e.target.value }; setFormData({ ...formData, filhos_info: n }); }} max={new Date().toISOString().split('T')[0]} className="h-7 text-xs" />
+                          {filho.data_nascimento && <div className="text-[10px] font-semibold bg-white/50 rounded px-1 py-0.5">Idade: {calculateAge(filho.data_nascimento)} anos</div>}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-gradient-to-br from-pink-400 to-pink-500 p-4 rounded-2xl shadow-lg border-2 border-pink-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Heart className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">DADOS DE SAÚDE</h3>
+              {/* SAÚDE + SEGUROS */}
+              <div className="bg-gradient-to-br from-pink-400 to-pink-500 p-3 rounded-2xl shadow-lg border-2 border-pink-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <Heart className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">SAÚDE E SEGUROS</h3>
                 </div>
-                
-                <div className="space-y-2">
-                  <div>
-                    <Label className="text-xs">Fuma:</Label>
-                    <Select value={formData.fuma} onValueChange={(v) => setFormData({...formData, fuma: v})}>
-                      <SelectTrigger tabIndex={27}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SIM">SIM</SelectItem>
-                        <SelectItem value="NÃO">NÃO</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px]">Fuma:</Label>
+                      <Select value={formData.fuma} onValueChange={(v) => setFormData({...formData, fuma: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SIM">SIM</SelectItem>
+                          <SelectItem value="NÃO">NÃO</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Moto:</Label>
+                      <Select value={formData.anda_moto} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SIM">SIM</SelectItem>
+                          <SelectItem value="NÃO">NÃO</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-
                   <div>
-                    <Label className="text-xs">Anda de Moto:</Label>
-                    <Select value={formData.anda_moto} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
-                      <SelectTrigger tabIndex={28}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SIM">SIM</SelectItem>
-                        <SelectItem value="NÃO">NÃO</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* COLUNA 2 */}
-            <div className="space-y-4">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-blue-400 to-blue-500 p-4 rounded-2xl shadow-lg border-2 border-blue-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Phone className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">INFORMAÇÕES DE CONTATO</h3>
-                </div>
-                
-                <div className="space-y-2">
-                  <div>
-                    <Label className="text-xs">Telefone:</Label>
-                    <Input 
-                      tabIndex={6}
-                      value={formData.telefone} 
-                      onChange={(e) => handlePhoneChange('telefone', e.target.value)}
-                      maxLength={15}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">E-mail:</Label>
-                    <Input 
-                      tabIndex={7}
-                      type="email" 
-                      value={formData.email} 
-                      onChange={(e) => handleUpperCase('email', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Empresa:</Label>
-                    <Input tabIndex={8} value={formData.empresa} onChange={(e) => handleUpperCase('empresa', e.target.value)} />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Cargo:</Label>
-                    <Input tabIndex={9} value={formData.cargo} onChange={(e) => handleUpperCase('cargo', e.target.value)} />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Plano de Saúde:</Label>
+                    <Label className="text-[11px]">Plano de Saúde:</Label>
                     <Select value={formData.plano_saude} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
-                      <SelectTrigger tabIndex={10}><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
                         <SelectItem value="NÃO">NÃO</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  
                   {formData.plano_saude === "SIM" && (
                     <div>
-                      <Label className="text-xs">Qual Plano:</Label>
+                      <Label className="text-[11px]">Qual Plano:</Label>
                       <Select value={formData.plano_saude_nome} onValueChange={(v) => setFormData({...formData, plano_saude_nome: v})}>
-                        <SelectTrigger tabIndex={11}><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="UNIMED">UNIMED</SelectItem>
                           <SelectItem value="BRADESCO">BRADESCO</SelectItem>
@@ -647,32 +561,25 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       </Select>
                     </div>
                   )}
-                  
                   <div>
-                    <Label className="text-xs">Valor Plano de Saúde:</Label>
-                    <Input 
-                      tabIndex={12}
-                      value={formData.valor_plano_saude} 
-                      onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value)}
-                    />
+                    <Label className="text-[11px]">Valor Plano Saúde:</Label>
+                    <Input tabIndex={12} value={formData.valor_plano_saude} onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value)} className="h-8 text-xs" />
                   </div>
-
                   <div>
-                    <Label className="text-xs">Seguro de Vida:</Label>
+                    <Label className="text-[11px]">Seguro de Vida:</Label>
                     <Select value={formData.seguro_vida} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
-                      <SelectTrigger tabIndex={13}><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
                         <SelectItem value="NÃO">NÃO</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
                   {formData.seguro_vida === "SIM" && (
                     <div>
-                      <Label className="text-xs">Qual Seguradora:</Label>
+                      <Label className="text-[11px]">Seguradora:</Label>
                       <Select value={formData.seguro_vida_seguradora} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
-                        <SelectTrigger tabIndex={14}><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="PRUDENTIAL">PRUDENTIAL</SelectItem>
                           <SelectItem value="MONGERAL">MONGERAL</SelectItem>
@@ -687,238 +594,40 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       </Select>
                     </div>
                   )}
-
                   <div>
-                    <Label className="text-xs">Valor do Seguro de Vida:</Label>
-                    <Input 
-                      tabIndex={15}
-                      value={formData.valor_seguro_vida} 
-                      onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value)}
-                    />
-                  </div>
-                  </div>
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 }}
-                className="bg-gradient-to-br from-green-400 to-green-500 p-4 rounded-2xl shadow-lg border-2 border-green-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <DollarSign className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">DADOS COMERCIAIS</h3>
-                </div>
-                
-                <div className="space-y-2">
-                  <div>
-                    <Label className="text-xs">Fonte de Prospecção:</Label>
-                    <Input tabIndex={16} value={formData.fonte_prospeccao} onChange={(e) => handleUpperCase('fonte_prospeccao', e.target.value)} />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Renda Mensal Estimada:</Label>
-                    <Input 
-                      tabIndex={17}
-                      value={formData.renda} 
-                      onChange={(e) => handleCurrencyChange('renda', e.target.value)}
-                    />
-                  </div>
-
-                  {/* CUSTOS FIXOS */}
-                  <div className="border-t border-green-300/50 pt-2 mt-2">
-                    <Label className="text-xs font-black text-white">💰 CUSTOS FIXOS MENSAIS:</Label>
-                  </div>
-                  {[
-                    { field: 'custo_agua', label: 'Água' },
-                    { field: 'custo_energia', label: 'Energia' },
-                    { field: 'custo_internet', label: 'Internet' },
-                    { field: 'custo_gas', label: 'Gás' },
-                    { field: 'custo_aluguel', label: 'Aluguel/Financiamento' },
-                    { field: 'custo_escola', label: 'Escola dos Filhos' },
-                    { field: 'custo_plano_saude_fixo', label: 'Plano de Saúde' },
-                    { field: 'custo_transporte', label: 'Transporte/Combustível' },
-                    { field: 'custo_alimentacao', label: 'Alimentação' },
-                    { field: 'custo_outros_fixos', label: 'Outros Fixos' },
-                  ].map(item => (
-                    <div key={item.field}>
-                      <Label className="text-xs">{item.label}:</Label>
-                      <Input 
-                        value={formData[item.field]} 
-                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
-                        placeholder="R$ 0,00"
-                      />
-                    </div>
-                  ))}
-                  <div className="bg-white/30 rounded-lg p-2">
-                    <Label className="text-xs font-bold">Total Custos Fixos:</Label>
-                    <div className="text-sm font-black text-green-900">
-                      {(() => {
-                        const fields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos'];
-                        const total = fields.reduce((sum, f) => {
-                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-                          return sum + val;
-                        }, 0);
-                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* CUSTOS VARIÁVEIS */}
-                  <div className="border-t border-green-300/50 pt-2 mt-2">
-                    <Label className="text-xs font-black text-white">🎯 CUSTOS VARIÁVEIS (Supérfluos):</Label>
-                  </div>
-                  {[
-                    { field: 'custo_lazer', label: 'Lazer' },
-                    { field: 'custo_hobbies', label: 'Hobbies' },
-                    { field: 'custo_vestuario', label: 'Vestuário' },
-                    { field: 'custo_viagens', label: 'Viagens' },
-                    { field: 'custo_outros_variaveis', label: 'Outros Variáveis' },
-                  ].map(item => (
-                    <div key={item.field}>
-                      <Label className="text-xs">{item.label}:</Label>
-                      <Input 
-                        value={formData[item.field]} 
-                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
-                        placeholder="R$ 0,00"
-                      />
-                    </div>
-                  ))}
-                  <div className="bg-white/30 rounded-lg p-2">
-                    <Label className="text-xs font-bold">Total Custos Variáveis:</Label>
-                    <div className="text-sm font-black text-green-900">
-                      {(() => {
-                        const fields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
-                        const total = fields.reduce((sum, f) => {
-                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-                          return sum + val;
-                        }, 0);
-                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* TOTAL GERAL DE CUSTOS */}
-                  <div className="bg-green-800/30 rounded-lg p-2">
-                    <Label className="text-xs font-bold text-white">CUSTO MENSAL TOTAL (Fixo + Variável):</Label>
-                    <div className="text-base font-black text-white">
-                      {(() => {
-                        const allFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos','custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
-                        const total = allFields.reduce((sum, f) => {
-                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-                          return sum + val;
-                        }, 0);
-                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                      })()}
-                    </div>
+                    <Label className="text-[11px]">Valor Seguro Vida:</Label>
+                    <Input tabIndex={15} value={formData.valor_seguro_vida} onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value)} className="h-8 text-xs" />
                   </div>
                 </div>
-              </motion.div>
-
-              {/* PATRIMÔNIO DETALHADO */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.27 }}
-                className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-2xl shadow-lg border-2 border-emerald-400"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Briefcase className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">PATRIMÔNIO</h3>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="border-b border-emerald-400/50 pb-1 mb-1">
-                    <Label className="text-xs font-black text-white">🏠 PATRIMÔNIO FÍSICO:</Label>
-                  </div>
-                  {[
-                    { field: 'patrimonio_imoveis', label: 'Imóveis (Casa, Apto, Lotes)' },
-                    { field: 'patrimonio_veiculos', label: 'Veículos' },
-                    { field: 'patrimonio_outros', label: 'Outros Bens Físicos' },
-                  ].map(item => (
-                    <div key={item.field}>
-                      <Label className="text-xs">{item.label}:</Label>
-                      <Input 
-                        value={formData[item.field]} 
-                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
-                        placeholder="R$ 0,00"
-                      />
-                    </div>
-                  ))}
-
-                  <div className="border-t border-emerald-400/50 pt-2 mt-2">
-                    <Label className="text-xs font-black text-white">📊 APLICAÇÕES FINANCEIRAS:</Label>
-                  </div>
-                  {[
-                    { field: 'patrimonio_investimentos', label: 'Investimentos/Aplicações' },
-                    { field: 'patrimonio_poupanca', label: 'Poupança' },
-                    { field: 'patrimonio_previdencia', label: 'Previdência Privada' },
-                  ].map(item => (
-                    <div key={item.field}>
-                      <Label className="text-xs">{item.label}:</Label>
-                      <Input 
-                        value={formData[item.field]} 
-                        onChange={(e) => handleCurrencyChange(item.field, e.target.value)}
-                        placeholder="R$ 0,00"
-                      />
-                    </div>
-                  ))}
-
-                  <div className="bg-emerald-800/30 rounded-lg p-2">
-                    <Label className="text-xs font-bold text-white">PATRIMÔNIO TOTAL:</Label>
-                    <div className="text-base font-black text-white">
-                      {(() => {
-                        const fields = ['patrimonio_imoveis','patrimonio_veiculos','patrimonio_outros','patrimonio_investimentos','patrimonio_poupanca','patrimonio_previdencia'];
-                        const total = fields.reduce((sum, f) => {
-                          const val = parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-                          return sum + val;
-                        }, 0);
-                        return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+              </div>
             </div>
 
-            {/* COLUNA 3 */}
-            <div className="space-y-4">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-gradient-to-br from-purple-400 to-purple-500 p-4 rounded-2xl shadow-lg border-2 border-purple-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">DADOS PESSOAIS</h3>
+            {/* COLUNA 2 - Dados Pessoais + Agendamento + Observações */}
+            <div className="space-y-3">
+              <div className="bg-gradient-to-br from-purple-400 to-purple-500 p-3 rounded-2xl shadow-lg border-2 border-purple-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">DADOS PESSOAIS</h3>
                 </div>
-                
-                <div className="space-y-2">
-                  <div>
-                    <Label className="text-xs">Data de Nascimento:</Label>
-                    <Input 
-                      tabIndex={20}
-                      type="date" 
-                      value={formData.data_nascimento} 
-                      onChange={(e) => handleDataNascimentoChange(e.target.value)}
-                    />
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px]">Nascimento:</Label>
+                      <Input tabIndex={20} type="date" value={formData.data_nascimento} onChange={(e) => handleDataNascimentoChange(e.target.value)} className="h-8 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Idade:</Label>
+                      <Input value={formData.idade} disabled className="bg-gray-100 h-8 text-xs" />
+                    </div>
                   </div>
-
                   <div>
-                    <Label className="text-xs">Idade:</Label>
-                    <Input tabIndex={21} value={formData.idade} disabled className="bg-gray-100" />
+                    <Label className="text-[11px]">Profissão:</Label>
+                    <Input tabIndex={22} value={formData.profissao} onChange={(e) => handleUpperCase('profissao', e.target.value)} className="h-8 text-xs" />
                   </div>
-
                   <div>
-                    <Label className="text-xs">Profissão:</Label>
-                    <Input tabIndex={22} value={formData.profissao} onChange={(e) => handleUpperCase('profissao', e.target.value)} />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Estado Civil:</Label>
+                    <Label className="text-[11px]">Estado Civil:</Label>
                     <Select value={formData.estado_civil} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento, data_casamento: v !== "CASADO" ? "" : formData.data_casamento})}>
-                      <SelectTrigger tabIndex={23}><SelectValue /></SelectTrigger>
+                      <SelectTrigger tabIndex={23} className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SOLTEIRO">SOLTEIRO</SelectItem>
                         <SelectItem value="CASADO">CASADO</SelectItem>
@@ -927,13 +636,12 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       </SelectContent>
                     </Select>
                   </div>
-
                   {formData.estado_civil === "CASADO" && (
                     <>
                       <div>
-                        <Label className="text-xs">Regime de Casamento:</Label>
+                        <Label className="text-[11px]">Regime:</Label>
                         <Select value={formData.regime_casamento} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
-                          <SelectTrigger tabIndex={24}><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="COMUNHÃO TOTAL">COMUNHÃO TOTAL</SelectItem>
                             <SelectItem value="COMUNHÃO PARCIAL">COMUNHÃO PARCIAL</SelectItem>
@@ -942,132 +650,214 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-xs">Data de Casamento:</Label>
-                        <Input 
-                          type="date" 
-                          value={formData.data_casamento || ""} 
-                          onChange={(e) => setFormData({...formData, data_casamento: e.target.value})}
-                          max={new Date().toISOString().split('T')[0]}
-                        />
+                        <Label className="text-[11px]">Data Casamento:</Label>
+                        <Input type="date" value={formData.data_casamento || ""} onChange={(e) => setFormData({...formData, data_casamento: e.target.value})} max={new Date().toISOString().split('T')[0]} className="h-8 text-xs" />
                       </div>
                     </>
                   )}
-                  
-                  <div>
-                    <Label className="text-xs">Altura (cm):</Label>
-                    <Input 
-                      tabIndex={25} 
-                      value={formData.altura} 
-                      onChange={(e) => handleAlturaOrPesoChange('altura', e.target.value)}
-                    />
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-[11px]">Altura (cm):</Label>
+                      <Input tabIndex={25} value={formData.altura} onChange={(e) => handleAlturaOrPesoChange('altura', e.target.value)} className="h-8 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Peso (kg):</Label>
+                      <Input tabIndex={26} value={formData.peso} onChange={(e) => handleAlturaOrPesoChange('peso', e.target.value)} className="h-8 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">IMC:</Label>
+                      <Input value={formData.imc} disabled className="bg-gray-100 font-bold h-8 text-xs" />
+                    </div>
                   </div>
-
                   <div>
-                    <Label className="text-xs">Peso (kg):</Label>
-                    <Input 
-                      tabIndex={26} 
-                      value={formData.peso} 
-                      onChange={(e) => handleAlturaOrPesoChange('peso', e.target.value)}
-                    />
+                    <Label className="text-[11px]">Fonte Prospecção:</Label>
+                    <Input tabIndex={16} value={formData.fonte_prospeccao} onChange={(e) => handleUpperCase('fonte_prospeccao', e.target.value)} className="h-8 text-xs" />
                   </div>
-                  
                   <div>
-                    <Label className="text-xs">IMC:</Label>
-                    <Input 
-                      value={formData.imc} 
-                      disabled 
-                      className="bg-gray-100 font-bold"
-                    />
+                    <Label className="text-[11px]">Renda Mensal:</Label>
+                    <Input tabIndex={17} value={formData.renda} onChange={(e) => handleCurrencyChange('renda', e.target.value)} className="h-8 text-xs" />
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 }}
-                className="bg-gradient-to-br from-red-400 to-red-500 p-4 rounded-2xl shadow-lg border-2 border-red-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">AGENDAMENTO</h3>
+              <div className="bg-gradient-to-br from-red-400 to-red-500 p-3 rounded-2xl shadow-lg border-2 border-red-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">AGENDAMENTO</h3>
                 </div>
-                
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div>
-                    <Label className="text-xs">Data de Contato:</Label>
-                    <Input tabIndex={29} type="date" value={formData.data_contato} onChange={(e) => setFormData({...formData, data_contato: e.target.value})} />
+                    <Label className="text-[11px]">Data de Contato:</Label>
+                    <Input tabIndex={29} type="date" value={formData.data_contato} onChange={(e) => setFormData({...formData, data_contato: e.target.value})} className="h-8 text-xs" />
                   </div>
-                  
                   <div>
-                    <Label className="text-xs">Agendar Visita:</Label>
+                    <Label className="text-[11px]">Agendar Visita:</Label>
                     {formData.agendar_visita ? (
-                      <div className="space-y-2">
-                        <p className="text-sm text-blue-600 font-bold">
-                          ✓ Visita agendada para: {(() => {
-                            const d = new Date(formData.agendar_visita);
-                            if (isNaN(d.getTime())) return formData.agendar_visita;
-                            return format(d, "dd/MM/yyyy 'Horário' HH:mm");
-                          })()}
+                      <div className="space-y-1">
+                        <p className="text-xs text-blue-600 font-bold">
+                          ✓ {(() => { const d = new Date(formData.agendar_visita); if (isNaN(d.getTime())) return formData.agendar_visita; return format(d, "dd/MM/yyyy HH:mm"); })()}
                         </p>
-                        <Button
-                          type="button"
-                          onClick={() => setShowAgendarVisita(true)}
-                          className="w-full justify-start"
-                          variant="outline"
-                        >
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Reagendar Visita
+                        <Button type="button" onClick={() => setShowAgendarVisita(true)} className="w-full h-8 text-xs" variant="outline">
+                          <Calendar className="w-3 h-3 mr-1" /> Reagendar
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        type="button"
-                        onClick={() => setShowAgendarVisita(true)}
-                        className="w-full justify-start bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-                        style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}
-                      >
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Agendar Visita
+                      <Button type="button" onClick={() => setShowAgendarVisita(true)} className="w-full h-8 text-xs" style={{ background: 'linear-gradient(135deg, #0096D8, #AFCB3A)' }}>
+                        <Calendar className="w-3 h-3 mr-1" /> Agendar Visita
                       </Button>
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-gradient-to-br from-cyan-400 to-cyan-500 p-4 rounded-2xl shadow-lg border-2 border-cyan-300"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-white" />
-                  <h3 className="font-black text-base text-white">OBSERVAÇÕES</h3>
+              <div className="bg-gradient-to-br from-cyan-400 to-cyan-500 p-3 rounded-2xl shadow-lg border-2 border-cyan-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">OBSERVAÇÕES</h3>
                 </div>
-                
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {formData.observacoes && formData.observacoes.length > 0 && (
-                    <div className="bg-white p-2 rounded max-h-32 overflow-y-auto text-xs space-y-1">
+                    <div className="bg-white p-1.5 rounded max-h-24 overflow-y-auto text-[11px] space-y-1">
                       {formData.observacoes.map((obs, idx) => (
-                        <div key={idx} className="border-b pb-1">
+                        <div key={idx} className="border-b pb-0.5">
                           <div className="font-bold text-blue-600">{obs.data}</div>
                           <div>{obs.texto}</div>
                         </div>
                       ))}
                     </div>
                   )}
-                  
-                  <Textarea 
-                    tabIndex={30}
-                    rows={3}
-                    value={formData.novaObservacao} 
-                    onChange={(e) => setFormData({...formData, novaObservacao: e.target.value.toUpperCase()})}
-                    className="text-sm"
-                    placeholder="Nova observação..."
-                  />
+                  <Textarea tabIndex={30} rows={2} value={formData.novaObservacao} onChange={(e) => setFormData({...formData, novaObservacao: e.target.value.toUpperCase()})} className="text-xs" placeholder="Nova observação..." />
                 </div>
-              </motion.div>
+              </div>
+            </div>
+
+            {/* COLUNA 3 - Custos Fixos e Variáveis */}
+            <div className="space-y-3">
+              <div className="bg-gradient-to-br from-green-400 to-green-500 p-3 rounded-2xl shadow-lg border-2 border-green-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <DollarSign className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">CUSTOS MENSAIS</h3>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-black text-white">💰 FIXOS:</Label>
+                  {[
+                    { field: 'custo_agua', label: 'Água' },
+                    { field: 'custo_energia', label: 'Energia' },
+                    { field: 'custo_internet', label: 'Internet' },
+                    { field: 'custo_gas', label: 'Gás' },
+                    { field: 'custo_aluguel', label: 'Aluguel/Financiam.' },
+                    { field: 'custo_escola', label: 'Escola Filhos' },
+                    { field: 'custo_plano_saude_fixo', label: 'Plano Saúde' },
+                    { field: 'custo_transporte', label: 'Transporte/Comb.' },
+                    { field: 'custo_alimentacao', label: 'Alimentação' },
+                    { field: 'custo_outros_fixos', label: 'Outros Fixos' },
+                  ].map(item => (
+                    <div key={item.field} className="flex items-center gap-1">
+                      <Label className="text-[10px] w-24 flex-shrink-0 text-right">{item.label}:</Label>
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                    </div>
+                  ))}
+                  <div className="bg-white/30 rounded-lg px-2 py-1">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[11px] font-bold">Total Fixos:</Label>
+                      <span className="text-xs font-black text-green-900">
+                        {(() => {
+                          const fields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos'];
+                          return fields.reduce((s, f) => s + (parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-green-300/50 pt-1.5 mt-1">
+                    <Label className="text-[11px] font-black text-white">🎯 VARIÁVEIS:</Label>
+                  </div>
+                  {[
+                    { field: 'custo_lazer', label: 'Lazer' },
+                    { field: 'custo_hobbies', label: 'Hobbies' },
+                    { field: 'custo_vestuario', label: 'Vestuário' },
+                    { field: 'custo_viagens', label: 'Viagens' },
+                    { field: 'custo_outros_variaveis', label: 'Outros Var.' },
+                  ].map(item => (
+                    <div key={item.field} className="flex items-center gap-1">
+                      <Label className="text-[10px] w-24 flex-shrink-0 text-right">{item.label}:</Label>
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                    </div>
+                  ))}
+                  <div className="bg-white/30 rounded-lg px-2 py-1">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[11px] font-bold">Total Variáveis:</Label>
+                      <span className="text-xs font-black text-green-900">
+                        {(() => {
+                          const fields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+                          return fields.reduce((s, f) => s + (parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-800/30 rounded-lg px-2 py-1.5">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[11px] font-bold text-white">TOTAL MENSAL:</Label>
+                      <span className="text-sm font-black text-white">
+                        {(() => {
+                          const all = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos','custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+                          return all.reduce((s, f) => s + (parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* COLUNA 4 - Patrimônio */}
+            <div className="space-y-3">
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl shadow-lg border-2 border-emerald-400">
+                <div className="flex items-center gap-2 mb-3">
+                  <Briefcase className="w-4 h-4 text-white" />
+                  <h3 className="font-black text-sm text-white">PATRIMÔNIO</h3>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-black text-white">🏠 FÍSICO:</Label>
+                  {[
+                    { field: 'patrimonio_imoveis', label: 'Imóveis' },
+                    { field: 'patrimonio_veiculos', label: 'Veículos' },
+                    { field: 'patrimonio_outros', label: 'Outros Bens' },
+                  ].map(item => (
+                    <div key={item.field} className="flex items-center gap-1">
+                      <Label className="text-[10px] w-20 flex-shrink-0 text-right">{item.label}:</Label>
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                    </div>
+                  ))}
+
+                  <div className="border-t border-emerald-400/50 pt-1.5 mt-1">
+                    <Label className="text-[11px] font-black text-white">📊 APLICAÇÕES:</Label>
+                  </div>
+                  {[
+                    { field: 'patrimonio_investimentos', label: 'Investimentos' },
+                    { field: 'patrimonio_poupanca', label: 'Poupança' },
+                    { field: 'patrimonio_previdencia', label: 'Previdência' },
+                  ].map(item => (
+                    <div key={item.field} className="flex items-center gap-1">
+                      <Label className="text-[10px] w-20 flex-shrink-0 text-right">{item.label}:</Label>
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                    </div>
+                  ))}
+
+                  <div className="bg-emerald-800/30 rounded-lg px-2 py-1.5">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[11px] font-bold text-white">TOTAL:</Label>
+                      <span className="text-sm font-black text-white">
+                        {(() => {
+                          const fields = ['patrimonio_imoveis','patrimonio_veiculos','patrimonio_outros','patrimonio_investimentos','patrimonio_poupanca','patrimonio_previdencia'];
+                          return fields.reduce((s, f) => s + (parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

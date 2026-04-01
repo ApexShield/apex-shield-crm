@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2, Plus, MessageSquare } from "lucide-react";
+import { Send, Loader2, Plus, MessageSquare, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import AgentMessageBubble from "./AgentMessageBubble";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,18 @@ export default function AgentChat() {
     setMessages(fullConv.messages || []);
   };
 
+  const deleteConversation = async (e, conv) => {
+    e.stopPropagation();
+    if (!confirm("Excluir esta conversa?")) return;
+    await base44.agents.updateConversation(conv.id, { metadata: { ...conv.metadata, deleted: true } });
+    setConversations(prev => prev.filter(c => c.id !== conv.id));
+    if (currentConversation?.id === conv.id) {
+      setCurrentConversation(null);
+      setMessages([]);
+    }
+    toast.success("Conversa excluída");
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || sending) return;
     let conv = currentConversation;
@@ -114,11 +127,11 @@ export default function AgentChat() {
             <p className="text-center text-slate-400 text-xs py-8">Nenhuma conversa ainda</p>
           ) : (
             conversations.map(conv => (
-              <button
+              <div
                 key={conv.id}
                 onClick={() => selectConversation(conv)}
                 className={cn(
-                  "w-full text-left px-2.5 py-2 rounded-lg transition-all text-xs",
+                  "w-full text-left px-2.5 py-2 rounded-lg transition-all text-xs cursor-pointer group relative",
                   currentConversation?.id === conv.id 
                     ? "bg-indigo-50 text-indigo-700 font-medium" 
                     : "hover:bg-slate-50 text-slate-600"
@@ -126,12 +139,19 @@ export default function AgentChat() {
               >
                 <div className="flex items-center gap-1.5">
                   <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">{conv.metadata?.name || "Conversa"}</span>
+                  <span className="truncate flex-1">{conv.metadata?.name || "Conversa"}</span>
+                  <button
+                    onClick={(e) => deleteConversation(e, conv)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded text-red-500 transition-opacity flex-shrink-0"
+                    title="Excluir conversa"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5 ml-5">
                   {new Date(conv.created_date).toLocaleDateString('pt-BR')}
                 </p>
-              </button>
+              </div>
             ))
           )}
         </div>

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3, Users } from "lucide-react";
+import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3, Users, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,6 +51,8 @@ export default function Leads() {
   const [showRelatorios, setShowRelatorios] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
   const [usuarioFiltro, setUsuarioFiltro] = useState("todos");
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("desc");
 
   // Listener para abrir apólice do formulário
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function Leads() {
   const { data: allClientes = [], isLoading } = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
-      return await base44.entities.Cliente.list("-created_date", 500);
+      return await base44.entities.Cliente.filter({}, "-created_date", 5000);
     },
     enabled: !!user
   });
@@ -166,21 +168,57 @@ export default function Leads() {
     return leadsFiltrados;
   }, [allClientes, user, usuarioFiltro, usuariosVisiveis]);
 
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === "desc" ? "asc" : "desc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("desc");
+    }
+  };
+
+  const getSortIcon = (column) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDirection === "desc" 
+      ? <ArrowDown className="w-3 h-3 ml-1 text-indigo-400" /> 
+      : <ArrowUp className="w-3 h-3 ml-1 text-indigo-400" />;
+  };
+
   // Filtrar dados
   const dadosFiltrados = useMemo(() => {
-    return clientes
+    const filtered = clientes
       .filter(c => !filtroStatus || c.status === filtroStatus)
       .filter(c => !busca || c.nome?.toLowerCase().includes(busca.toLowerCase()))
       .filter(c => !buscaEmpresa || c.empresa?.toLowerCase().includes(buscaEmpresa.toLowerCase()))
       .filter(c => !buscaTelefone || c.telefone?.replace(/\D/g, '').includes(buscaTelefone.replace(/\D/g, '')))
       .filter(c => {
         if (!filtroDataVisita) return true;
-        // Comparar apenas a parte da data (YYYY-MM-DD)
         const dataContato = c.data_contato ? c.data_contato.split('T')[0] : null;
         return dataContato === filtroDataVisita;
-      })
-      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-  }, [clientes, filtroStatus, busca, buscaEmpresa, buscaTelefone, filtroDataVisita]);
+      });
+
+    if (!sortColumn) {
+      return filtered.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    }
+
+    return filtered.sort((a, b) => {
+      let valA = a[sortColumn] || "";
+      let valB = b[sortColumn] || "";
+
+      // Dates
+      if (["data_contato", "agendar_visita", "created_date", "data_cadastro"].includes(sortColumn)) {
+        valA = valA ? new Date(valA).getTime() : 0;
+        valB = valB ? new Date(valB).getTime() : 0;
+      } else if (typeof valA === "string") {
+        valA = valA.toLowerCase();
+        valB = (valB || "").toLowerCase();
+      }
+
+      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [clientes, filtroStatus, busca, buscaEmpresa, buscaTelefone, filtroDataVisita, sortColumn, sortDirection]);
 
   // Calcular contadores
   const contadores = useMemo(() => {
@@ -453,20 +491,33 @@ export default function Leads() {
             <Table className="table-auto w-full min-w-[1200px]">
               <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm z-10">
                 <TableRow className="border-white/10">
-                  <TableHead className="font-bold text-white whitespace-nowrap">Cód</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Nome</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Data Contato</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Data Visita</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Status</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Telefone</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">E-mail</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Empresa</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Cargo</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Fonte</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Renda</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Idade</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Profissão</TableHead>
-                  <TableHead className="font-bold text-white whitespace-nowrap">Proprietário</TableHead>
+                  {[
+                    { key: "codigo", label: "Cód" },
+                    { key: "nome", label: "Nome" },
+                    { key: "data_contato", label: "Data Contato" },
+                    { key: "agendar_visita", label: "Data Visita" },
+                    { key: "status", label: "Status" },
+                    { key: "telefone", label: "Telefone" },
+                    { key: "email", label: "E-mail" },
+                    { key: "empresa", label: "Empresa" },
+                    { key: "cargo", label: "Cargo" },
+                    { key: "fonte_prospeccao", label: "Fonte" },
+                    { key: "renda", label: "Renda" },
+                    { key: "idade", label: "Idade" },
+                    { key: "profissao", label: "Profissão" },
+                    { key: "created_by", label: "Proprietário" },
+                  ].map(col => (
+                    <TableHead
+                      key={col.key}
+                      className="font-bold text-white whitespace-nowrap cursor-pointer select-none hover:bg-white/10 transition-colors"
+                      onClick={() => handleSort(col.key)}
+                    >
+                      <div className="flex items-center">
+                        {col.label}
+                        {getSortIcon(col.key)}
+                      </div>
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>

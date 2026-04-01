@@ -334,11 +334,11 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   };
 
   const handleUpperCase = (field, value) => {
-    setFormData({ ...formData, [field]: value.toUpperCase() });
+    setFormData(prev => ({ ...prev, [field]: value.toUpperCase() }));
   };
 
   const handleCPFChange = (value) => {
-    setFormData({ ...formData, cpf: formatCPF(value) });
+    setFormData(prev => ({ ...prev, cpf: formatCPF(value) }));
   };
 
   const handleFilhosChange = (quantidade) => {
@@ -363,22 +363,24 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   };
 
   const handlePhoneChange = (field, value) => {
-    setFormData({ ...formData, [field]: formatPhone(value) });
+    setFormData(prev => ({ ...prev, [field]: formatPhone(value) }));
   };
 
   const handleCurrencyChange = (field, value) => {
-    setFormData({ ...formData, [field]: formatCurrency(value) });
+    setFormData(prev => ({ ...prev, [field]: formatCurrency(value) }));
   };
 
   const handleAlturaOrPesoChange = (field, value) => {
-    const newData = { ...formData, [field]: value };
-    if (field === "altura" || field === "peso") {
-      newData.imc = calculateIMC(
-        field === "altura" ? value : formData.altura,
-        field === "peso" ? value : formData.peso
-      );
-    }
-    setFormData(newData);
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      if (field === "altura" || field === "peso") {
+        newData.imc = calculateIMC(
+          field === "altura" ? value : prev.altura,
+          field === "peso" ? value : prev.peso
+        );
+      }
+      return newData;
+    });
   };
 
   const handleLimpar = () => {

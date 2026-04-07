@@ -40,8 +40,6 @@ const STATUS_CONFIG = [
 export default function Leads() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [busca, setBusca] = useState("");
-  const [buscaEmpresa, setBuscaEmpresa] = useState("");
-  const [buscaTelefone, setBuscaTelefone] = useState("");
   const [filtroDataVisita, setFiltroDataVisita] = useState("");
   const [selectedLead, setSelectedLead] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -188,36 +186,30 @@ export default function Leads() {
   const dadosFiltrados = useMemo(() => {
     const filtered = clientes
       .filter(c => !filtroStatus || c.status === filtroStatus)
-      .filter(c => !busca || c.nome?.toLowerCase().includes(busca.toLowerCase()))
-      .filter(c => !buscaEmpresa || c.empresa?.toLowerCase().includes(buscaEmpresa.toLowerCase()))
-      .filter(c => !buscaTelefone || c.telefone?.replace(/\D/g, '').includes(buscaTelefone.replace(/\D/g, '')))
+      .filter(c => {
+        if (!busca) return true;
+        const termo = busca.toLowerCase();
+        const termoNum = busca.replace(/\D/g, '');
+        return (
+          c.nome?.toLowerCase().includes(termo) ||
+          c.email?.toLowerCase().includes(termo) ||
+          c.empresa?.toLowerCase().includes(termo) ||
+          c.cargo?.toLowerCase().includes(termo) ||
+          c.profissao?.toLowerCase().includes(termo) ||
+          c.fonte_prospeccao?.toLowerCase().includes(termo) ||
+          c.codigo?.toLowerCase().includes(termo) ||
+          c.status?.toLowerCase().includes(termo) ||
+          c.renda?.toLowerCase().includes(termo) ||
+          c.endereco?.toLowerCase().includes(termo) ||
+          c.cpf?.toLowerCase().includes(termo) ||
+          (termoNum && c.telefone?.replace(/\D/g, '').includes(termoNum))
+        );
+      })
       .filter(c => {
         if (!filtroDataVisita) return true;
         const dataContato = c.data_contato ? c.data_contato.split('T')[0] : null;
         return dataContato === filtroDataVisita;
       });
-
-    if (!sortColumn) {
-      return filtered.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    }
-
-    return filtered.sort((a, b) => {
-      let valA = a[sortColumn] || "";
-      let valB = b[sortColumn] || "";
-
-      // Dates
-      if (["data_contato", "agendar_visita", "created_date", "data_cadastro"].includes(sortColumn)) {
-        valA = valA ? new Date(valA).getTime() : 0;
-        valB = valB ? new Date(valB).getTime() : 0;
-      } else if (typeof valA === "string") {
-        valA = valA.toLowerCase();
-        valB = (valB || "").toLowerCase();
-      }
-
-      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
-      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
   }, [clientes, filtroStatus, busca, buscaEmpresa, buscaTelefone, filtroDataVisita, sortColumn, sortDirection]);
 
   // Calcular contadores
@@ -419,43 +411,11 @@ export default function Leads() {
 
             {/* Busca e Filtros */}
             <div className="flex gap-2 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
+              <div className="flex-1 min-w-[300px]">
                 <Input
-                  placeholder="🔍 Buscar por nome..."
+                  placeholder="🔍 Buscar por nome, email, telefone, empresa, CPF, cargo..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                />
-              </div>
-              <div className="flex-1 min-w-[200px]">
-                <Input
-                  placeholder="🏢 Buscar por empresa..."
-                  value={buscaEmpresa}
-                  onChange={(e) => setBuscaEmpresa(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                />
-              </div>
-              <div className="flex-1 min-w-[200px]">
-                <Input
-                  placeholder="📱 Buscar por telefone..."
-                  value={buscaTelefone}
-                  onChange={(e) => {
-                    const valor = e.target.value;
-                    // Formatar telefone: (XX)XXXXX-XXXX
-                    const numeros = valor.replace(/\D/g, '');
-                    let formatado = numeros;
-                    if (numeros.length > 0) {
-                      formatado = '(' + numeros.substring(0, 2);
-                      if (numeros.length > 2) {
-                        formatado += ')' + numeros.substring(2, 7);
-                      }
-                      if (numeros.length > 7) {
-                        formatado += '-' + numeros.substring(7, 11);
-                      }
-                    }
-                    setBuscaTelefone(formatado);
-                  }}
-                  maxLength={14}
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 />
               </div>
@@ -466,12 +426,12 @@ export default function Leads() {
                 className="w-auto bg-white/10 border-white/20 text-white"
               />
               <Button
-                onClick={() => { setBusca(""); setBuscaEmpresa(""); setBuscaTelefone(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
+                onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
                 className="bg-red-500/80 hover:bg-red-600"
               >
                 Limpar
               </Button>
-              {(busca || buscaEmpresa || buscaTelefone || filtroDataVisita || filtroStatus) && (
+              {(busca || filtroDataVisita || filtroStatus) && (
                 <div className="flex items-center bg-white/10 px-4 py-2 rounded-lg">
                   <span className="text-white font-semibold">{dadosFiltrados.length} leads</span>
                 </div>

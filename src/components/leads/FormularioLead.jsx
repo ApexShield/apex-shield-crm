@@ -576,6 +576,18 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     <div>
                       <Label className="text-[11px]">IMC:</Label>
                       <Input value={formData.imc} disabled className="bg-gray-100 font-bold h-8 text-xs" />
+                      {formData.imc && (() => {
+                        const imc = parseFloat(formData.imc.replace(',', '.'));
+                        if (isNaN(imc)) return null;
+                        let label, color;
+                        if (imc < 18.5) { label = 'Abaixo do peso'; color = 'text-blue-600 bg-blue-100'; }
+                        else if (imc < 24.9) { label = 'Peso normal'; color = 'text-green-700 bg-green-100'; }
+                        else if (imc < 29.9) { label = 'Sobrepeso'; color = 'text-yellow-700 bg-yellow-100'; }
+                        else if (imc < 34.9) { label = 'Obesidade grau I'; color = 'text-orange-700 bg-orange-100'; }
+                        else if (imc < 39.9) { label = 'Obesidade grau II'; color = 'text-red-600 bg-red-100'; }
+                        else { label = 'Obesidade grau III'; color = 'text-red-800 bg-red-200'; }
+                        return <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 text-center ${color}`}>{label}</div>;
+                      })()}
                     </div>
                   </div>
                   <div>

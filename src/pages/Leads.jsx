@@ -210,7 +210,28 @@ export default function Leads() {
         const dataContato = c.data_contato ? c.data_contato.split('T')[0] : null;
         return dataContato === filtroDataVisita;
       });
-  }, [clientes, filtroStatus, busca, buscaEmpresa, buscaTelefone, filtroDataVisita, sortColumn, sortDirection]);
+
+    if (!sortColumn) {
+      return filtered.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    }
+
+    return filtered.sort((a, b) => {
+      let valA = a[sortColumn] || "";
+      let valB = b[sortColumn] || "";
+
+      if (["data_contato", "agendar_visita", "created_date", "data_cadastro"].includes(sortColumn)) {
+        valA = valA ? new Date(valA).getTime() : 0;
+        valB = valB ? new Date(valB).getTime() : 0;
+      } else if (typeof valA === "string") {
+        valA = valA.toLowerCase();
+        valB = (valB || "").toLowerCase();
+      }
+
+      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [clientes, filtroStatus, busca, filtroDataVisita, sortColumn, sortDirection]);
 
   // Calcular contadores
   const contadores = useMemo(() => {

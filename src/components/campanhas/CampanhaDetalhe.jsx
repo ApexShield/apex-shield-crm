@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   Mail, MessageSquare, CheckCircle2, XCircle, Clock, Send, 
-  Users, ArrowLeft, Loader2, Link as LinkIcon, Eye, Trash2
+  Users, ArrowLeft, Loader2, Link as LinkIcon, Eye, Trash2, ExternalLink
 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
 
 const statusEnvio = {
   enviado: { label: "Enviado", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
@@ -206,6 +206,23 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
                 const StIcon = st.icon;
                 const isEmail = envio.canal === "email";
 
+                const handleWhatsAppSend = async () => {
+                  if (!envio.destino) return;
+                  const tel = envio.destino.replace(/\D/g, '');
+                  const telFormatado = tel.startsWith('55') ? tel : '55' + tel;
+                  const msg = envio.mensagem_enviada || campanha.mensagem || '';
+                  const url = `https://wa.me/${telFormatado}?text=${encodeURIComponent(msg)}`;
+                  window.open(url, '_blank');
+                  // Marcar como enviado
+                  try {
+                    await base44.entities.CampanhaEnvio.update(envio.id, { status: 'enviado' });
+                    queryClient.invalidateQueries({ queryKey: ["campanha-envios", campanha.id] });
+                    toast.success(`WhatsApp aberto para ${envio.cliente_nome || envio.destino}`);
+                  } catch (e) {
+                    console.error(e);
+                  }
+                };
+
                 return (
                   <div key={envio.id} className={`flex items-center gap-3 p-3 rounded-lg border ${st.bg} border-slate-200`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isEmail ? 'bg-indigo-100' : 'bg-green-100'}`}>
@@ -218,9 +235,32 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
                         <p className="text-xs text-red-500 mt-0.5 truncate">{envio.erro_detalhe}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <StIcon className={`w-4 h-4 ${st.color}`} />
-                      <span className={`text-xs font-medium ${st.color}`}>{st.label}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {!isEmail && envio.status === 'pendente' && (
+                        <Button
+                          size="sm"
+                          onClick={handleWhatsAppSend}
+                          className="h-7 px-2.5 text-xs bg-green-600 hover:bg-green-700 gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Enviar
+                        </Button>
+                      )}
+                      {!isEmail && envio.status === 'enviado' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleWhatsAppSend}
+                          className="h-7 px-2.5 text-xs border-green-300 text-green-700 hover:bg-green-50 gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Reenviar
+                        </Button>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <StIcon className={`w-4 h-4 ${st.color}`} />
+                        <span className={`text-xs font-medium ${st.color}`}>{st.label}</span>
+                      </div>
                     </div>
                   </div>
                 );

@@ -1,0 +1,138 @@
+{
+  "name": "Campanha",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da campanha"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "email",
+        "whatsapp",
+        "ambos"
+      ],
+      "default": "email",
+      "description": "Canal de envio"
+    },
+    "link_conteudo": {
+      "type": "string",
+      "description": "Link do post/conte\u00fado para divulga\u00e7\u00e3o"
+    },
+    "mensagem": {
+      "type": "string",
+      "description": "Mensagem personalizada com vari\u00e1veis"
+    },
+    "assunto_email": {
+      "type": "string",
+      "description": "Assunto do email"
+    },
+    "filtro_clientes": {
+      "type": "string",
+      "enum": [
+        "todos",
+        "novo",
+        "ab_fone",
+        "ab_visita",
+        "ab_fechamento",
+        "delay",
+        "analise",
+        "venda_feita",
+        "entrega_apolice"
+      ],
+      "default": "todos",
+      "description": "Filtro de clientes por status"
+    },
+    "selected_client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos clientes selecionados manualmente para esta campanha"
+    },
+    "filtro_empresa": {
+      "type": "string",
+      "description": "Filtro por nome da empresa"
+    },
+    "filtro_cargo": {
+      "type": "string",
+      "description": "Filtro por cargo"
+    },
+    "filtro_profissao": {
+      "type": "string",
+      "description": "Filtro por profiss\u00e3o"
+    },
+    "total_destinatarios": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de destinat\u00e1rios"
+    },
+    "emails_enviados": {
+      "type": "number",
+      "default": 0,
+      "description": "Emails enviados com sucesso"
+    },
+    "whatsapp_gerados": {
+      "type": "number",
+      "default": 0,
+      "description": "Links WhatsApp gerados"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "enviando",
+        "concluida",
+        "erro"
+      ],
+      "default": "rascunho",
+      "description": "Status da campanha"
+    }
+  },
+  "required": [
+    "titulo",
+    "mensagem"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

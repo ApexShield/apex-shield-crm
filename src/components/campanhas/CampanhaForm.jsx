@@ -5,12 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Send, Link, MessageSquare, Mail, Loader2, Users, UserCheck } from "lucide-react";
+import { Send, Link, MessageSquare, Mail, Loader2, Users, UserCheck, Building2, Briefcase } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import WhatsAppLinksDialog from "./WhatsAppLinksDialog";
 import ClienteSelectorDialog from "./ClienteSelectorDialog";
+import IntegrationLimitAlert, { isOverLimit, getRemainingUsage } from "../IntegrationLimitAlert";
 
 const VARIAVEIS = [
   { label: "+ Primeiro Nome", value: "[NOME]" },
@@ -40,6 +41,9 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
   const [mensagem, setMensagem] = useState("Olá [NOME]! Tenho uma novidade incrível para compartilhar com você. Confira no link abaixo!");
   const [assuntoEmail, setAssuntoEmail] = useState("");
   const [filtroClientes, setFiltroClientes] = useState("todos");
+  const [filtroEmpresa, setFiltroEmpresa] = useState("");
+  const [filtroCargo, setFiltroCargo] = useState("");
+  const [filtroProfissao, setFiltroProfissao] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [whatsappLinks, setWhatsappLinks] = useState([]);
   const [showWhatsappLinks, setShowWhatsappLinks] = useState(false);
@@ -47,13 +51,18 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
   const [showClientSelector, setShowClientSelector] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => base44.auth.me()
+  });
+
   const inserirVariavel = (variavel) => {
     setMensagem(prev => prev + " " + variavel);
   };
 
   // Clientes filtrados para preview
   const clientesFiltrados = (() => {
-    // Se há seleção manual, usa ela (ignora filtro por status)
+    // Se há seleção manual, usa ela (ignora outros filtros)
     if (selectedClientIds.length > 0) {
       const idSet = new Set(selectedClientIds);
       return clientes.filter(c => idSet.has(c.id));
@@ -63,8 +72,23 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
       ab_fechamento: "AB Fechamento", delay: "Delay", analise: "Análise",
       venda_feita: "Venda Feita", entrega_apolice: "Entrega de Apólice"
     };
-    if (filtroClientes === "todos") return clientes;
-    return clientes.filter(c => c.status === statusMap[filtroClientes]);
+    let filtered = clientes;
+    if (filtroClientes !== "todos") {
+      filtered = filtered.filter(c => c.status === statusMap[filtroClientes]);
+    }
+    if (filtroEmpresa.trim()) {
+      const term = filtroEmpresa.trim().toLowerCase();
+      filtered = filtered.filter(c => c.empresa?.toLowerCase().includes(term));
+    }
+    if (filtroCargo.trim()) {
+      const term = filtroCargo.trim().toLowerCase();
+      filtered = filtered.filter(c => c.cargo?.toLowerCase().includes(term));
+    }
+    if (filtroProfissao.trim()) {
+      const term = filtroProfissao.trim().toLowerCase();
+      filtered = filtered.filter(c => c.profissao?.toLowerCase().includes(term));
+    }
+    return filtered;
   })();
 
   const clientesComEmail = clientesFiltrados.filter(c => c.email?.trim());
@@ -74,13 +98,35 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
     if (!titulo.trim()) { toast.error("Informe o título da campanha"); return; }
     if (!mensagem.trim()) { toast.error("Informe a mensagem"); return; }
 
+    // Verificar limite de integrações
+    if (currentUser && isOverLimit(currentUser)) {
+      toast.error("Você atingiu seu limite de integrações. Não é possível enviar a campanha.");
+      return;
+    }
+
+    // Verificar se o envio não excede o saldo restante
+    const destinatariosCount = (tipo === "email" || tipo === "ambos") ? clientesComEmail.length : clientesComTelefone.length;
+    const remaining = currentUser ? getRemainingUsage(currentUser) : 100;
+    if (destinatariosCount > remaining) {
+      toast.error(`Você tem ${remaining} integrações restantes, mas está tentando enviar para ${destinatariosCount} destinatários. Reduza o número de destinatários.`);
+      return;
+    }
+
     setEnviando(true);
+
+    // Salvar os IDs dos clientes filtrados para garantir que o backend envie SOMENTE para eles
+    const idsParaEnviar = clientesFiltrados.map(c => c.id);
 
     // Criar campanha
     const campanha = await base44.entities.Campanha.create({
       titulo, tipo, link_conteudo: linkConteudo, mensagem,
       assunto_email: assuntoEmail || titulo,
-      filtro_clientes: filtroClientes, status: "rascunho"
+      filtro_clientes: filtroClientes,
+      filtro_empresa: filtroEmpresa || undefined,
+      filtro_cargo: filtroCargo || undefined,
+      filtro_profissao: filtroProfissao || undefined,
+      selected_client_ids: idsParaEnviar,
+      status: "rascunho"
     });
 
     if (tipo === "email" || tipo === "ambos") {
@@ -219,6 +265,9 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
             </div>
           )}
 
+          {/* Alerta de limite */}
+          <IntegrationLimitAlert user={currentUser} />
+
           {/* Filtro de clientes */}
           <div>
             <Label className="text-slate-700 font-semibold">Destinatários</Label>
@@ -250,6 +299,40 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
                 Selecionar
               </Button>
             </div>
+
+            {/* Filtros por empresa, cargo, profissão */}
+            {selectedClientIds.length === 0 && (
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <div>
+                  <Label className="text-[11px] text-slate-500 flex items-center gap-1"><Building2 className="w-3 h-3" /> Empresa</Label>
+                  <Input
+                    value={filtroEmpresa}
+                    onChange={e => setFiltroEmpresa(e.target.value)}
+                    placeholder="Filtrar empresa..."
+                    className="h-8 text-xs mt-0.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-slate-500 flex items-center gap-1"><Briefcase className="w-3 h-3" /> Cargo</Label>
+                  <Input
+                    value={filtroCargo}
+                    onChange={e => setFiltroCargo(e.target.value)}
+                    placeholder="Filtrar cargo..."
+                    className="h-8 text-xs mt-0.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-slate-500 flex items-center gap-1"><Briefcase className="w-3 h-3" /> Profissão</Label>
+                  <Input
+                    value={filtroProfissao}
+                    onChange={e => setFiltroProfissao(e.target.value)}
+                    placeholder="Filtrar profissão..."
+                    className="h-8 text-xs mt-0.5"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 mt-2 text-xs text-slate-500">
               {(tipo === "email" || tipo === "ambos") && (
                 <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {clientesComEmail.length} com email</span>

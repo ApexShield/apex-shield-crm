@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Users, CheckCircle2, Mail, Phone } from "lucide-react";
+import { Search, Users, CheckCircle2, Mail, Phone, Building2, Briefcase } from "lucide-react";
 
 export default function ClienteSelectorDialog({ open, onClose, clientes = [], selectedIds = [], onConfirm }) {
   const [search, setSearch] = useState("");
@@ -15,7 +15,10 @@ export default function ClienteSelectorDialog({ open, onClose, clientes = [], se
     return clientes.filter(c =>
       (c.nome || '').toLowerCase().includes(s) ||
       (c.email || '').toLowerCase().includes(s) ||
-      (c.telefone || '').includes(s)
+      (c.telefone || '').includes(s) ||
+      (c.empresa || '').toLowerCase().includes(s) ||
+      (c.cargo || '').toLowerCase().includes(s) ||
+      (c.profissao || '').toLowerCase().includes(s)
     );
   }, [clientes, search]);
 
@@ -50,7 +53,7 @@ export default function ClienteSelectorDialog({ open, onClose, clientes = [], se
             <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por nome, email ou telefone..."
+              placeholder="Buscar por nome, email, telefone, empresa, cargo, profissão..."
               className="pl-9"
             />
           </div>
@@ -78,9 +81,11 @@ export default function ClienteSelectorDialog({ open, onClose, clientes = [], se
                   <Checkbox checked={selected.has(c.id)} className="pointer-events-none" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-slate-800 truncate">{c.nome}</p>
-                    <div className="flex gap-3 text-xs text-slate-400">
+                    <div className="flex gap-3 text-xs text-slate-400 flex-wrap">
                       {c.email && <span className="flex items-center gap-0.5 truncate"><Mail className="w-3 h-3" />{c.email}</span>}
                       {c.telefone && <span className="flex items-center gap-0.5"><Phone className="w-3 h-3" />{c.telefone}</span>}
+                      {c.empresa && <span className="flex items-center gap-0.5"><Building2 className="w-3 h-3" />{c.empresa}</span>}
+                      {c.cargo && <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" />{c.cargo}</span>}
                     </div>
                   </div>
                   {selected.has(c.id) && <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />}

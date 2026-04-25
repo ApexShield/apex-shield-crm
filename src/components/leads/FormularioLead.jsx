@@ -104,6 +104,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     custo_plano_saude_fixo: "",
     custo_transporte: "",
     custo_alimentacao: "",
+    custo_cartao_credito: "",
     custo_outros_fixos: "",
     custo_variavel_total: "",
     custo_lazer: "",
@@ -333,12 +334,30 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     onClose();
   };
 
-  const handleUpperCase = (field, value) => {
+  const handleUpperCase = (field, value, e) => {
+    // Preservar posição do cursor
+    const input = e?.target;
+    const pos = input?.selectionStart;
     setFormData(prev => ({ ...prev, [field]: value.toUpperCase() }));
+    if (input) {
+      requestAnimationFrame(() => {
+        input.setSelectionRange(pos, pos);
+      });
+    }
   };
 
-  const handleCPFChange = (value) => {
-    setFormData(prev => ({ ...prev, cpf: formatCPF(value) }));
+  const handleCPFChange = (value, e) => {
+    const input = e?.target;
+    const prevLen = input?.value?.length || 0;
+    const formatted = formatCPF(value);
+    setFormData(prev => ({ ...prev, cpf: formatted }));
+    if (input) {
+      const diff = formatted.length - prevLen;
+      const pos = (input.selectionStart || 0) + diff;
+      requestAnimationFrame(() => {
+        input.setSelectionRange(pos, pos);
+      });
+    }
   };
 
   const handleFilhosChange = (quantidade) => {
@@ -362,12 +381,32 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     setFormData({ ...formData, data_nascimento: date, idade });
   };
 
-  const handlePhoneChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: formatPhone(value) }));
+  const handlePhoneChange = (field, value, e) => {
+    const input = e?.target;
+    const prevLen = input?.value?.length || 0;
+    const formatted = formatPhone(value);
+    setFormData(prev => ({ ...prev, [field]: formatted }));
+    if (input) {
+      const diff = formatted.length - prevLen;
+      const pos = (input.selectionStart || 0) + diff;
+      requestAnimationFrame(() => {
+        input.setSelectionRange(pos, pos);
+      });
+    }
   };
 
-  const handleCurrencyChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: formatCurrency(value) }));
+  const handleCurrencyChange = (field, value, e) => {
+    const input = e?.target;
+    const prevLen = input?.value?.length || 0;
+    const formatted = formatCurrency(value);
+    setFormData(prev => ({ ...prev, [field]: formatted }));
+    if (input) {
+      const diff = formatted.length - prevLen;
+      const pos = (input.selectionStart || 0) + diff;
+      requestAnimationFrame(() => {
+        input.setSelectionRange(pos, pos);
+      });
+    }
   };
 
   const handleAlturaOrPesoChange = (field, value) => {
@@ -462,27 +501,27 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Nome Completo:</Label>
-                    <Input tabIndex={4} autoFocus={!lead} value={formData.nome} onChange={(e) => handleUpperCase('nome', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={4} autoFocus={!lead} value={formData.nome} onChange={(e) => handleUpperCase('nome', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">CPF:</Label>
-                    <Input tabIndex={4.5} value={formData.cpf} onChange={(e) => handleCPFChange(e.target.value)} maxLength={14} placeholder="000.000.000-00" className="h-8 text-xs" />
+                    <Input tabIndex={4.5} value={formData.cpf} onChange={(e) => handleCPFChange(e.target.value, e)} maxLength={14} placeholder="000.000.000-00" className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Telefone:</Label>
-                    <Input tabIndex={6} value={formData.telefone} onChange={(e) => handlePhoneChange('telefone', e.target.value)} maxLength={15} className="h-8 text-xs" />
+                    <Input tabIndex={6} value={formData.telefone} onChange={(e) => handlePhoneChange('telefone', e.target.value, e)} maxLength={15} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">E-mail:</Label>
-                    <Input tabIndex={7} type="email" value={formData.email} onChange={(e) => handleUpperCase('email', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={7} type="email" value={formData.email} onChange={(e) => handleUpperCase('email', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Empresa:</Label>
-                    <Input tabIndex={8} value={formData.empresa} onChange={(e) => handleUpperCase('empresa', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={8} value={formData.empresa} onChange={(e) => handleUpperCase('empresa', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Cargo:</Label>
-                    <Input tabIndex={9} value={formData.cargo} onChange={(e) => handleUpperCase('cargo', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={9} value={formData.cargo} onChange={(e) => handleUpperCase('cargo', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Filhos:</Label>
@@ -531,7 +570,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Profissão:</Label>
-                    <Input tabIndex={22} value={formData.profissao} onChange={(e) => handleUpperCase('profissao', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={22} value={formData.profissao} onChange={(e) => handleUpperCase('profissao', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Estado Civil:</Label>
@@ -592,11 +631,11 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Fonte Prospecção:</Label>
-                    <Input tabIndex={16} value={formData.fonte_prospeccao} onChange={(e) => handleUpperCase('fonte_prospeccao', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={16} value={formData.fonte_prospeccao} onChange={(e) => handleUpperCase('fonte_prospeccao', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Renda Mensal:</Label>
-                    <Input tabIndex={17} value={formData.renda} onChange={(e) => handleCurrencyChange('renda', e.target.value)} className="h-8 text-xs" />
+                    <Input tabIndex={17} value={formData.renda} onChange={(e) => handleCurrencyChange('renda', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                 </div>
               </div>
@@ -652,11 +691,12 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     { field: 'custo_plano_saude_fixo', label: 'Plano Saúde' },
                     { field: 'custo_transporte', label: 'Transporte/Comb.' },
                     { field: 'custo_alimentacao', label: 'Alimentação' },
+                    { field: 'custo_cartao_credito', label: 'Cartão Crédito' },
                     { field: 'custo_outros_fixos', label: 'Outros Fixos' },
                   ].map(item => (
                     <div key={item.field} className="flex items-center gap-1">
                       <Label className="text-[10px] w-24 flex-shrink-0 text-right">{item.label}:</Label>
-                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value, e)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
                     </div>
                   ))}
                   <div className="bg-white/30 rounded-lg px-2 py-1">
@@ -664,7 +704,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       <Label className="text-[11px] font-bold">Total Fixos:</Label>
                       <span className="text-xs font-black text-green-900">
                         {(() => {
-                          const fields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos'];
+                          const fields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos'];
                           return fields.reduce((s, f) => s + (parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                         })()}
                       </span>
@@ -683,7 +723,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   ].map(item => (
                     <div key={item.field} className="flex items-center gap-1">
                       <Label className="text-[10px] w-24 flex-shrink-0 text-right">{item.label}:</Label>
-                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value, e)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
                     </div>
                   ))}
                   <div className="bg-white/30 rounded-lg px-2 py-1">
@@ -703,7 +743,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       <Label className="text-[11px] font-bold text-white">TOTAL MENSAL:</Label>
                       <span className="text-sm font-black text-white">
                         {(() => {
-                          const all = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_outros_fixos','custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+                          const all = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos','custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
                           return all.reduce((s, f) => s + (parseFloat((formData[f] || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                         })()}
                       </span>
@@ -729,7 +769,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   ].map(item => (
                     <div key={item.field} className="flex items-center gap-1">
                       <Label className="text-[10px] w-20 flex-shrink-0 text-right">{item.label}:</Label>
-                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value, e)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
                     </div>
                   ))}
 
@@ -743,7 +783,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   ].map(item => (
                     <div key={item.field} className="flex items-center gap-1">
                       <Label className="text-[10px] w-20 flex-shrink-0 text-right">{item.label}:</Label>
-                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
+                      <Input value={formData[item.field]} onChange={(e) => handleCurrencyChange(item.field, e.target.value, e)} placeholder="R$ 0,00" className="h-7 text-xs flex-1" />
                     </div>
                   ))}
 
@@ -817,7 +857,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   )}
                   <div>
                     <Label className="text-[11px]">Valor Plano Saúde:</Label>
-                    <Input value={formData.valor_plano_saude} onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value)} className="h-8 text-xs" />
+                    <Input value={formData.valor_plano_saude} onChange={(e) => handleCurrencyChange('valor_plano_saude', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Seguro de Vida:</Label>
@@ -850,7 +890,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   )}
                   <div>
                     <Label className="text-[11px]">Valor Seguro Vida:</Label>
-                    <Input value={formData.valor_seguro_vida} onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value)} className="h-8 text-xs" />
+                    <Input value={formData.valor_seguro_vida} onChange={(e) => handleCurrencyChange('valor_seguro_vida', e.target.value, e)} className="h-8 text-xs" />
                   </div>
                 </div>
               </div>

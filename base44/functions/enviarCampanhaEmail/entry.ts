@@ -287,6 +287,21 @@ Deno.serve(async (req) => {
         erro_detalhe: erroDetalhe || undefined,
         mensagem_enviada: msg.substring(0, 500)
       });
+
+      // Adicionar observação no cliente sobre participação na campanha
+      if (envioStatus === 'enviado') {
+        try {
+          const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const obsTexto = `PARTICIPOU DA CAMPANHA "${campanha.titulo}" (EMAIL) EM ${hoje}`;
+          const clienteAtual = await base44.entities.Cliente.get(cliente.id);
+          const obsExistentes = clienteAtual.observacoes || [];
+          await base44.entities.Cliente.update(cliente.id, {
+            observacoes: [...obsExistentes, { data: hoje, texto: obsTexto }]
+          });
+        } catch (obsErr) {
+          console.error('Erro ao adicionar observação:', obsErr.message);
+        }
+      }
     }
 
     // Bulk create envio logs

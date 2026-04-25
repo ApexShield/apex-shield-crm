@@ -22,6 +22,21 @@ export default function WhatsAppLinksDialog({ open, onClose, links = [] }) {
       }
     }
 
+    // Adicionar observação no cliente
+    if (link.cliente_id) {
+      try {
+        const cliente = await base44.entities.Cliente.get(link.cliente_id);
+        const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const obsTexto = `PARTICIPOU DA CAMPANHA (WHATSAPP) EM ${hoje}`;
+        const obsExistentes = cliente.observacoes || [];
+        await base44.entities.Cliente.update(link.cliente_id, {
+          observacoes: [...obsExistentes, { data: hoje, texto: obsTexto }]
+        });
+      } catch (e) {
+        console.error("Erro ao adicionar observação:", e);
+      }
+    }
+
     setEnviados(prev => ({ ...prev, [idx]: true }));
     setLoading(prev => ({ ...prev, [idx]: false }));
   };

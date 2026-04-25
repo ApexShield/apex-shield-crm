@@ -1,0 +1,423 @@
+{
+  "name": "Cliente",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico do cliente com alias do usu\u00e1rio"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome completo do cliente"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do cliente"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Novo",
+        "AB Fone",
+        "AB Visita",
+        "AB Fechamento",
+        "Delay",
+        "An\u00e1lise",
+        "Venda Feita",
+        "Entrega de Ap\u00f3lice",
+        "Encerrado"
+      ],
+      "default": "AB Fone",
+      "description": "Status do lead no funil"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone de contato"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email do cliente"
+    },
+    "empresa": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "cargo": {
+      "type": "string",
+      "description": "Cargo na empresa"
+    },
+    "fonte_prospeccao": {
+      "type": "string",
+      "description": "Origem da prospec\u00e7\u00e3o"
+    },
+    "custo_mensal_fixo": {
+      "type": "string",
+      "description": "Custo mensal fixo total (soma autom\u00e1tica)"
+    },
+    "custo_agua": {
+      "type": "string",
+      "description": "Custo fixo - \u00c1gua"
+    },
+    "custo_energia": {
+      "type": "string",
+      "description": "Custo fixo - Energia"
+    },
+    "custo_internet": {
+      "type": "string",
+      "description": "Custo fixo - Internet"
+    },
+    "custo_gas": {
+      "type": "string",
+      "description": "Custo fixo - G\u00e1s"
+    },
+    "custo_aluguel": {
+      "type": "string",
+      "description": "Custo fixo - Aluguel/Financiamento"
+    },
+    "custo_escola": {
+      "type": "string",
+      "description": "Custo fixo - Escola dos filhos"
+    },
+    "custo_plano_saude_fixo": {
+      "type": "string",
+      "description": "Custo fixo - Plano de Sa\u00fade"
+    },
+    "custo_transporte": {
+      "type": "string",
+      "description": "Custo fixo - Transporte/Combust\u00edvel"
+    },
+    "custo_alimentacao": {
+      "type": "string",
+      "description": "Custo fixo - Alimenta\u00e7\u00e3o"
+    },
+    "custo_cartao_credito": {
+      "type": "string",
+      "description": "Custo fixo - Cart\u00e3o de Cr\u00e9dito"
+    },
+    "custo_outros_fixos": {
+      "type": "string",
+      "description": "Custo fixo - Outros gastos fixos"
+    },
+    "custo_variavel_total": {
+      "type": "string",
+      "description": "Custo vari\u00e1vel total (soma autom\u00e1tica)"
+    },
+    "custo_lazer": {
+      "type": "string",
+      "description": "Custo vari\u00e1vel - Lazer"
+    },
+    "custo_hobbies": {
+      "type": "string",
+      "description": "Custo vari\u00e1vel - Hobbies"
+    },
+    "custo_vestuario": {
+      "type": "string",
+      "description": "Custo vari\u00e1vel - Vestu\u00e1rio"
+    },
+    "custo_viagens": {
+      "type": "string",
+      "description": "Custo vari\u00e1vel - Viagens"
+    },
+    "custo_outros_variaveis": {
+      "type": "string",
+      "description": "Custo vari\u00e1vel - Outros sup\u00e9rfluos"
+    },
+    "renda": {
+      "type": "string",
+      "description": "Renda mensal estimada"
+    },
+    "patrimonio": {
+      "type": "string",
+      "description": "Patrim\u00f4nio total (soma autom\u00e1tica)"
+    },
+    "patrimonio_imoveis": {
+      "type": "string",
+      "description": "Patrim\u00f4nio - Im\u00f3veis (casa, apto, lotes)"
+    },
+    "patrimonio_veiculos": {
+      "type": "string",
+      "description": "Patrim\u00f4nio - Ve\u00edculos"
+    },
+    "patrimonio_investimentos": {
+      "type": "string",
+      "description": "Patrim\u00f4nio - Investimentos/Aplica\u00e7\u00f5es financeiras"
+    },
+    "patrimonio_poupanca": {
+      "type": "string",
+      "description": "Patrim\u00f4nio - Poupan\u00e7a"
+    },
+    "patrimonio_previdencia": {
+      "type": "string",
+      "description": "Patrim\u00f4nio - Previd\u00eancia privada"
+    },
+    "patrimonio_outros": {
+      "type": "string",
+      "description": "Patrim\u00f4nio - Outros bens"
+    },
+    "idade": {
+      "type": "string",
+      "description": "Idade"
+    },
+    "data_nascimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de nascimento"
+    },
+    "profissao": {
+      "type": "string",
+      "description": "Profiss\u00e3o"
+    },
+    "estado_civil": {
+      "type": "string",
+      "description": "Estado civil"
+    },
+    "regime_casamento": {
+      "type": "string",
+      "description": "Regime de casamento"
+    },
+    "data_casamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de casamento"
+    },
+    "filhos": {
+      "type": "string",
+      "description": "Quantidade de filhos"
+    },
+    "filhos_info": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "data_nascimento": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "description": "Informa\u00e7\u00f5es dos filhos"
+    },
+    "altura": {
+      "type": "string",
+      "description": "Altura em cm"
+    },
+    "peso": {
+      "type": "string",
+      "description": "Peso em kg"
+    },
+    "imc": {
+      "type": "string",
+      "description": "IMC calculado"
+    },
+    "fuma": {
+      "type": "string",
+      "description": "Fuma"
+    },
+    "anda_moto": {
+      "type": "string",
+      "description": "Anda de moto"
+    },
+    "plano_saude": {
+      "type": "string",
+      "description": "Possui plano de sa\u00fade"
+    },
+    "plano_saude_nome": {
+      "type": "string",
+      "description": "Nome do plano de sa\u00fade"
+    },
+    "valor_plano_saude": {
+      "type": "string",
+      "description": "Valor do plano de sa\u00fade"
+    },
+    "seguro_vida": {
+      "type": "string",
+      "description": "Possui seguro de vida"
+    },
+    "seguro_vida_seguradora": {
+      "type": "string",
+      "description": "Nome da seguradora"
+    },
+    "valor_seguro_vida": {
+      "type": "string",
+      "description": "Valor do seguro de vida"
+    },
+    "data_contato": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de contato agendado"
+    },
+    "agendar_visita": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da visita agendada"
+    },
+    "data_cadastro": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de cadastro"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o do cliente"
+    },
+    "observacoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "texto": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de observa\u00e7\u00f5es"
+    },
+    "documentos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "data_upload": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Documentos do cliente"
+    },
+    "num_indicacoes": {
+      "type": "string",
+      "description": "N\u00famero de indica\u00e7\u00f5es"
+    },
+    "indicacoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "profissao": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": "string"
+          },
+          "conexao": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de indica\u00e7\u00f5es"
+    },
+    "dados_apolice": {
+      "type": "object",
+      "description": "Dados da ap\u00f3lice de seguro"
+    },
+    "historico_status": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "de": {
+            "type": "string"
+          },
+          "para": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de mudan\u00e7as de status"
+    },
+    "mensagem_aniversario_enviada": {
+      "type": "boolean",
+      "description": "Indica se mensagem de anivers\u00e1rio foi enviada"
+    },
+    "data_ultima_mensagem": {
+      "type": "string",
+      "description": "Data da \u00faltima mensagem enviada"
+    }
+  },
+  "required": [
+    "nome"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.agencia_id": "{{user.data.agencia_id}}",
+          "user_condition": {
+            "data.tipo_hierarquia": "L\u00edder de Ag\u00eancia"
+          }
+        },
+        {
+          "data.unidade_id": "{{user.data.unidade_id}}",
+          "user_condition": {
+            "data.tipo_hierarquia": "L\u00edder de Unidade"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.agencia_id": "{{user.data.agencia_id}}",
+          "user_condition": {
+            "data.tipo_hierarquia": "L\u00edder de Ag\u00eancia"
+          }
+        },
+        {
+          "data.unidade_id": "{{user.data.unidade_id}}",
+          "user_condition": {
+            "data.tipo_hierarquia": "L\u00edder de Unidade"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

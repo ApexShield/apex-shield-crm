@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const navigation = [
   { name: "Aniversariantes", icon: Users, page: "Aniversariantes" },
   { name: "Calculadora Rápida", icon: Briefcase, page: "CalculadoraRapida" },
   { name: "Campanhas", icon: Megaphone, page: "Campanhas" },
+  { name: "Metas", icon: Target, page: "Metas" },
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
   { name: "Gerenciar Cupons", icon: Ticket, page: "GerenciarCupons", adminOnly: true },

@@ -221,6 +221,20 @@ export default function CampanhaDetalhe({ campanha, open, onClose }) {
                   } catch (e) {
                     console.error(e);
                   }
+                  // Adicionar observação no cliente
+                  if (envio.cliente_id) {
+                    try {
+                      const cliente = await base44.entities.Cliente.get(envio.cliente_id);
+                      const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                      const obsTexto = `PARTICIPOU DA CAMPANHA "${campanha.titulo}" (WHATSAPP) EM ${hoje}`;
+                      const obsExistentes = cliente.observacoes || [];
+                      await base44.entities.Cliente.update(envio.cliente_id, {
+                        observacoes: [...obsExistentes, { data: hoje, texto: obsTexto }]
+                      });
+                    } catch (e) {
+                      console.error("Erro ao adicionar observação:", e);
+                    }
+                  }
                 };
 
                 return (

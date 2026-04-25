@@ -10,6 +10,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Campanhas from './pages/Campanhas';
 import Assinatura from './pages/Assinatura';
 import GerenciarCupons from './pages/GerenciarCupons';
+import Metas from './pages/Metas';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -70,6 +71,11 @@ const AuthenticatedApp = () => {
       <Route path="/GerenciarCupons" element={
         <LayoutWrapper currentPageName="GerenciarCupons">
           <GerenciarCupons />
+        </LayoutWrapper>
+      } />
+      <Route path="/Metas" element={
+        <LayoutWrapper currentPageName="Metas">
+          <Metas />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

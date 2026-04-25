@@ -164,7 +164,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
         const telFormatado = tel.startsWith('55') ? tel : '55' + tel;
         const url = `https://wa.me/${telFormatado}?text=${encodeURIComponent(msg)}`;
 
-        links.push({ nome: cliente.nome, telefone: cliente.telefone, url });
+        links.push({ nome: cliente.nome, telefone: cliente.telefone, url, cliente_id: cliente.id });
 
         whatsLogs.push({
           campanha_id: campanha.id,

@@ -1,0 +1,109 @@
+{
+  "name": "Meta",
+  "type": "object",
+  "properties": {
+    "periodo": {
+      "type": "string",
+      "description": "Per\u00edodo da meta (ex: 2025, Janeiro 2025, Semana 12)"
+    },
+    "ligacoes_realizadas": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de liga\u00e7\u00f5es realizadas"
+    },
+    "ligacoes_atendidas": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de liga\u00e7\u00f5es atendidas"
+    },
+    "agendamentos_feitos": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de agendamentos feitos"
+    },
+    "abs_marcadas": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de ABs marcadas"
+    },
+    "abs_realizadas": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de ABs realizadas"
+    },
+    "f_agendados": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de F agendados"
+    },
+    "f_realizados": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de F realizados"
+    },
+    "n_protocoladas": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de N protocoladas"
+    },
+    "recs": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de RECS"
+    },
+    "pa": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de PA"
+    },
+    "cs": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de CS"
+    }
+  },
+  "required": [
+    "periodo"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

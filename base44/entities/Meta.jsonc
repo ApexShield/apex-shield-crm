@@ -4,37 +4,26 @@
   "properties": {
     "periodo": {
       "type": "string",
-      "description": "Per\u00edodo da meta (ex: 2025, Janeiro 2025, Semana 12)"
+      "description": "Per\u00edodo da meta no formato YYYY-MM (ex: 2025-04)"
+    },
+    "periodo_label": {
+      "type": "string",
+      "description": "Label leg\u00edvel do per\u00edodo (ex: Abril 2025)"
     },
     "ligacoes_realizadas": {
       "type": "number",
       "default": 0,
       "description": "Meta de liga\u00e7\u00f5es realizadas"
     },
-    "ligacoes_atendidas": {
-      "type": "number",
-      "default": 0,
-      "description": "Meta de liga\u00e7\u00f5es atendidas"
-    },
     "agendamentos_feitos": {
       "type": "number",
       "default": 0,
       "description": "Meta de agendamentos feitos"
     },
-    "abs_marcadas": {
-      "type": "number",
-      "default": 0,
-      "description": "Meta de ABs marcadas"
-    },
     "abs_realizadas": {
       "type": "number",
       "default": 0,
       "description": "Meta de ABs realizadas"
-    },
-    "f_agendados": {
-      "type": "number",
-      "default": 0,
-      "description": "Meta de F agendados"
     },
     "f_realizados": {
       "type": "number",
@@ -44,7 +33,7 @@
     "n_protocoladas": {
       "type": "number",
       "default": 0,
-      "description": "Meta de N protocoladas"
+      "description": "Meta de propostas realizadas"
     },
     "recs": {
       "type": "number",

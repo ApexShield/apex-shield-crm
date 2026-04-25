@@ -3,27 +3,45 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, Loader2, Trash2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Save, Loader2, Trash2, CalendarIcon } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const METRICS = [
-  { key: "ligacoes_realizadas", label: "Ligações realizadas" },
-  { key: "ligacoes_atendidas", label: "Ligações atendidas" },
-  { key: "agendamentos_feitos", label: "Agendamentos feitos" },
-  { key: "abs_marcadas", label: "ABs marcadas" },
-  { key: "abs_realizadas", label: "ABs realizadas" },
-  { key: "f_agendados", label: "F agendados" },
-  { key: "f_realizados", label: "F realizados" },
-  { key: "n_protocoladas", label: "N protocoladas" },
-  { key: "recs", label: "RECS" },
-  { key: "pa", label: "PA (Prêmio Anual)" },
-  { key: "cs", label: "CS (Capital Segurado)" },
+  { key: "ligacoes_realizadas", label: "Ligações Realizadas" },
+  { key: "agendamentos_feitos", label: "Agendamentos Feitos" },
+  { key: "abs_realizadas", label: "ABs Realizadas" },
+  { key: "f_realizados", label: "F Realizados" },
+  { key: "n_protocoladas", label: "Propostas Realizadas" },
+  { key: "recs", label: "REC Realizadas" },
+  { key: "pa", label: "PA Realizado" },
+  { key: "cs", label: "CS Realizado" },
 ];
 
+const MESES_LABEL = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
+
+function parseExistingPeriodo(periodo) {
+  if (!periodo) return null;
+  const parts = periodo.split("-");
+  if (parts.length === 2) {
+    const y = parseInt(parts[0]);
+    const m = parseInt(parts[1]) - 1;
+    if (!isNaN(y) && !isNaN(m)) return new Date(y, m, 1);
+  }
+  return null;
+}
+
 export default function MetaForm({ open, onClose, existingMeta }) {
-  const [periodo, setPeriodo] = useState(existingMeta?.periodo || "");
+  const [selectedMonth, setSelectedMonth] = useState(() => parseExistingPeriodo(existingMeta?.periodo));
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [values, setValues] = useState(() => {
     const initial = {};
     METRICS.forEach(m => { initial[m.key] = existingMeta?.[m.key] || 0; });
@@ -32,10 +50,17 @@ export default function MetaForm({ open, onClose, existingMeta }) {
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
+  const periodoStr = selectedMonth
+    ? `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`
+    : "";
+  const periodoLabel = selectedMonth
+    ? `${MESES_LABEL[selectedMonth.getMonth()]} ${selectedMonth.getFullYear()}`
+    : "";
+
   const handleSave = async () => {
-    if (!periodo.trim()) { toast.error("Informe o período da meta"); return; }
+    if (!selectedMonth) { toast.error("Selecione o mês da meta"); return; }
     setSaving(true);
-    const payload = { periodo: periodo.trim(), ...values };
+    const payload = { periodo: periodoStr, periodo_label: periodoLabel, ...values };
     if (existingMeta) {
       await base44.entities.Meta.update(existingMeta.id, payload);
       toast.success("Meta atualizada!");
@@ -66,25 +91,41 @@ export default function MetaForm({ open, onClose, existingMeta }) {
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label className="text-sm font-semibold text-slate-700">Período / Nome da Meta</Label>
-            <Input
-              value={periodo}
-              onChange={e => setPeriodo(e.target.value)}
-              placeholder="Ex: Janeiro 2025, Semana 12, Anual 2025..."
-              className="mt-1"
-            />
+            <Label className="text-sm font-semibold text-slate-700">Mês da Meta</Label>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full mt-1 justify-start text-left font-normal gap-2">
+                  <CalendarIcon className="w-4 h-4 text-slate-400" />
+                  {periodoLabel || "Selecione o mês..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedMonth}
+                  onSelect={(d) => {
+                    if (d) {
+                      setSelectedMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+                      setCalendarOpen(false);
+                    }
+                  }}
+                  locale={ptBR}
+                  defaultMonth={selectedMonth || new Date()}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="grid grid-cols-1 gap-3">
             {METRICS.map(m => (
-              <div key={m.key}>
-                <Label className="text-sm text-slate-600">{m.label}</Label>
+              <div key={m.key} className="flex items-center gap-3">
+                <Label className="text-sm text-slate-600 w-44 flex-shrink-0">{m.label}</Label>
                 <Input
                   type="number"
                   step={m.key === "pa" || m.key === "cs" ? "0.01" : "1"}
                   min="0"
                   value={values[m.key]}
                   onChange={e => setValues(prev => ({ ...prev, [m.key]: parseFloat(e.target.value) || 0 }))}
-                  className="mt-1"
+                  className="flex-1"
                 />
               </div>
             ))}

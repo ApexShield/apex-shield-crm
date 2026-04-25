@@ -1,18 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Target, TrendingUp, TrendingDown } from "lucide-react";
+import MetaPieChart from "./MetaPieChart";
+import MetaIndividualChart from "./MetaIndividualChart";
 
 const METRICS = [
-  { key: "ligacoes_realizadas", label: "Ligações realizadas" },
-  { key: "ligacoes_atendidas", label: "Ligações atendidas" },
-  { key: "agendamentos_feitos", label: "Agendamentos feitos" },
-  { key: "abs_marcadas", label: "ABs marcadas" },
-  { key: "abs_realizadas", label: "ABs realizadas" },
-  { key: "f_agendados", label: "F agendados" },
-  { key: "f_realizados", label: "F realizados" },
-  { key: "n_protocoladas", label: "N protocoladas" },
-  { key: "recs", label: "RECS" },
-  { key: "pa", label: "PA (Prêmio Anual)" },
-  { key: "cs", label: "CS (Capital Segurado)" },
+  { key: "ligacoes_realizadas", label: "Ligações Realizadas" },
+  { key: "agendamentos_feitos", label: "Agendamentos Feitos" },
+  { key: "abs_realizadas", label: "ABs Realizadas" },
+  { key: "f_realizados", label: "F Realizados" },
+  { key: "n_protocoladas", label: "Propostas Realizadas" },
+  { key: "recs", label: "REC Realizadas" },
+  { key: "pa", label: "PA Realizado" },
+  { key: "cs", label: "CS Realizado" },
 ];
 
 function calcRealized(data, key) {
@@ -22,89 +21,138 @@ function calcRealized(data, key) {
 export default function MetaComparativo({ data, metas, onEdit }) {
   if (metas.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-        <Target className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-        <p className="text-slate-500 font-medium">Nenhuma meta definida ainda.</p>
-        <p className="text-slate-400 text-sm mt-1">Clique em "Definir Meta" para começar a acompanhar sua performance.</p>
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700/50 p-10 text-center">
+        <Target className="w-14 h-14 text-slate-600 mx-auto mb-4" />
+        <p className="text-slate-400 font-semibold text-lg">Nenhuma meta definida ainda</p>
+        <p className="text-slate-500 text-sm mt-1">Clique em "Definir Meta" para começar a acompanhar sua performance.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {metas.map(meta => {
+        const metricsData = METRICS.map(m => ({
+          ...m,
+          metaVal: Number(meta[m.key]) || 0,
+          realizado: Math.round(calcRealized(data, m.key) * 100) / 100,
+        }));
+
         return (
-          <div key={meta.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-white" />
-                <h3 className="font-bold text-white">{meta.periodo}</h3>
+          <div key={meta.id} className="space-y-4">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-slate-700/50 px-5 py-4 flex items-center justify-between shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg" style={{ boxShadow: "0 0 12px rgba(0,229,255,0.3)" }}>
+                  <Target className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg">{meta.periodo_label || meta.periodo}</h3>
+                  <p className="text-slate-500 text-xs">Acompanhamento de metas</p>
+                </div>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => onEdit(meta)} className="text-white hover:bg-white/20 h-7 gap-1">
+              <Button size="sm" variant="ghost" onClick={() => onEdit(meta)} className="text-slate-400 hover:text-white hover:bg-white/10 h-8 gap-1.5 border border-slate-700">
                 <Pencil className="w-3 h-3" /> Editar
               </Button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left px-4 py-2 text-slate-600 font-semibold">Indicador</th>
-                    <th className="text-center px-3 py-2 text-emerald-600 font-semibold">Meta</th>
-                    <th className="text-center px-3 py-2 text-indigo-600 font-semibold">Realizado</th>
-                    <th className="text-center px-3 py-2 text-slate-600 font-semibold">%</th>
-                    <th className="text-center px-3 py-2 text-slate-600 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {METRICS.map((m, idx) => {
-                    const metaVal = Number(meta[m.key]) || 0;
-                    const realizado = Math.round(calcRealized(data, m.key) * 100) / 100;
-                    const pct = metaVal > 0 ? Math.round((realizado / metaVal) * 100) : (realizado > 0 ? 100 : 0);
-                    const atingiu = pct >= 100;
-                    const barWidth = Math.min(pct, 100);
 
-                    return (
-                      <tr key={m.key} className={idx % 2 === 0 ? "" : "bg-slate-50/50"}>
-                        <td className="px-4 py-2.5 text-slate-700 font-medium">{m.label}</td>
-                        <td className="text-center px-3 py-2.5 text-emerald-700 font-semibold">
-                          {(m.key === "pa" || m.key === "cs") ? metaVal.toLocaleString("pt-BR") : metaVal}
-                        </td>
-                        <td className="text-center px-3 py-2.5 text-indigo-700 font-semibold">
-                          {(m.key === "pa" || m.key === "cs") ? realizado.toLocaleString("pt-BR") : realizado}
-                        </td>
-                        <td className="text-center px-3 py-2.5">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className={`text-xs font-bold ${atingiu ? 'text-green-600' : pct >= 70 ? 'text-amber-600' : 'text-red-500'}`}>
-                              {pct}%
-                            </span>
-                            <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${atingiu ? 'bg-green-500' : pct >= 70 ? 'bg-amber-400' : 'bg-red-400'}`}
-                                style={{ width: `${barWidth}%` }}
-                              />
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Pie chart geral */}
+              <div className="lg:col-span-1">
+                <MetaPieChart metrics={metricsData} />
+              </div>
+              {/* Individual donuts */}
+              <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {metricsData.map((m, idx) => (
+                  <MetaIndividualChart
+                    key={m.key}
+                    label={m.label}
+                    metaVal={m.metaVal}
+                    realizado={m.realizado}
+                    colorIdx={idx}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Data Table */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700/50">
+                      <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs tracking-wider">INDICADOR</th>
+                      <th className="text-center px-3 py-3 text-cyan-400 font-semibold text-xs tracking-wider">META</th>
+                      <th className="text-center px-3 py-3 text-emerald-400 font-semibold text-xs tracking-wider">REALIZADO</th>
+                      <th className="text-center px-3 py-3 text-slate-400 font-semibold text-xs tracking-wider">PROGRESSO</th>
+                      <th className="text-center px-3 py-3 text-slate-400 font-semibold text-xs tracking-wider">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metricsData.map((m, idx) => {
+                      const pct = m.metaVal > 0 ? Math.round((m.realizado / m.metaVal) * 100) : (m.realizado > 0 ? 100 : 0);
+                      const atingiu = pct >= 100;
+                      const barWidth = Math.min(pct, 100);
+                      const isCurrency = m.key === "pa" || m.key === "cs";
+
+                      return (
+                        <tr key={m.key} className={`border-b border-slate-800/50 ${idx % 2 === 0 ? "bg-slate-900/30" : ""}`}>
+                          <td className="px-4 py-3 text-white font-medium">{m.label}</td>
+                          <td className="text-center px-3 py-3 text-cyan-300 font-semibold">
+                            {isCurrency ? m.metaVal.toLocaleString("pt-BR") : m.metaVal}
+                          </td>
+                          <td className="text-center px-3 py-3 text-emerald-300 font-semibold">
+                            {isCurrency ? m.realizado.toLocaleString("pt-BR") : m.realizado}
+                          </td>
+                          <td className="text-center px-3 py-3">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`text-xs font-bold ${atingiu ? "text-green-400" : pct >= 70 ? "text-amber-400" : "text-red-400"}`}>
+                                {pct}%
+                              </span>
+                              <div className="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${barWidth}%`,
+                                    background: atingiu
+                                      ? "linear-gradient(90deg, #00e676, #76ff03)"
+                                      : pct >= 70
+                                      ? "linear-gradient(90deg, #ffea00, #ff6d00)"
+                                      : "linear-gradient(90deg, #ff1744, #ff6d00)",
+                                    boxShadow: atingiu
+                                      ? "0 0 8px rgba(0,230,118,0.5)"
+                                      : pct >= 70
+                                      ? "0 0 8px rgba(255,234,0,0.4)"
+                                      : "0 0 8px rgba(255,23,68,0.4)",
+                                  }}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="text-center px-3 py-2.5">
-                          {metaVal === 0 ? (
-                            <span className="text-xs text-slate-400">—</span>
-                          ) : atingiu ? (
-                            <div className="flex items-center justify-center gap-1 text-green-600">
-                              <TrendingUp className="w-3.5 h-3.5" />
-                              <span className="text-xs font-bold">Atingida</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center gap-1 text-red-500">
-                              <TrendingDown className="w-3.5 h-3.5" />
-                              <span className="text-xs font-bold">Falta {(m.key === "pa" || m.key === "cs") ? (metaVal - realizado).toLocaleString("pt-BR") : (metaVal - realizado)}</span>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td className="text-center px-3 py-3">
+                            {m.metaVal === 0 ? (
+                              <span className="text-xs text-slate-600">—</span>
+                            ) : atingiu ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <TrendingUp className="w-3.5 h-3.5 text-green-400" />
+                                <span className="text-xs font-bold text-green-400">Atingida</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1">
+                                <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+                                <span className="text-xs font-bold text-red-400">
+                                  Falta {isCurrency ? (m.metaVal - m.realizado).toLocaleString("pt-BR") : (m.metaVal - m.realizado)}
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         );

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Pencil, Target, TrendingUp, TrendingDown } from "lucide-react";
+import { Pencil, Target, TrendingUp, TrendingDown, User } from "lucide-react";
 import MetaPieChart from "./MetaPieChart";
 import MetaIndividualChart from "./MetaIndividualChart";
 
@@ -18,7 +18,7 @@ function calcRealized(data, key) {
   return data.reduce((sum, d) => sum + (Number(d[key]) || 0), 0);
 }
 
-export default function MetaComparativo({ data, metas, onEdit }) {
+export default function MetaComparativo({ data, metas, onEdit, showOwner }) {
   if (metas.length === 0) {
     return (
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700/50 p-10 text-center">
@@ -32,11 +32,18 @@ export default function MetaComparativo({ data, metas, onEdit }) {
   return (
     <div className="space-y-6">
       {metas.map(meta => {
+        // When showing aggregate view, filter records by meta owner
+        const metaRecords = showOwner && meta.created_by
+          ? data.filter(r => r.created_by === meta.created_by)
+          : data;
+
         const metricsData = METRICS.map(m => ({
           ...m,
           metaVal: Number(meta[m.key]) || 0,
-          realizado: Math.round(calcRealized(data, m.key) * 100) / 100,
+          realizado: Math.round(calcRealized(metaRecords, m.key) * 100) / 100,
         }));
+
+        const ownerName = meta._owner_nome || "";
 
         return (
           <div key={meta.id} className="space-y-4">
@@ -48,21 +55,27 @@ export default function MetaComparativo({ data, metas, onEdit }) {
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-lg">{meta.periodo_label || meta.periodo}</h3>
-                  <p className="text-slate-500 text-xs">Acompanhamento de metas</p>
+                  {showOwner && ownerName && (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <User className="w-3 h-3 text-cyan-400" />
+                      <span className="text-xs text-cyan-400 font-medium">{ownerName}</span>
+                    </div>
+                  )}
+                  {!showOwner && <p className="text-slate-500 text-xs">Acompanhamento de metas</p>}
                 </div>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => onEdit(meta)} className="text-slate-400 hover:text-white hover:bg-white/10 h-8 gap-1.5 border border-slate-700">
-                <Pencil className="w-3 h-3" /> Editar
-              </Button>
+              {onEdit && (
+                <Button size="sm" variant="ghost" onClick={() => onEdit(meta)} className="text-slate-400 hover:text-white hover:bg-white/10 h-8 gap-1.5 border border-slate-700">
+                  <Pencil className="w-3 h-3" /> Editar
+                </Button>
+              )}
             </div>
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Pie chart geral */}
               <div className="lg:col-span-1">
                 <MetaPieChart metrics={metricsData} />
               </div>
-              {/* Individual donuts */}
               <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {metricsData.map((m, idx) => (
                   <MetaIndividualChart

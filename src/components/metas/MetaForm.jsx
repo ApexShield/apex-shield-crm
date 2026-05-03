@@ -128,11 +128,24 @@ export default function MetaForm({ open, onClose, existingMeta }) {
               <div key={m.key} className="flex items-center gap-3">
                 <Label className="text-sm text-slate-600 w-44 flex-shrink-0">{m.label}</Label>
                 <Input
-                  type="number"
-                  step={m.key === "pa" || m.key === "cs" ? "0.01" : "1"}
-                  min="0"
+                  type="text"
+                  inputMode={(m.key === "pa" || m.key === "cs") ? "decimal" : "numeric"}
                   value={values[m.key]}
-                  onChange={e => setValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                  onChange={e => {
+                    let raw = e.target.value;
+                    const isFloat = m.key === "pa" || m.key === "cs";
+                    if (isFloat) {
+                      raw = raw.replace(/[^0-9.]/g, "");
+                      const parts = raw.split(".");
+                      if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
+                    } else {
+                      raw = raw.replace(/[^0-9]/g, "");
+                    }
+                    if (raw.length > 1 && raw[0] === "0" && raw[1] !== ".") {
+                      raw = raw.replace(/^0+/, "");
+                    }
+                    setValues(prev => ({ ...prev, [m.key]: raw }));
+                  }}
                   onFocus={e => { if (e.target.value === "0") setValues(prev => ({ ...prev, [m.key]: "" })); }}
                   placeholder="0"
                   className="flex-1"

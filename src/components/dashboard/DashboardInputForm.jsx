@@ -136,11 +136,26 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
               <div key={m.key}>
                 <Label className="text-sm text-slate-600">{m.label}</Label>
                 <Input
-                  type="number"
-                  step={m.type === "float" ? "0.01" : "1"}
-                  min="0"
+                  type="text"
+                  inputMode={m.type === "float" ? "decimal" : "numeric"}
                   value={values[m.key]}
-                  onChange={e => setValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                  onChange={e => {
+                    let raw = e.target.value;
+                    // Allow only digits (and dot for floats)
+                    if (m.type === "float") {
+                      raw = raw.replace(/[^0-9.]/g, "");
+                      // Only one dot allowed
+                      const parts = raw.split(".");
+                      if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
+                    } else {
+                      raw = raw.replace(/[^0-9]/g, "");
+                    }
+                    // Remove leading zeros (but keep "0." for floats)
+                    if (raw.length > 1 && raw[0] === "0" && raw[1] !== ".") {
+                      raw = raw.replace(/^0+/, "");
+                    }
+                    setValues(prev => ({ ...prev, [m.key]: raw }));
+                  }}
                   onFocus={e => { if (e.target.value === "0") setValues(prev => ({ ...prev, [m.key]: "" })); }}
                   placeholder="0"
                   className="mt-1"

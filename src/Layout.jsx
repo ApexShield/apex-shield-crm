@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import ConvitesDialog from "./components/ConvitesDialog";
 import AniversariantesPopup from "./components/AniversariantesPopup";
+import BottomNav from "./components/mobile/BottomNav";
+import DeleteAccountDialog from "./components/mobile/DeleteAccountDialog";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
@@ -35,6 +37,7 @@ const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico", "BoasVinda
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showConvitesDialog, setShowConvitesDialog] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   const isPublicPage = PUBLIC_PAGES.includes(currentPageName);
 
@@ -174,12 +177,21 @@ export default function Layout({ children, currentPageName }) {
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteAccount(true)}
+              className="w-full mt-2 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 gap-1.5 justify-start"
+            >
+              <Trash2 className="w-3 h-3" />
+              Excluir Conta
+            </Button>
           </div>
         </div>
       </aside>
 
       <div className="lg:pl-72">
-        <header className="lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3">
+        <header className="lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 safe-area-top">
           <div className="flex items-center justify-between">
             <Button 
               variant="ghost" 
@@ -198,10 +210,12 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </header>
 
-        <main>
+        <main className="mobile-content-pad">
           {children}
         </main>
       </div>
+
+      <BottomNav />
 
       <ConvitesDialog
         open={showConvitesDialog}
@@ -210,6 +224,12 @@ export default function Layout({ children, currentPageName }) {
       />
 
       <AniversariantesPopup />
+
+      <DeleteAccountDialog
+        open={showDeleteAccount}
+        onClose={() => setShowDeleteAccount(false)}
+        userEmail={user?.email}
+      />
     </div>
   );
 }

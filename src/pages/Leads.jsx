@@ -22,6 +22,7 @@ import FunilVendas from "../components/leads/FunilVendas";
 import ApoliceDialog from "../components/leads/ApoliceDialog";
 import Relatorios from "../components/leads/Relatorios";
 import ImportExportLeads from "../components/leads/ImportExportLeads";
+import LeadCard from "../components/mobile/LeadCard";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -355,7 +356,7 @@ export default function Leads() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-[1800px] mx-auto">
         {/* Header Moderno */}
         <div className="mb-6">
@@ -365,7 +366,7 @@ export default function Leads() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-black text-white">Dashboard de Leads</h1>
+                <h1 className="text-xl md:text-3xl font-black text-white">Dashboard de Leads</h1>
                 <p className="text-indigo-300">Gerencie seus clientes e oportunidades</p>
               </div>
             </div>
@@ -466,8 +467,8 @@ export default function Leads() {
           </div>
         </div>
 
-        {/* Tabela de Dados */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">
+        {/* Table (Desktop) */}
+        <div className="hidden md:block bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">
           <div className="overflow-x-auto overflow-y-auto touch-pan-x touch-pan-y" style={{ maxHeight: '500px', WebkitOverflowScrolling: 'touch' }}>
             <Table className="table-auto w-full min-w-[1200px]">
               <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm z-10">
@@ -572,52 +573,70 @@ export default function Leads() {
           </div>
         </div>
 
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-2 mb-6 max-h-[60vh] overflow-y-auto">
+          {dadosFiltrados.map(cliente => (
+            <LeadCard
+              key={cliente.id}
+              cliente={cliente}
+              isSelected={selectedLead?.id === cliente.id}
+              onClick={() => {
+                setSelectedLead(cliente);
+              }}
+              getStatusColor={getStatusColor}
+            />
+          ))}
+          {dadosFiltrados.length === 0 && (
+            <p className="text-center text-white/50 py-10 text-sm">Nenhum lead encontrado</p>
+          )}
+        </div>
+
         {/* Botões de Ação */}
-        <div className="flex gap-3 flex-wrap">
+        <div className="grid grid-cols-3 md:flex gap-2 md:gap-3 md:flex-wrap">
           <Button
             onClick={() => { setEditingLead(null); setShowForm(true); }}
-            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-6 py-6"
+            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
           >
-            <Plus className="w-5 h-5 mr-2" />
-            Criar Lead
+            <Plus className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            Criar
           </Button>
           <Button
             onClick={handleEdit}
-            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-6 py-6"
+            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
             disabled={!selectedLead}
           >
-            <Edit className="w-5 h-5 mr-2" />
+            <Edit className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
             Editar
           </Button>
           <Button
             onClick={handleDelete}
-            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-6 py-6"
+            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
             disabled={!selectedLead}
           >
-            <Trash2 className="w-5 h-5 mr-2" />
+            <Trash2 className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
             Excluir
           </Button>
           <Button
             onClick={() => setShowDocumentos(true)}
-            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-6 py-6"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
             disabled={!selectedLead}
           >
-            <FileText className="w-5 h-5 mr-2" />
-            Documentos
+            <FileText className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            Docs
           </Button>
           <Button
             onClick={() => setShowRelatorios(true)}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6 py-6"
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
           >
-            <FileText className="w-5 h-5 mr-2" />
+            <FileText className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
             Relatórios
           </Button>
           <Button
             onClick={() => setShowImportExport(true)}
-            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-6 py-6"
+            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
           >
-            <Upload className="w-5 h-5 mr-2" />
-            Import/Export
+            <Upload className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            Import
           </Button>
         </div>
       </div>

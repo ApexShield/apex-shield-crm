@@ -443,33 +443,37 @@ export default function Leads() {
             </div>
 
             {/* Busca e Filtros */}
-            <div className="flex gap-1.5 md:gap-2 flex-wrap">
-              <div className="flex-1 min-w-0 md:min-w-[300px]">
+            <div className="space-y-1.5 md:space-y-0 md:flex md:gap-2 md:flex-wrap">
+              {/* Busca - full width on mobile */}
+              <div className="flex-1 md:min-w-[300px]">
                 <Input
-                  placeholder="🔍 Buscar por nome, email, telefone, empresa, CPF, cargo..."
+                  placeholder="🔍 Buscar nome, telefone, CPF, empresa..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-8 md:h-9 text-xs md:text-sm"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-8 md:h-9 text-xs md:text-sm w-full"
                 />
               </div>
-              <Input
-                type="date"
-                value={filtroDataVisita}
-                onChange={(e) => setFiltroDataVisita(e.target.value)}
-                className="w-auto bg-white/10 border-white/20 text-white h-8 md:h-9 text-xs md:text-sm"
-              />
-              <Button
-                onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
-                className="bg-red-500/80 hover:bg-red-600 h-8 md:h-9 text-xs px-2 md:px-4"
-                size="sm"
-              >
-                Limpar
-              </Button>
-              {(busca || filtroDataVisita || filtroStatus) && (
-                <div className="flex items-center bg-white/10 px-2 md:px-4 py-1 md:py-2 rounded-lg">
-                  <span className="text-white font-semibold text-xs md:text-sm">{dadosFiltrados.length} leads</span>
-                </div>
-              )}
+              {/* Data + Limpar + contador em linha */}
+              <div className="flex gap-1.5 md:gap-2 items-center">
+                <Input
+                  type="date"
+                  value={filtroDataVisita}
+                  onChange={(e) => setFiltroDataVisita(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white h-8 md:h-9 text-xs md:text-sm flex-1 md:flex-none md:w-auto min-w-0"
+                />
+                <Button
+                  onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
+                  className="bg-red-500/80 hover:bg-red-600 h-8 md:h-9 text-xs px-2.5 md:px-4 flex-shrink-0"
+                  size="sm"
+                >
+                  Limpar
+                </Button>
+                {(busca || filtroDataVisita || filtroStatus) && (
+                  <div className="flex items-center bg-white/10 px-2 md:px-4 py-1 md:py-2 rounded-md flex-shrink-0">
+                    <span className="text-white font-semibold text-[10px] md:text-sm">{dadosFiltrados.length} leads</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

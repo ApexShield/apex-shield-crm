@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -23,6 +23,7 @@ import ApoliceDialog from "../components/leads/ApoliceDialog";
 import Relatorios from "../components/leads/Relatorios";
 import ImportExportLeads from "../components/leads/ImportExportLeads";
 import LeadCard from "../components/mobile/LeadCard";
+import MobileLeadList from "../components/mobile/MobileLeadList";
 import PullToRefresh from "../components/mobile/PullToRefresh";
 
 // Configuração dos status com cores do VBA
@@ -254,7 +255,17 @@ export default function Leads() {
       const result = await base44.entities.Cliente.create(data);
       return result;
     },
-    onSuccess: () => {
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ["clientes"] });
+      const previous = queryClient.getQueryData(["clientes"]);
+      const optimistic = { ...newData, id: `temp-${Date.now()}`, created_by: user?.email, created_date: new Date().toISOString() };
+      queryClient.setQueryData(["clientes"], (old) => [optimistic, ...(old || [])]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(["clientes"], context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setShowForm(false);
       setEditingLead(null);
@@ -286,7 +297,16 @@ export default function Leads() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Cliente.delete(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["clientes"] });
+      const previous = queryClient.getQueryData(["clientes"]);
+      queryClient.setQueryData(["clientes"], (old) => (old || []).filter(c => c.id !== id));
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(["clientes"], context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setSelectedLead(null);
     }
@@ -589,26 +609,18 @@ export default function Leads() {
           </div>
         </div>
 
-        {/* Mobile Cards - scrollable list */}
+        {/* Mobile Cards - scrollable list with limited render */}
         <div className="md:hidden pb-24">
-          <div className="space-y-1">
-            {dadosFiltrados.map(cliente => (
-              <LeadCard
-                key={cliente.id}
-                cliente={cliente}
-                isSelected={selectedLead?.id === cliente.id}
-                onClick={() => setSelectedLead(cliente)}
-                onDoubleClick={() => {
-                  setEditingLead(cliente);
-                  setShowForm(true);
-                }}
-                getStatusColor={getStatusColor}
-              />
-            ))}
-            {dadosFiltrados.length === 0 && (
-              <p className="text-center text-white/50 py-10 text-sm">Nenhum lead encontrado</p>
-            )}
-          </div>
+          <MobileLeadList
+            leads={dadosFiltrados}
+            selectedId={selectedLead?.id}
+            onSelect={setSelectedLead}
+            onEdit={(cliente) => {
+              setEditingLead(cliente);
+              setShowForm(true);
+            }}
+            getStatusColor={getStatusColor}
+          />
         </div>
 
         {/* Botões de Ação - Desktop */}

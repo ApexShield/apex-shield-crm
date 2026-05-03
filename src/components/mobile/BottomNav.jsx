@@ -29,14 +29,21 @@ export default function BottomNav() {
   const menuRef = useRef(null);
   const prevPath = useRef(location.pathname);
 
-  // Save scroll on route change, restore on arrival
+  // Save scroll on route change, restore on arrival with delay for render
   useEffect(() => {
     if (prevPath.current !== location.pathname) {
       scrollStore[prevPath.current] = window.scrollY;
       prevPath.current = location.pathname;
+      // Use double rAF to wait for DOM paint before restoring scroll
       requestAnimationFrame(() => {
-        const saved = scrollStore[location.pathname];
-        if (saved != null) window.scrollTo(0, saved);
+        requestAnimationFrame(() => {
+          const saved = scrollStore[location.pathname];
+          if (saved != null) {
+            window.scrollTo({ top: saved, behavior: "instant" });
+          } else {
+            window.scrollTo({ top: 0, behavior: "instant" });
+          }
+        });
       });
     }
   }, [location.pathname]);

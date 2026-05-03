@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2, ArrowLeft
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2, ArrowLeft, Headphones
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,11 @@ const navigation = [
   { name: "Organograma", icon: Users, page: "Organograma" },
   // { name: "Assinatura", icon: Crown, page: "Assinatura" },
   { name: "Política de Privacidade", icon: Briefcase, page: "PoliticaPrivacidade" },
-  { name: "Termos de Serviço", icon: Briefcase, page: "TermosServico" }
+  { name: "Termos de Serviço", icon: Briefcase, page: "TermosServico" },
+  { name: "Suporte", icon: Headphones, page: "Suporte" }
 ];
 
-const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico", "BoasVindas"];
+const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico", "BoasVindas", "Suporte"];
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);

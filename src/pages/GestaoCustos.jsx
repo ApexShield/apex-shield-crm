@@ -217,69 +217,63 @@ export default function GestaoCustos() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <Wallet className="w-7 h-7 text-white" />
+        <div className="mb-4 md:mb-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 md:w-14 md:h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg md:rounded-xl flex items-center justify-center">
+                <Wallet className="w-4 h-4 md:w-7 md:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-black text-white">Gestão Financeira</h1>
-                <p className="text-blue-300">Controle suas receitas e despesas</p>
+                <h1 className="text-lg md:text-3xl font-black text-white">Gestão Financeira</h1>
+                <p className="text-[11px] md:text-sm text-blue-300">Controle suas receitas e despesas</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <Input
-                type="month"
-                value={mesAno}
-                onChange={(e) => setMesAno(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <Button
-                onClick={() => setShowDialog(true)}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Nova Transação
-              </Button>
-            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-3">
+            <Input
+              type="month"
+              value={mesAno}
+              onChange={(e) => setMesAno(e.target.value)}
+              className="bg-white/10 border-white/20 text-white h-8 md:h-9 text-xs md:text-sm flex-1 max-w-[200px]"
+            />
+            <Button
+              onClick={() => setShowDialog(true)}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold h-8 md:h-auto md:px-8 md:py-6 text-xs md:text-lg px-3"
+            >
+              <Plus className="w-3.5 h-3.5 md:w-5 md:h-5 mr-1 md:mr-2" />
+              Nova Transação
+            </Button>
           </div>
         </div>
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-8 h-8" />
-                <span className="text-sm font-semibold">Receitas</span>
-              </div>
-              <p className="text-3xl font-black">{formatCurrency(resumo.totalReceitas)}</p>
-            </Card>
-          </motion.div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 md:gap-6 mb-4 md:mb-6">
+          <Card className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 md:p-6 text-white">
+            <div className="flex items-center justify-between mb-1">
+              <TrendingUp className="w-5 h-5 md:w-8 md:h-8" />
+              <span className="text-[10px] md:text-sm font-semibold">Receitas</span>
+            </div>
+            <p className="text-lg md:text-3xl font-black">{formatCurrency(resumo.totalReceitas)}</p>
+          </Card>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Card className="bg-gradient-to-br from-red-500 to-rose-600 p-6 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <TrendingDown className="w-8 h-8" />
-                <span className="text-sm font-semibold">Despesas</span>
-              </div>
-              <p className="text-3xl font-black">{formatCurrency(resumo.totalDespesas)}</p>
-            </Card>
-          </motion.div>
+          <Card className="bg-gradient-to-br from-red-500 to-rose-600 p-3 md:p-6 text-white">
+            <div className="flex items-center justify-between mb-1">
+              <TrendingDown className="w-5 h-5 md:w-8 md:h-8" />
+              <span className="text-[10px] md:text-sm font-semibold">Despesas</span>
+            </div>
+            <p className="text-lg md:text-3xl font-black">{formatCurrency(resumo.totalDespesas)}</p>
+          </Card>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Card className={`bg-gradient-to-br ${resumo.saldo >= 0 ? 'from-blue-500 to-indigo-600' : 'from-orange-500 to-red-600'} p-6 text-white`}>
-              <div className="flex items-center justify-between mb-2">
-                <DollarSign className="w-8 h-8" />
-                <span className="text-sm font-semibold">Saldo</span>
-              </div>
-              <p className="text-3xl font-black">{formatCurrency(resumo.saldo)}</p>
-            </Card>
-          </motion.div>
+          <Card className={`bg-gradient-to-br ${resumo.saldo >= 0 ? 'from-blue-500 to-indigo-600' : 'from-orange-500 to-red-600'} p-3 md:p-6 text-white col-span-2 md:col-span-1`}>
+            <div className="flex items-center justify-between mb-1">
+              <DollarSign className="w-5 h-5 md:w-8 md:h-8" />
+              <span className="text-[10px] md:text-sm font-semibold">Saldo</span>
+            </div>
+            <p className="text-lg md:text-3xl font-black">{formatCurrency(resumo.saldo)}</p>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -368,22 +362,22 @@ export default function GestaoCustos() {
                       : "bg-red-500/20 border border-red-500/30"
                   }`}
                 >
-                  <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                     {transacao.tipo === "Receita" ? (
-                      <TrendingUp className="w-6 h-6 text-green-400" />
+                      <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-green-400 flex-shrink-0" />
                     ) : (
-                      <TrendingDown className="w-6 h-6 text-red-400" />
+                      <TrendingDown className="w-4 h-4 md:w-6 md:h-6 text-red-400 flex-shrink-0" />
                     )}
-                    <div className="flex-1">
-                      <p className="text-white font-bold">{transacao.descricao}</p>
-                      <div className="flex items-center gap-3 text-sm text-white/70">
-                        <span className="px-2 py-0.5 bg-white/10 rounded-full">{transacao.categoria}</span>
-                        <span>{format(parseISO(transacao.data), "dd/MM/yyyy")}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-xs md:text-base truncate">{transacao.descricao}</p>
+                      <div className="flex items-center gap-2 text-[10px] md:text-sm text-white/70">
+                        <span className="px-1.5 py-0.5 bg-white/10 rounded-full truncate">{transacao.categoria}</span>
+                        <span className="flex-shrink-0">{format(parseISO(transacao.data), "dd/MM")}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <p className={`text-xl font-black ${transacao.tipo === "Receita" ? "text-green-400" : "text-red-400"}`}>
+                  <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+                    <p className={`text-sm md:text-xl font-black ${transacao.tipo === "Receita" ? "text-green-400" : "text-red-400"}`}>
                       {transacao.tipo === "Receita" ? "+" : "-"} {formatCurrency(transacao.valor)}
                     </p>
                     <Button

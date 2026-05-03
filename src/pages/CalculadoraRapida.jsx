@@ -332,17 +332,17 @@ export default function CalculadoraRapida() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <Calculator className="w-7 h-7 text-white" />
+        <div className="mb-4 md:mb-8">
+          <div className="flex items-center gap-2.5 md:gap-4 mb-3">
+            <div className="w-9 h-9 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center">
+              <Calculator className="w-4 h-4 md:w-7 md:h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-white">Calculadora Rápida</h1>
-              <p className="text-indigo-300 text-sm">Faça uma cotação diretamente do dashboard • Resultados instantâneos</p>
+              <h1 className="text-lg md:text-3xl font-black text-white">Calculadora Rápida</h1>
+              <p className="text-indigo-300 text-[11px] md:text-sm">Faça uma cotação diretamente do dashboard • Resultados instantâneos</p>
             </div>
           </div>
         </div>
@@ -350,15 +350,15 @@ export default function CalculadoraRapida() {
         {/* Formulário */}
         <Card className="bg-white/5 backdrop-blur-sm border-white/10 mb-6">
           <CardHeader>
-            <CardTitle className="text-white text-xl flex items-center gap-2">
-              <FileText className="w-6 h-6 text-indigo-400" />
+            <CardTitle className="text-white text-base md:text-xl flex items-center gap-2">
+              <FileText className="w-4 h-4 md:w-6 md:h-6 text-indigo-400" />
               Cálculo de Seguro de Vida
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Seleção de Cliente com busca */}
-            <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-4 rounded-xl border-2 border-indigo-400">
-              <Label className="text-white mb-2 block text-lg font-bold">Selecione um contato existente</Label>
+            <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-3 md:p-4 rounded-xl border-2 border-indigo-400">
+              <Label className="text-white mb-1.5 block text-sm md:text-lg font-bold">Selecione um contato existente</Label>
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -693,10 +693,10 @@ export default function CalculadoraRapida() {
 
             {/* Botões */}
             <div className="flex gap-3">
-              <Button onClick={gerarApresentacao} disabled={generating} className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 text-lg">
-                {generating ? "Gerando Análise..." : "Gerar Análise Completa"}
+              <Button onClick={gerarApresentacao} disabled={generating} className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 md:py-6 text-sm md:text-lg">
+                {generating ? "Gerando..." : "Gerar Análise"}
               </Button>
-              <Button onClick={limparCalculadora} variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-bold py-6 px-8">Limpar</Button>
+              <Button onClick={limparCalculadora} variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-bold py-3 md:py-6 px-4 md:px-8 text-sm md:text-base">Limpar</Button>
             </div>
           </CardContent>
         </Card>

@@ -132,27 +132,38 @@ export default function Metas() {
   const isLeader = teamData?.tipo === "LiderAgencia" || teamData?.tipo === "LiderUnidade";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 md:p-6">
-      <div className="max-w-[1400px] mx-auto space-y-5">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-3 md:p-6">
+      <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-5">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+          className="space-y-3"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg" style={{ boxShadow: "0 0 16px rgba(0,229,255,0.3)" }}>
-              <Target className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 md:w-11 md:h-11 rounded-lg md:rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg" style={{ boxShadow: "0 0 12px rgba(0,229,255,0.3)" }}>
+                <Target className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg md:text-2xl font-black text-white">Painel de Metas</h1>
+                <p className="text-[11px] md:text-sm text-slate-400 line-clamp-1">
+                  {viewLabel || "Minhas Metas"}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-black text-white">Painel de Metas</h1>
-              <p className="text-sm text-slate-400">
-                {viewLabel || "Compare suas metas com os dados realizados"}
-              </p>
-            </div>
+            <Button
+              onClick={() => { setEditingMeta(null); setShowForm(true); }}
+              size="sm"
+              className="gap-1.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 font-bold shadow-lg text-xs md:text-sm h-8 md:h-9 px-3"
+              style={{ boxShadow: "0 0 12px rgba(0,229,255,0.25)" }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Definir Meta
+            </Button>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <Select value={ano} onValueChange={(v) => setAno(v)}>
-              <SelectTrigger className="w-[100px] bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-[80px] md:w-[100px] bg-slate-800 border-slate-700 text-white h-8 md:h-9 text-xs md:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -160,21 +171,13 @@ export default function Metas() {
               </SelectContent>
             </Select>
             <Select value={mes} onValueChange={(v) => setMes(v)}>
-              <SelectTrigger className="w-[140px] bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="w-[110px] md:w-[140px] bg-slate-800 border-slate-700 text-white h-8 md:h-9 text-xs md:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {MESES.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button
-              onClick={() => { setEditingMeta(null); setShowForm(true); }}
-              className="gap-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 font-bold shadow-lg"
-              style={{ boxShadow: "0 0 12px rgba(0,229,255,0.25)" }}
-            >
-              <Plus className="w-4 h-4" />
-              Definir Meta
-            </Button>
           </div>
         </motion.div>
 

@@ -182,51 +182,48 @@ export default function Aniversariantes() {
   };
 
   const getIcon = (tipo) => {
-    if (tipo === "casamento") return <Heart className="w-8 h-8 text-white" />;
-    if (tipo === "filho") return <Users className="w-8 h-8 text-white" />;
-    return <PartyPopper className="w-8 h-8 text-white" />;
+    if (tipo === "casamento") return <Heart className="w-5 h-5 md:w-7 md:h-7 text-white" />;
+    if (tipo === "filho") return <Users className="w-5 h-5 md:w-7 md:h-7 text-white" />;
+    return <PartyPopper className="w-5 h-5 md:w-7 md:h-7 text-white" />;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 p-3 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
-                <Cake className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-black text-purple-900">Aniversariantes</h1>
-                <p className="text-purple-600 font-medium">Celebre com seus clientes!</p>
-              </div>
+        <div className="mb-4 md:mb-6">
+          <div className="flex items-center gap-3 mb-4 md:mb-6">
+            <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg">
+              <Cake className="w-5 h-5 md:w-7 md:h-7 text-white" />
             </div>
-            
+            <div>
+              <h1 className="text-xl md:text-3xl font-black text-purple-900">Aniversariantes</h1>
+              <p className="text-xs md:text-sm text-purple-600 font-medium">Celebre com seus clientes!</p>
+            </div>
           </div>
 
           {/* Filtros */}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               onClick={() => setFilter("hoje")}
-              className={`px-8 py-6 text-lg font-bold rounded-2xl transition-all ${
+              className={`px-4 md:px-8 py-2.5 md:py-5 text-xs md:text-base font-bold rounded-xl md:rounded-2xl transition-all ${
                 filter === "hoje"
-                  ? "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-xl scale-105"
+                  ? "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg"
                   : "bg-white text-purple-700 hover:bg-purple-50"
               }`}
             >
-              <Cake className="w-5 h-5 mr-2" />
+              <Cake className="w-3.5 h-3.5 md:w-5 md:h-5 mr-1.5" />
               Hoje ({aniversariantes.filter(a => a.ehHoje).length})
             </Button>
             <Button
               onClick={() => setFilter("semana")}
-              className={`px-8 py-6 text-lg font-bold rounded-2xl transition-all ${
+              className={`px-4 md:px-8 py-2.5 md:py-5 text-xs md:text-base font-bold rounded-xl md:rounded-2xl transition-all ${
                 filter === "semana"
-                  ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-xl scale-105"
+                  ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg"
                   : "bg-white text-purple-700 hover:bg-purple-50"
               }`}
             >
-              <Calendar className="w-5 h-5 mr-2" />
+              <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 mr-1.5" />
               Esta Semana
             </Button>
           </div>
@@ -241,8 +238,8 @@ export default function Aniversariantes() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-20"
             >
-              <Gift className="w-24 h-24 mx-auto text-purple-300 mb-4" />
-              <p className="text-2xl text-purple-600 font-bold">
+              <Gift className="w-14 h-14 md:w-24 md:h-24 mx-auto text-purple-300 mb-3" />
+              <p className="text-base md:text-2xl text-purple-600 font-bold">
                 Nenhum aniversariante {filter === "hoje" ? "hoje" : "esta semana"}
               </p>
             </motion.div>
@@ -252,7 +249,7 @@ export default function Aniversariantes() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
             >
               {aniversariantes.map((item, index) => (
                 <motion.div
@@ -262,75 +259,67 @@ export default function Aniversariantes() {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Card
-                    className={`relative overflow-hidden bg-gradient-to-br ${getGradient(item)} p-6 hover:scale-105 transition-transform duration-300 shadow-2xl`}
+                    className={`relative overflow-hidden bg-gradient-to-br ${getGradient(item)} p-4 md:p-6 shadow-xl`}
                   >
                     <div className="absolute top-0 right-0 opacity-20">
-                      <Sparkles className="w-32 h-32 text-white" />
+                      <Sparkles className="w-20 h-20 md:w-32 md:h-32 text-white" />
                     </div>
 
                     {/* Badge tipo */}
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-white/30 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-bold">
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-white/30 backdrop-blur-sm text-white text-[10px] md:text-xs px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold">
                         {getBadge(item.tipo_aniversario)}
                       </span>
                     </div>
 
                     {item.ehHoje && (
-                      <div className="absolute top-4 right-4">
-                        <motion.div
-                          animate={{ rotate: [0, -10, 10, -10, 0] }}
-                          transition={{ repeat: Infinity, duration: 2 }}
-                          className="bg-yellow-300 text-yellow-900 px-3 py-1 rounded-full text-xs font-black shadow-lg"
-                        >
+                      <div className="absolute top-3 right-3">
+                        <div className="bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black shadow-lg">
                           {item.display_emoji} HOJE!
-                        </motion.div>
+                        </div>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-4 mb-4 mt-8">
-                      <div className="w-16 h-16 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <div className="flex items-center gap-3 mb-3 mt-7 md:mt-8">
+                      <div className="w-10 h-10 md:w-14 md:h-14 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0">
                         {getIcon(item.tipo_aniversario)}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-black text-white">{item.display_nome}</h3>
-                        <p className="text-white/90 text-sm font-semibold">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm md:text-lg font-black text-white truncate">{item.display_nome}</h3>
+                        <p className="text-white/90 text-xs md:text-sm font-semibold">
                           {item.display_info}
                         </p>
                       </div>
                     </div>
 
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                        <Calendar className="w-5 h-5 text-white flex-shrink-0" />
-                        <span className="text-white font-semibold">
+                    <div className="space-y-1.5 md:space-y-2 mb-3">
+                      <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-2 md:p-3">
+                        <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 text-white flex-shrink-0" />
+                        <span className="text-white font-semibold text-xs md:text-sm">
                           {format(item.dataAniversario, "dd 'de' MMMM", { locale: ptBR })}
                         </span>
                       </div>
 
                       {item.telefone && (
-                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                          <Phone className="w-5 h-5 text-white flex-shrink-0" />
-                          <span className="text-white font-medium text-sm">
-                            {item.telefone}
-                          </span>
+                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-2 md:p-3">
+                          <Phone className="w-3.5 h-3.5 md:w-4 md:h-4 text-white flex-shrink-0" />
+                          <span className="text-white font-medium text-xs md:text-sm">{item.telefone}</span>
                         </div>
                       )}
 
                       {item.email && (
-                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                          <Mail className="w-5 h-5 text-white flex-shrink-0" />
-                          <span className="text-white font-medium text-sm truncate">
-                            {item.email}
-                          </span>
+                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-2 md:p-3">
+                          <Mail className="w-3.5 h-3.5 md:w-4 md:h-4 text-white flex-shrink-0" />
+                          <span className="text-white font-medium text-xs md:text-sm truncate">{item.email}</span>
                         </div>
                       )}
                     </div>
 
                     <Button
                       onClick={() => handleSendMessage(item)}
-                      className="w-full bg-white text-purple-700 hover:bg-purple-50 font-bold py-3 rounded-xl shadow-lg"
+                      className="w-full bg-white text-purple-700 hover:bg-purple-50 font-bold py-2 md:py-3 rounded-xl shadow-lg text-xs md:text-sm"
                     >
-                      <Gift className="w-4 h-4 mr-2" />
+                      <Gift className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5" />
                       Enviar Parabéns
                     </Button>
                   </Card>

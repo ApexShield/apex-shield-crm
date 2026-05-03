@@ -207,7 +207,7 @@ export default function Organograma() {
   const semVinculo = !isAdmin && !isLiderAgencia && !isLiderUnidade && arvoresVisiveis.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 p-3 md:p-6 overflow-x-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 p-2 md:p-6">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 md:mb-8 gap-3">
@@ -331,8 +331,8 @@ export default function Organograma() {
                 </div>
               </Card>
             ) : arvoresVisiveis.length > 0 ? (
-              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl border border-white/20 p-2 md:p-8 overflow-x-auto">
-                <div className="flex flex-col items-center gap-4 md:gap-12 min-w-fit">
+              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl border border-white/20 p-1.5 md:p-8 overflow-x-auto md:overflow-x-visible">
+                <div className="flex flex-col items-center gap-2 md:gap-12 w-full">
                   {arvoresVisiveis.map(arvore => (
                     <OrgTree
                       key={arvore.id}

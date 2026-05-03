@@ -586,7 +586,7 @@ export default function Leads() {
         </div>
 
         {/* Mobile Cards with Pull to Refresh */}
-        <div className="md:hidden mb-6">
+        <div className="md:hidden mb-16">
           <PullToRefresh
             onRefresh={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
             className="max-h-[60vh]"
@@ -610,53 +610,110 @@ export default function Leads() {
           </PullToRefresh>
         </div>
 
-        {/* Botões de Ação */}
-        <div className="grid grid-cols-3 md:flex gap-2 md:gap-3 md:flex-wrap">
+        {/* Botões de Ação - Desktop */}
+        <div className="hidden md:flex gap-3 flex-wrap">
           <Button
             onClick={() => { setEditingLead(null); setShowForm(true); }}
-            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
+            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-6 py-6 text-sm no-select"
           >
-            <Plus className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Criar
           </Button>
           <Button
             onClick={handleEdit}
-            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
+            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-6 py-6 text-sm no-select"
             disabled={!selectedLead}
           >
-            <Edit className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            <Edit className="w-5 h-5 mr-2" />
             Editar
           </Button>
           <Button
             onClick={handleDelete}
-            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
+            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-6 py-6 text-sm no-select"
             disabled={!selectedLead}
           >
-            <Trash2 className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            <Trash2 className="w-5 h-5 mr-2" />
             Excluir
           </Button>
           <Button
             onClick={() => setShowDocumentos(true)}
-            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-6 py-6 text-sm no-select"
             disabled={!selectedLead}
           >
-            <FileText className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            <FileText className="w-5 h-5 mr-2" />
             Docs
           </Button>
           <Button
             onClick={() => setShowRelatorios(true)}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6 py-6 text-sm no-select"
           >
-            <FileText className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            <FileText className="w-5 h-5 mr-2" />
             Relatórios
           </Button>
           <Button
             onClick={() => setShowImportExport(true)}
-            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-3 md:px-6 py-4 md:py-6 text-xs md:text-sm no-select"
+            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-6 py-6 text-sm no-select"
           >
-            <Upload className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+            <Upload className="w-5 h-5 mr-2" />
             Import
           </Button>
+        </div>
+
+        {/* Mobile Action Bar - fixed above BottomNav */}
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-white/10 px-2 py-2 safe-area-bottom">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            <Button
+              onClick={() => { setEditingLead(null); setShowForm(true); }}
+              size="sm"
+              className="bg-gradient-to-r from-blue-500 to-cyan-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Criar
+            </Button>
+            <Button
+              onClick={handleEdit}
+              size="sm"
+              className="bg-gradient-to-r from-orange-500 to-amber-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              disabled={!selectedLead}
+            >
+              <Edit className="w-3.5 h-3.5" />
+              Editar
+            </Button>
+            <Button
+              onClick={handleDelete}
+              size="sm"
+              className="bg-gradient-to-r from-red-500 to-pink-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              disabled={!selectedLead}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Excluir
+            </Button>
+            <Button
+              onClick={() => setShowDocumentos(true)}
+              size="sm"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              disabled={!selectedLead}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Docs
+            </Button>
+            <Button
+              onClick={() => setShowRelatorios(true)}
+              size="sm"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Relatórios
+            </Button>
+            <Button
+              onClick={() => setShowImportExport(true)}
+              size="sm"
+              className="bg-gradient-to-r from-indigo-500 to-blue-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Import
+            </Button>
+          </div>
         </div>
       </div>
 

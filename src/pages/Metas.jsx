@@ -8,14 +8,22 @@ import { motion } from "framer-motion";
 
 import MetaForm from "../components/metas/MetaForm";
 import MetaComparativo from "../components/metas/MetaComparativo";
-import DashboardFilters from "../components/dashboard/DashboardFilters";
 import MetaTeamSelector from "../components/metas/MetaTeamSelector";
+
+const MESES = [
+  { value: "01", label: "Janeiro" }, { value: "02", label: "Fevereiro" },
+  { value: "03", label: "Março" }, { value: "04", label: "Abril" },
+  { value: "05", label: "Maio" }, { value: "06", label: "Junho" },
+  { value: "07", label: "Julho" }, { value: "08", label: "Agosto" },
+  { value: "09", label: "Setembro" }, { value: "10", label: "Outubro" },
+  { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
+];
 
 export default function Metas() {
   const [showForm, setShowForm] = useState(false);
   const [editingMeta, setEditingMeta] = useState(null);
   const [ano, setAno] = useState(String(new Date().getFullYear()));
-  const [filteredData, setFilteredData] = useState(null);
+  const [mes, setMes] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [selectedView, setSelectedView] = useState("__meu__");
 
   const { data: teamData, isLoading } = useQuery({
@@ -29,19 +37,25 @@ export default function Metas() {
   const years = [];
   for (let y = 2024; y <= new Date().getFullYear() + 1; y++) years.push(y);
 
-  // Resolve metas and records based on selectedView
+  const selectedPeriodo = `${ano}-${mes}`;
+  const selectedPeriodoLabel = `${MESES.find(m => m.value === mes)?.label || ""} ${ano}`;
+
+  // Resolve metas and records based on selectedView, filtered by selected month
   const { metas, records, viewLabel, canEdit } = useMemo(() => {
     if (!teamData) return { metas: [], records: [], viewLabel: "", canEdit: false };
 
-    // Helper: aggregate metas & records from a list of member data
+    const filterByPeriodo = (metasList) => metasList.filter(m => m.periodo === selectedPeriodo);
+    const filterRecordsByMonth = (recordsList) => recordsList.filter(r => {
+      if (!r.data) return false;
+      return r.data.startsWith(selectedPeriodo);
+    });
+
     const aggregateMembers = (members) => {
       const allMetas = [];
       const allRecords = [];
-      const seenMetaPeriodos = new Map();
       for (const m of members) {
-        allRecords.push(...(m.records || []));
-        for (const meta of (m.metas || [])) {
-          // When viewing "todos", show each user's meta separately with their name
+        allRecords.push(...filterRecordsByMonth(m.records || []));
+        for (const meta of filterByPeriodo(m.metas || [])) {
           allMetas.push({ ...meta, _owner_nome: m.nome });
         }
       }
@@ -51,8 +65,8 @@ export default function Metas() {
     if (selectedView === "__meu__") {
       const d = teamData.meusDados || {};
       return {
-        metas: d.metas || [],
-        records: d.records || [],
+        metas: filterByPeriodo(d.metas || []),
+        records: filterRecordsByMonth(d.records || []),
         viewLabel: "Minhas Metas",
         canEdit: true,
       };
@@ -77,7 +91,6 @@ export default function Metas() {
       }
     }
 
-    // Unit view: __unidade__<id>
     if (selectedView.startsWith("__unidade__")) {
       const unitId = selectedView.replace("__unidade__", "");
       const unit = teamData.unidades?.[unitId];
@@ -88,26 +101,33 @@ export default function Metas() {
       }
     }
 
-    // Individual member by email
     if (teamData.tipo === "LiderAgencia") {
       for (const u of Object.values(teamData.unidades || {})) {
         const member = u.membros?.[selectedView];
         if (member) {
-          return { metas: member.metas || [], records: member.records || [], viewLabel: member.nome, canEdit: false };
+          return {
+            metas: filterByPeriodo(member.metas || []),
+            records: filterRecordsByMonth(member.records || []),
+            viewLabel: member.nome,
+            canEdit: false,
+          };
         }
       }
     }
     if (teamData.tipo === "LiderUnidade") {
       const member = teamData.membros?.[selectedView];
       if (member) {
-        return { metas: member.metas || [], records: member.records || [], viewLabel: member.nome, canEdit: false };
+        return {
+          metas: filterByPeriodo(member.metas || []),
+          records: filterRecordsByMonth(member.records || []),
+          viewLabel: member.nome,
+          canEdit: false,
+        };
       }
     }
 
     return { metas: [], records: [], viewLabel: "", canEdit: false };
-  }, [teamData, selectedView]);
-
-  const dataToUse = filteredData || records;
+  }, [teamData, selectedView, selectedPeriodo]);
 
   const isLeader = teamData?.tipo === "LiderAgencia" || teamData?.tipo === "LiderUnidade";
 
@@ -131,13 +151,20 @@ export default function Metas() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Select value={ano} onValueChange={(v) => { setAno(v); setFilteredData(null); }}>
-              <SelectTrigger className="w-[120px] bg-slate-800 border-slate-700 text-white">
+            <Select value={ano} onValueChange={(v) => setAno(v)}>
+              <SelectTrigger className="w-[100px] bg-slate-800 border-slate-700 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
                 {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={mes} onValueChange={(v) => setMes(v)}>
+              <SelectTrigger className="w-[140px] bg-slate-800 border-slate-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MESES.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button
@@ -157,7 +184,7 @@ export default function Metas() {
             <MetaTeamSelector
               teamData={teamData}
               selectedView={selectedView}
-              onSelectView={(v) => { setSelectedView(v); setFilteredData(null); }}
+              onSelectView={setSelectedView}
             />
           </motion.div>
         )}
@@ -168,12 +195,12 @@ export default function Metas() {
           </div>
         ) : (
           <div className="space-y-5">
-            <DashboardFilters data={records} onFilteredData={setFilteredData} ano={ano} />
             <MetaComparativo
-              data={dataToUse}
+              data={records}
               metas={metas}
               onEdit={canEdit ? (m) => { setEditingMeta(m); setShowForm(true); } : null}
               showOwner={selectedView === "__todos__" || selectedView.startsWith("__unidade__")}
+              periodoLabel={selectedPeriodoLabel}
             />
           </div>
         )}

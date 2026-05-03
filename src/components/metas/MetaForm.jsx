@@ -68,7 +68,7 @@ export default function MetaForm({ open, onClose, existingMeta }) {
       await base44.entities.Meta.create(payload);
       toast.success("Meta criada!");
     }
-    queryClient.invalidateQueries({ queryKey: ["metas"] });
+    queryClient.invalidateQueries({ queryKey: ["metas-equipe"] });
     setSaving(false);
     onClose();
   };
@@ -76,7 +76,7 @@ export default function MetaForm({ open, onClose, existingMeta }) {
   const handleDelete = async () => {
     if (!existingMeta || !confirm("Excluir esta meta?")) return;
     await base44.entities.Meta.delete(existingMeta.id);
-    queryClient.invalidateQueries({ queryKey: ["metas"] });
+    queryClient.invalidateQueries({ queryKey: ["metas-equipe"] });
     toast.success("Meta excluída");
     onClose();
   };

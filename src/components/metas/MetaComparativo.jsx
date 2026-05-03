@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Target, TrendingUp, TrendingDown, User } from "lucide-react";
-import MetaPieChart from "./MetaPieChart";
+import MetaPerformanceChart from "./MetaPerformanceChart";
 import MetaIndividualChart from "./MetaIndividualChart";
+import MetaSummaryBar from "./MetaSummaryBar";
 
 const METRICS = [
   { key: "ligacoes_realizadas", label: "Ligações Realizadas" },
@@ -18,12 +19,16 @@ function calcRealized(data, key) {
   return data.reduce((sum, d) => sum + (Number(d[key]) || 0), 0);
 }
 
-export default function MetaComparativo({ data, metas, onEdit, showOwner }) {
+export default function MetaComparativo({ data, metas, onEdit, showOwner, periodoLabel }) {
   if (metas.length === 0) {
     return (
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700/50 p-10 text-center">
         <Target className="w-14 h-14 text-slate-600 mx-auto mb-4" />
-        <p className="text-slate-400 font-semibold text-lg">Nenhuma meta definida ainda</p>
+        <p className="text-slate-400 font-semibold text-lg">
+          {periodoLabel
+            ? `Nenhuma meta definida para ${periodoLabel}`
+            : "Nenhuma meta definida ainda"}
+        </p>
         <p className="text-slate-500 text-sm mt-1">Clique em "Definir Meta" para começar a acompanhar sua performance.</p>
       </div>
     );
@@ -71,10 +76,13 @@ export default function MetaComparativo({ data, metas, onEdit, showOwner }) {
               )}
             </div>
 
+            {/* Summary Bar */}
+            <MetaSummaryBar meta={meta} />
+
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-1">
-                <MetaPieChart metrics={metricsData} />
+                <MetaPerformanceChart metrics={metricsData} />
               </div>
               <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {metricsData.map((m, idx) => (

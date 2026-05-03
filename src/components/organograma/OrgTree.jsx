@@ -14,15 +14,14 @@ export default function OrgTree({ usuario, onClickUser, clickable }) {
       {subordinados.length > 0 && (
         <>
           {/* Linha vertical do pai para baixo */}
-          <div className="w-0.5 h-8 bg-white/30" />
+          <div className="w-0.5 h-4 md:h-8 bg-white/30" />
 
           {/* Linha horizontal conectando os filhos */}
           {subordinados.length > 1 && (
             <div className="relative w-full flex justify-center">
               <div className="flex">
-                {subordinados.map((sub, idx) => (
+                {subordinados.map((sub) => (
                   <div key={sub.id} className="flex flex-col items-center" style={{ minWidth: 0 }}>
-                    {/* Célula vazia para medir posição — invisível */}
                     <div className="w-full" />
                   </div>
                 ))}
@@ -38,11 +37,10 @@ export default function OrgTree({ usuario, onClickUser, clickable }) {
               const isOnly = subordinados.length === 1;
 
               return (
-                <div key={sub.id} className="flex flex-col items-center px-3">
+                <div key={sub.id} className="flex flex-col items-center px-1 md:px-3">
                   {/* Conector horizontal + vertical */}
                   {!isOnly && (
                     <div className="relative w-full h-0 flex justify-center">
-                      {/* Linha horizontal */}
                       <div
                         className="absolute top-0 h-0.5 bg-white/25"
                         style={{
@@ -53,7 +51,7 @@ export default function OrgTree({ usuario, onClickUser, clickable }) {
                     </div>
                   )}
                   {/* Linha vertical para o filho */}
-                  <div className="w-0.5 h-8 bg-white/25" />
+                  <div className="w-0.5 h-4 md:h-8 bg-white/25" />
                   
                   {/* Card do subordinado */}
                   <OrgUserCard
@@ -65,18 +63,16 @@ export default function OrgTree({ usuario, onClickUser, clickable }) {
                   {/* Sub-subordinados com agrupamento visual */}
                   {subSubs.length > 0 && (
                     <>
-                      <div className="w-0.5 h-6 bg-white/20" />
+                      <div className="w-0.5 h-3 md:h-6 bg-white/20" />
                       
-                      {/* Container com borda de grupo */}
-                      <div className="relative bg-white/5 border border-white/15 rounded-xl p-4 pt-2">
-                        {/* Label do grupo */}
-                        <div className="text-center mb-3">
-                          <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+                      <div className="relative bg-white/5 border border-white/15 rounded-lg md:rounded-xl p-2 md:p-4 pt-1 md:pt-2">
+                        <div className="text-center mb-1.5 md:mb-3">
+                          <span className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-wider font-medium">
                             Equipe de {sub.full_name?.split(" ")[0] || "Líder"}
                           </span>
                         </div>
 
-                        <div className="flex items-start gap-3 flex-wrap justify-center">
+                        <div className="flex items-start gap-1.5 md:gap-3 flex-wrap justify-center">
                           {subSubs.map((subSub) => (
                             <div key={subSub.id} className="flex flex-col items-center">
                               <OrgTree

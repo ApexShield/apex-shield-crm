@@ -243,18 +243,18 @@ export default function Organograma() {
           })}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-6">
           {/* Painel lateral - somente Admin */}
           {isAdmin && (usuariosSemHierarquia.length > 0 || usuariosOrfaos.length > 0) && (
-            <div className="w-full md:w-72 flex-shrink-0 space-y-4">
+            <div className="w-full md:w-72 flex-shrink-0 space-y-3">
               {/* Usuários sem hierarquia */}
               {usuariosSemHierarquia.length > 0 && (
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-yellow-400/30 p-4 sticky top-6">
-                  <h3 className="text-yellow-300 font-bold mb-3 text-sm flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg md:rounded-xl border border-yellow-400/30 p-3 md:p-4 md:sticky md:top-6">
+                  <h3 className="text-yellow-300 font-bold mb-2 text-xs md:text-sm flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     Sem Hierarquia ({usuariosSemHierarquia.length})
                   </h3>
-                  <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                  <div className="space-y-1.5 max-h-[25vh] md:max-h-[35vh] overflow-y-auto">
                     {usuariosSemHierarquia.map(u => (
                       <div
                         key={u.id}
@@ -262,14 +262,14 @@ export default function Organograma() {
                           setUsuarioParaVincular(u);
                           setShowVincularDialog(true);
                         }}
-                        className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-yellow-400/30"
+                        className="flex items-center gap-2 md:gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-2 md:p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-yellow-400/30"
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-white font-bold text-xs">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-white font-bold text-[10px] md:text-xs flex-shrink-0">
                           {u.full_name?.charAt(0) || u.email?.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
-                          <p className="text-white/50 text-[10px] truncate">{u.email}</p>
+                          <p className="text-white text-[11px] md:text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
+                          <p className="text-white/50 text-[9px] md:text-[10px] truncate">{u.email}</p>
                         </div>
                       </div>
                     ))}
@@ -277,15 +277,15 @@ export default function Organograma() {
                 </div>
               )}
 
-              {/* Usuários órfãos - têm hierarquia mas não aparecem na árvore */}
+              {/* Usuários órfãos */}
               {usuariosOrfaos.length > 0 && (
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-orange-400/30 p-4">
-                  <h3 className="text-orange-300 font-bold mb-1 text-sm flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    Sem Vínculo na Árvore ({usuariosOrfaos.length})
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg md:rounded-xl border border-orange-400/30 p-3 md:p-4">
+                  <h3 className="text-orange-300 font-bold mb-1 text-xs md:text-sm flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    Sem Vínculo ({usuariosOrfaos.length})
                   </h3>
-                  <p className="text-orange-200/60 text-[10px] mb-3">Têm hierarquia mas não estão conectados a nenhum líder</p>
-                  <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                  <p className="text-orange-200/60 text-[9px] md:text-[10px] mb-2">Não conectados a nenhum líder</p>
+                  <div className="space-y-1.5 max-h-[25vh] md:max-h-[35vh] overflow-y-auto">
                     {usuariosOrfaos.map(u => {
                       const oCfg = getHierarchyConfig(u.tipo_hierarquia);
                       const OIcon = oCfg.icon;
@@ -296,17 +296,17 @@ export default function Organograma() {
                             setUsuarioParaVincular(u);
                             setShowVincularDialog(true);
                           }}
-                          className="flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-orange-400/30"
+                          className="flex items-center gap-2 md:gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-2 md:p-3 rounded-lg cursor-pointer transition-all border border-white/10 hover:border-orange-400/30"
                         >
-                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${oCfg.avatarBg} flex items-center justify-center text-white font-bold text-xs`}>
+                          <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br ${oCfg.avatarBg} flex items-center justify-center text-white font-bold text-[10px] md:text-xs flex-shrink-0`}>
                             {u.full_name?.charAt(0) || u.email?.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
-                            <p className="text-white/50 text-[10px] truncate">{u.email}</p>
-                            <div className="flex items-center gap-1">
-                              <OIcon className={`w-3 h-3 ${oCfg.legendIcon}`} />
-                              <p className={`text-[10px] ${oCfg.legendText}`}>{u.tipo_hierarquia}</p>
+                            <p className="text-white text-[11px] md:text-xs font-medium truncate">{u.full_name || u.email?.split("@")[0]}</p>
+                            <p className="text-white/50 text-[9px] md:text-[10px] truncate">{u.email}</p>
+                            <div className="flex items-center gap-0.5">
+                              <OIcon className={`w-2.5 h-2.5 ${oCfg.legendIcon}`} />
+                              <p className={`text-[9px] ${oCfg.legendText}`}>{u.tipo_hierarquia}</p>
                             </div>
                           </div>
                         </div>
@@ -331,8 +331,8 @@ export default function Organograma() {
                 </div>
               </Card>
             ) : arvoresVisiveis.length > 0 ? (
-              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-4 md:p-8 overflow-x-auto">
-                <div className="flex flex-col items-center gap-8 md:gap-12 min-w-fit">
+              <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl border border-white/20 p-2 md:p-8 overflow-x-auto">
+                <div className="flex flex-col items-center gap-4 md:gap-12 min-w-fit">
                   {arvoresVisiveis.map(arvore => (
                     <OrgTree
                       key={arvore.id}

@@ -413,68 +413,68 @@ export default function Leads() {
         </div>
 
         {/* Status Buttons e Funil */}
-        <div className="grid lg:grid-cols-3 gap-4 mb-6">
-          {/* Coluna de Status - 2 colunas */}
-          <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
+        <div className="grid lg:grid-cols-3 gap-4 mb-4 md:mb-6">
+          {/* Coluna de Status */}
+          <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3 md:p-6">
+            <h3 className="text-white font-bold mb-2 md:mb-4 flex items-center gap-2 text-xs md:text-base">
+              <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
               Filtrar por Status
             </h3>
             
-            {/* Grid de Botões de Status */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
+            {/* Grid de Botões de Status - compacto no mobile */}
+            <div className="grid grid-cols-5 md:grid-cols-5 gap-1 md:gap-2 mb-2 md:mb-4">
               {STATUS_CONFIG.map((status) => (
                 <motion.button
                   key={status.value}
-                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setFiltroStatus(status.value)}
-                  className={`px-3 py-3 rounded-lg font-bold text-xs transition-all ${
-                    filtroStatus === status.value ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''
+                  className={`px-1 py-1 md:px-3 md:py-3 rounded md:rounded-lg font-bold text-[8px] md:text-xs transition-all ${
+                    filtroStatus === status.value ? 'ring-1 md:ring-2 ring-white ring-offset-1 md:ring-offset-2 ring-offset-slate-900' : ''
                   }`}
                   style={{
                     backgroundColor: status.color,
                     color: status.textColor
                   }}
                 >
-                  <div>{status.label}</div>
-                  <div className="text-lg mt-1">{contadores[status.value] || 0}</div>
+                  <div className="truncate leading-tight">{status.label}</div>
+                  <div className="text-xs md:text-lg leading-tight">{contadores[status.value] || 0}</div>
                 </motion.button>
               ))}
             </div>
 
             {/* Busca e Filtros */}
-            <div className="flex gap-2 flex-wrap">
-              <div className="flex-1 min-w-[300px]">
+            <div className="flex gap-1.5 md:gap-2 flex-wrap">
+              <div className="flex-1 min-w-0 md:min-w-[300px]">
                 <Input
                   placeholder="🔍 Buscar por nome, email, telefone, empresa, CPF, cargo..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-8 md:h-9 text-xs md:text-sm"
                 />
               </div>
               <Input
                 type="date"
                 value={filtroDataVisita}
                 onChange={(e) => setFiltroDataVisita(e.target.value)}
-                className="w-auto bg-white/10 border-white/20 text-white"
+                className="w-auto bg-white/10 border-white/20 text-white h-8 md:h-9 text-xs md:text-sm"
               />
               <Button
                 onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
-                className="bg-red-500/80 hover:bg-red-600"
+                className="bg-red-500/80 hover:bg-red-600 h-8 md:h-9 text-xs px-2 md:px-4"
+                size="sm"
               >
                 Limpar
               </Button>
               {(busca || filtroDataVisita || filtroStatus) && (
-                <div className="flex items-center bg-white/10 px-4 py-2 rounded-lg">
-                  <span className="text-white font-semibold">{dadosFiltrados.length} leads</span>
+                <div className="flex items-center bg-white/10 px-2 md:px-4 py-1 md:py-2 rounded-lg">
+                  <span className="text-white font-semibold text-xs md:text-sm">{dadosFiltrados.length} leads</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Funil de Vendas */}
-          <div className="lg:col-span-1">
+          {/* Funil de Vendas - hidden on mobile */}
+          <div className="lg:col-span-1 hidden lg:block">
             <FunilVendas clientes={clientes} />
           </div>
         </div>
@@ -585,29 +585,24 @@ export default function Leads() {
           </div>
         </div>
 
-        {/* Mobile Cards with Pull to Refresh */}
-        <div className="md:hidden mb-20">
-          <PullToRefresh
-            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
-            className="max-h-[55vh]"
-          >
-            <div className="space-y-1.5">
-              {dadosFiltrados.map(cliente => (
-                <LeadCard
-                  key={cliente.id}
-                  cliente={cliente}
-                  isSelected={selectedLead?.id === cliente.id}
-                  onClick={() => {
-                    setSelectedLead(cliente);
-                  }}
-                  getStatusColor={getStatusColor}
-                />
-              ))}
-              {dadosFiltrados.length === 0 && (
-                <p className="text-center text-white/50 py-10 text-sm">Nenhum lead encontrado</p>
-              )}
-            </div>
-          </PullToRefresh>
+        {/* Mobile Cards - scrollable list */}
+        <div className="md:hidden pb-24">
+          <div className="space-y-1">
+            {dadosFiltrados.map(cliente => (
+              <LeadCard
+                key={cliente.id}
+                cliente={cliente}
+                isSelected={selectedLead?.id === cliente.id}
+                onClick={() => {
+                  setSelectedLead(cliente);
+                }}
+                getStatusColor={getStatusColor}
+              />
+            ))}
+            {dadosFiltrados.length === 0 && (
+              <p className="text-center text-white/50 py-10 text-sm">Nenhum lead encontrado</p>
+            )}
+          </div>
         </div>
 
         {/* Botões de Ação - Desktop */}

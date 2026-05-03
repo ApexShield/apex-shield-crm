@@ -77,7 +77,7 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className={cn(
-            isMobile ? "p-2 max-h-[55vh] overflow-y-auto -webkit-overflow-scrolling-touch" : "p-1",
+            isMobile ? "p-2 max-h-[55vh] overflow-y-auto" : "p-1",
             !isMobile && position === "popper" &&
               "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
           )}>

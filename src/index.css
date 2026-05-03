@@ -2,17 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile: prevent overscroll bounce */
+/* Smooth touch scrolling — allow native overscroll gestures */
 html, body {
-  overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
 }
 
-/* No-select for interactive elements — only prevent text selection,
-   do NOT suppress system gestures (-webkit-touch-callout) */
-.no-select {
-  user-select: none;
-  -webkit-user-select: none;
+/* Only apply overscroll containment on the main content area,
+   not on html/body which would suppress system back-gesture */
+.mobile-content-pad {
+  overscroll-behavior-y: contain;
 }
 
 /* Safe area helpers */

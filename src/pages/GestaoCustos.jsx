@@ -12,7 +12,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
-import PullToRefresh from "../components/mobile/PullToRefresh";
 
 const CATEGORIAS_DESPESA = [
   "Alimentação", "Transporte", "Marketing", "Escritório", "Tecnologia", "Pessoal", "AGUA", "ENERGIA", "INTERNET", "GAS", "EDUCAÇÃO", "Outros"
@@ -237,10 +236,6 @@ export default function GestaoCustos() {
   }
 
   return (
-    <PullToRefresh
-      onRefresh={() => queryClient.invalidateQueries({ queryKey: ["transacoes"] })}
-      className="min-h-screen md:!overflow-visible"
-    >
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
@@ -540,6 +535,5 @@ export default function GestaoCustos() {
         </Dialog>
       </div>
     </div>
-    </PullToRefresh>
   );
 }

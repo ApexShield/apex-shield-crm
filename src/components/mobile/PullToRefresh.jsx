@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 
 const THRESHOLD = 70;
@@ -8,36 +8,64 @@ export default function PullToRefresh({ onRefresh, children, className = "" }) {
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef(0);
   const pulling = useRef(false);
+  const containerRef = useRef(null);
+
+  // Prevent native overscroll only when pull gesture is active
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const preventOverscroll = (e) => {
+      if (pulling.current && pullDistance > 0) {
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener("touchmove", preventOverscroll, { passive: false });
+    return () => el.removeEventListener("touchmove", preventOverscroll);
+  }, [pullDistance]);
 
   const handleTouchStart = useCallback((e) => {
-    // Only activate when at top of page (window scroll)
-    if (window.scrollY > 0) return;
+    // Only activate when page is scrolled to top
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop > 5 || refreshing) return;
     startY.current = e.touches[0].clientY;
     pulling.current = true;
-  }, []);
+  }, [refreshing]);
 
   const handleTouchMove = useCallback((e) => {
     if (!pulling.current || refreshing) return;
-    if (window.scrollY > 0) {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop > 5) {
       pulling.current = false;
       setPullDistance(0);
       return;
     }
-    const dy = Math.max(0, e.touches[0].clientY - startY.current);
-    const dampened = Math.min(dy * 0.45, 110);
+    const dy = e.touches[0].clientY - startY.current;
+    if (dy < 0) {
+      pulling.current = false;
+      setPullDistance(0);
+      return;
+    }
+    const dampened = Math.min(dy * 0.4, 110);
     setPullDistance(dampened);
   }, [refreshing]);
 
   const handleTouchEnd = useCallback(async () => {
-    if (!pulling.current) return;
+    if (!pulling.current && !pullDistance) return;
     pulling.current = false;
     if (pullDistance >= THRESHOLD && onRefresh) {
       setRefreshing(true);
       setPullDistance(THRESHOLD);
-      await onRefresh();
-      setRefreshing(false);
+      try {
+        await onRefresh();
+      } finally {
+        setRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0);
     }
-    setPullDistance(0);
   }, [pullDistance, onRefresh]);
 
   const progress = Math.min(pullDistance / THRESHOLD, 1);
@@ -45,18 +73,20 @@ export default function PullToRefresh({ onRefresh, children, className = "" }) {
 
   return (
     <div
+      ref={containerRef}
       className={`relative ${className}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pull indicator */}
+      {/* Pull indicator — only on mobile */}
       <div
-        className="absolute left-0 right-0 flex items-center justify-center z-20 pointer-events-none transition-opacity lg:hidden"
+        className="absolute left-0 right-0 flex items-center justify-center z-20 pointer-events-none lg:hidden"
         style={{
           top: 0,
-          height: showIndicator ? `${Math.max(pullDistance, refreshing ? 44 : 0)}px` : 0,
+          height: showIndicator ? `${Math.max(pullDistance, refreshing ? 44 : 0)}px` : "0px",
           opacity: showIndicator ? 1 : 0,
+          transition: pulling.current ? "opacity 0.15s" : "all 0.3s ease-out",
         }}
       >
         <div
@@ -67,13 +97,12 @@ export default function PullToRefresh({ onRefresh, children, className = "" }) {
         </div>
       </div>
 
+      {/* Content with pull offset */}
       <div
         style={{
-          transform: showIndicator && !refreshing
-            ? `translateY(${pullDistance}px)`
-            : refreshing
-              ? "translateY(44px)"
-              : "translateY(0)",
+          transform: showIndicator
+            ? `translateY(${refreshing ? 44 : pullDistance}px)`
+            : "translateY(0)",
           transition: pulling.current ? "none" : "transform 0.3s ease-out",
         }}
       >

@@ -178,7 +178,7 @@ export default function BottomNav() {
               <button
                 key={item.page}
                 onClick={() => handleTabPress(item)}
-                className={`flex flex-col items-center justify-center gap-0.5 no-select min-h-[48px] ${
+                className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] ${
                   isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
                 }`}
               >
@@ -189,7 +189,7 @@ export default function BottomNav() {
           })}
           <button
             onClick={() => setMoreOpen(prev => !prev)}
-            className={`flex flex-col items-center justify-center gap-0.5 no-select min-h-[48px] ${
+            className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] ${
               moreOpen || isMoreActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
             }`}
           >

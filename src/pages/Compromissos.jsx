@@ -14,6 +14,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CompromissoFixoDialog from "../components/compromissos/CompromissoFixoDialog";
+import MobileAgendaView from "../components/compromissos/MobileAgendaView";
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
 const COLORS = [
@@ -323,108 +324,84 @@ export default function Compromissos() {
   };
 
   const mobileDay = weekDays[mobileDayIndex] || weekDays[0];
-  const mobileDayEvents = useMemo(() => {
-    if (!mobileDay) return [];
-    return compromissos.filter(c => {
-      if (!c.data_inicio) return false;
-      const cs = new Date(c.data_inicio);
-      if (isNaN(cs.getTime())) return false;
-      return cs.getDate() === mobileDay.getDate() && cs.getMonth() === mobileDay.getMonth() && cs.getFullYear() === mobileDay.getFullYear();
-    }).sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio));
-  }, [compromissos, mobileDay]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-3 md:p-6">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="mb-4 md:mb-6 space-y-3 md:space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
+      {/* Desktop header */}
+      <div className="hidden md:block p-6">
+        <div className="max-w-[1800px] mx-auto mb-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <CalendarDays className="w-5 h-5 md:w-7 md:h-7 text-white" />
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <CalendarDays className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-xl md:text-3xl font-black text-white">Agenda</h1>
-                <p className="text-indigo-300 text-xs md:text-base">Compromissos e reuniões</p>
+                <h1 className="text-3xl font-black text-white">Agenda</h1>
+                <p className="text-indigo-300 text-base">Compromissos e reuniões</p>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20 text-xs md:text-sm">
-                <Repeat className="w-4 h-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Compromisso </span>Fixo
+              <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20">
+                <Repeat className="w-4 h-4 mr-2" /> Compromisso Fixo
               </Button>
-              <Button onClick={() => setShowLinkDialog(true)} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs md:text-sm hidden md:flex">
-                <Link2 className="w-4 h-4 mr-1 md:mr-2" /> Link Padrão
+              <Button onClick={() => setShowLinkDialog(true)} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <Link2 className="w-4 h-4 mr-2" /> Link Padrão
               </Button>
-              <Button onClick={() => { resetForm(); setShowDialog(true); }} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-4 md:px-8 py-3 md:py-6 text-sm md:text-lg">
-                <Plus className="w-5 h-5 mr-1 md:mr-2" /> <span className="hidden md:inline">Criar </span>Novo
+              <Button onClick={() => { resetForm(); setShowDialog(true); }} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-8 py-6 text-lg">
+                <Plus className="w-5 h-5 mr-2" /> Criar Novo
               </Button>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-          <div className="flex items-center justify-between p-3 md:p-6 border-b border-white/10">
-            <div className="flex items-center gap-2 md:gap-3">
-              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 w-8 md:h-9 md:w-9"><ChevronLeft className="w-4 h-4 md:w-5 md:h-5" /></Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0 font-bold text-xs md:text-sm">Hoje</Button>
-              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-8 w-8 md:h-9 md:w-9"><ChevronRight className="w-4 h-4 md:w-5 md:h-5" /></Button>
+      {/* Mobile header */}
+      <div className="md:hidden px-4 pt-3 pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-black text-white">Agenda</h1>
+          </div>
+          <div className="flex gap-1.5">
+            <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 h-8 px-2.5 text-[10px] font-semibold rounded-lg">
+              <Repeat className="w-3 h-3 mr-1" /> Fixo
+            </Button>
+            <Button onClick={() => { resetForm(); setShowDialog(true); }} size="sm" className="bg-gradient-to-r from-emerald-500 to-green-600 font-bold h-8 px-3 text-xs rounded-lg shadow-lg shadow-emerald-500/20">
+              <Plus className="w-3.5 h-3.5 mr-1" /> Novo
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1800px] mx-auto md:px-6">
+        {/* Mobile view */}
+        <div className="md:hidden" style={{ height: "calc(100dvh - 56px - 3.5rem - 52px)" }}>
+          <MobileAgendaView
+            weekDays={weekDays}
+            mobileDayIndex={mobileDayIndex}
+            setMobileDayIndex={setMobileDayIndex}
+            compromissos={compromissos}
+            currentWeekStart={currentWeekStart}
+            setCurrentWeekStart={setCurrentWeekStart}
+            onEditEvent={handleEditEvent}
+            onAddEvent={() => {
+              const s = new Date(mobileDay); s.setHours(9, 0, 0, 0);
+              const e = new Date(s); e.setHours(10, 0, 0, 0);
+              setFormData({ titulo: "", descricao: "", data_inicio: s.toISOString(), data_fim: e.toISOString(), cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", email_participante: "", endereco: "" });
+              setShowDialog(true);
+            }}
+          />
+        </div>
+
+        <div className="hidden md:block bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-9 w-9"><ChevronLeft className="w-5 h-5" /></Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white border-0 font-bold text-sm">Hoje</Button>
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))} className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-9 w-9"><ChevronRight className="w-5 h-5" /></Button>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm md:text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
+              <span className="text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
               {compromissos.length > 0 && <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-indigo-300">{compromissos.length} compromissos</span>}
-            </div>
-          </div>
-
-          {/* Mobile: Day selector + list view */}
-          <div className="md:hidden">
-            <div className="flex overflow-x-auto gap-1 p-2 border-b border-white/10">
-              {weekDays.map((day, i) => (
-                <button key={i} onClick={() => setMobileDayIndex(i)}
-                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg transition-all ${
-                    mobileDayIndex === i ? 'bg-indigo-600 text-white' : isSameDay(day, new Date()) ? 'bg-white/10 text-white' : 'text-indigo-300'
-                  }`}>
-                  <span className="text-[10px] font-bold uppercase">{format(day, "EEE", { locale: ptBR })}</span>
-                  <span className="text-lg font-black">{format(day, "d")}</span>
-                </button>
-              ))}
-            </div>
-            <div className="p-3 space-y-2 max-h-[60vh] overflow-y-auto">
-              {mobileDayEvents.length === 0 ? (
-                <div className="text-center py-8 text-indigo-300 text-sm">Nenhum compromisso neste dia</div>
-              ) : (
-                mobileDayEvents.map(event => {
-                  const start = new Date(event.data_inicio);
-                  const end = new Date(event.data_fim);
-                  return (
-                    <div key={event.id} onClick={() => handleEditEvent(event)}
-                      className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 cursor-pointer hover:bg-white/10 transition-all">
-                      <div className="w-1.5 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: event.cor || '#3b82f6' }} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-bold text-sm truncate">{event.titulo}</span>
-                          {event.email_participante && event.convidado_confirmou && (
-                                <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-2.5 h-2.5 text-white" /></span>
-                              )}
-                              {event.email_participante && event.convidado_recusou && (
-                                <span className="bg-red-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><XCircle className="w-2.5 h-2.5 text-white" /></span>
-                              )}
-                              {event.email_participante && !event.convidado_confirmou && !event.convidado_recusou && (
-                                <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0"><Clock className="w-2 h-2 text-white" /></span>
-                              )}
-                        </div>
-                        <div className="text-xs text-indigo-300 mt-0.5">
-                          {!isNaN(start.getTime()) && format(start, 'HH:mm')} - {!isNaN(end.getTime()) && format(end, 'HH:mm')}
-                          {event.modalidade && <span className="ml-2">{event.modalidade === 'online' ? '💻 Online' : '📍 Presencial'}</span>}
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                    </div>
-                  );
-                })
-              )}
-              <Button onClick={() => { const s = new Date(mobileDay); s.setHours(9,0,0,0); const e = new Date(s); e.setHours(10,0,0,0); setFormData({ titulo: "", descricao: "", data_inicio: s.toISOString(), data_fim: e.toISOString(), cor: "#0891b2", tipo: "agendado", modalidade: "", meeting_link: "", email_participante: "", endereco: "" }); setShowDialog(true); }}
-                className="w-full bg-white/5 border border-dashed border-white/20 text-indigo-300 hover:bg-white/10 mt-2">
-                <Plus className="w-4 h-4 mr-2" /> Adicionar compromisso
-              </Button>
             </div>
           </div>
 

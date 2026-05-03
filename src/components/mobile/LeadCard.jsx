@@ -1,11 +1,12 @@
 import { Phone, Calendar, Building2, Mail } from "lucide-react";
 
-export default function LeadCard({ cliente, isSelected, onClick, getStatusColor }) {
+export default function LeadCard({ cliente, isSelected, onClick, onDoubleClick, getStatusColor }) {
   const cor = getStatusColor(cliente.status);
 
   return (
     <div
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 border transition-all no-select ${
         isSelected
           ? "border-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-400/50"

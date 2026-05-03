@@ -597,8 +597,10 @@ export default function Leads() {
                 key={cliente.id}
                 cliente={cliente}
                 isSelected={selectedLead?.id === cliente.id}
-                onClick={() => {
-                  setSelectedLead(cliente);
+                onClick={() => setSelectedLead(cliente)}
+                onDoubleClick={() => {
+                  setEditingLead(cliente);
+                  setShowForm(true);
                 }}
                 getStatusColor={getStatusColor}
               />

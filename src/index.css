@@ -29,18 +29,20 @@ html, body {
     padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
   }
 
-  /* ── Mobile min font size: 14px ── */
+  /* ── Mobile min font size ── */
   body {
     font-size: 14px;
     -webkit-text-size-adjust: 100%;
   }
 
-  /* Ensure all text is at least 14px on mobile */
-  p, span, label, a, td, th, li, div, input, textarea, select, button {
-    font-size: max(var(--tw-fs, inherit), 14px);
+  /* Enforce 14px min only on leaf text elements, not containers */
+  p, label, a, td, th, li,
+  input, textarea, select, button,
+  [role="menuitem"], [role="option"] {
+    font-size: max(inherit, 14px);
   }
 
-  /* Allow explicit tiny utility classes only in controlled areas */
+  /* Allow controlled smaller text */
   .mobile-text-xs { font-size: 12px !important; }
   .mobile-text-xxs { font-size: 11px !important; }
 

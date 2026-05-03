@@ -44,7 +44,10 @@ export default function MetaForm({ open, onClose, existingMeta }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [values, setValues] = useState(() => {
     const initial = {};
-    METRICS.forEach(m => { initial[m.key] = existingMeta?.[m.key] || 0; });
+    METRICS.forEach(m => {
+      const val = existingMeta?.[m.key] || 0;
+      initial[m.key] = val === 0 ? "" : String(val);
+    });
     return initial;
   });
   const [saving, setSaving] = useState(false);
@@ -60,7 +63,12 @@ export default function MetaForm({ open, onClose, existingMeta }) {
   const handleSave = async () => {
     if (!selectedMonth) { toast.error("Selecione o mês da meta"); return; }
     setSaving(true);
-    const payload = { periodo: periodoStr, periodo_label: periodoLabel, ...values };
+    const numericValues = {};
+    METRICS.forEach(m => {
+      const v = values[m.key];
+      numericValues[m.key] = v === "" ? 0 : parseFloat(v) || 0;
+    });
+    const payload = { periodo: periodoStr, periodo_label: periodoLabel, ...numericValues };
     if (existingMeta) {
       await base44.entities.Meta.update(existingMeta.id, payload);
       toast.success("Meta atualizada!");
@@ -124,7 +132,9 @@ export default function MetaForm({ open, onClose, existingMeta }) {
                   step={m.key === "pa" || m.key === "cs" ? "0.01" : "1"}
                   min="0"
                   value={values[m.key]}
-                  onChange={e => setValues(prev => ({ ...prev, [m.key]: parseFloat(e.target.value) || 0 }))}
+                  onChange={e => setValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                  onFocus={e => { if (e.target.value === "0") setValues(prev => ({ ...prev, [m.key]: "" })); }}
+                  placeholder="0"
                   className="flex-1"
                 />
               </div>

@@ -57,7 +57,8 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
   const [values, setValues] = useState(() => {
     const initial = {};
     METRICS.forEach(m => {
-      initial[m.key] = existingRecord ? (existingRecord[m.key] || 0) : 0;
+      const val = existingRecord ? (existingRecord[m.key] || 0) : 0;
+      initial[m.key] = val === 0 ? "" : String(val);
     });
     return initial;
   });
@@ -71,12 +72,18 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
     const ano = selectedDate.getFullYear();
     const dataStr = format(selectedDate, "yyyy-MM-dd");
 
+    const numericValues = {};
+    METRICS.forEach(m => {
+      const v = values[m.key];
+      numericValues[m.key] = v === "" ? 0 : parseFloat(v) || 0;
+    });
+
     const payload = {
       data: dataStr,
       dia_semana: diaSemana,
       semana,
       ano,
-      ...values,
+      ...numericValues,
     };
 
     if (existingRecord) {
@@ -133,7 +140,9 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
                   step={m.type === "float" ? "0.01" : "1"}
                   min="0"
                   value={values[m.key]}
-                  onChange={e => setValues(prev => ({ ...prev, [m.key]: parseFloat(e.target.value) || 0 }))}
+                  onChange={e => setValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                  onFocus={e => { if (e.target.value === "0") setValues(prev => ({ ...prev, [m.key]: "" })); }}
+                  placeholder="0"
                   className="mt-1"
                 />
               </div>

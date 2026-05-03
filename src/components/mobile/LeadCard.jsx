@@ -1,5 +1,4 @@
-import { Phone, Mail, Calendar, Building2 } from "lucide-react";
-import { format } from "date-fns";
+import { Phone, Calendar } from "lucide-react";
 
 export default function LeadCard({ cliente, isSelected, onClick, getStatusColor }) {
   const cor = getStatusColor(cliente.status);
@@ -7,60 +6,56 @@ export default function LeadCard({ cliente, isSelected, onClick, getStatusColor 
   return (
     <div
       onClick={onClick}
-      className={`rounded-xl p-3.5 border transition-all no-select ${
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 border transition-all no-select ${
         isSelected
           ? "border-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-400/50"
           : "border-white/10 bg-white/5 active:bg-white/10"
       }`}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0 flex-1">
-          <p className="font-bold text-white text-sm truncate">{cliente.nome}</p>
-          <p className="text-[10px] text-white/50">{cliente.codigo || cliente.id?.slice(-4)}</p>
+      {/* Left: status dot */}
+      <div
+        className="w-2 h-2 rounded-full flex-shrink-0"
+        style={{ backgroundColor: cor }}
+      />
+
+      {/* Center: info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="font-bold text-white text-xs truncate">{cliente.nome}</p>
+          <span className="text-[9px] text-white/40 flex-shrink-0">{cliente.codigo || cliente.id?.slice(-4)}</span>
         </div>
-        <span
-          className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-          style={{ backgroundColor: cor, color: "white" }}
-        >
-          {cliente.status}
-        </span>
+        <div className="flex items-center gap-3 mt-0.5">
+          {cliente.telefone && (
+            <a
+              href={`https://wa.me/55${cliente.telefone.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-green-400 text-[10px]"
+              onClick={e => e.stopPropagation()}
+            >
+              <Phone className="w-2.5 h-2.5" />
+              {cliente.telefone}
+            </a>
+          )}
+          {cliente.data_contato && (
+            <div className="flex items-center gap-1 text-white/40 text-[10px]">
+              <Calendar className="w-2.5 h-2.5" />
+              {(() => {
+                const p = cliente.data_contato.split("T")[0].split("-");
+                return `${p[2]}/${p[1]}`;
+              })()}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-1">
-        {cliente.telefone && (
-          <a
-            href={`https://wa.me/55${cliente.telefone.replace(/\D/g, "")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-green-400 text-xs"
-            onClick={e => e.stopPropagation()}
-          >
-            <Phone className="w-3 h-3" />
-            {cliente.telefone}
-          </a>
-        )}
-        {cliente.email && (
-          <div className="flex items-center gap-1.5 text-blue-400 text-xs truncate">
-            <Mail className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{cliente.email}</span>
-          </div>
-        )}
-        {cliente.empresa && (
-          <div className="flex items-center gap-1.5 text-white/60 text-xs truncate">
-            <Building2 className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{cliente.empresa}</span>
-          </div>
-        )}
-        {cliente.data_contato && (
-          <div className="flex items-center gap-1.5 text-white/50 text-xs">
-            <Calendar className="w-3 h-3 flex-shrink-0" />
-            {(() => {
-              const p = cliente.data_contato.split("T")[0].split("-");
-              return `${p[2]}/${p[1]}/${p[0]}`;
-            })()}
-          </div>
-        )}
-      </div>
+      {/* Right: status badge */}
+      <span
+        className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+        style={{ backgroundColor: cor, color: "white" }}
+      >
+        {cliente.status}
+      </span>
     </div>
   );
 }

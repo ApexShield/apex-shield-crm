@@ -586,12 +586,12 @@ export default function Leads() {
         </div>
 
         {/* Mobile Cards with Pull to Refresh */}
-        <div className="md:hidden mb-16">
+        <div className="md:hidden mb-20">
           <PullToRefresh
             onRefresh={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
-            className="max-h-[60vh]"
+            className="max-h-[55vh]"
           >
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {dadosFiltrados.map(cliente => (
                 <LeadCard
                   key={cliente.id}
@@ -660,57 +660,57 @@ export default function Leads() {
         </div>
 
         {/* Mobile Action Bar - fixed above BottomNav */}
-        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-white/10 px-2 py-2 safe-area-bottom">
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 border-t border-indigo-500/30 px-1.5 py-1.5" style={{ background: "linear-gradient(to right, rgba(30,27,75,0.97), rgba(49,46,129,0.97))" }}>
+          <div className="grid grid-cols-6 gap-1">
             <Button
               onClick={() => { setEditingLead(null); setShowForm(true); }}
               size="sm"
-              className="bg-gradient-to-r from-blue-500 to-cyan-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              className="bg-blue-500 hover:bg-blue-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3" />
               Criar
             </Button>
             <Button
               onClick={handleEdit}
               size="sm"
-              className="bg-gradient-to-r from-orange-500 to-amber-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              className="bg-orange-500 hover:bg-orange-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
               disabled={!selectedLead}
             >
-              <Edit className="w-3.5 h-3.5" />
+              <Edit className="w-3 h-3" />
               Editar
             </Button>
             <Button
               onClick={handleDelete}
               size="sm"
-              className="bg-gradient-to-r from-red-500 to-pink-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              className="bg-red-500 hover:bg-red-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
               disabled={!selectedLead}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3 h-3" />
               Excluir
             </Button>
             <Button
               onClick={() => setShowDocumentos(true)}
               size="sm"
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              className="bg-purple-500 hover:bg-purple-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
               disabled={!selectedLead}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-3 h-3" />
               Docs
             </Button>
             <Button
               onClick={() => setShowRelatorios(true)}
               size="sm"
-              className="bg-gradient-to-r from-green-500 to-emerald-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              className="bg-emerald-500 hover:bg-emerald-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
             >
-              <FileText className="w-3.5 h-3.5" />
-              Relatórios
+              <FileText className="w-3 h-3" />
+              Relat.
             </Button>
             <Button
               onClick={() => setShowImportExport(true)}
               size="sm"
-              className="bg-gradient-to-r from-indigo-500 to-blue-600 font-bold text-[10px] h-8 px-2.5 flex-shrink-0 no-select gap-1"
+              className="bg-indigo-500 hover:bg-indigo-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
             >
-              <Upload className="w-3.5 h-3.5" />
+              <Upload className="w-3 h-3" />
               Import
             </Button>
           </div>

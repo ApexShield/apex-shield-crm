@@ -43,7 +43,7 @@ export default function MobileLeadList({ leads, selectedId, onSelect, onEdit, ge
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {visibleLeads.map(cliente => (
         <LeadCard
           key={cliente.id}

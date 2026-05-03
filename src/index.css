@@ -26,7 +26,43 @@ html, body {
 /* Mobile bottom nav spacing */
 @media (max-width: 1023px) {
   .mobile-content-pad {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ── Mobile min font size: 14px ── */
+  body {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Ensure all text is at least 14px on mobile */
+  p, span, label, a, td, th, li, div, input, textarea, select, button {
+    font-size: max(var(--tw-fs, inherit), 14px);
+  }
+
+  /* Allow explicit tiny utility classes only in controlled areas */
+  .mobile-text-xs { font-size: 12px !important; }
+  .mobile-text-xxs { font-size: 11px !important; }
+
+  /* ── Mobile 44px touch targets ── */
+  button, a, [role="button"], [role="tab"],
+  input[type="checkbox"], input[type="radio"],
+  select, .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Input fields: taller on mobile */
+  input, textarea, select,
+  [role="combobox"] {
+    min-height: 44px;
+  }
+
+  /* Exempt icon-only buttons inside dense grids (status grid, action bar) */
+  .dense-touch button,
+  .dense-touch a {
+    min-height: 36px;
+    min-width: 36px;
   }
 }
 

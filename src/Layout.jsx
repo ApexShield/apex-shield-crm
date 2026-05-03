@@ -203,6 +203,7 @@ export default function Layout({ children, currentPageName }) {
               <Button 
                 variant="ghost" 
                 size="icon"
+                className="min-w-[44px] min-h-[44px]"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
@@ -211,6 +212,7 @@ export default function Layout({ children, currentPageName }) {
               <Button 
                 variant="ghost" 
                 size="icon"
+                className="min-w-[44px] min-h-[44px]"
                 onClick={() => navigate(-1)}
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -220,9 +222,9 @@ export default function Layout({ children, currentPageName }) {
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <Briefcase className="w-4 h-4 text-white" />
               </div>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">APEX SHIELD CRM</span>
+              <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">APEX SHIELD CRM</span>
             </div>
-            <div className="w-10" />
+            <div className="w-11" />
           </div>
         </header>
 

@@ -403,7 +403,7 @@ export default function Leads() {
               </div>
               <div>
                 <h1 className="text-xl md:text-3xl font-black text-white">Dashboard de Leads</h1>
-                <p className="text-indigo-300">Gerencie seus clientes e oportunidades</p>
+                <p className="text-sm text-indigo-300">Gerencie seus clientes e oportunidades</p>
               </div>
             </div>
             {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
@@ -440,28 +440,29 @@ export default function Leads() {
         <div className="grid lg:grid-cols-3 gap-4 mb-4 md:mb-6">
           {/* Coluna de Status */}
           <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3 md:p-6">
-            <h3 className="text-white font-bold mb-2 md:mb-4 flex items-center gap-2 text-xs md:text-base">
+            <h3 className="text-white font-bold mb-2 md:mb-4 flex items-center gap-2 text-sm md:text-base">
               <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
               Filtrar por Status
             </h3>
             
-            {/* Grid de Botões de Status - compacto no mobile */}
-            <div className="grid grid-cols-5 md:grid-cols-5 gap-1 md:gap-2 mb-2 md:mb-4">
+            {/* Grid de Botões de Status - 44px touch targets on mobile */}
+            <div className="dense-touch grid grid-cols-5 md:grid-cols-5 gap-1 md:gap-2 mb-2 md:mb-4">
               {STATUS_CONFIG.map((status) => (
                 <motion.button
                   key={status.value}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setFiltroStatus(status.value)}
-                  className={`px-1 py-1 md:px-3 md:py-3 rounded md:rounded-lg font-bold text-[8px] md:text-xs transition-all ${
+                  className={`px-1 py-1.5 md:px-3 md:py-3 rounded md:rounded-lg font-bold text-[10px] md:text-xs transition-all ${
                     filtroStatus === status.value ? 'ring-1 md:ring-2 ring-white ring-offset-1 md:ring-offset-2 ring-offset-slate-900' : ''
                   }`}
                   style={{
                     backgroundColor: status.color,
-                    color: status.textColor
+                    color: status.textColor,
+                    minHeight: "36px"
                   }}
                 >
-                  <div className="truncate leading-tight">{status.label}</div>
-                  <div className="text-xs md:text-lg leading-tight">{contadores[status.value] || 0}</div>
+                  <div className="truncate leading-tight mobile-text-xxs">{status.label}</div>
+                  <div className="text-sm md:text-lg leading-tight font-black">{contadores[status.value] || 0}</div>
                 </motion.button>
               ))}
             </div>
@@ -474,7 +475,7 @@ export default function Leads() {
                   placeholder="🔍 Buscar nome, telefone, CPF, empresa..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-8 md:h-9 text-xs md:text-sm w-full"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-11 md:h-9 text-sm md:text-sm w-full"
                 />
               </div>
               {/* Data + Limpar + contador em linha */}
@@ -483,18 +484,18 @@ export default function Leads() {
                   type="date"
                   value={filtroDataVisita}
                   onChange={(e) => setFiltroDataVisita(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white h-8 md:h-9 text-xs md:text-sm flex-1 md:flex-none md:w-auto min-w-0"
+                  className="bg-white/10 border-white/20 text-white h-11 md:h-9 text-sm md:text-sm flex-1 md:flex-none md:w-auto min-w-0"
                 />
                 <Button
                   onClick={() => { setBusca(""); setFiltroDataVisita(""); setFiltroStatus(""); }}
-                  className="bg-red-500/80 hover:bg-red-600 h-8 md:h-9 text-xs px-2.5 md:px-4 flex-shrink-0"
+                  className="bg-red-500/80 hover:bg-red-600 h-11 md:h-9 text-sm px-3 md:px-4 flex-shrink-0"
                   size="sm"
                 >
                   Limpar
                 </Button>
                 {(busca || filtroDataVisita || filtroStatus) && (
-                  <div className="flex items-center bg-white/10 px-2 md:px-4 py-1 md:py-2 rounded-md flex-shrink-0">
-                    <span className="text-white font-semibold text-[10px] md:text-sm">{dadosFiltrados.length} leads</span>
+                  <div className="flex items-center bg-white/10 px-2 md:px-4 py-1.5 md:py-2 rounded-md flex-shrink-0">
+                    <span className="text-white font-semibold text-xs md:text-sm">{dadosFiltrados.length} leads</span>
                   </div>
                 )}
               </div>
@@ -614,7 +615,7 @@ export default function Leads() {
         </div>
 
         {/* Mobile Cards - scrollable list with limited render */}
-        <div className="md:hidden pb-24">
+        <div className="md:hidden pb-28">
           <MobileLeadList
             leads={dadosFiltrados}
             selectedId={selectedLead?.id}
@@ -676,59 +677,59 @@ export default function Leads() {
           </Button>
         </div>
 
-        {/* Mobile Action Bar - fixed above BottomNav */}
-        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 border-t border-indigo-500/30 px-1.5 py-1.5" style={{ background: "linear-gradient(to right, rgba(30,27,75,0.97), rgba(49,46,129,0.97))" }}>
-          <div className="grid grid-cols-6 gap-1">
+        {/* Mobile Action Bar - fixed above BottomNav, 44px touch targets */}
+        <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 border-t border-indigo-500/30 px-1.5 py-1.5" style={{ background: "linear-gradient(to right, rgba(30,27,75,0.97), rgba(49,46,129,0.97))" }}>
+          <div className="dense-touch grid grid-cols-6 gap-1">
             <Button
               onClick={() => { setEditingLead(null); setShowForm(true); }}
               size="sm"
-              className="bg-blue-500 hover:bg-blue-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
+              className="bg-blue-500 hover:bg-blue-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
-              <Plus className="w-3 h-3" />
-              Criar
+              <Plus className="w-4 h-4" />
+              <span className="mobile-text-xxs">Criar</span>
             </Button>
             <Button
               onClick={handleEdit}
               size="sm"
-              className="bg-orange-500 hover:bg-orange-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
+              className="bg-orange-500 hover:bg-orange-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
               disabled={!selectedLead}
             >
-              <Edit className="w-3 h-3" />
-              Editar
+              <Edit className="w-4 h-4" />
+              <span className="mobile-text-xxs">Editar</span>
             </Button>
             <Button
               onClick={handleDelete}
               size="sm"
-              className="bg-red-500 hover:bg-red-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
+              className="bg-red-500 hover:bg-red-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
               disabled={!selectedLead}
             >
-              <Trash2 className="w-3 h-3" />
-              Excluir
+              <Trash2 className="w-4 h-4" />
+              <span className="mobile-text-xxs">Excluir</span>
             </Button>
             <Button
               onClick={() => setShowDocumentos(true)}
               size="sm"
-              className="bg-purple-500 hover:bg-purple-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
+              className="bg-purple-500 hover:bg-purple-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
               disabled={!selectedLead}
             >
-              <FileText className="w-3 h-3" />
-              Docs
+              <FileText className="w-4 h-4" />
+              <span className="mobile-text-xxs">Docs</span>
             </Button>
             <Button
               onClick={() => setShowRelatorios(true)}
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
+              className="bg-emerald-500 hover:bg-emerald-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
-              <FileText className="w-3 h-3" />
-              Relat.
+              <FileText className="w-4 h-4" />
+              <span className="mobile-text-xxs">Relat.</span>
             </Button>
             <Button
               onClick={() => setShowImportExport(true)}
               size="sm"
-              className="bg-indigo-500 hover:bg-indigo-600 font-bold text-[9px] h-7 px-0 no-select flex flex-col items-center gap-0 rounded-md"
+              className="bg-indigo-500 hover:bg-indigo-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
-              <Upload className="w-3 h-3" />
-              Import
+              <Upload className="w-4 h-4" />
+              <span className="mobile-text-xxs">Import</span>
             </Button>
           </div>
         </div>

@@ -14,7 +14,7 @@ export default function AgentChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -55,12 +55,14 @@ export default function AgentChat() {
     setConversations(prev => [conv, ...prev]);
     setCurrentConversation(conv);
     setMessages(conv.messages || []);
+    setShowSidebar(false);
   };
 
   const selectConversation = async (conv) => {
     const fullConv = await base44.agents.getConversation(conv.id);
     setCurrentConversation(fullConv);
     setMessages(fullConv.messages || []);
+    setShowSidebar(false);
   };
 
   const deleteConversation = async (e, conv) => {
@@ -102,11 +104,11 @@ export default function AgentChat() {
   };
 
   return (
-    <div className="w-full h-full flex overflow-hidden bg-slate-50">
+    <div className="w-full h-full flex overflow-hidden bg-slate-50 relative">
       {/* Sidebar */}
       <div className={cn(
-        "w-64 bg-white border-r border-slate-200 flex flex-col h-full",
-        showSidebar ? "flex" : "hidden lg:flex"
+        "bg-white border-r border-slate-200 flex flex-col h-full",
+        showSidebar ? "absolute inset-0 z-20 lg:relative lg:w-64" : "hidden lg:flex lg:w-64"
       )}>
         <div className="p-3 border-b border-slate-100">
           <Button 
@@ -160,10 +162,10 @@ export default function AgentChat() {
       {/* Chat area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2.5">
+        <div className="bg-white border-b border-slate-200 px-3 py-2 flex items-center gap-2">
           <button 
             onClick={() => setShowSidebar(!showSidebar)} 
-            className="lg:hidden p-1 hover:bg-slate-100 rounded"
+            className="lg:hidden p-1.5 hover:bg-slate-100 rounded-lg"
           >
             <MessageSquare className="w-4 h-4 text-slate-500" />
           </button>
@@ -229,20 +231,20 @@ export default function AgentChat() {
         </div>
 
         {/* Input - fixed at bottom */}
-        <div className="bg-white border-t border-slate-200 px-4 py-2.5">
+        <div className="bg-white border-t border-slate-200 px-3 py-2 safe-area-bottom">
           <div className="flex gap-2 max-w-4xl mx-auto">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Digite sua mensagem..."
-              className="flex-1 border-slate-300 focus:border-indigo-400 h-10 text-sm"
+              className="flex-1 border-slate-300 focus:border-indigo-400 h-9 text-sm"
               disabled={sending}
             />
             <Button
               onClick={sendMessage}
               disabled={!input.trim() || sending}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 h-10 px-4"
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 h-9 px-3"
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>

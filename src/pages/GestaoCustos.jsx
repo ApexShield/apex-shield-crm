@@ -12,6 +12,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
+import PullToRefresh from "../components/mobile/PullToRefresh";
 
 const CATEGORIAS_DESPESA = [
   "Alimentação", "Transporte", "Marketing", "Escritório", "Tecnologia", "Pessoal", "AGUA", "ENERGIA", "INTERNET", "GAS", "EDUCAÇÃO", "Outros"
@@ -63,7 +64,17 @@ export default function GestaoCustos() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Transacao.create(data),
-    onSuccess: () => {
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ["transacoes"] });
+      const previous = queryClient.getQueryData(["transacoes"]);
+      const optimistic = { ...newData, id: `temp-${Date.now()}`, created_by: currentUser?.email, created_date: new Date().toISOString() };
+      queryClient.setQueryData(["transacoes"], (old) => [...(old || []), optimistic]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(["transacoes"], context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transacoes"] });
       setShowDialog(false);
       resetForm();
@@ -72,7 +83,16 @@ export default function GestaoCustos() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Transacao.delete(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["transacoes"] });
+      const previous = queryClient.getQueryData(["transacoes"]);
+      queryClient.setQueryData(["transacoes"], (old) => (old || []).filter(t => t.id !== id));
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(["transacoes"], context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transacoes"] });
     }
   });
@@ -217,6 +237,10 @@ export default function GestaoCustos() {
   }
 
   return (
+    <PullToRefresh
+      onRefresh={() => queryClient.invalidateQueries({ queryKey: ["transacoes"] })}
+      className="min-h-screen md:!overflow-visible"
+    >
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-3 md:p-6">
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
@@ -516,5 +540,6 @@ export default function GestaoCustos() {
         </Dialog>
       </div>
     </div>
+    </PullToRefresh>
   );
 }

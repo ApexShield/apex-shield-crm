@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Users, BarChart3, Calendar, Bot, MoreHorizontal, Cake, Megaphone, Calculator, Target, Wallet, GitBranch, X } from "lucide-react";
 import { createPageUrl } from "@/utils";
@@ -20,10 +20,26 @@ const MORE_ITEMS = [
   { icon: GitBranch, label: "Organograma", page: "Organograma", color: "from-indigo-500 to-blue-500" },
 ];
 
+// Persist scroll positions per route
+const scrollStore = {};
+
 export default function BottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   const menuRef = useRef(null);
+  const prevPath = useRef(location.pathname);
+
+  // Save scroll on route change, restore on arrival
+  useEffect(() => {
+    if (prevPath.current !== location.pathname) {
+      scrollStore[prevPath.current] = window.scrollY;
+      prevPath.current = location.pathname;
+      requestAnimationFrame(() => {
+        const saved = scrollStore[location.pathname];
+        if (saved != null) window.scrollTo(0, saved);
+      });
+    }
+  }, [location.pathname]);
 
   // Close menu on route change
   useEffect(() => {
@@ -72,12 +88,12 @@ export default function BottomNav() {
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
             className="fixed bottom-20 left-3 right-3 z-[60] lg:hidden safe-area-bottom"
           >
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-slate-700">Mais opções</span>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mais opções</span>
                 <button
                   onClick={() => setMoreOpen(false)}
-                  className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"
+                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -96,14 +112,14 @@ export default function BottomNav() {
                       <Link
                         to={path}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all no-select ${
-                          isActive ? "bg-indigo-50 ring-1 ring-indigo-200" : "bg-slate-50 active:bg-slate-100"
+                          isActive ? "bg-indigo-50 dark:bg-indigo-900/40 ring-1 ring-indigo-200 dark:ring-indigo-600" : "bg-slate-50 dark:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600"
                         }`}
                       >
                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-sm`}>
                           <item.icon className="w-5 h-5 text-white" />
                         </div>
                         <span className={`text-[11px] font-semibold text-center leading-tight ${
-                          isActive ? "text-indigo-600" : "text-slate-600"
+                          isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-300"
                         }`}>{item.label}</span>
                       </Link>
                     </motion.div>
@@ -116,7 +132,7 @@ export default function BottomNav() {
       </AnimatePresence>
 
       {/* Bottom nav bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 lg:hidden safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 lg:hidden safe-area-bottom">
         <div className="grid grid-cols-5 h-14">
           {MAIN_ITEMS.map(item => {
             const path = createPageUrl(item.page);
@@ -126,7 +142,7 @@ export default function BottomNav() {
                 key={item.page}
                 to={path}
                 className={`flex flex-col items-center justify-center gap-0.5 no-select ${
-                  isActive ? "text-indigo-600" : "text-slate-400"
+                  isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -137,7 +153,7 @@ export default function BottomNav() {
           <button
             onClick={() => setMoreOpen(prev => !prev)}
             className={`flex flex-col items-center justify-center gap-0.5 no-select ${
-              moreOpen || isMoreActive ? "text-indigo-600" : "text-slate-400"
+              moreOpen || isMoreActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
             }`}
           >
             <MoreHorizontal className="w-5 h-5" />

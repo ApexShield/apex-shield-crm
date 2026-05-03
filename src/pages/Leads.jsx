@@ -23,6 +23,7 @@ import ApoliceDialog from "../components/leads/ApoliceDialog";
 import Relatorios from "../components/leads/Relatorios";
 import ImportExportLeads from "../components/leads/ImportExportLeads";
 import LeadCard from "../components/mobile/LeadCard";
+import PullToRefresh from "../components/mobile/PullToRefresh";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -265,7 +266,18 @@ export default function Leads() {
       const result = await base44.entities.Cliente.update(id, data);
       return result;
     },
-    onSuccess: () => {
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ["clientes"] });
+      const previous = queryClient.getQueryData(["clientes"]);
+      queryClient.setQueryData(["clientes"], (old) =>
+        (old || []).map(c => c.id === id ? { ...c, ...data } : c)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(["clientes"], context.previous);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setShowForm(false);
       setEditingLead(null);
@@ -573,22 +585,29 @@ export default function Leads() {
           </div>
         </div>
 
-        {/* Mobile Cards */}
-        <div className="md:hidden space-y-2 mb-6 max-h-[60vh] overflow-y-auto">
-          {dadosFiltrados.map(cliente => (
-            <LeadCard
-              key={cliente.id}
-              cliente={cliente}
-              isSelected={selectedLead?.id === cliente.id}
-              onClick={() => {
-                setSelectedLead(cliente);
-              }}
-              getStatusColor={getStatusColor}
-            />
-          ))}
-          {dadosFiltrados.length === 0 && (
-            <p className="text-center text-white/50 py-10 text-sm">Nenhum lead encontrado</p>
-          )}
+        {/* Mobile Cards with Pull to Refresh */}
+        <div className="md:hidden mb-6">
+          <PullToRefresh
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
+            className="max-h-[60vh]"
+          >
+            <div className="space-y-2">
+              {dadosFiltrados.map(cliente => (
+                <LeadCard
+                  key={cliente.id}
+                  cliente={cliente}
+                  isSelected={selectedLead?.id === cliente.id}
+                  onClick={() => {
+                    setSelectedLead(cliente);
+                  }}
+                  getStatusColor={getStatusColor}
+                />
+              ))}
+              {dadosFiltrados.length === 0 && (
+                <p className="text-center text-white/50 py-10 text-sm">Nenhum lead encontrado</p>
+              )}
+            </div>
+          </PullToRefresh>
         </div>
 
         {/* Botões de Ação */}

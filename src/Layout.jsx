@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2, ArrowLeft
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,12 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showConvitesDialog, setShowConvitesDialog] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Main pages that show the menu icon; sub-pages show back arrow
+  const MAIN_PAGES = ["Leads", "DashboardAtividades", "Compromissos", "AgenteApex", "Home", "BoasVindas"];
+  const isMainPage = MAIN_PAGES.includes(currentPageName) || location.pathname === "/";
 
   const isPublicPage = PUBLIC_PAGES.includes(currentPageName);
 
@@ -191,27 +197,45 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       <div className="lg:pl-72">
-        <header className="lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 safe-area-top">
+        <header className="lg:hidden sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-4 py-3 safe-area-top">
           <div className="flex items-center justify-between">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
+            {isMainPage ? (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate(-1)}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            )}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <Briefcase className="w-4 h-4 text-white" />
               </div>
-              <span className="font-semibold text-slate-800">APEX SHIELD CRM</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">APEX SHIELD CRM</span>
             </div>
             <div className="w-10" />
           </div>
         </header>
 
         <main className="mobile-content-pad">
-          {children}
+          <motion.div
+            key={currentPageName}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="lg:animate-none"
+          >
+            {children}
+          </motion.div>
         </main>
       </div>
 

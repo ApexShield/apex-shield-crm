@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,11 +8,12 @@ import {
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ConvitesDialog from "./components/ConvitesDialog";
 import AniversariantesPopup from "./components/AniversariantesPopup";
 import BottomNav from "./components/mobile/BottomNav";
 import DeleteAccountDialog from "./components/mobile/DeleteAccountDialog";
+import PullToRefresh from "./components/mobile/PullToRefresh";
 
 const navigation = [
   { name: "Leads", icon: Users, page: "Leads" },
@@ -69,9 +70,15 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [convitesPendentes.length]);
 
+  const queryClient = useQueryClient();
+
   const handleLogout = () => {
     base44.auth.logout();
   };
+
+  const handlePullRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
 
   // Páginas públicas: renderizar apenas o conteúdo, sem sidebar nem layout do CRM
   if (isPublicPage) {
@@ -229,15 +236,17 @@ export default function Layout({ children, currentPageName }) {
         </header>
 
         <main className="mobile-content-pad">
-          <motion.div
-            key={currentPageName}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="lg:animate-none"
-          >
-            {children}
-          </motion.div>
+          <PullToRefresh onRefresh={handlePullRefresh}>
+            <motion.div
+              key={currentPageName}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="lg:animate-none"
+            >
+              {children}
+            </motion.div>
+          </PullToRefresh>
         </main>
       </div>
 

@@ -7,7 +7,7 @@ export default function LeadCard({ cliente, isSelected, onClick, onDoubleClick, 
     <div
       onClick={onClick}
       onDoubleClick={onDoubleClick}
-      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 border transition-all no-select min-h-[52px] ${
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 border transition-all min-h-[52px] ${
         isSelected
           ? "border-indigo-400 bg-indigo-500/20 ring-1 ring-indigo-400/50"
           : "border-white/10 bg-white/5 active:bg-white/10"

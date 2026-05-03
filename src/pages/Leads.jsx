@@ -632,14 +632,14 @@ export default function Leads() {
         <div className="hidden md:flex gap-3 flex-wrap">
           <Button
             onClick={() => { setEditingLead(null); setShowForm(true); }}
-            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-6 py-6 text-sm no-select"
+            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 font-bold px-6 py-6 text-sm"
           >
             <Plus className="w-5 h-5 mr-2" />
             Criar
           </Button>
           <Button
             onClick={handleEdit}
-            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-6 py-6 text-sm no-select"
+            className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-bold px-6 py-6 text-sm"
             disabled={!selectedLead}
           >
             <Edit className="w-5 h-5 mr-2" />
@@ -647,7 +647,7 @@ export default function Leads() {
           </Button>
           <Button
             onClick={handleDelete}
-            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-6 py-6 text-sm no-select"
+            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 font-bold px-6 py-6 text-sm"
             disabled={!selectedLead}
           >
             <Trash2 className="w-5 h-5 mr-2" />
@@ -655,7 +655,7 @@ export default function Leads() {
           </Button>
           <Button
             onClick={() => setShowDocumentos(true)}
-            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-6 py-6 text-sm no-select"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold px-6 py-6 text-sm"
             disabled={!selectedLead}
           >
             <FileText className="w-5 h-5 mr-2" />
@@ -663,14 +663,14 @@ export default function Leads() {
           </Button>
           <Button
             onClick={() => setShowRelatorios(true)}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6 py-6 text-sm no-select"
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-bold px-6 py-6 text-sm"
           >
             <FileText className="w-5 h-5 mr-2" />
             Relatórios
           </Button>
           <Button
             onClick={() => setShowImportExport(true)}
-            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-6 py-6 text-sm no-select"
+            className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 font-bold px-6 py-6 text-sm"
           >
             <Upload className="w-5 h-5 mr-2" />
             Import
@@ -683,7 +683,7 @@ export default function Leads() {
             <Button
               onClick={() => { setEditingLead(null); setShowForm(true); }}
               size="sm"
-              className="bg-blue-500 hover:bg-blue-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
+              className="bg-blue-500 hover:bg-blue-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
               <Plus className="w-4 h-4" />
               <span className="mobile-text-xxs">Criar</span>
@@ -691,7 +691,7 @@ export default function Leads() {
             <Button
               onClick={handleEdit}
               size="sm"
-              className="bg-orange-500 hover:bg-orange-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
+              className="bg-orange-500 hover:bg-orange-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
               disabled={!selectedLead}
             >
               <Edit className="w-4 h-4" />
@@ -700,7 +700,7 @@ export default function Leads() {
             <Button
               onClick={handleDelete}
               size="sm"
-              className="bg-red-500 hover:bg-red-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
+              className="bg-red-500 hover:bg-red-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
               disabled={!selectedLead}
             >
               <Trash2 className="w-4 h-4" />
@@ -709,7 +709,7 @@ export default function Leads() {
             <Button
               onClick={() => setShowDocumentos(true)}
               size="sm"
-              className="bg-purple-500 hover:bg-purple-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
+              className="bg-purple-500 hover:bg-purple-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
               disabled={!selectedLead}
             >
               <FileText className="w-4 h-4" />
@@ -718,7 +718,7 @@ export default function Leads() {
             <Button
               onClick={() => setShowRelatorios(true)}
               size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
+              className="bg-emerald-500 hover:bg-emerald-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
               <FileText className="w-4 h-4" />
               <span className="mobile-text-xxs">Relat.</span>
@@ -726,7 +726,7 @@ export default function Leads() {
             <Button
               onClick={() => setShowImportExport(true)}
               size="sm"
-              className="bg-indigo-500 hover:bg-indigo-600 font-bold text-xs h-11 px-0 no-select flex flex-col items-center justify-center gap-0.5 rounded-md"
+              className="bg-indigo-500 hover:bg-indigo-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
               <Upload className="w-4 h-4" />
               <span className="mobile-text-xxs">Import</span>

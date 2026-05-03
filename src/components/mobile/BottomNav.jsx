@@ -149,7 +149,7 @@ export default function BottomNav() {
                     >
                       <Link
                         to={path}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all no-select min-h-[72px] ${
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all min-h-[72px] ${
                           isActive ? "bg-indigo-50 dark:bg-indigo-900/40 ring-1 ring-indigo-200 dark:ring-indigo-600" : "bg-slate-50 dark:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600"
                         }`}
                       >

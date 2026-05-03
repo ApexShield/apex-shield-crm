@@ -8,11 +8,11 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* No-select for interactive elements */
+/* No-select for interactive elements — only prevent text selection,
+   do NOT suppress system gestures (-webkit-touch-callout) */
 .no-select {
   user-select: none;
   -webkit-user-select: none;
-  -webkit-touch-callout: none;
 }
 
 /* Safe area helpers */

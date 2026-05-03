@@ -30,7 +30,7 @@ function EventCard({ event, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-2xl overflow-hidden transition-all active:scale-[0.98] no-select"
+      className="w-full text-left rounded-2xl overflow-hidden transition-all active:scale-[0.98]"
       style={{ background: `linear-gradient(135deg, ${event.cor || '#3b82f6'}22, ${event.cor || '#3b82f6'}08)` }}
     >
       <div className="flex items-stretch">
@@ -172,7 +172,7 @@ export default function MobileAgendaView({
             <button
               key={i}
               onClick={() => setMobileDayIndex(i)}
-              className={`flex-1 flex flex-col items-center py-2 rounded-xl transition-all no-select ${
+              className={`flex-1 flex flex-col items-center py-2 rounded-xl transition-all ${
                 isSelected
                   ? "bg-gradient-to-b from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30"
                   : isToday

@@ -50,7 +50,10 @@ SelectScrollDownButton.displayName =
   SelectPrimitive.ScrollDownButton.displayName
 
 const SelectContent = React.forwardRef(({ className, children, position = "popper", ...props }, ref) => {
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    setIsMobile(window.innerWidth < 1024);
+  }, []);
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -64,7 +67,7 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className
         )}
-        position={isMobile ? "item-aligned" : position}
+        position={isMobile ? "popper" : position}
         {...props}>
         {isMobile && (
           <div className="flex justify-center pt-2 pb-1">
@@ -74,13 +77,14 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className={cn(
-            isMobile ? "p-2" : "p-1",
+            isMobile ? "p-2 max-h-[55vh] overflow-y-auto -webkit-overflow-scrolling-touch" : "p-1",
             !isMobile && position === "popper" &&
               "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
           )}>
           {children}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
+        {isMobile && <div className="safe-area-bottom" />}
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

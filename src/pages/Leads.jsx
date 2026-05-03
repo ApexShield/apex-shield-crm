@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3, Users, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import usePersistedState from "../hooks/usePersistedState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,9 +42,15 @@ const STATUS_CONFIG = [
 ];
 
 export default function Leads() {
-  const [filtroStatus, setFiltroStatus] = useState("");
-  const [busca, setBusca] = useState("");
-  const [filtroDataVisita, setFiltroDataVisita] = useState("");
+  // Persisted state survives tab switches in bottom nav
+  const [filtroStatus, setFiltroStatus] = usePersistedState("leads_filtroStatus", "");
+  const [busca, setBusca] = usePersistedState("leads_busca", "");
+  const [filtroDataVisita, setFiltroDataVisita] = usePersistedState("leads_filtroData", "");
+  const [usuarioFiltro, setUsuarioFiltro] = usePersistedState("leads_usuarioFiltro", "todos");
+  const [sortColumn, setSortColumn] = usePersistedState("leads_sortCol", null);
+  const [sortDirection, setSortDirection] = usePersistedState("leads_sortDir", "desc");
+
+  // Transient UI state (no need to persist)
   const [selectedLead, setSelectedLead] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
@@ -51,9 +58,6 @@ export default function Leads() {
   const [showApolice, setShowApolice] = useState(false);
   const [showRelatorios, setShowRelatorios] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
-  const [usuarioFiltro, setUsuarioFiltro] = useState("todos");
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState("desc");
 
   // Listener para abrir apólice do formulário
   useEffect(() => {

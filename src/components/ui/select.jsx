@@ -56,10 +56,13 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
   }, []);
   return (
     <SelectPrimitive.Portal>
+      {isMobile && (
+        <div className="fixed inset-0 z-[99] bg-black/40" aria-hidden="true" />
+      )}
       <SelectPrimitive.Content
         ref={ref}
         className={cn(
-          "relative z-50 overflow-hidden border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "relative z-[100] overflow-hidden border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           isMobile
             ? "fixed inset-x-0 bottom-0 top-auto max-h-[60vh] rounded-t-2xl border-t data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4"
             : "max-h-96 min-w-[8rem] rounded-md data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",

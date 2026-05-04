@@ -56,9 +56,6 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
   }, []);
   return (
     <SelectPrimitive.Portal>
-      {isMobile && (
-        <div className="fixed inset-0 z-[99] bg-black/40" aria-hidden="true" />
-      )}
       <SelectPrimitive.Content
         ref={ref}
         className={cn(

@@ -525,8 +525,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Filhos:</Label>
-                    <Select value={formData.filhos} onValueChange={handleFilhosChange}>
-                      <SelectTrigger tabIndex={5} className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <Select value={formData.filhos === "" ? undefined : formData.filhos} onValueChange={handleFilhosChange}>
+                      <SelectTrigger tabIndex={5} className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {[0,1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                       </SelectContent>
@@ -574,8 +574,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Estado Civil:</Label>
-                    <Select value={formData.estado_civil} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento, data_casamento: v !== "CASADO" ? "" : formData.data_casamento})}>
-                      <SelectTrigger tabIndex={23} className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <Select value={formData.estado_civil || undefined} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento, data_casamento: v !== "CASADO" ? "" : formData.data_casamento})}>
+                      <SelectTrigger tabIndex={23} className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SOLTEIRO">SOLTEIRO</SelectItem>
                         <SelectItem value="CASADO">CASADO</SelectItem>
@@ -588,8 +588,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     <>
                       <div>
                         <Label className="text-[11px]">Regime:</Label>
-                        <Select value={formData.regime_casamento} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <Select value={formData.regime_casamento || undefined} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="COMUNHÃO TOTAL">COMUNHÃO TOTAL</SelectItem>
                             <SelectItem value="COMUNHÃO PARCIAL">COMUNHÃO PARCIAL</SelectItem>
@@ -811,8 +811,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-[11px]">Fuma:</Label>
-                      <Select value={formData.fuma} onValueChange={(v) => setFormData({...formData, fuma: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <Select value={formData.fuma || undefined} onValueChange={(v) => setFormData({...formData, fuma: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SIM">SIM</SelectItem>
                           <SelectItem value="NÃO">NÃO</SelectItem>
@@ -821,8 +821,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     </div>
                     <div>
                       <Label className="text-[11px]">Moto:</Label>
-                      <Select value={formData.anda_moto} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <Select value={formData.anda_moto || undefined} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SIM">SIM</SelectItem>
                           <SelectItem value="NÃO">NÃO</SelectItem>
@@ -832,8 +832,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Plano de Saúde:</Label>
-                    <Select value={formData.plano_saude} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <Select value={formData.plano_saude || undefined} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
                         <SelectItem value="NÃO">NÃO</SelectItem>
@@ -843,8 +843,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   {formData.plano_saude === "SIM" && (
                     <div>
                       <Label className="text-[11px]">Qual Plano:</Label>
-                      <Select value={formData.plano_saude_nome} onValueChange={(v) => setFormData({...formData, plano_saude_nome: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <Select value={formData.plano_saude_nome || undefined} onValueChange={(v) => setFormData({...formData, plano_saude_nome: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="UNIMED">UNIMED</SelectItem>
                           <SelectItem value="BRADESCO">BRADESCO</SelectItem>
@@ -861,8 +861,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Seguro de Vida:</Label>
-                    <Select value={formData.seguro_vida} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <Select value={formData.seguro_vida || undefined} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
                         <SelectItem value="NÃO">NÃO</SelectItem>
@@ -872,8 +872,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   {formData.seguro_vida === "SIM" && (
                     <div>
                       <Label className="text-[11px]">Seguradora:</Label>
-                      <Select value={formData.seguro_vida_seguradora} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <Select value={formData.seguro_vida_seguradora || undefined} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="PRUDENTIAL">PRUDENTIAL</SelectItem>
                           <SelectItem value="MONGERAL">MONGERAL</SelectItem>
@@ -913,9 +913,9 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               
               <div className="mb-2">
                 <Label className="text-[11px]">Qtd Indicações:</Label>
-                <Select value={formData.num_indicacoes} onValueChange={handleIndicacoesChange}>
+                <Select value={formData.num_indicacoes === "" ? undefined : formData.num_indicacoes} onValueChange={handleIndicacoesChange}>
                   <SelectTrigger className="w-24 h-8 text-xs">
-                    <SelectValue />
+                    <SelectValue placeholder="0" />
                   </SelectTrigger>
                   <SelectContent>
                     {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (

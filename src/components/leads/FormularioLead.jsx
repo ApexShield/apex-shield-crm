@@ -65,15 +65,15 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   });
 
   const [formData, setFormData] = useState({
-    codigo: nextCodigo || "",
-    status: "AB Fone",
-    data_cadastro: new Date().toISOString().split('T')[0],
-    nome: "",
-    cpf: "",
-    regime_casamento: "",
-    data_casamento: "",
-    filhos: "",
-    filhos_info: [],
+  codigo: nextCodigo || "",
+  status: "AB Fone",
+  data_cadastro: new Date().toISOString().split('T')[0],
+  nome: "",
+  cpf: "",
+  regime_casamento: "",
+  data_casamento: "",
+  filhos: undefined,
+  filhos_info: [],
     telefone: "",
     email: "",
     empresa: "",
@@ -209,7 +209,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         observacoes: [],
         novaObservacao: "",
         documentos: [],
-        num_indicacoes: "0",
+        num_indicacoes: undefined,
         indicacoes: []
       });
       setHasUnsavedChanges(false);
@@ -362,18 +362,22 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
   const handleFilhosChange = (quantidade) => {
     const num = parseInt(quantidade) || 0;
-    const newFilhosInfo = Array(num).fill(null).map((_, i) => 
-      formData.filhos_info[i] || { nome: "", data_nascimento: "" }
-    );
-    setFormData({ ...formData, filhos: quantidade, filhos_info: newFilhosInfo });
+    setFormData(prev => {
+      const newFilhosInfo = Array(num).fill(null).map((_, i) => 
+        prev.filhos_info[i] || { nome: "", data_nascimento: "" }
+      );
+      return { ...prev, filhos: quantidade, filhos_info: newFilhosInfo };
+    });
   };
 
   const handleIndicacoesChange = (quantidade) => {
     const num = parseInt(quantidade) || 0;
-    const newIndicacoes = Array(num).fill(null).map((_, i) => 
-      formData.indicacoes[i] || { nome: "", profissao: "", telefone: "", conexao: "" }
-    );
-    setFormData({ ...formData, num_indicacoes: quantidade, indicacoes: newIndicacoes });
+    setFormData(prev => {
+      const newIndicacoes = Array(num).fill(null).map((_, i) => 
+        prev.indicacoes[i] || { nome: "", profissao: "", telefone: "", conexao: "" }
+      );
+      return { ...prev, num_indicacoes: quantidade, indicacoes: newIndicacoes };
+    });
   };
 
   const handleDataNascimentoChange = (date) => {
@@ -525,7 +529,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Filhos:</Label>
-                    <Select value={formData.filhos === "" ? undefined : formData.filhos} onValueChange={handleFilhosChange}>
+                    <Select value={formData.filhos != null ? formData.filhos : undefined} onValueChange={handleFilhosChange}>
                       <SelectTrigger tabIndex={5} className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {[0,1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
@@ -913,7 +917,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               
               <div className="mb-2">
                 <Label className="text-[11px]">Qtd Indicações:</Label>
-                <Select value={formData.num_indicacoes === "" ? undefined : formData.num_indicacoes} onValueChange={handleIndicacoesChange}>
+                <Select value={formData.num_indicacoes != null ? formData.num_indicacoes : undefined} onValueChange={handleIndicacoesChange}>
                   <SelectTrigger className="w-24 h-8 text-xs">
                     <SelectValue placeholder="0" />
                   </SelectTrigger>

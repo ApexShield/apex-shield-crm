@@ -138,17 +138,26 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   useEffect(() => {
     if (lead) {
       const base = getEmptyFormData();
-      setFormData({ 
-        ...base, 
-        ...lead,
-        filhos: lead.filhos != null ? String(lead.filhos) : undefined,
-        filhos_info: lead.filhos_info || [],
-        num_indicacoes: lead.num_indicacoes != null ? String(lead.num_indicacoes) : undefined,
-        observacoes: lead.observacoes || [],
-        documentos: lead.documentos || [],
-        indicacoes: lead.indicacoes || [],
-        novaObservacao: ""
+      // Merge lead data, converting null/undefined to "" for controlled inputs
+      const merged = { ...base };
+      Object.keys(base).forEach(key => {
+        if (key === 'filhos_info' || key === 'observacoes' || key === 'documentos' || key === 'indicacoes') {
+          merged[key] = lead[key] || base[key];
+        } else if (key === 'filhos') {
+          merged[key] = lead.filhos != null ? String(lead.filhos) : undefined;
+        } else if (key === 'num_indicacoes') {
+          merged[key] = lead.num_indicacoes != null ? String(lead.num_indicacoes) : undefined;
+        } else if (key === 'novaObservacao') {
+          merged[key] = "";
+        } else if (lead[key] != null) {
+          merged[key] = lead[key];
+        }
       });
+      // Also copy any lead fields not in base (like id, created_by, etc.)
+      Object.keys(lead).forEach(key => {
+        if (!(key in base)) merged[key] = lead[key];
+      });
+      setFormData(merged);
     } else {
       setFormData(getEmptyFormData());
       setHasUnsavedChanges(false);

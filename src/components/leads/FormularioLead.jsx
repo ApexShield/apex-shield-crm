@@ -64,16 +64,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     queryFn: () => base44.auth.me()
   });
 
-  const [formData, setFormData] = useState({
-  codigo: nextCodigo || "",
-  status: "AB Fone",
-  data_cadastro: new Date().toISOString().split('T')[0],
-  nome: "",
-  cpf: "",
-  regime_casamento: "",
-  data_casamento: "",
-  filhos: undefined,
-  filhos_info: [],
+  const getEmptyFormData = () => ({
+    codigo: nextCodigo || "",
+    status: "AB Fone",
+    data_cadastro: new Date().toISOString().split('T')[0],
+    nome: "",
+    cpf: "",
+    regime_casamento: "",
+    data_casamento: "",
+    filhos: undefined,
+    filhos_info: [],
     telefone: "",
     email: "",
     empresa: "",
@@ -129,89 +129,28 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
     observacoes: [],
     novaObservacao: "",
     documentos: [],
-    num_indicacoes: "0",
+    num_indicacoes: undefined,
     indicacoes: []
   });
 
+  const [formData, setFormData] = useState(getEmptyFormData);
+
   useEffect(() => {
     if (lead) {
+      const base = getEmptyFormData();
       setFormData({ 
-        ...formData, 
+        ...base, 
         ...lead,
+        filhos: lead.filhos != null ? String(lead.filhos) : undefined,
         filhos_info: lead.filhos_info || [],
+        num_indicacoes: lead.num_indicacoes != null ? String(lead.num_indicacoes) : undefined,
         observacoes: lead.observacoes || [],
         documentos: lead.documentos || [],
         indicacoes: lead.indicacoes || [],
         novaObservacao: ""
       });
     } else {
-      setFormData({
-        codigo: nextCodigo || "",
-        status: "AB Fone",
-        data_cadastro: new Date().toISOString().split('T')[0],
-        nome: "",
-        cpf: "",
-        regime_casamento: "",
-        data_casamento: "",
-        filhos: "",
-        filhos_info: [],
-        telefone: "",
-        email: "",
-        empresa: "",
-        cargo: "",
-        plano_saude: "",
-        plano_saude_nome: "",
-        valor_plano_saude: "",
-        seguro_vida: "",
-        seguro_vida_seguradora: "",
-        valor_seguro_vida: "",
-        data_nascimento: "",
-        idade: "",
-        profissao: "",
-        estado_civil: "",
-        altura: "",
-        peso: "",
-        imc: "",
-        fuma: "",
-        anda_moto: "",
-        fonte_prospeccao: "",
-        custo_mensal_fixo: "",
-        custo_agua: "",
-        custo_energia: "",
-        custo_internet: "",
-        custo_gas: "",
-        custo_aluguel: "",
-        custo_escola: "",
-        custo_plano_saude_fixo: "",
-        custo_transporte: "",
-        custo_alimentacao: "",
-        custo_outros_fixos: "",
-        custo_variavel_total: "",
-        custo_lazer: "",
-        custo_hobbies: "",
-        custo_vestuario: "",
-        custo_viagens: "",
-        custo_outros_variaveis: "",
-        renda: "",
-        patrimonio: "",
-        patrimonio_imoveis: "",
-        patrimonio_veiculos: "",
-        patrimonio_investimentos: "",
-        patrimonio_poupanca: "",
-        patrimonio_previdencia: "",
-        patrimonio_outros: "",
-        data_contato: "",
-        agendar_visita: "",
-        endereco: "",
-        endereco_place_id: "",
-        endereco_lat: null,
-        endereco_lng: null,
-        observacoes: [],
-        novaObservacao: "",
-        documentos: [],
-        num_indicacoes: undefined,
-        indicacoes: []
-      });
+      setFormData(getEmptyFormData());
       setHasUnsavedChanges(false);
     }
   }, [lead, open, nextCodigo]);
@@ -382,7 +321,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
   const handleDataNascimentoChange = (date) => {
     const idade = calculateAge(date);
-    setFormData({ ...formData, data_nascimento: date, idade });
+    setFormData(prev => ({ ...prev, data_nascimento: date, idade }));
   };
 
   const handlePhoneChange = (field, value, e) => {
@@ -427,15 +366,15 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   };
 
   const handleLimpar = () => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       nome: "",
       telefone: "",
       email: "",
       empresa: "",
       cargo: "",
       novaObservacao: ""
-    });
+    }));
   };
 
   const numFilhos = parseInt(formData.filhos) || 0;
@@ -454,7 +393,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   return (
     <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 w-[95vw]">
+      <DialogContent className="compact-form max-w-7xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 w-[95vw]">
         <DialogHeader>
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -484,7 +423,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Status:</Label>
-                    <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
+                    <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
                       <SelectTrigger tabIndex={2} className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Novo">Novo</SelectItem>
@@ -501,7 +440,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Data de Cadastro:</Label>
-                    <Input tabIndex={3} type="date" value={formData.data_cadastro} onChange={(e) => setFormData({...formData, data_cadastro: e.target.value})} className="h-8 text-xs" />
+                    <Input tabIndex={3} type="date" value={formData.data_cadastro} onChange={(e) => setFormData(prev => ({...prev, data_cadastro: e.target.value}))} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Nome Completo:</Label>
@@ -542,8 +481,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       {formData.filhos_info.map((filho, idx) => (
                         <div key={idx} className="space-y-1 border-l-2 border-orange-400 pl-2">
                           <Label className="text-[11px]">Filho {idx + 1}:</Label>
-                          <Input value={filho.nome} onChange={(e) => { const n = [...formData.filhos_info]; n[idx] = { ...n[idx], nome: e.target.value.toUpperCase() }; setFormData({ ...formData, filhos_info: n }); }} className="h-7 text-xs" />
-                          <Input type="date" value={filho.data_nascimento || ""} onChange={(e) => { const n = [...formData.filhos_info]; n[idx] = { ...n[idx], data_nascimento: e.target.value }; setFormData({ ...formData, filhos_info: n }); }} max={new Date().toISOString().split('T')[0]} className="h-7 text-xs" />
+                          <Input value={filho.nome} onChange={(e) => { const val = e.target.value.toUpperCase(); setFormData(prev => { const n = [...prev.filhos_info]; n[idx] = { ...n[idx], nome: val }; return { ...prev, filhos_info: n }; }); }} className="h-7 text-xs" />
+                          <Input type="date" value={filho.data_nascimento || ""} onChange={(e) => { const val = e.target.value; setFormData(prev => { const n = [...prev.filhos_info]; n[idx] = { ...n[idx], data_nascimento: val }; return { ...prev, filhos_info: n }; }); }} max={new Date().toISOString().split('T')[0]} className="h-7 text-xs" />
                           {filho.data_nascimento && <div className="text-[10px] font-semibold bg-white/50 rounded px-1 py-0.5">Idade: {calculateAge(filho.data_nascimento)} anos</div>}
                         </div>
                       ))}
@@ -578,7 +517,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Estado Civil:</Label>
-                    <Select value={formData.estado_civil || undefined} onValueChange={(v) => setFormData({...formData, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : formData.regime_casamento, data_casamento: v !== "CASADO" ? "" : formData.data_casamento})}>
+                    <Select value={formData.estado_civil || undefined} onValueChange={(v) => setFormData(prev => ({...prev, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : prev.regime_casamento, data_casamento: v !== "CASADO" ? "" : prev.data_casamento}))}>
                       <SelectTrigger tabIndex={23} className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SOLTEIRO">SOLTEIRO</SelectItem>
@@ -592,7 +531,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     <>
                       <div>
                         <Label className="text-[11px]">Regime:</Label>
-                        <Select value={formData.regime_casamento || undefined} onValueChange={(v) => setFormData({...formData, regime_casamento: v})}>
+                        <Select value={formData.regime_casamento || undefined} onValueChange={(v) => setFormData(prev => ({...prev, regime_casamento: v}))}>
                           <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="COMUNHÃO TOTAL">COMUNHÃO TOTAL</SelectItem>
@@ -603,7 +542,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                       </div>
                       <div>
                         <Label className="text-[11px]">Data Casamento:</Label>
-                        <Input type="date" value={formData.data_casamento || ""} onChange={(e) => setFormData({...formData, data_casamento: e.target.value})} max={new Date().toISOString().split('T')[0]} className="h-8 text-xs" />
+                        <Input type="date" value={formData.data_casamento || ""} onChange={(e) => setFormData(prev => ({...prev, data_casamento: e.target.value}))} max={new Date().toISOString().split('T')[0]} className="h-8 text-xs" />
                       </div>
                     </>
                   )}
@@ -652,7 +591,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                 <div className="space-y-1.5">
                   <div>
                     <Label className="text-[11px]">Data de Contato:</Label>
-                    <Input tabIndex={29} type="date" value={formData.data_contato} onChange={(e) => setFormData({...formData, data_contato: e.target.value})} className="h-8 text-xs" />
+                    <Input tabIndex={29} type="date" value={formData.data_contato} onChange={(e) => setFormData(prev => ({...prev, data_contato: e.target.value}))} className="h-8 text-xs" />
                   </div>
                   <div>
                     <Label className="text-[11px]">Agendar Visita:</Label>
@@ -815,7 +754,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-[11px]">Fuma:</Label>
-                      <Select value={formData.fuma || undefined} onValueChange={(v) => setFormData({...formData, fuma: v})}>
+                      <Select value={formData.fuma || undefined} onValueChange={(v) => setFormData(prev => ({...prev, fuma: v}))}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SIM">SIM</SelectItem>
@@ -825,7 +764,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     </div>
                     <div>
                       <Label className="text-[11px]">Moto:</Label>
-                      <Select value={formData.anda_moto || undefined} onValueChange={(v) => setFormData({...formData, anda_moto: v})}>
+                      <Select value={formData.anda_moto || undefined} onValueChange={(v) => setFormData(prev => ({...prev, anda_moto: v}))}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SIM">SIM</SelectItem>
@@ -836,7 +775,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Plano de Saúde:</Label>
-                    <Select value={formData.plano_saude || undefined} onValueChange={(v) => setFormData({...formData, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : formData.plano_saude_nome})}>
+                    <Select value={formData.plano_saude || undefined} onValueChange={(v) => setFormData(prev => ({...prev, plano_saude: v, plano_saude_nome: v === "NÃO" ? "" : prev.plano_saude_nome}))}>
                       <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
@@ -847,7 +786,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   {formData.plano_saude === "SIM" && (
                     <div>
                       <Label className="text-[11px]">Qual Plano:</Label>
-                      <Select value={formData.plano_saude_nome || undefined} onValueChange={(v) => setFormData({...formData, plano_saude_nome: v})}>
+                      <Select value={formData.plano_saude_nome || undefined} onValueChange={(v) => setFormData(prev => ({...prev, plano_saude_nome: v}))}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="UNIMED">UNIMED</SelectItem>
@@ -865,7 +804,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Seguro de Vida:</Label>
-                    <Select value={formData.seguro_vida || undefined} onValueChange={(v) => setFormData({...formData, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : formData.seguro_vida_seguradora})}>
+                    <Select value={formData.seguro_vida || undefined} onValueChange={(v) => setFormData(prev => ({...prev, seguro_vida: v, seguro_vida_seguradora: v === "NÃO" ? "" : prev.seguro_vida_seguradora}))}>
                       <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SIM">SIM</SelectItem>
@@ -876,7 +815,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   {formData.seguro_vida === "SIM" && (
                     <div>
                       <Label className="text-[11px]">Seguradora:</Label>
-                      <Select value={formData.seguro_vida_seguradora || undefined} onValueChange={(v) => setFormData({...formData, seguro_vida_seguradora: v})}>
+                      <Select value={formData.seguro_vida_seguradora || undefined} onValueChange={(v) => setFormData(prev => ({...prev, seguro_vida_seguradora: v}))}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="PRUDENTIAL">PRUDENTIAL</SelectItem>
@@ -931,7 +870,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
 
               {parseInt(formData.num_indicacoes) > 0 && (
                 <>
-                  <div className="grid grid-cols-4 gap-1.5 text-[10px] font-bold mb-1">
+                  {/* Desktop: grid 4 colunas / Mobile: cada indicação em bloco */}
+                  <div className="hidden md:grid grid-cols-4 gap-1.5 text-[10px] font-bold mb-1">
                     <div>Nome:</div>
                     <div>Profissão:</div>
                     <div>Telefone:</div>
@@ -939,71 +879,157 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
 
                   {formData.indicacoes.map((indicacao, idx) => (
-                    <div key={idx} className="grid grid-cols-4 gap-1.5 mb-1.5">
-                      <Input 
-                        className="h-7 text-xs"
-                        value={indicacao.nome} 
-                        onChange={(e) => {
-                          const newIndicacoes = [...formData.indicacoes];
-                          newIndicacoes[idx].nome = e.target.value.toUpperCase();
-                          setFormData({ ...formData, indicacoes: newIndicacoes });
-                        }}
-                      />
-                      <Input 
-                        className="h-7 text-xs"
-                        value={indicacao.profissao} 
-                        onChange={(e) => {
-                          const newIndicacoes = [...formData.indicacoes];
-                          newIndicacoes[idx].profissao = e.target.value.toUpperCase();
-                          setFormData({ ...formData, indicacoes: newIndicacoes });
-                        }}
-                      />
-                      <Input 
-                        className="h-7 text-xs"
-                        value={indicacao.telefone} 
-                        onChange={(e) => {
-                          const newIndicacoes = [...formData.indicacoes];
-                          newIndicacoes[idx].telefone = formatPhone(e.target.value);
-                          setFormData({ ...formData, indicacoes: newIndicacoes });
-                        }}
-                        maxLength={14}
-                      />
-                      <div className="flex gap-1">
+                    <div key={idx}>
+                      {/* Desktop layout */}
+                      <div className="hidden md:grid grid-cols-4 gap-1.5 mb-1.5">
                         <Input 
-                          className="h-7 text-xs flex-1"
-                          value={indicacao.conexao} 
+                          className="h-7 text-xs"
+                          value={indicacao.nome} 
                           onChange={(e) => {
                             const newIndicacoes = [...formData.indicacoes];
-                            newIndicacoes[idx].conexao = e.target.value.toUpperCase();
-                            setFormData({ ...formData, indicacoes: newIndicacoes });
+                            newIndicacoes[idx] = { ...newIndicacoes[idx], nome: e.target.value.toUpperCase() };
+                            setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
                           }}
                         />
+                        <Input 
+                          className="h-7 text-xs"
+                          value={indicacao.profissao} 
+                          onChange={(e) => {
+                            const newIndicacoes = [...formData.indicacoes];
+                            newIndicacoes[idx] = { ...newIndicacoes[idx], profissao: e.target.value.toUpperCase() };
+                            setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                          }}
+                        />
+                        <Input 
+                          className="h-7 text-xs"
+                          value={indicacao.telefone} 
+                          onChange={(e) => {
+                            const newIndicacoes = [...formData.indicacoes];
+                            newIndicacoes[idx] = { ...newIndicacoes[idx], telefone: formatPhone(e.target.value) };
+                            setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                          }}
+                          maxLength={14}
+                        />
+                        <div className="flex gap-1">
+                          <Input 
+                            className="h-7 text-xs flex-1"
+                            value={indicacao.conexao} 
+                            onChange={(e) => {
+                              const newIndicacoes = [...formData.indicacoes];
+                              newIndicacoes[idx] = { ...newIndicacoes[idx], conexao: e.target.value.toUpperCase() };
+                              setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                            onClick={async () => {
+                              if (!indicacao.nome || !indicacao.telefone) {
+                                alert('Preencha o nome e telefone da indicação antes de criar o lead');
+                                return;
+                              }
+                              const nomeNovoLead = `${indicacao.nome} IND ${formData.nome}`;
+                              try {
+                                await base44.entities.Cliente.create({
+                                  nome: nomeNovoLead,
+                                  telefone: indicacao.telefone,
+                                  status: "Novo",
+                                  data_cadastro: new Date().toISOString().split('T')[0]
+                                });
+                                alert('✅ Lead criado com sucesso!');
+                              } catch (error) {
+                                alert('❌ Erro ao criar lead: ' + error.message);
+                              }
+                            }}
+                          >
+                            <UserPlus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Mobile layout - stacked */}
+                      <div className="md:hidden bg-white/30 rounded-lg p-2 mb-2 space-y-1">
+                        <div className="text-[10px] font-bold text-yellow-900">Indicação {idx + 1}:</div>
+                        <div className="grid grid-cols-2 gap-1">
+                          <div>
+                            <Label className="text-[10px]">Nome:</Label>
+                            <Input 
+                              className="h-8 text-xs"
+                              placeholder="Nome"
+                              value={indicacao.nome} 
+                              onChange={(e) => {
+                                const newIndicacoes = [...formData.indicacoes];
+                                newIndicacoes[idx] = { ...newIndicacoes[idx], nome: e.target.value.toUpperCase() };
+                                setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Profissão:</Label>
+                            <Input 
+                              className="h-8 text-xs"
+                              placeholder="Profissão"
+                              value={indicacao.profissao} 
+                              onChange={(e) => {
+                                const newIndicacoes = [...formData.indicacoes];
+                                newIndicacoes[idx] = { ...newIndicacoes[idx], profissao: e.target.value.toUpperCase() };
+                                setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Telefone:</Label>
+                            <Input 
+                              className="h-8 text-xs"
+                              placeholder="Telefone"
+                              value={indicacao.telefone} 
+                              onChange={(e) => {
+                                const newIndicacoes = [...formData.indicacoes];
+                                newIndicacoes[idx] = { ...newIndicacoes[idx], telefone: formatPhone(e.target.value) };
+                                setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                              }}
+                              maxLength={14}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Conexão:</Label>
+                            <Input 
+                              className="h-8 text-xs"
+                              placeholder="Conexão"
+                              value={indicacao.conexao} 
+                              onChange={(e) => {
+                                const newIndicacoes = [...formData.indicacoes];
+                                newIndicacoes[idx] = { ...newIndicacoes[idx], conexao: e.target.value.toUpperCase() };
+                                setFormData(prev => ({ ...prev, indicacoes: newIndicacoes }));
+                              }}
+                            />
+                          </div>
+                        </div>
                         <Button
                           type="button"
                           size="sm"
-                          className="h-7 px-1.5 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                          className="w-full h-8 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                           onClick={async () => {
                             if (!indicacao.nome || !indicacao.telefone) {
                               alert('Preencha o nome e telefone da indicação antes de criar o lead');
                               return;
                             }
                             const nomeNovoLead = `${indicacao.nome} IND ${formData.nome}`;
-                            const telefoneNovoLead = indicacao.telefone;
                             try {
                               await base44.entities.Cliente.create({
                                 nome: nomeNovoLead,
-                                telefone: telefoneNovoLead,
+                                telefone: indicacao.telefone,
                                 status: "Novo",
                                 data_cadastro: new Date().toISOString().split('T')[0]
                               });
                               alert('✅ Lead criado com sucesso!');
                             } catch (error) {
-                              console.error('Erro ao criar lead:', error);
                               alert('❌ Erro ao criar lead: ' + error.message);
                             }
                           }}
                         >
-                          <UserPlus className="w-3 h-3" />
+                          <UserPlus className="w-3 h-3 mr-1" /> Criar Lead
                         </Button>
                       </div>
                     </div>
@@ -1034,7 +1060,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     ))}
                   </div>
                 )}
-                <Textarea tabIndex={30} value={formData.novaObservacao} onChange={(e) => setFormData({...formData, novaObservacao: e.target.value.toUpperCase()})} className="text-xs flex-1 min-h-[80px]" placeholder="Nova observação..." />
+                <Textarea tabIndex={30} value={formData.novaObservacao} onChange={(e) => setFormData(prev => ({...prev, novaObservacao: e.target.value.toUpperCase()}))} className="text-xs flex-1 min-h-[80px]" placeholder="Nova observação..." />
               </div>
             </motion.div>
           </div>
@@ -1044,14 +1070,14 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="flex gap-3 mt-6 flex-wrap"
+            className="grid grid-cols-2 md:flex gap-2 md:gap-3 mt-6"
           >
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
               <Button 
                 type="submit" 
                 tabIndex={31}
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-black text-xl py-7 shadow-xl rounded-xl"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 font-black text-sm md:text-xl py-4 md:py-7 shadow-xl rounded-xl"
               >
                 {isLoading ? (
                   <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> SALVANDO...</>
@@ -1069,7 +1095,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     const event = new CustomEvent('openApolice', { detail: lead });
                     window.dispatchEvent(event);
                   }}
-                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 font-black text-xl py-7 shadow-xl rounded-xl"
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 font-black text-sm md:text-xl py-4 md:py-7 shadow-xl rounded-xl"
                 >
                   <Sparkles className="w-6 h-6 mr-2" />
                   APÓLICE
@@ -1081,7 +1107,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               <Button 
                 type="button"
                 onClick={handleLimpar}
-                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 font-black text-xl py-7 shadow-xl rounded-xl"
+                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 font-black text-sm md:text-xl py-4 md:py-7 shadow-xl rounded-xl"
               >
                 <Eraser className="w-6 h-6 mr-2" />
                 LIMPAR
@@ -1092,7 +1118,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
               <Button 
                 type="button"
                 onClick={handleClose}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 font-black text-xl py-7 shadow-xl rounded-xl"
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 font-black text-sm md:text-xl py-4 md:py-7 shadow-xl rounded-xl"
               >
                 <XCircle className="w-6 h-6 mr-2" />
                 CANCELAR
@@ -1108,10 +1134,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
           user={user}
           onSave={(agendamento) => {
             // Atualiza o campo no formulário do lead
-            setFormData({
-              ...formData,
+            setFormData(prev => ({
+              ...prev,
               agendar_visita: agendamento.dataHora
-            });
+            }));
             
             // Se estiver editando um lead existente, sincronizar
             if (lead?.id) {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { Search, Users, CheckCircle2, Mail, Phone, Building2, Briefcase } from "
 export default function ClienteSelectorDialog({ open, onClose, clientes = [], selectedIds = [], onConfirm }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(new Set(selectedIds));
+
+  // Sync selected state when dialog opens or selectedIds change
+  useEffect(() => {
+    if (open) {
+      setSelected(new Set(selectedIds));
+      setSearch("");
+    }
+  }, [open, selectedIds]);
 
   const filteredClientes = useMemo(() => {
     if (!search.trim()) return clientes;

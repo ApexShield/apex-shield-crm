@@ -104,28 +104,62 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
       return;
     }
 
-    // Verificar se o envio não excede o saldo restante
-    const destinatariosCount = (tipo === "email" || tipo === "ambos") ? clientesComEmail.length : clientesComTelefone.length;
-    const remaining = currentUser ? getRemainingUsage(currentUser) : 100;
-    if (destinatariosCount > remaining) {
-      toast.error(`Você tem ${remaining} integrações restantes, mas está tentando enviar para ${destinatariosCount} destinatários. Reduza o número de destinatários.`);
+    // Determinar contagem real de destinatários por canal
+    const emailCount = (tipo === "email" || tipo === "ambos") ? clientesComEmail.length : 0;
+    const whatsCount = (tipo === "whatsapp" || tipo === "ambos") ? clientesComTelefone.length : 0;
+    const destinatariosCount = Math.max(emailCount, whatsCount);
+
+    if (destinatariosCount === 0) {
+      toast.error("Nenhum destinatário com contato válido para o canal selecionado.");
       return;
     }
 
+    const remaining = currentUser ? getRemainingUsage(currentUser) : 100;
+    if (emailCount > remaining) {
+      toast.error(`Você tem ${remaining} integrações restantes, mas está tentando enviar para ${emailCount} destinatários. Reduza o número de destinatários.`);
+      return;
+    }
+
+    // Confirmação explícita antes do envio
+    const detalhes = [];
+    if (emailCount > 0) detalhes.push(`${emailCount} email(s)`);
+    if (whatsCount > 0) detalhes.push(`${whatsCount} WhatsApp(s)`);
+    const confirmMsg = `Confirma o envio da campanha para ${detalhes.join(' e ')}?\n\n${selectedClientIds.length > 0 ? '(Seleção manual de clientes)' : `(Filtro: ${filtroClientes === 'todos' ? 'Todos os clientes' : filtroClientes})`}`;
+    
+    if (!confirm(confirmMsg)) return;
+
     setEnviando(true);
 
-    // Salvar os IDs dos clientes filtrados para garantir que o backend envie SOMENTE para eles
-    const idsParaEnviar = clientesFiltrados.map(c => c.id);
+    // Determinar destinatários efetivos baseado no canal
+    let destinatariosEfetivos;
+    if (tipo === "whatsapp") {
+      destinatariosEfetivos = clientesComTelefone;
+    } else if (tipo === "email") {
+      destinatariosEfetivos = clientesComEmail;
+    } else {
+      // "ambos" - unir clientes que têm email OU telefone (sem duplicatas)
+      const idSet = new Set();
+      destinatariosEfetivos = [];
+      [...clientesComEmail, ...clientesComTelefone].forEach(c => {
+        if (!idSet.has(c.id)) { idSet.add(c.id); destinatariosEfetivos.push(c); }
+      });
+    }
+
+    // Salvar APENAS os IDs dos destinatários efetivos (com contato válido para o canal)
+    const idsParaEnviar = destinatariosEfetivos.map(c => c.id);
+
+    console.log(`Campanha: ${idsParaEnviar.length} destinatários efetivos (${selectedClientIds.length > 0 ? 'seleção manual' : 'filtro: ' + filtroClientes})`);
 
     // Criar campanha
     const campanha = await base44.entities.Campanha.create({
       titulo, tipo, link_conteudo: linkConteudo, mensagem,
       assunto_email: assuntoEmail || titulo,
-      filtro_clientes: filtroClientes,
+      filtro_clientes: selectedClientIds.length > 0 ? "manual" : filtroClientes,
       filtro_empresa: filtroEmpresa || undefined,
       filtro_cargo: filtroCargo || undefined,
       filtro_profissao: filtroProfissao || undefined,
       selected_client_ids: idsParaEnviar,
+      total_destinatarios: idsParaEnviar.length,
       status: "rascunho"
     });
 
@@ -145,10 +179,11 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
     }
 
     if (tipo === "whatsapp" || tipo === "ambos") {
-      // Gerar links WhatsApp para exibição (não abre automaticamente)
+      // Gerar links WhatsApp APENAS para os clientes selecionados/filtrados com telefone
+      const clientesWhatsApp = clientesFiltrados.filter(c => c.telefone?.trim());
       const links = [];
       const whatsLogs = [];
-      for (const cliente of clientesComTelefone.slice(0, 50)) {
+      for (const cliente of clientesWhatsApp.slice(0, 50)) {
         const primeiroNome = (cliente.nome || '').split(' ')[0];
         let msg = mensagem
           .replace(/\[NOME\]/gi, primeiroNome)
@@ -191,7 +226,7 @@ export default function CampanhaForm({ open, onClose, clientes = [] }) {
 
       await base44.entities.Campanha.update(campanha.id, {
         whatsapp_gerados: links.length,
-        total_destinatarios: (tipo === "whatsapp") ? clientesComTelefone.length : undefined,
+        total_destinatarios: (tipo === "whatsapp") ? clientesWhatsApp.length : undefined,
         status: tipo === "whatsapp" ? "concluida" : undefined
       });
 

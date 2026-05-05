@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 async function getUserGoogleToken(base44, userEmail) {
   const auths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
@@ -91,55 +91,25 @@ Deno.serve(async (req) => {
 
     await base44.entities.Campanha.update(campanha_id, { status: 'enviando' });
 
-    // USE selected_client_ids from the campaign - this is the CRITICAL fix
-    // The frontend now saves exactly which clients should receive the campaign
+    // STRICTLY use selected_client_ids from the campaign
+    // The frontend saves exactly which client IDs should receive the campaign
     let clientesComEmail = [];
 
-    if (campanha.selected_client_ids && campanha.selected_client_ids.length > 0) {
-      // Fetch ONLY the specific clients that were selected
-      console.log(`Using ${campanha.selected_client_ids.length} pre-selected client IDs`);
-      
-      // Fetch all user's clients and filter by selected IDs
-      const allClientes = await base44.entities.Cliente.filter(
-        { created_by: user.email }, '-created_date', 5000
-      );
-      const selectedSet = new Set(campanha.selected_client_ids);
-      clientesComEmail = allClientes.filter(c => selectedSet.has(c.id) && c.email?.trim());
-      
-      console.log(`Matched ${clientesComEmail.length} clients with email from ${campanha.selected_client_ids.length} selected`);
-    } else {
-      // Fallback: old behavior with status filter (for backward compatibility)
-      const statusMap = {
-        novo: "Novo", ab_fone: "AB Fone", ab_visita: "AB Visita",
-        ab_fechamento: "AB Fechamento", delay: "Delay", analise: "Análise",
-        venda_feita: "Venda Feita", entrega_apolice: "Entrega de Apólice"
-      };
-
-      let filterQuery = { created_by: user.email };
-      if (campanha.filtro_clientes && campanha.filtro_clientes !== 'todos') {
-        filterQuery.status = statusMap[campanha.filtro_clientes];
-      }
-
-      let clientes = await base44.entities.Cliente.filter(filterQuery, '-created_date', 5000);
-      
-      // Apply additional filters
-      if (campanha.filtro_empresa) {
-        const term = campanha.filtro_empresa.toLowerCase();
-        clientes = clientes.filter(c => c.empresa?.toLowerCase().includes(term));
-      }
-      if (campanha.filtro_cargo) {
-        const term = campanha.filtro_cargo.toLowerCase();
-        clientes = clientes.filter(c => c.cargo?.toLowerCase().includes(term));
-      }
-      if (campanha.filtro_profissao) {
-        const term = campanha.filtro_profissao.toLowerCase();
-        clientes = clientes.filter(c => c.profissao?.toLowerCase().includes(term));
-      }
-      
-      clientesComEmail = clientes.filter(c => c.email && c.email.trim());
+    if (!campanha.selected_client_ids || campanha.selected_client_ids.length === 0) {
+      console.log('ERROR: No selected_client_ids found on campaign. Aborting to prevent mass send.');
+      await base44.entities.Campanha.update(campanha_id, { status: 'erro', total_destinatarios: 0, emails_enviados: 0 });
+      return Response.json({ success: false, error: 'Nenhum destinatário selecionado na campanha', enviados: 0 });
     }
 
-    console.log(`Final email recipients for ${user.email}: ${clientesComEmail.length}`);
+    console.log(`Using ${campanha.selected_client_ids.length} pre-selected client IDs`);
+    
+    // Fetch user's visible clients and filter STRICTLY by selected IDs
+    const allClientes = await base44.entities.Cliente.filter({}, '-created_date', 5000);
+    const selectedSet = new Set(campanha.selected_client_ids);
+    clientesComEmail = allClientes.filter(c => selectedSet.has(c.id) && c.email?.trim());
+    
+    console.log(`Matched ${clientesComEmail.length} clients with email from ${campanha.selected_client_ids.length} selected IDs`);
+    console.log(`Selected IDs sample: ${campanha.selected_client_ids.slice(0, 5).join(', ')}`);
 
     if (clientesComEmail.length === 0) {
       await base44.entities.Campanha.update(campanha_id, { status: 'concluida', total_destinatarios: 0, emails_enviados: 0 });

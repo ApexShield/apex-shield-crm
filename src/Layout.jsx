@@ -34,7 +34,7 @@ const navigation = [
   { name: "Suporte", icon: Headphones, page: "Suporte" }
 ];
 
-const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico", "BoasVindas", "Suporte"];
+const PUBLIC_PAGES = ["Home", "PoliticaPrivacidade", "TermosServico", "BoasVindas", "Suporte", "ExcluirConta"];
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);

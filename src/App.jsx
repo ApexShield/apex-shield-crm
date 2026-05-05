@@ -13,6 +13,7 @@ import Assinatura from './pages/Assinatura';
 import GerenciarCupons from './pages/GerenciarCupons';
 import Metas from './pages/Metas';
 import Suporte from './pages/Suporte';
+import ExcluirConta from './pages/ExcluirConta';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,6 +84,11 @@ const AuthenticatedApp = () => {
       <Route path="/Suporte" element={
         <LayoutWrapper currentPageName="Suporte">
           <Suporte />
+        </LayoutWrapper>
+      } />
+      <Route path="/ExcluirConta" element={
+        <LayoutWrapper currentPageName="ExcluirConta">
+          <ExcluirConta />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

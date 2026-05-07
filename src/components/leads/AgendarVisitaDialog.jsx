@@ -106,12 +106,19 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         }
       }
 
-      // Send invite email with .ics if participant email exists
+      // Send calendar invite if participant email exists
+      let conviteMsg = '';
       if (participanteEmail) {
         try {
-          await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: compromisso.id });
+          const res = await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: compromisso.id });
+          if (res.data?.warning === 'no_calendar_connection') {
+            conviteMsg = '\n\n⚠️ Email enviado, mas sem opção Aceitar/Recusar. Conecte seu Google Calendar na página de Compromissos para enviar convites nativos.';
+          } else {
+            conviteMsg = '\n\n📧 Convite de calendário enviado com opções de Aceitar/Recusar!';
+          }
         } catch (err) {
           console.error('Erro ao enviar convite:', err);
+          conviteMsg = '\n\n⚠️ Erro ao enviar convite por email.';
         }
       }
 
@@ -126,7 +133,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
 
       resetForm();
       onClose();
-      alert('✅ Compromisso criado!' + (participanteEmail ? ' Convite enviado por email com .ics.' : ''));
+      alert('✅ Compromisso criado!' + conviteMsg);
     } catch (error) {
       const msg = error.response?.data?.error || error.message || 'Tente novamente';
       setErro(`Erro: ${msg}`);
@@ -219,7 +226,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             <Input type="email" value={emailConvidado} onChange={(e) => setEmailConvidado(e.target.value)} placeholder={cliente?.email || "Digite o email do convidado"} className="bg-white/10 border-white/20 text-white" />
             {(emailConvidado || cliente?.email) && (
               <div className="mt-2 bg-green-500/20 border border-green-500/50 px-3 py-2 rounded-lg text-sm text-green-100">
-                ✉️ Convite com .ics será enviado para: <strong>{emailConvidado || cliente.email}</strong>
+                📅 Convite de calendário será enviado para: <strong>{emailConvidado || cliente.email}</strong>
+                <br/><span className="text-green-300 text-xs">O cliente receberá opções de Aceitar/Recusar no email</span>
               </div>
             )}
           </div>
@@ -291,7 +299,7 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
           {erro && <div className="bg-red-500/20 border border-red-500/50 px-3 py-2 rounded-lg text-sm text-red-100">{erro}</div>}
 
           <div className="text-xs text-blue-300 flex items-center gap-1 bg-blue-500/10 p-2 rounded-lg">
-            📧 Se informar email, o participante receberá um convite de calendário com opções nativas de Aceitar/Recusar no app de email
+            📅 Se informar email, o compromisso será criado no Google Calendar e o participante receberá um convite nativo com opções de Aceitar/Recusar
           </div>
 
           <div className="flex gap-2 justify-end pt-4">

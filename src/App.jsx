@@ -14,6 +14,7 @@ import GerenciarCupons from './pages/GerenciarCupons';
 import Metas from './pages/Metas';
 import Suporte from './pages/Suporte';
 import ExcluirConta from './pages/ExcluirConta';
+import SimuladorReenquadramento from './pages/SimuladorReenquadramento';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -89,6 +90,11 @@ const AuthenticatedApp = () => {
       <Route path="/ExcluirConta" element={
         <LayoutWrapper currentPageName="ExcluirConta">
           <ExcluirConta />
+        </LayoutWrapper>
+      } />
+      <Route path="/SimuladorReenquadramento" element={
+        <LayoutWrapper currentPageName="SimuladorReenquadramento">
+          <SimuladorReenquadramento />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

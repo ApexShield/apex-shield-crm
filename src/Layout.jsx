@@ -26,6 +26,7 @@ const navigation = [
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
   { name: "Gerenciar Cupons", icon: Ticket, page: "GerenciarCupons", adminOnly: true },
+  { name: "Simulador Etário", icon: BarChart3, page: "SimuladorReenquadramento" },
   { name: "Agente Apex", icon: Bot, page: "AgenteApex" },
   { name: "Organograma", icon: Users, page: "Organograma" },
   // { name: "Assinatura", icon: Crown, page: "Assinatura" },

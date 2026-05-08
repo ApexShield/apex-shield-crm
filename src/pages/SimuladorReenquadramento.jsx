@@ -204,11 +204,22 @@ export default function SimuladorReenquadramento() {
           />
 
           {/* Disclaimer */}
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700 dark:text-amber-400">
-              <strong>Aviso:</strong> Esta simulação é uma projeção estimada baseada nas tabelas de reenquadramento etário de cada seguradora e no IPCA acumulado. Os valores reais podem variar conforme alterações nas tabelas, condições contratuais e regulamentações vigentes. Consulte sempre a apólice do cliente.
-            </p>
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="space-y-1.5">
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                ⚠️ AVISO IMPORTANTE — SIMULAÇÃO PARA FINS DE CONSCIENTIZAÇÃO
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                Esta simulação é baseada nas <strong>condições gerais</strong> de cada seguradora e tem caráter meramente informativo e educacional, visando demonstrar o impacto financeiro do reenquadramento etário ao longo dos anos.
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                <strong>A validação real deve ser feita conforme o código do processo SUSEP de cada apólice.</strong> Os percentuais podem variar conforme o produto contratado, condições específicas da apólice e atualizações nas condições gerais da seguradora.
+              </p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-500/80 italic">
+                Consulte sempre o contrato e as condições gerais vigentes antes de tomar qualquer decisão.
+              </p>
+            </div>
           </div>
         </motion.div>
       )}

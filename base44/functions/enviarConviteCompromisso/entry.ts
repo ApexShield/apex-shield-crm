@@ -167,11 +167,34 @@ Deno.serve(async (req) => {
     const userAuth = await getUserGoogleToken(base44, user.email);
     
     if (!userAuth) {
-      console.error(`Usuário ${user.email} não tem Google conectado. Não é possível enviar convite.`);
-      return Response.json({
-        success: false,
-        error: 'Você precisa conectar sua conta Google para enviar convites. Vá em Configurações e conecte seu Google.'
-      }, { status: 400 });
+      console.log(`Usuário ${user.email} não tem Google conectado. Usando SendEmail como fallback.`);
+      
+      // FALLBACK: Enviar via SendEmail da plataforma
+      try {
+        const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
+        
+        await base44.integrations.Core.SendEmail({
+          to: comp.email_participante,
+          subject: subject,
+          body: emailHTML,
+          from_name: organizerName
+        });
+        
+        await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+        console.log('SUCCESS: Convite enviado via SendEmail para', comp.email_participante);
+        
+        return Response.json({
+          success: true,
+          method: 'platform_email',
+          message: `Convite enviado para ${comp.email_participante} via email do sistema`
+        });
+      } catch (sendErr) {
+        console.error('Erro ao enviar via SendEmail:', sendErr.message);
+        return Response.json({
+          success: false,
+          error: 'Não foi possível enviar o convite por email. Tente novamente ou conecte sua conta Google.'
+        }, { status: 500 });
+      }
     }
 
     const userAccessToken = userAuth.access_token;
@@ -265,10 +288,36 @@ Deno.serve(async (req) => {
       console.error('Gmail error (user token):', gmailErr.message);
     }
 
+    // ══════════════════════════════════════════════════════════════════
+    // ATTEMPT 3: Fallback via SendEmail da plataforma
+    // ══════════════════════════════════════════════════════════════════
+    try {
+      console.log('Fallback final: Enviando via SendEmail da plataforma');
+      const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
+      
+      await base44.integrations.Core.SendEmail({
+        to: comp.email_participante,
+        subject: subject,
+        body: emailHTML,
+        from_name: organizerName
+      });
+      
+      await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+      console.log('SUCCESS: Convite enviado via SendEmail (fallback) para', comp.email_participante);
+      
+      return Response.json({
+        success: true,
+        method: 'platform_email',
+        message: `Convite enviado para ${comp.email_participante} via email do sistema`
+      });
+    } catch (sendErr) {
+      console.error('SendEmail fallback also failed:', sendErr.message);
+    }
+
     console.error('ALL methods failed for user', user.email, '-> invite to', comp.email_participante);
     return Response.json({
       success: false,
-      error: 'Não foi possível enviar o convite pelo seu Gmail. Verifique se sua conta Google está conectada corretamente.'
+      error: 'Não foi possível enviar o convite. Tente novamente mais tarde.'
     }, { status: 500 });
 
   } catch (error) {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Calculator, TrendingUp, Shield, AlertTriangle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import SimuladorGrafico from "../components/simulador/SimuladorGrafico";
 import SimuladorResumo from "../components/simulador/SimuladorResumo";
+import RelatorioPDFButton from "../components/simulador/RelatorioPDF";
 import { SEGURADORAS, calcularProjecao } from "../components/simulador/tabelasReajuste";
 
 const IPCA_12M = 4.14; // IPCA acumulado 12 meses - Mar/2026 (IBGE)
@@ -17,6 +18,7 @@ export default function SimuladorReenquadramento() {
   const [sexo, setSexo] = useState("ambos");
   const [coberturaMorte, setCoberturaMorte] = useState("");
   const [simulado, setSimulado] = useState(false);
+  const chartRef = useRef(null);
 
   const valorCobertura = parseFloat((coberturaMorte || "0").replace(/[^\d,]/g, "").replace(",", ".")) || 0;
   const idadeNum = parseInt(idade) || 0;
@@ -56,19 +58,28 @@ export default function SimuladorReenquadramento() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
+        className="flex items-center justify-between gap-3"
       >
-        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
-          <Calculator className="w-5 h-5 md:w-6 md:h-6 text-white" />
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+            <Calculator className="w-5 h-5 md:w-6 md:h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg md:text-2xl font-bold text-slate-800 dark:text-slate-100">
+              Simulador de Reenquadramento Etário
+            </h1>
+            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">
+              Projeção de reajuste na cobertura de morte por seguradora
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-lg md:text-2xl font-bold text-slate-800 dark:text-slate-100">
-            Simulador de Reenquadramento Etário
-          </h1>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">
-            Projeção de reajuste na cobertura de morte por seguradora
-          </p>
-        </div>
+        <RelatorioPDFButton
+          projecoes={projecoes}
+          idadeInicial={idadeNum}
+          valorInicial={valorCobertura}
+          sexo={sexo}
+          chartRef={chartRef}
+        />
       </motion.div>
 
       {/* IPCA Info */}
@@ -190,11 +201,13 @@ export default function SimuladorReenquadramento() {
           </Card>
 
           {/* Gráfico */}
-          <SimuladorGrafico
-            projecoes={projecoes}
-            idadeInicial={idadeNum}
-            valorInicial={valorCobertura}
-          />
+          <div ref={chartRef}>
+            <SimuladorGrafico
+              projecoes={projecoes}
+              idadeInicial={idadeNum}
+              valorInicial={valorCobertura}
+            />
+          </div>
 
           {/* Resumo */}
           <SimuladorResumo

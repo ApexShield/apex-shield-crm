@@ -77,23 +77,18 @@ export default function Compromissos() {
     return allClientes.filter(c => c.created_by === user.email).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   }, [allClientes, user]);
 
-  // Calculate a wide date range for fetching (3 months before to 3 months after current week)
+  // Calculate date range for fetching Google Calendar events (current week + buffer)
   const fetchRange = useMemo(() => {
     const rangeStart = new Date(currentWeekStart);
-    rangeStart.setMonth(rangeStart.getMonth() - 3);
-    const rangeEnd = new Date(currentWeekStart);
-    rangeEnd.setMonth(rangeEnd.getMonth() + 3);
+    rangeStart.setHours(0, 0, 0, 0);
+    const rangeEnd = addDays(currentWeekStart, 7);
+    rangeEnd.setHours(23, 59, 59, 999);
     return { start: rangeStart.toISOString(), end: rangeEnd.toISOString() };
   }, [currentWeekStart]);
 
   const { data: localCompromissos = [], isLoading } = useQuery({
-    queryKey: ['compromissos', fetchRange.start, fetchRange.end],
-    queryFn: async () => {
-      const results = await base44.entities.Compromisso.filter({
-        data_inicio: { $gte: fetchRange.start, $lte: fetchRange.end }
-      }, '-data_inicio', 1000);
-      return results;
-    },
+    queryKey: ['compromissos'],
+    queryFn: () => base44.entities.Compromisso.list('-data_inicio', 500),
     enabled: !!user
   });
 
@@ -101,26 +96,26 @@ export default function Compromissos() {
   const { data: googleEvents = [] } = useQuery({
     queryKey: ['google-calendar-events', fetchRange.start, fetchRange.end],
     queryFn: async () => {
-      try {
-        const res = await base44.functions.invoke('listarEventosCalendar', {
-          dataInicio: fetchRange.start,
-          dataFim: fetchRange.end
-        });
-        return res.data?.eventos || [];
-      } catch (err) {
-        console.error('Erro ao buscar eventos do Google Calendar:', err);
-        return [];
-      }
+      const res = await base44.functions.invoke('listarEventosCalendar', {
+        dataInicio: fetchRange.start,
+        dataFim: fetchRange.end
+      });
+      return res.data?.eventos || [];
     },
     enabled: !!user,
-    refetchInterval: 120000, // refresh every 2 min
+    retry: 2,
+    refetchInterval: 120000,
   });
 
   // Merge local + google events, avoiding duplicates
   const compromissos = useMemo(() => {
-    const localGoogleIds = new Set(localCompromissos.filter(c => c.google_event_id).map(c => c.google_event_id));
+    const localGoogleIds = new Set(
+      localCompromissos
+        .filter(c => c.google_event_id && c.google_event_id !== '')
+        .map(c => c.google_event_id)
+    );
     const uniqueGoogleEvents = googleEvents
-      .filter(ge => !ge.is_all_day && !localGoogleIds.has(ge.google_event_id))
+      .filter(ge => !ge.is_all_day && ge.google_event_id && !localGoogleIds.has(ge.google_event_id))
       .map(ge => ({ ...ge, id: `gcal_${ge.google_event_id}`, source: 'google' }));
     return [...localCompromissos, ...uniqueGoogleEvents];
   }, [localCompromissos, googleEvents]);

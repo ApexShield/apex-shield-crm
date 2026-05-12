@@ -22,7 +22,6 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
   const [telefone, setTelefone] = useState("");
   const [erros, setErros] = useState([]);
 
-  // Puxar dados existentes do lead sempre que o dialog abrir ou o lead mudar
   useEffect(() => {
     if (open && lead) {
       setCpf(lead.cpf || "");
@@ -33,15 +32,9 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
     }
   }, [open, lead]);
 
-  const isFieldValid = (field, value) => {
-    if (field === "cpf") return value.replace(/\D/g, "").length >= 11;
-    return !!value.trim();
-  };
-
   const handleConvert = () => {
     const missing = [];
     if (!nome.trim()) missing.push("Nome Completo");
-    if (!cpf.trim() || cpf.replace(/\D/g, "").length < 11) missing.push("CPF (completo)");
     if (!email.trim()) missing.push("Email");
     if (!telefone.trim()) missing.push("Telefone");
 
@@ -68,8 +61,7 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
             Converter Lead em Cliente
           </AlertDialogTitle>
           <AlertDialogDescription className="text-indigo-200">
-            Para avançar para AB Fechamento, o lead precisa ser convertido em cliente.
-            Os dados abaixo foram puxados do cadastro. Verifique e complete os campos obrigatórios:
+            Para converter, preencha os campos obrigatórios abaixo (Nome, Email e Telefone). CPF é opcional.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -79,16 +71,16 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
             <div className="relative">
               <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())}
                 className="bg-white/10 border-white/20 text-white h-9 pr-10" />
-              <FieldStatus valid={isFieldValid("nome", nome)} />
+              <FieldStatus valid={!!nome.trim()} />
             </div>
           </div>
           <div>
-            <Label className="text-white text-xs">CPF *</Label>
+            <Label className="text-white text-xs">CPF (opcional)</Label>
             <div className="relative">
               <Input value={cpf} onChange={(e) => setCpf(formatCPF(e.target.value))}
                 maxLength={14} placeholder="000.000.000-00"
                 className="bg-white/10 border-white/20 text-white h-9 pr-10" />
-              <FieldStatus valid={isFieldValid("cpf", cpf)} />
+              {cpf.trim() ? <FieldStatus valid={cpf.replace(/\D/g, "").length >= 11} /> : null}
             </div>
           </div>
           <div>
@@ -96,7 +88,7 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
             <div className="relative">
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value.toUpperCase())}
                 className="bg-white/10 border-white/20 text-white h-9 pr-10" />
-              <FieldStatus valid={isFieldValid("email", email)} />
+              <FieldStatus valid={!!email.trim()} />
             </div>
           </div>
           <div>
@@ -105,7 +97,7 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
               <Input value={telefone} onChange={(e) => setTelefone(formatPhone(e.target.value))}
                 maxLength={15}
                 className="bg-white/10 border-white/20 text-white h-9 pr-10" />
-              <FieldStatus valid={isFieldValid("telefone", telefone)} />
+              <FieldStatus valid={!!telefone.trim()} />
             </div>
           </div>
 

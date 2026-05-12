@@ -384,6 +384,43 @@ export default function Leads() {
     }
   };
 
+  const executeConversion = async (lead, dados) => {
+    const historicoAtual = lead.historico_status || [];
+    await updateMutation.mutateAsync({
+      id: lead.id,
+      data: {
+        cpf: dados.cpf || lead.cpf || "",
+        nome: dados.nome,
+        email: dados.email,
+        telefone: dados.telefone,
+        is_cliente: true,
+        status: "AB Fechamento",
+        data_conversao_cliente: new Date().toISOString(),
+        historico_status: [
+          ...historicoAtual,
+          { de: lead.status, para: "AB Fechamento", data: format(new Date(), "dd/MM/yyyy HH:mm"), timestamp: Date.now() }
+        ]
+      }
+    });
+    setSelectedLead(null);
+    alert("✅ Lead convertido em cliente e avançado para AB Fechamento! Agora aparece no Painel de Clientes.");
+    queryClient.invalidateQueries({ queryKey: ["clientes"] });
+  };
+
+  const handleConverterClick = async () => {
+    if (!selectedLead) return;
+    const lead = selectedLead;
+    // Se já tem nome, email e telefone, converter direto sem abrir dialog
+    if (lead.nome?.trim() && lead.email?.trim() && lead.telefone?.trim()) {
+      if (confirm(`Converter "${lead.nome}" em cliente?\n\nEmail: ${lead.email}\nTelefone: ${lead.telefone}`)) {
+        await executeConversion(lead, { nome: lead.nome, email: lead.email, telefone: lead.telefone, cpf: lead.cpf });
+      }
+    } else {
+      // Falta algum campo obrigatório, abrir dialog para preencher
+      setShowConverterDialog(true);
+    }
+  };
+
   const handleSaveApolice = async (data) => {
     if (!selectedLead) return;
     try {
@@ -692,7 +729,7 @@ export default function Leads() {
             Import
           </Button>
           <Button
-            onClick={() => { if (selectedLead) setShowConverterDialog(true); }}
+            onClick={handleConverterClick}
             disabled={!selectedLead}
             className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 font-bold px-6 py-6 text-sm"
           >
@@ -756,7 +793,7 @@ export default function Leads() {
               <span className="mobile-text-xxs">Import</span>
             </Button>
             <Button
-              onClick={() => { if (selectedLead) setShowConverterDialog(true); }}
+              onClick={handleConverterClick}
               disabled={!selectedLead}
               size="sm"
               className="bg-emerald-500 hover:bg-emerald-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
@@ -814,27 +851,8 @@ export default function Leads() {
         lead={selectedLead}
         onConvert={async (dados) => {
           if (!selectedLead) return;
-          const historicoAtual = selectedLead.historico_status || [];
-          await updateMutation.mutateAsync({
-            id: selectedLead.id,
-            data: {
-              cpf: dados.cpf,
-              nome: dados.nome,
-              email: dados.email,
-              telefone: dados.telefone,
-              is_cliente: true,
-              status: "AB Fechamento",
-              data_conversao_cliente: new Date().toISOString(),
-              historico_status: [
-                ...historicoAtual,
-                { de: selectedLead.status, para: "AB Fechamento", data: format(new Date(), "dd/MM/yyyy HH:mm"), timestamp: Date.now() }
-              ]
-            }
-          });
+          await executeConversion(selectedLead, dados);
           setShowConverterDialog(false);
-          setSelectedLead(null);
-          alert("✅ Lead convertido em cliente e avançado para AB Fechamento! Agora aparece no Painel de Clientes.");
-          queryClient.invalidateQueries({ queryKey: ["clientes"] });
         }}
       />
     </div>

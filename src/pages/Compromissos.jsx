@@ -60,8 +60,9 @@ export default function Compromissos() {
 
   // Real-time subscription for live status updates
   useEffect(() => {
-    const unsubscribe = base44.entities.Compromisso.subscribe((event) => {
+    const unsubscribe = base44.entities.Compromisso.subscribe(() => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
     });
     return unsubscribe;
   }, [queryClient]);
@@ -85,7 +86,7 @@ export default function Compromissos() {
     return { start: rangeStart.toISOString(), end: rangeEnd.toISOString() };
   }, [currentWeekStart]);
 
-  const { data: compromissos = [], isLoading } = useQuery({
+  const { data: localCompromissos = [], isLoading } = useQuery({
     queryKey: ['compromissos', fetchRange.start, fetchRange.end],
     queryFn: async () => {
       const results = await base44.entities.Compromisso.filter({
@@ -95,6 +96,34 @@ export default function Compromissos() {
     },
     enabled: !!user
   });
+
+  // Fetch Google Calendar events
+  const { data: googleEvents = [] } = useQuery({
+    queryKey: ['google-calendar-events', fetchRange.start, fetchRange.end],
+    queryFn: async () => {
+      try {
+        const res = await base44.functions.invoke('listarEventosCalendar', {
+          dataInicio: fetchRange.start,
+          dataFim: fetchRange.end
+        });
+        return res.data?.eventos || [];
+      } catch (err) {
+        console.error('Erro ao buscar eventos do Google Calendar:', err);
+        return [];
+      }
+    },
+    enabled: !!user,
+    refetchInterval: 120000, // refresh every 2 min
+  });
+
+  // Merge local + google events, avoiding duplicates
+  const compromissos = useMemo(() => {
+    const localGoogleIds = new Set(localCompromissos.filter(c => c.google_event_id).map(c => c.google_event_id));
+    const uniqueGoogleEvents = googleEvents
+      .filter(ge => !ge.is_all_day && !localGoogleIds.has(ge.google_event_id))
+      .map(ge => ({ ...ge, id: `gcal_${ge.google_event_id}`, source: 'google' }));
+    return [...localCompromissos, ...uniqueGoogleEvents];
+  }, [localCompromissos, googleEvents]);
 
   const criarMutation = useMutation({
     mutationFn: async (data) => {
@@ -137,6 +166,7 @@ export default function Compromissos() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });
+      queryClient.invalidateQueries({ queryKey: ['google-calendar-events'] });
       setShowDialog(false);
       resetForm();
       alert('✅ Compromisso criado com sucesso!');
@@ -301,6 +331,11 @@ export default function Compromissos() {
   };
 
   const handleEditEvent = (event) => {
+    // Google-only events: open in Google Calendar
+    if (event.source === 'google') {
+      if (event.htmlLink) window.open(event.htmlLink, '_blank');
+      return;
+    }
     setEditingEvent(event);
     const dataInicio = event.data_inicio ? new Date(event.data_inicio) : new Date();
     const dataFim = event.data_fim ? new Date(event.data_fim) : new Date(dataInicio.getTime() + 3600000);
@@ -356,7 +391,7 @@ export default function Compromissos() {
     const eventId = result.draggableId.split('_')[0];
     const [newDay, newHour] = result.destination.droppableId.split('_').map(Number);
     const event = compromissos.find(e => e.id === eventId);
-    if (!event) return;
+    if (!event || event.source === 'google') return;
     const newDate = addDays(currentWeekStart, newDay);
     const newStart = new Date(newDate); newStart.setHours(newHour, 0, 0, 0);
     const duration = new Date(event.data_fim).getTime() - new Date(event.data_inicio).getTime();
@@ -452,6 +487,7 @@ export default function Compromissos() {
             <div className="flex items-center gap-3">
               <span className="text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
               {compromissos.length > 0 && <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-indigo-300">{compromissos.length} compromissos</span>}
+              {googleEvents.length > 0 && <span className="text-xs bg-blue-500/20 px-2 py-1 rounded-full text-blue-300">📅 {googleEvents.filter(ge => !ge.is_all_day).length} Google</span>}
             </div>
           </div>
 
@@ -471,6 +507,12 @@ export default function Compromissos() {
                       <span className="text-xs text-indigo-200">{c.label}</span>
                     </div>
                   ))}
+                  <div className="border-t border-white/10 pt-2 mt-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm">📅</span>
+                      <span className="text-xs text-blue-300 font-medium">Evento do Google Calendar</span>
+                    </div>
+                  </div>
                   <div className="border-t border-white/10 pt-2 mt-2">
                     <p className="text-[10px] text-indigo-300 font-semibold mb-1.5">Status dos Lembretes</p>
                     <div className="flex items-center gap-2">
@@ -513,14 +555,16 @@ export default function Compromissos() {
                                   {events.map((event, idx) => {
                                     const { topOffset, heightPx } = calculateEventPosition(event);
                                     const start = new Date(event.data_inicio);
+                                    const isGoogleOnly = event.source === 'google';
                                     return (
-                                      <Draggable key={event.id} draggableId={`${event.id}_${dayIndex}_${hour}`} index={idx}>
+                                      <Draggable key={event.id} draggableId={`${event.id}_${dayIndex}_${hour}`} index={idx} isDragDisabled={isGoogleOnly}>
                                         {(prov, snap) => (
                                           <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
-                                            className={`absolute rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg cursor-grab overflow-hidden ${snap.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'}`}
+                                            className={`absolute rounded-md px-2 py-1.5 text-[11px] text-white font-bold shadow-lg overflow-hidden ${isGoogleOnly ? 'cursor-pointer ring-1 ring-white/20' : 'cursor-grab'} ${snap.isDragging ? 'z-50 opacity-90 shadow-2xl ring-2 ring-white/50' : 'z-10'}`}
                                             style={{ backgroundColor: event.cor || "#3b82f6", top: `${topOffset}%`, height: `${heightPx}px`, left: '2px', width: 'calc(100% - 4px)', ...prov.draggableProps.style }}
                                             onClick={(e) => { if (!snap.isDragging) { e.stopPropagation(); handleEditEvent(event); } }}>
                                             <div className="flex items-center gap-1">
+                                              {isGoogleOnly && <span className="text-[9px] flex-shrink-0" title="Google Calendar">📅</span>}
                                               <span className="truncate flex-1">{event.titulo}</span>
                                               {event.email_participante && (event.lembrete_1h_enviado || event.lembrete_30min_enviado) && (
                                                 <span className={`flex-shrink-0 rounded-full w-5 h-5 flex items-center justify-center shadow-md text-[10px] font-black text-white ${event.lembrete_30min_enviado ? 'bg-green-500' : 'bg-yellow-500'}`}

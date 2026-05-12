@@ -189,34 +189,47 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
         type: "object",
         properties: {
           cpf: { type: "string", description: "CPF do segurado" },
-          plano: { type: "string", description: "Código do plano (ex: VS20, VT10, etc)" },
-          periodicidade_premio: { type: "string", description: "Periodicidade do(s) prêmio(s) - Mensal ou Anual" },
-          capital_segurado_morte: { type: "string", description: "Capital segurado para morte" },
-          premio_bruto_morte: { type: "string", description: "Prêmio bruto da cobertura de morte" },
-          total_premio_iof: { type: "string", description: "Total de prêmio(s) + IOF" },
+          produto_nome: { type: "string", description: "Nome do produto/seguro exatamente como aparece no documento (ex: VIDA SEGURA, Vida Singular, Vida Total, Vida Total Singular). Geralmente está no topo da primeira página." },
+          plano_codigo: { type: "string", description: "Código do plano se houver (ex: VS20, VT10, VSG25)" },
+          periodicidade_premio: { type: "string", description: "Periodicidade de pagamento dos prêmios - Mensal ou Anual" },
+          total_premio_iof: { type: "string", description: "Valor Total (R$) da linha 'Total' na tabela de prêmios por coberturas, que é a soma de todos os prêmios totais + IOF" },
           
           beneficiarios: {
             type: "array",
+            description: "Lista de TODOS os beneficiários. Extrair TODOS os campos de cada beneficiário da tabela de beneficiários.",
             items: {
               type: "object",
               properties: {
-                nome: { type: "string" },
-                parentesco: { type: "string" },
-                data_nascimento: { type: "string" },
-                distribuicao: { type: "string" }
+                nome: { type: "string", description: "Nome completo do beneficiário" },
+                parentesco: { type: "string", description: "Parentesco exato como aparece no documento (ex: Filha, Filho (a), Cônjuge, Pai, Mãe)" },
+                data_nascimento: { type: "string", description: "Data de nascimento no formato DD/MM/YYYY" },
+                percentual: { type: "string", description: "Percentual de participação, apenas o número sem % (ex: 20, 50, 15)" }
               }
             }
           },
           
-          coberturas: {
+          coberturas_capitais: {
             type: "array",
-            description: "Lista de coberturas contratadas",
+            description: "Extrair da tabela 'Cobertura(s) e capital(is) segurado(s)': cada linha com o nome da cobertura, capital segurado e período de vigência.",
+            items: {
+              type: "object",
+              properties: {
+                nome: { type: "string", description: "Nome da cobertura exatamente como no documento" },
+                capital_segurado: { type: "string", description: "Valor do capital segurado (R$)" },
+                periodo_vigencia: { type: "string", description: "Período de vigência (ex: '25 Anos', '5 Anos')" }
+              }
+            }
+          },
+          
+          coberturas_premios: {
+            type: "array",
+            description: "Extrair da tabela 'Prêmio(s) por cobertura(s)': cada linha com o nome da cobertura e o valor da coluna 'Prêmio total (R$)' que inclui IOF.",
             items: {
               type: "object",
               properties: {
                 nome: { type: "string", description: "Nome da cobertura" },
-                capital_segurado: { type: "string", description: "Capital segurado (R$)" },
-                premio_bruto: { type: "string", description: "Prêmio Bruto (R$)" }
+                premio_total: { type: "string", description: "Valor da coluna 'Prêmio total (R$)' que é o prêmio líquido + IOF" },
+                prazo_pagamento: { type: "string", description: "Prazo de pagamento do prêmio (ex: '25 Anos', '5 Anos')" }
               }
             }
           }
@@ -230,104 +243,237 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
 
       if (result.status === "success" && result.output) {
         const data = result.output;
+        console.log("Dados extraídos da apólice:", JSON.stringify(data, null, 2));
         
-        // Processar o campo Plano (ex: VS20, VT10, VS75)
+        // ── Helpers ──
+        const normalizarValor = (val) => {
+          if (!val) return "";
+          if (val.includes("R$")) return val.trim();
+          const numStr = val.replace(/[^\d,\.]/g, "");
+          let num;
+          if (numStr.includes(",")) {
+            num = parseFloat(numStr.replace(/\./g, "").replace(",", "."));
+          } else {
+            num = parseFloat(numStr);
+          }
+          if (isNaN(num)) return val;
+          return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        };
+        
+        const matchSelect = (rawValue, options) => {
+          if (!rawValue) return "";
+          const numStr = rawValue.replace(/[^\d,\.]/g, "");
+          let num;
+          if (numStr.includes(",")) {
+            num = parseFloat(numStr.replace(/\./g, "").replace(",", "."));
+          } else {
+            num = parseFloat(numStr);
+          }
+          if (isNaN(num)) return "";
+          let best = "";
+          let bestDiff = Infinity;
+          for (const opt of options) {
+            const optNum = parseFloat(opt.replace(/[^\d,\.]/g, "").replace(/\./g, "").replace(",", "."));
+            if (isNaN(optNum)) continue;
+            const diff = Math.abs(optNum - num);
+            if (diff < bestDiff) { bestDiff = diff; best = opt; }
+          }
+          return bestDiff <= (num * 0.05 + 1) ? best : "";
+        };
+        
+        const strip = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        
+        // ── Produto ──
         let produtoFinal = "";
+        const prodNome = strip(data.produto_nome || "");
+        if (prodNome.includes("vida segura")) produtoFinal = "Vida Segura";
+        else if (prodNome.includes("vida total singular") || prodNome.includes("total singular")) produtoFinal = "Vida Total Singular";
+        else if (prodNome.includes("vida singular")) produtoFinal = "Vida Singular";
+        else if (prodNome.includes("vida total")) produtoFinal = "Vida Total";
+        // Fallback por código do plano
+        if (!produtoFinal && data.plano_codigo) {
+          const pc = data.plano_codigo.toUpperCase();
+          if (pc.includes("VSG")) produtoFinal = "Vida Segura";
+          else if (pc.includes("VTS")) produtoFinal = "Vida Total Singular";
+          else if (pc.includes("VS")) produtoFinal = "Vida Singular";
+          else if (pc.includes("VT")) produtoFinal = "Vida Total";
+        }
+        
+        // ── Mesclar tabelas de capitais e prêmios por nome ──
+        const cobMap = {};
+        (data.coberturas_capitais || []).forEach(c => {
+          const key = strip(c.nome);
+          if (!cobMap[key]) cobMap[key] = { nome: c.nome };
+          cobMap[key].capital = c.capital_segurado;
+          cobMap[key].vigencia = c.periodo_vigencia;
+        });
+        (data.coberturas_premios || []).forEach(c => {
+          const key = strip(c.nome);
+          if (!cobMap[key]) cobMap[key] = { nome: c.nome };
+          cobMap[key].premio = c.premio_total;
+          cobMap[key].prazo = c.prazo_pagamento;
+        });
+        
+        // ── Mapear coberturas ──
+        const formUpdates = {};
+        let capitalMorte = "";
+        let premioMorte = "";
+        let vigenciaPrincipal = "";
+        
+        Object.values(cobMap).forEach(cob => {
+          const n = strip(cob.nome || "");
+          
+          if (n.includes("morte") && n.includes("decrescente")) {
+            if (cob.capital) formUpdates.morte_decrescente_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_morte_decrescente = normalizarValor(cob.premio);
+            if (cob.vigencia) { const m = cob.vigencia.match(/\d+/); if (m) formUpdates.morte_decrescente_periodo = m[0]; }
+          }
+          else if (n.includes("morte") && n.includes("acidental")) {
+            if (cob.capital) formUpdates.morte_acidental_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_morte_acidental = normalizarValor(cob.premio);
+          }
+          else if (n.includes("invalidez") && n.includes("majorada")) {
+            if (cob.capital) formUpdates.invalidez_acidental_majorada_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_invalidez_majorada = normalizarValor(cob.premio);
+          }
+          else if (n.includes("invalidez") && (n.includes("acident") || n.includes("parcial"))) {
+            if (cob.capital) formUpdates.invalidez_acidental_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_invalidez_acidental = normalizarValor(cob.premio);
+          }
+          else if (n.includes("amparo") && n.includes("funeral")) {
+            const amparoCapOpts = ["R$ 7.000,00", "R$ 10.000,00", "R$ 15.000,00", "R$ 20.000,00"];
+            if (cob.capital) formUpdates.amparo_funeral_capital = matchSelect(cob.capital, amparoCapOpts);
+            if (cob.premio) formUpdates.premio_amparo_funeral = normalizarValor(cob.premio);
+            // Detectar tipo (Familiar, Individual, etc)
+            if (n.includes("familiar") && n.includes("pais")) formUpdates.amparo_funeral_cobertura = "Familiar + Pais";
+            else if (n.includes("familiar")) formUpdates.amparo_funeral_cobertura = "Familiar";
+            else if (n.includes("conjuge") || n.includes("cônjuge")) formUpdates.amparo_funeral_cobertura = "Individual + Conjuge";
+            else if (n.includes("individual")) formUpdates.amparo_funeral_cobertura = "Individual";
+          }
+          else if (n.includes("cirurgia") && !n.includes("doenca") && !n.includes("grave")) {
+            if (cob.capital) formUpdates.cirurgias_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_cirurgias = normalizarValor(cob.premio);
+          }
+          else if (n.includes("ipdf")) {
+            if (cob.capital) formUpdates.ipdf_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_ipdf = normalizarValor(cob.premio);
+          }
+          else if (n.includes("doenca") && n.includes("grave") && n.includes("premium")) {
+            if (cob.capital) formUpdates.doencas_graves_cirurgicos_premium_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_doencas_graves_cirurgicos_premium = normalizarValor(cob.premio);
+          }
+          else if (n.includes("doenca") && n.includes("grave") && (n.includes("cirurgic") || n.includes("procedimento"))) {
+            if (cob.capital) formUpdates.doencas_graves_cirurgicos_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_doencas_graves_cirurgicos = normalizarValor(cob.premio);
+          }
+          else if (n.includes("doenca") && n.includes("grave")) {
+            if (cob.capital) formUpdates.doencas_graves_mais_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_doencas_graves_mais = normalizarValor(cob.premio);
+          }
+          else if (n.includes("fratura") && (n.includes("ossea") || n.includes("óssea"))) {
+            if (cob.capital) formUpdates.fratura_ossea_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_fratura_ossea = normalizarValor(cob.premio);
+          }
+          else if (n.includes("diaria") && n.includes("incapacidade")) {
+            if (cob.premio) formUpdates.premio_dit = normalizarValor(cob.premio);
+            if (cob.capital) formUpdates.dit_diaria = normalizarValor(cob.capital);
+          }
+          else if (n.includes("diaria") && n.includes("internacao")) {
+            const dihOpts = ["R$ 200,00", "R$ 250,00", "R$ 300,00", "R$ 350,00", "R$ 450,00", "R$ 550,00", "R$ 750,00", "R$ 1.000,00", "R$ 2.000,00", "R$ 3.000,00"];
+            if (cob.capital) formUpdates.dih_capital = matchSelect(cob.capital, dihOpts);
+            if (cob.premio) formUpdates.premio_dih = normalizarValor(cob.premio);
+          }
+          else if (n.includes("temporaria") && n.includes("morte")) {
+            if (cob.capital) formUpdates.temporaria_morte_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_temporaria_morte = normalizarValor(cob.premio);
+            const vig = cob.vigencia || cob.prazo || "";
+            const vm = vig.match(/\d+/);
+            if (vm) {
+              formUpdates.temporaria_morte_periodo = vm[0];
+              formUpdates.temporaria_morte_vigencia = ["75", "65", "99"].includes(vm[0]) ? "Idade Alcançada" : "Fixado";
+            }
+          }
+          else if (n.includes("funeral") && n.includes("individual")) {
+            const funOpts = ["R$ 10.000,00", "R$ 15.000,00", "R$ 20.000,00"];
+            if (cob.capital) formUpdates.funeral_individual_capital = matchSelect(cob.capital, funOpts);
+            if (cob.premio) formUpdates.premio_funeral_individual = normalizarValor(cob.premio);
+          }
+          else if (n.includes("doenca") && n.includes("incapacitante")) {
+            if (cob.capital) formUpdates.doencas_incapacitantes_capital = normalizarValor(cob.capital);
+            if (cob.premio) formUpdates.premio_doencas_incapacitantes = normalizarValor(cob.premio);
+          }
+          // Morte principal (apenas "morte" sem qualificadores)
+          else if (n.includes("morte") && !n.includes("decrescente") && !n.includes("acidental") && !n.includes("temporaria")) {
+            capitalMorte = cob.capital || "";
+            premioMorte = cob.premio || "";
+            vigenciaPrincipal = cob.vigencia || cob.prazo || "";
+          }
+        });
+        
+        // ── Vigência principal → tipo e período ──
         let tipoCobertura = "";
         let periodoCobertura = "";
-        
-        if (data.plano) {
-          const planoUpper = data.plano.toUpperCase();
-          if (planoUpper.includes("VS")) {
-            produtoFinal = "Vida Singular";
-          } else if (planoUpper.includes("VT")) {
-            produtoFinal = "Vida Total";
-          }
-          
-          // Extrair número do plano
-          const numeroMatch = planoUpper.match(/\d+/);
-          if (numeroMatch) {
-            const numero = numeroMatch[0];
-            periodoCobertura = numero;
-            
-            // Se for 75, 65 ou 99 = Idade Alcançada, caso contrário = Fixado
-            if (numero === "75" || numero === "65" || numero === "99") {
-              tipoCobertura = "Idade Alcançada";
-            } else {
-              tipoCobertura = "Fixado";
-            }
-          }
+        const vigMatch = (vigenciaPrincipal || "").match(/\d+/);
+        if (vigMatch) {
+          periodoCobertura = vigMatch[0];
+          tipoCobertura = ["75", "65", "99"].includes(vigMatch[0]) ? "Idade Alcançada" : "Fixado";
         }
         
-        // Processar coberturas
-        const coberturasMap = {};
-        if (data.coberturas && Array.isArray(data.coberturas)) {
-          data.coberturas.forEach(cob => {
-            const nomeLower = (cob.nome || "").toLowerCase();
-            
-            if (nomeLower.includes("morte") && nomeLower.includes("decrescente")) {
-              coberturasMap.morte_decrescente_capital = cob.capital_segurado;
-              coberturasMap.premio_morte_decrescente = cob.premio_bruto;
-            } else if (nomeLower.includes("morte") && nomeLower.includes("acidental")) {
-              coberturasMap.morte_acidental_capital = cob.capital_segurado;
-              coberturasMap.premio_morte_acidental = cob.premio_bruto;
-            } else if (nomeLower.includes("invalidez") && nomeLower.includes("majorada")) {
-              coberturasMap.invalidez_acidental_majorada_capital = cob.capital_segurado;
-              coberturasMap.premio_invalidez_majorada = cob.premio_bruto;
-            } else if (nomeLower.includes("invalidez") && nomeLower.includes("acidental")) {
-              coberturasMap.invalidez_acidental_capital = cob.capital_segurado;
-              coberturasMap.premio_invalidez_acidental = cob.premio_bruto;
-            } else if (nomeLower.includes("amparo") && nomeLower.includes("funeral")) {
-              coberturasMap.amparo_funeral_capital = cob.capital_segurado;
-              coberturasMap.premio_amparo_funeral = cob.premio_bruto;
-            } else if (nomeLower.includes("cirurgia")) {
-              coberturasMap.cirurgias_capital = cob.capital_segurado;
-              coberturasMap.premio_cirurgias = cob.premio_bruto;
-            } else if (nomeLower.includes("ipdf")) {
-              coberturasMap.ipdf_capital = cob.capital_segurado;
-              coberturasMap.premio_ipdf = cob.premio_bruto;
-            } else if (nomeLower.includes("doenças graves") && nomeLower.includes("premium")) {
-              coberturasMap.doencas_graves_cirurgicos_premium_capital = cob.capital_segurado;
-              coberturasMap.premio_doencas_graves_cirurgicos_premium = cob.premio_bruto;
-            } else if (nomeLower.includes("doenças graves") && nomeLower.includes("cirúrgico")) {
-              coberturasMap.doencas_graves_cirurgicos_capital = cob.capital_segurado;
-              coberturasMap.premio_doencas_graves_cirurgicos = cob.premio_bruto;
-            } else if (nomeLower.includes("doenças graves")) {
-              coberturasMap.doencas_graves_mais_capital = cob.capital_segurado;
-              coberturasMap.premio_doencas_graves_mais = cob.premio_bruto;
-            } else if (nomeLower.includes("fratura") && nomeLower.includes("óssea")) {
-              coberturasMap.fratura_ossea_capital = cob.capital_segurado;
-              coberturasMap.premio_fratura_ossea = cob.premio_bruto;
-            } else if (nomeLower.includes("dit") || (nomeLower.includes("diária") && nomeLower.includes("incapacidade"))) {
-              coberturasMap.premio_dit = cob.premio_bruto;
-            } else if (nomeLower.includes("dih") || (nomeLower.includes("diária") && nomeLower.includes("internação")) || nomeLower.includes("internação hospitalar")) {
-              coberturasMap.dih_capital = cob.capital_segurado;
-              coberturasMap.premio_dih = cob.premio_bruto;
-            } else if (nomeLower.includes("temporária") && nomeLower.includes("morte")) {
-              coberturasMap.temporaria_morte_capital = cob.capital_segurado;
-              coberturasMap.premio_temporaria_morte = cob.premio_bruto;
-            } else if (nomeLower.includes("funeral") && nomeLower.includes("individual")) {
-              coberturasMap.funeral_individual_capital = cob.capital_segurado;
-              coberturasMap.premio_funeral_individual = cob.premio_bruto;
-            } else if (nomeLower.includes("doenças incapacitantes")) {
-              coberturasMap.doencas_incapacitantes_capital = cob.capital_segurado;
-              coberturasMap.premio_doencas_incapacitantes = cob.premio_bruto;
-            }
-          });
+        // ── Beneficiários ──
+        const parentescoMap = {
+          "conjuge": "Cônjuge", "cônjuge": "Cônjuge", "companheiro": "Cônjuge", "companheira": "Cônjuge",
+          "esposo": "Cônjuge", "esposa": "Cônjuge", "marido": "Cônjuge",
+          "filho": "Filho(a)", "filha": "Filho(a)", "filho(a)": "Filho(a)", "filho (a)": "Filho(a)",
+          "pai": "Pai", "mãe": "Mãe", "mae": "Mãe",
+          "irmão": "Irmão(ã)", "irmã": "Irmão(ã)", "irmao": "Irmão(ã)", "irma": "Irmão(ã)",
+          "sobrinho": "Sobrinho(a)", "sobrinha": "Sobrinho(a)",
+        };
+        const normParentesco = (p) => {
+          if (!p) return "";
+          return parentescoMap[p.toLowerCase().trim()] || "Outro";
+        };
+        const normData = (d) => {
+          if (!d) return "";
+          if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+          const m = d.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+          if (m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+          return d;
+        };
+        
+        let beneficiarios = [];
+        if (data.beneficiarios?.length > 0) {
+          beneficiarios = data.beneficiarios.map(b => ({
+            nome: (b.nome || "").toUpperCase(),
+            parentesco: normParentesco(b.parentesco),
+            data_nascimento: normData(b.data_nascimento),
+            distribuicao: (b.percentual || b.distribuicao || "").replace(/[^0-9]/g, "")
+          }));
         }
         
-        // Mesclar dados extraídos com dados atuais
+        // ── Frequência ──
+        let freq = "";
+        if (data.periodicidade_premio) {
+          const fp = data.periodicidade_premio.toLowerCase();
+          if (fp.includes("mensal")) freq = "Mensal";
+          else if (fp.includes("anual")) freq = "Anual";
+        }
+        
+        console.log("Produto:", produtoFinal, "| Vigência:", periodoCobertura, tipoCobertura);
+        console.log("Coberturas mapeadas:", JSON.stringify(formUpdates, null, 2));
+        console.log("Beneficiários:", JSON.stringify(beneficiarios, null, 2));
+        
+        // Mesclar dados extraídos
         setFormData(prev => ({
           ...prev,
           produto: produtoFinal || prev.produto,
           tipo_cobertura: tipoCobertura || prev.tipo_cobertura,
           periodo_cobertura: periodoCobertura || prev.periodo_cobertura,
-          frequencia_pagamento: data.periodicidade_premio || prev.frequencia_pagamento,
-          capital_morte: data.capital_segurado_morte || prev.capital_morte,
-          premio_morte: data.premio_bruto_morte || prev.premio_morte,
-          total_premio_iof: data.total_premio_iof || prev.total_premio_iof,
-          beneficiarios: data.beneficiarios || prev.beneficiarios,
-          ...coberturasMap
+          frequencia_pagamento: freq || prev.frequencia_pagamento,
+          capital_morte: capitalMorte ? normalizarValor(capitalMorte) : prev.capital_morte,
+          premio_morte: premioMorte ? normalizarValor(premioMorte) : prev.premio_morte,
+          total_premio_iof: data.total_premio_iof ? normalizarValor(data.total_premio_iof) : prev.total_premio_iof,
+          beneficiarios: beneficiarios.length > 0 ? beneficiarios : prev.beneficiarios,
+          ...formUpdates
         }));
         
         // Atualizar CPF do cliente se extraído
@@ -454,6 +600,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                 <Select value={formData.produto} onValueChange={(v) => setFormData({...formData, produto: v})}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Vida Segura">Vida Segura</SelectItem>
                     <SelectItem value="Vida Singular">Vida Singular</SelectItem>
                     <SelectItem value="Vida Total">Vida Total</SelectItem>
                     <SelectItem value="Vida Total Singular">Vida Total Singular</SelectItem>
@@ -483,7 +630,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
               </div>
             )}
 
-            {(formData.produto === "Vida Singular" || formData.produto === "Vida Total") && (
+            {(formData.produto === "Vida Segura" || formData.produto === "Vida Singular" || formData.produto === "Vida Total") && (
               <>
                 <div>
                   <Label className="text-xs">Tipo de Cobertura:</Label>
@@ -502,7 +649,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                     <Select value={formData.periodo_cobertura} onValueChange={(v) => setFormData({...formData, periodo_cobertura: v})}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {formData.produto === "Vida Singular" ? (
+                        {(formData.produto === "Vida Singular" || formData.produto === "Vida Segura") ? (
                           <>
                             <SelectItem value="5">5 anos</SelectItem>
                             <SelectItem value="10">10 anos</SelectItem>
@@ -529,7 +676,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                     <Select value={formData.periodo_cobertura} onValueChange={(v) => setFormData({...formData, periodo_cobertura: v})}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {formData.produto === "Vida Singular" ? (
+                        {(formData.produto === "Vida Singular" || formData.produto === "Vida Segura") ? (
                           <SelectItem value="75">75 anos</SelectItem>
                         ) : (
                           <>

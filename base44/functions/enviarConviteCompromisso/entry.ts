@@ -174,12 +174,28 @@ Deno.serve(async (req) => {
       try {
         const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
         
+        // Enviar para o participante
         await base44.integrations.Core.SendEmail({
           to: comp.email_participante,
           subject: subject,
           body: emailHTML,
           from_name: organizerName
         });
+        
+        // Enviar cópia para o próprio organizador
+        if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
+          try {
+            await base44.integrations.Core.SendEmail({
+              to: organizerEmail,
+              subject: `[Cópia] ${subject}`,
+              body: emailHTML,
+              from_name: organizerName
+            });
+            console.log('Cópia do convite enviada para organizador:', organizerEmail);
+          } catch (copyErr) {
+            console.error('Erro ao enviar cópia para organizador:', copyErr.message);
+          }
+        }
         
         await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
         console.log('SUCCESS: Convite enviado via SendEmail para', comp.email_participante);
@@ -305,6 +321,21 @@ Deno.serve(async (req) => {
         body: emailHTML,
         from_name: organizerName
       });
+      
+      // Enviar cópia para o próprio organizador
+      if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
+        try {
+          await base44.integrations.Core.SendEmail({
+            to: organizerEmail,
+            subject: `[Cópia] ${subject}`,
+            body: emailHTML,
+            from_name: organizerName
+          });
+          console.log('Cópia do convite enviada para organizador:', organizerEmail);
+        } catch (copyErr) {
+          console.error('Erro ao enviar cópia para organizador:', copyErr.message);
+        }
+      }
       
       await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
       console.log('SUCCESS: Convite enviado via SendEmail (fallback) para', comp.email_participante);

@@ -15,7 +15,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfI
 import { ptBR } from "date-fns/locale";
 import CompromissoFixoDialog from "../components/compromissos/CompromissoFixoDialog";
 import MobileAgendaView from "../components/compromissos/MobileAgendaView";
-import GoogleCalendarStatus from "../components/compromissos/GoogleCalendarStatus";
+
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
 const COLORS = [
@@ -92,25 +92,7 @@ export default function Compromissos() {
     enabled: !!user
   });
 
-  // Fetch Google Calendar events (individual per user via app user connector)
-  const { data: googleEvents = [] } = useQuery({
-    queryKey: ['google-calendar-events', fetchRange.start, fetchRange.end],
-    queryFn: async () => {
-      try {
-        const res = await base44.functions.invoke('listarEventosCalendar', {
-          dataInicio: fetchRange.start,
-          dataFim: fetchRange.end
-        });
-        return res.data?.eventos || [];
-      } catch {
-        // User hasn't connected their Google Calendar yet — return empty
-        return [];
-      }
-    },
-    enabled: !!user,
-    retry: 1,
-    refetchInterval: 120000,
-  });
+  const googleEvents = [];
 
   // Merge local + google events, avoiding duplicates
   const compromissos = useMemo(() => {
@@ -424,7 +406,6 @@ export default function Compromissos() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap items-center">
-              <GoogleCalendarStatus />
               <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20">
                 <Repeat className="w-4 h-4 mr-2" /> Compromisso Fixo
               </Button>
@@ -454,7 +435,6 @@ export default function Compromissos() {
             </Button>
           </div>
         </div>
-        <GoogleCalendarStatus />
       </div>
 
       <div className="max-w-[1800px] mx-auto md:px-6">

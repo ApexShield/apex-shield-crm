@@ -28,7 +28,8 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
     return parseFloat(String(val).replace(/[^\d,]/g, "").replace(",", ".")) || 0;
   };
 
-  const propostasFechadas = clientes.filter(c => c.status === "Venda Feita" && c.dados_apolice).length;
+  const clientesComApolice = clientes.filter(c => c.dados_apolice?.total_premio_iof);
+  const propostasFechadas = clientesComApolice.length;
 
   // Vendas no período — clientes convertidos (data_conversao_cliente no range)
   const vendasNoPeriodo = clientes.filter(c =>
@@ -36,10 +37,13 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
   );
   const totalVendasPeriodo = vendasNoPeriodo.length;
 
-  // Calcular PA total
-  const paTotal = clientes
-    .filter(c => c.status === "Venda Feita" && c.dados_apolice)
-    .reduce((sum, c) => sum + parseCurrency(c.dados_apolice?.total_premio_iof), 0);
+  // Calcular PA total — extraído do total_premio_iof da apólice
+  // Se frequência = Mensal, multiplica por 12 para obter o Prêmio Anual
+  const paTotal = clientesComApolice.reduce((sum, c) => {
+    const premio = parseCurrency(c.dados_apolice?.total_premio_iof);
+    const freq = (c.dados_apolice?.frequencia_pagamento || "").toLowerCase();
+    return sum + (freq === "mensal" ? premio * 12 : premio);
+  }, 0);
 
   const barData = [
     { name: "Abordagens", valor: abordagens, fill: "#3b82f6" },

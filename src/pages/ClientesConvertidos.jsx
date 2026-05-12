@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, Edit, FileText, TrendingUp, Plus } from "lucide-react";
@@ -29,6 +29,16 @@ export default function ClientesConvertidos() {
   const [showDocumentos, setShowDocumentos] = useState(false);
   const [showApolice, setShowApolice] = useState(false);
   const [showCriarCliente, setShowCriarCliente] = useState(false);
+
+  // Listener para abrir apólice do formulário (idêntico ao Leads)
+  useEffect(() => {
+    const handleOpenApolice = (e) => {
+      setSelectedCliente(e.detail);
+      setShowApolice(true);
+    };
+    window.addEventListener('openApolice', handleOpenApolice);
+    return () => window.removeEventListener('openApolice', handleOpenApolice);
+  }, []);
 
   const queryClient = useQueryClient();
   const { data: user } = useQuery({ queryKey: ["currentUser"], queryFn: () => base44.auth.me() });
@@ -142,6 +152,7 @@ export default function ClientesConvertidos() {
   const handleSaveApolice = async (data) => {
     if (!selectedCliente) return;
     await updateMutation.mutateAsync({ id: selectedCliente.id, data });
+    alert("Dados da apólice salvos com sucesso!");
     setShowApolice(false);
   };
 

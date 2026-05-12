@@ -13,7 +13,9 @@ Deno.serve(async (req) => {
     const tipoHierarquia = user.tipo_hierarquia;
 
     const allUsers = await base44.asServiceRole.entities.User.list();
-    const allRecords = await base44.asServiceRole.entities.DashboardDiario.filter({ ano }, "-data", 5000);
+    const allRecords = ano
+      ? await base44.asServiceRole.entities.DashboardDiario.filter({ ano }, "-data", 5000)
+      : await base44.asServiceRole.entities.DashboardDiario.list("-data", 5000);
 
     // Helper: find all subordinates recursively using lider_email/lider_id
     // User custom fields may be at root or inside .data depending on SDK behavior

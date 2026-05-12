@@ -15,6 +15,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfI
 import { ptBR } from "date-fns/locale";
 import CompromissoFixoDialog from "../components/compromissos/CompromissoFixoDialog";
 import MobileAgendaView from "../components/compromissos/MobileAgendaView";
+import CorretorSelector from "../components/compromissos/CorretorSelector";
 
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
@@ -40,6 +41,7 @@ export default function Compromissos() {
   const [sendingInvite, setSendingInvite] = useState(false);
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
   const [pendingUpdateData, setPendingUpdateData] = useState(null);
+  const [selectedCorretor, setSelectedCorretor] = useState(null);
 
   const getDefaultDates = () => {
     const now = new Date();
@@ -77,35 +79,43 @@ export default function Compromissos() {
     return allClientes.filter(c => c.created_by === user.email).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   }, [allClientes, user]);
 
-  // Calculate date range for fetching Google Calendar events (current week + buffer)
-  const fetchRange = useMemo(() => {
-    const rangeStart = new Date(currentWeekStart);
-    rangeStart.setHours(0, 0, 0, 0);
-    const rangeEnd = addDays(currentWeekStart, 7);
-    rangeEnd.setHours(23, 59, 59, 999);
-    return { start: rangeStart.toISOString(), end: rangeEnd.toISOString() };
-  }, [currentWeekStart]);
 
+  const isLeader = user?.tipo_hierarquia === 'LiderUnidade' || user?.tipo_hierarquia === 'LiderAgencia' || user?.role === 'admin';
+
+  // Fetch team members for leaders
+  const { data: teamData } = useQuery({
+    queryKey: ['team-members'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listarCompromissosEquipe', {});
+      return res.data;
+    },
+    enabled: !!user && isLeader,
+  });
+  const teamMembers = teamData?.teamMembers || [];
+
+  // Fetch own compromissos (RLS handles visibility)
   const { data: localCompromissos = [], isLoading } = useQuery({
     queryKey: ['compromissos'],
-    queryFn: () => base44.entities.Compromisso.list('-data_inicio', 500),
-    enabled: !!user
+    queryFn: () => base44.entities.Compromisso.list('-data_inicio', 2000),
+    enabled: !!user && !selectedCorretor,
   });
 
-  const googleEvents = [];
+  // Fetch selected corretor's compromissos via backend
+  const { data: corretorData, isLoading: loadingCorretor } = useQuery({
+    queryKey: ['compromissos-corretor', selectedCorretor],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listarCompromissosEquipe', { corretor_email: selectedCorretor });
+      return res.data;
+    },
+    enabled: !!user && !!selectedCorretor,
+  });
 
-  // Merge local + google events, avoiding duplicates
   const compromissos = useMemo(() => {
-    const localGoogleIds = new Set(
-      localCompromissos
-        .filter(c => c.google_event_id && c.google_event_id !== '')
-        .map(c => c.google_event_id)
-    );
-    const uniqueGoogleEvents = googleEvents
-      .filter(ge => !ge.is_all_day && ge.google_event_id && !localGoogleIds.has(ge.google_event_id))
-      .map(ge => ({ ...ge, id: `gcal_${ge.google_event_id}`, source: 'google' }));
-    return [...localCompromissos, ...uniqueGoogleEvents];
-  }, [localCompromissos, googleEvents]);
+    if (selectedCorretor) {
+      return corretorData?.compromissos || [];
+    }
+    return localCompromissos;
+  }, [localCompromissos, corretorData, selectedCorretor]);
 
   const criarMutation = useMutation({
     mutationFn: async (data) => {
@@ -406,6 +416,9 @@ export default function Compromissos() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap items-center">
+              {isLeader && teamMembers.length > 0 && (
+                <CorretorSelector teamMembers={teamMembers} selectedEmail={selectedCorretor} onSelect={setSelectedCorretor} />
+              )}
               <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20">
                 <Repeat className="w-4 h-4 mr-2" /> Compromisso Fixo
               </Button>
@@ -426,6 +439,11 @@ export default function Compromissos() {
           <div>
             <h1 className="text-lg font-black text-white">Agenda</h1>
           </div>
+        </div>
+        {isLeader && teamMembers.length > 0 && (
+          <CorretorSelector teamMembers={teamMembers} selectedEmail={selectedCorretor} onSelect={setSelectedCorretor} />
+        )}
+        <div className="flex items-center justify-between">
           <div className="flex gap-1.5">
             <Button onClick={() => setShowFixoDialog(true)} variant="outline" size="sm" className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 h-8 px-2.5 text-[10px] font-semibold rounded-lg">
               <Repeat className="w-3 h-3 mr-1" /> Fixo
@@ -467,7 +485,7 @@ export default function Compromissos() {
             <div className="flex items-center gap-3">
               <span className="text-xl font-bold text-white">{format(currentWeekStart, "MMM yyyy", { locale: ptBR })}</span>
               {compromissos.length > 0 && <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-indigo-300">{compromissos.length} compromissos</span>}
-              {googleEvents.length > 0 && <span className="text-xs bg-blue-500/20 px-2 py-1 rounded-full text-blue-300">📅 {googleEvents.filter(ge => !ge.is_all_day).length} Google</span>}
+              {selectedCorretor && <span className="text-xs bg-purple-500/20 px-2 py-1 rounded-full text-purple-300">👤 {teamMembers.find(m => m.email === selectedCorretor)?.full_name || selectedCorretor}</span>}
             </div>
           </div>
 
@@ -487,12 +505,7 @@ export default function Compromissos() {
                       <span className="text-xs text-indigo-200">{c.label}</span>
                     </div>
                   ))}
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm">📅</span>
-                      <span className="text-xs text-blue-300 font-medium">Evento do Google Calendar</span>
-                    </div>
-                  </div>
+
                   <div className="border-t border-white/10 pt-2 mt-2">
                     <p className="text-[10px] text-indigo-300 font-semibold mb-1.5">Status dos Lembretes</p>
                     <div className="flex items-center gap-2">

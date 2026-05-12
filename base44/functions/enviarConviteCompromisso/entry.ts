@@ -7,103 +7,125 @@ function formatICSDate(d) {
   return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
 }
 
-function buildICS(comp, startDate, endDate, organizerName, organizerEmail, location) {
-  const uid = `${comp.id}@apexshieldcrm.com`;
-  return [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Apex Shield CRM//PT','CALSCALE:GREGORIAN','METHOD:REQUEST',
-    'BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${formatICSDate(new Date())}`,
-    `DTSTART:${formatICSDate(startDate)}`,`DTEND:${formatICSDate(endDate)}`,
+function buildICS(comp, startDate, endDate, organizerName, organizerEmail, participantEmail, location) {
+  const uid = `${comp.id}-${Date.now()}@apexshieldcrm.com`;
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Apex Shield CRM//PT',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${formatICSDate(new Date())}`,
+    `DTSTART:${formatICSDate(startDate)}`,
+    `DTEND:${formatICSDate(endDate)}`,
     `SUMMARY:${comp.titulo}`,
     `DESCRIPTION:${(comp.descricao || 'Compromisso agendado via Apex Shield CRM').replace(/\n/g, '\\n')}`,
     `LOCATION:${location}`,
     `ORGANIZER;CN=${organizerName}:mailto:${organizerEmail}`,
     `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=${organizerName}:mailto:${organizerEmail}`,
-    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${comp.email_participante}:mailto:${comp.email_participante}`,
-    'STATUS:CONFIRMED','SEQUENCE:0',
-    'BEGIN:VALARM','TRIGGER:-PT1H','ACTION:DISPLAY','DESCRIPTION:Lembrete - 1 hora antes','END:VALARM',
-    'END:VEVENT','END:VCALENDAR'
-  ].join('\r\n');
+    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${participantEmail}:mailto:${participantEmail}`,
+    'STATUS:CONFIRMED',
+    'SEQUENCE:0',
+    'BEGIN:VALARM',
+    'TRIGGER:-PT1H',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Lembrete',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ];
+  return lines.join('\r\n');
 }
 
 function buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location) {
   const isOnline = comp.modalidade === 'online';
   const meetLink = comp.meeting_link || '';
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Convite: ${comp.titulo}</title></head>
-<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;">
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Convite: ${comp.titulo}</title></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:24px 16px;"><tr><td align="center">
 <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;">
-<tr><td style="background-color:#1a365d;padding:24px 32px;text-align:center;"><h1 style="color:#ffffff;font-size:18px;margin:0;font-weight:700;">Convite para Compromisso</h1></td></tr>
+<tr><td style="background-color:#1a365d;padding:24px 32px;text-align:center;"><h1 style="color:#ffffff;font-size:18px;margin:0;">Convite para Compromisso</h1></td></tr>
 <tr><td style="padding:32px;">
-  <p style="color:#333;font-size:15px;line-height:1.5;margin:0 0 20px;">Olá, você foi convidado(a) para o seguinte compromisso:</p>
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px;">
+  <p style="color:#333;font-size:15px;margin:0 0 20px;">Olá, você foi convidado(a) para o seguinte compromisso:</p>
+  <table width="100%" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px;">
     <tr><td style="padding:20px;">
-      <h2 style="color:#1a365d;font-size:18px;margin:0 0 16px;font-weight:700;">${comp.titulo}</h2>
+      <h2 style="color:#1a365d;font-size:18px;margin:0 0 16px;">${comp.titulo}</h2>
       <p style="color:#334155;font-size:14px;margin:4px 0;">&#128197; <strong>${dayStr}</strong></p>
       <p style="color:#334155;font-size:14px;margin:4px 0;">&#128336; <strong>${timeStart} - ${timeEnd}</strong> (Horário de Brasília)</p>
-      <p style="color:#334155;font-size:14px;margin:4px 0;">${isOnline ? '&#128187; Reunião Online' : '&#128205; ' + location}${meetLink ? '<br><a href="'+meetLink+'" style="color:#2563eb;font-size:13px;">'+meetLink+'</a>' : ''}</p>
-      <p style="color:#334155;font-size:14px;margin:4px 0;">&#128100; Organizador: <strong>${organizerName}</strong><br><span style="color:#64748b;font-size:13px;">${organizerEmail}</span></p>
+      <p style="color:#334155;font-size:14px;margin:4px 0;">${isOnline ? '&#128187; Reunião Online' : '&#128205; ' + location}${meetLink ? '<br><a href="'+meetLink+'" style="color:#2563eb;">'+meetLink+'</a>' : ''}</p>
+      <p style="color:#334155;font-size:14px;margin:4px 0;">&#128100; Organizador: <strong>${organizerName}</strong> (${organizerEmail})</p>
       ${comp.descricao ? '<div style="margin-top:16px;padding-top:12px;border-top:1px solid #e2e8f0;"><p style="color:#64748b;font-size:13px;margin:0;">'+comp.descricao+'</p></div>' : ''}
     </td></tr>
   </table>
-  ${meetLink ? '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr><td align="center"><a href="'+meetLink+'" target="_blank" style="display:inline-block;background-color:#2563eb;color:#ffffff;padding:12px 32px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;">Entrar na Reunião</a></td></tr></table>' : ''}
-  <div style="background:#eff6ff;border-radius:6px;padding:16px;border:1px solid #bfdbfe;text-align:center;">
-    <p style="color:#1e40af;font-size:13px;margin:0;font-weight:600;">Este email contém um convite de calendário em anexo.</p>
-    <p style="color:#3b82f6;font-size:12px;margin:4px 0 0;">Aceite ou recuse diretamente pelo seu aplicativo de email ou calendário.</p>
-  </div>
+  ${meetLink ? '<p style="text-align:center;"><a href="'+meetLink+'" style="display:inline-block;background-color:#2563eb;color:#fff;padding:12px 32px;border-radius:6px;font-weight:700;text-decoration:none;">Entrar na Reunião</a></p>' : ''}
 </td></tr>
 <tr><td style="background-color:#f8fafc;padding:16px 32px;text-align:center;border-top:1px solid #e2e8f0;">
   <p style="color:#94a3b8;font-size:11px;margin:0;">Enviado via Apex Shield CRM</p>
 </td></tr></table></td></tr></table></body></html>`;
 }
 
-function buildPlainText(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location) {
-  let text = `Convite para Compromisso\n\nVocê foi convidado(a) para:\n\n${comp.titulo}\n`;
-  text += `Data: ${dayStr}\nHorário: ${timeStart} - ${timeEnd} (Horário de Brasília)\nLocal: ${location}\n`;
-  if (comp.meeting_link) text += `Link: ${comp.meeting_link}\n`;
-  text += `Organizador: ${organizerName} (${organizerEmail})\n`;
-  if (comp.descricao) text += `\nObs: ${comp.descricao}\n`;
-  text += `\nAceite ou recuse pelo seu app de calendário.\n---\nApex Shield CRM`;
-  return text;
-}
-
-function base64Encode(str) {
+// Simple base64 without line breaks (for MIME content parts)
+function b64(str) {
   const bytes = new TextEncoder().encode(str);
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary).replace(/(.{76})/g, '$1\r\n');
+  return btoa(binary);
 }
 
-function buildMIME(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject) {
-  return buildMIMEForRecipient(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject, comp.email_participante);
-}
-
-function buildMIMEForRecipient(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject, toEmail) {
-  const boundary = `----=_Part_${Date.now()}_main`;
-  const altBoundary = `----=_Part_${Date.now()}_alt`;
-  const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-  return [
-    `From: ${organizerName} <${organizerEmail}>`,`To: ${toEmail}`,`Subject: ${encodedSubject}`,
-    `MIME-Version: 1.0`,`Content-Type: multipart/mixed; boundary="${boundary}"`,``,
-    `--${boundary}`,`Content-Type: multipart/alternative; boundary="${altBoundary}"`,``,
-    `--${altBoundary}`,`Content-Type: text/plain; charset=UTF-8`,`Content-Transfer-Encoding: base64`,``,base64Encode(plainText),``,
-    `--${altBoundary}`,`Content-Type: text/html; charset=UTF-8`,`Content-Transfer-Encoding: base64`,``,base64Encode(emailHTML),``,
-    `--${altBoundary}`,`Content-Type: text/calendar; charset=UTF-8; method=REQUEST`,`Content-Transfer-Encoding: base64`,``,base64Encode(icsContent),``,
-    `--${altBoundary}--`,``,
-    `--${boundary}`,`Content-Type: application/ics; name="invite.ics"`,`Content-Disposition: attachment; filename="invite.ics"`,`Content-Transfer-Encoding: base64`,``,base64Encode(icsContent),``,
-    `--${boundary}--`
-  ].join('\r\n');
-}
-
-function urlSafeBase64(str) {
+// URL-safe base64 for Gmail API raw field
+function urlSafeB64(str) {
   const bytes = new TextEncoder().encode(str);
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+function buildMIMEMessage(toEmail, fromName, fromEmail, subject, htmlBody, icsContent) {
+  const boundary = `boundary_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const altBoundary = `alt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const encodedSubject = `=?UTF-8?B?${b64(subject)}?=`;
+  
+  const parts = [
+    `From: ${fromName} <${fromEmail}>`,
+    `To: ${toEmail}`,
+    `Subject: ${encodedSubject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    ``,
+    `--${boundary}`,
+    `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+    ``,
+    `--${altBoundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: base64`,
+    ``,
+    b64(htmlBody),
+    ``,
+    `--${altBoundary}`,
+    `Content-Type: text/calendar; charset=UTF-8; method=REQUEST`,
+    `Content-Transfer-Encoding: base64`,
+    ``,
+    b64(icsContent),
+    ``,
+    `--${altBoundary}--`,
+    ``,
+    `--${boundary}`,
+    `Content-Type: application/ics; name="invite.ics"`,
+    `Content-Disposition: attachment; filename="invite.ics"`,
+    `Content-Transfer-Encoding: base64`,
+    ``,
+    b64(icsContent),
+    ``,
+    `--${boundary}--`
+  ];
+  
+  return parts.join('\r\n');
+}
+
 // ── Get user's own Google token ──
 async function getUserGoogleToken(base44, userEmail) {
-  // Try UserGoogleCalendarAuth first, then UserGoogleAuth
   for (const entityName of ['UserGoogleCalendarAuth', 'UserGoogleAuth']) {
     const auths = await base44.asServiceRole.entities[entityName].filter({ user_email: userEmail });
     if (auths.length === 0) continue;
@@ -133,6 +155,62 @@ async function getUserGoogleToken(base44, userEmail) {
   return null;
 }
 
+// ── Helper: Create Google Calendar event via API ──
+async function createCalendarEvent(accessToken, comp, startDate, endDate, organizerEmail, participantEmail, location) {
+  const calEvent = {
+    summary: comp.titulo,
+    description: comp.descricao || 'Compromisso agendado via Apex Shield CRM',
+    location: location,
+    start: { dateTime: comp.data_inicio, timeZone: 'America/Sao_Paulo' },
+    end: { dateTime: (comp.data_fim || new Date(startDate.getTime() + 3600000).toISOString()), timeZone: 'America/Sao_Paulo' },
+    attendees: [
+      { email: organizerEmail },
+      { email: participantEmail }
+    ],
+    guestsCanModify: false,
+    reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 60 }, { method: 'popup', minutes: 30 }] }
+  };
+
+  let calUrl = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all';
+  if (comp.modalidade === 'online' && !comp.meeting_link) {
+    calEvent.conferenceData = { createRequest: { requestId: `meet-${comp.id}-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } };
+    calUrl += '&conferenceDataVersion=1';
+  } else if (comp.meeting_link) {
+    calEvent.description += `\n\nLink da reunião: ${comp.meeting_link}`;
+  }
+
+  const calRes = await fetch(calUrl, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(calEvent)
+  });
+
+  if (!calRes.ok) {
+    const errText = await calRes.text();
+    throw new Error(`Calendar API ${calRes.status}: ${errText}`);
+  }
+
+  return await calRes.json();
+}
+
+// ── Helper: Send MIME email via Gmail API ──
+async function sendGmailMIME(accessToken, toEmail, fromName, fromEmail, subject, htmlBody, icsContent) {
+  const mime = buildMIMEMessage(toEmail, fromName, fromEmail, subject, htmlBody, icsContent);
+  const raw = urlSafeB64(mime);
+  
+  const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gmail API ${res.status}: ${errText}`);
+  }
+  return await res.json();
+}
+
 // ── Main handler ──
 
 Deno.serve(async (req) => {
@@ -160,6 +238,7 @@ Deno.serve(async (req) => {
 
     const organizerName = user.full_name || 'Corretor';
     const organizerEmail = user.email;
+    const participantEmail = comp.email_participante;
     const location = comp.modalidade === 'online' ? (comp.meeting_link || 'Online') : (comp.endereco || 'A definir');
 
     const optsBR = { timeZone: 'America/Sao_Paulo' };
@@ -168,229 +247,149 @@ Deno.serve(async (req) => {
     const timeEnd = endDate.toLocaleTimeString('pt-BR', { ...optsBR, hour: '2-digit', minute: '2-digit' });
     const subject = `Convite: ${comp.titulo} - ${dayStr}`;
 
-    // ── Get user's OWN Google token ──
-    const userAuth = await getUserGoogleToken(base44, user.email);
+    // ══════════════════════════════════════════════════════════════════
+    // STRATEGY 1: Google Calendar API (best — creates event in agenda directly)
+    // Try user's own token first, then shared connector
+    // ══════════════════════════════════════════════════════════════════
     
-    if (!userAuth) {
-      console.log(`Usuário ${user.email} não tem Google conectado. Usando Gmail shared connector como fallback.`);
-      
-      // FALLBACK: Enviar via Gmail shared connector (suporta MIME com .ics anexo)
-      try {
-        const icsContent = buildICS(comp, startDate, endDate, organizerName, organizerEmail, location);
-        const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
-        const plainText = buildPlainText(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
-        
-        const { accessToken: gmailSharedToken } = await base44.asServiceRole.connectors.getConnection('gmail');
-        
-        // Enviar para o participante (MIME com .ics)
-        const mimeParticipant = buildMIME(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject);
-        const rawParticipant = urlSafeBase64(mimeParticipant);
-        
-        const sendRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${gmailSharedToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw: rawParticipant })
-        });
-        
-        if (!sendRes.ok) {
-          const errText = await sendRes.text();
-          console.error('Gmail shared connector send error:', sendRes.status, errText);
-          throw new Error(`Gmail API error: ${sendRes.status}`);
-        }
-        
-        console.log('SUCCESS: Convite com .ics enviado via Gmail shared connector para', comp.email_participante);
-        
-        // Enviar cópia para o próprio organizador (MIME com .ics)
-        if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
-          try {
-            const mimeOrganizer = buildMIMEForRecipient(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, `[Cópia] ${subject}`, organizerEmail);
-            const rawOrganizer = urlSafeBase64(mimeOrganizer);
-            
-            await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${gmailSharedToken}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ raw: rawOrganizer })
-            });
-            console.log('Cópia com .ics enviada para organizador:', organizerEmail);
-          } catch (copyErr) {
-            console.error('Erro ao enviar cópia para organizador:', copyErr.message);
-          }
-        }
-        
-        await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
-        
-        return Response.json({
-          success: true,
-          method: 'gmail_shared_ics',
-          message: `Convite com calendário enviado para ${comp.email_participante} e ${organizerEmail}`
-        });
-      } catch (sendErr) {
-        console.error('Erro ao enviar via Gmail shared connector:', sendErr.message);
-        
-        // Fallback final: SendEmail sem .ics
-        try {
-          const emailHTMLFallback = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
-          await base44.integrations.Core.SendEmail({
-            to: comp.email_participante,
-            subject: subject,
-            body: emailHTMLFallback,
-            from_name: organizerName
-          });
-          await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
-          return Response.json({ success: true, method: 'platform_email', message: `Convite enviado (sem .ics) para ${comp.email_participante}` });
-        } catch (finalErr) {
-          console.error('SendEmail fallback also failed:', finalErr.message);
-          return Response.json({ success: false, error: 'Não foi possível enviar o convite.' }, { status: 500 });
-        }
-      }
+    const calendarTokens = [];
+    
+    // Try user's own Google token
+    const userAuth = await getUserGoogleToken(base44, user.email);
+    if (userAuth) {
+      calendarTokens.push({ token: userAuth.access_token, source: 'user', email: userAuth.google_email });
+    }
+    
+    // Always have shared connector as backup for Calendar
+    try {
+      const { accessToken: sharedCalToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
+      calendarTokens.push({ token: sharedCalToken, source: 'shared_calendar', email: 'shared' });
+    } catch (e) {
+      console.log('Shared Google Calendar connector not available:', e.message);
     }
 
-    const userAccessToken = userAuth.access_token;
-    const senderEmail = userAuth.google_email;
-    console.log(`Usando conta Google do usuário: ${senderEmail} (${user.email})`);
-
-    // ══════════════════════════════════════════════════════════════════
-    // ATTEMPT 1: Google Calendar API via USER'S OWN token
-    // ══════════════════════════════════════════════════════════════════
-    try {
-      console.log('Tentando criar evento no Calendar do usuário:', senderEmail);
-
-      const calEvent = {
-        summary: comp.titulo,
-        description: comp.descricao || 'Compromisso agendado via Apex Shield CRM',
-        location: location,
-        start: { dateTime: comp.data_inicio, timeZone: 'America/Sao_Paulo' },
-        end: { dateTime: (comp.data_fim || new Date(startDate.getTime() + 3600000).toISOString()), timeZone: 'America/Sao_Paulo' },
-        attendees: [
-          { email: senderEmail, responseStatus: 'accepted', self: true },
-          { email: comp.email_participante, responseStatus: 'needsAction' }
-        ],
-        guestsCanModify: false,
-        guestsCanSeeOtherGuests: false,
-        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 60 }, { method: 'popup', minutes: 30 }] }
-      };
-
-      let calUrl = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all';
-      if (comp.modalidade === 'online' && !comp.meeting_link) {
-        calEvent.conferenceData = { createRequest: { requestId: `meet-${comp.id}-${Date.now()}`, conferenceSolutionKey: { type: 'hangoutsMeet' } } };
-        calUrl += '&conferenceDataVersion=1';
-      } else if (comp.meeting_link) {
-        calEvent.description += `\n\nLink da reunião: ${comp.meeting_link}`;
-      }
-
-      const calRes = await fetch(calUrl, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${userAccessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(calEvent)
-      });
-
-      if (calRes.ok) {
-        const calData = await calRes.json();
+    for (const { token, source, email } of calendarTokens) {
+      try {
+        console.log(`Tentando criar evento via Calendar API (${source}: ${email})`);
+        const calData = await createCalendarEvent(token, comp, startDate, endDate, organizerEmail, participantEmail, location);
+        
         const newMeetLink = calData.hangoutLink || calData.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri;
         const updateData = { email_enviado: true, google_event_id: calData.id };
         if (newMeetLink && !comp.meeting_link) updateData.meeting_link = newMeetLink;
         await base44.entities.Compromisso.update(comp.id, updateData);
 
-        console.log('SUCCESS: Calendar event created via user token:', calData.id, '- invite sent from', senderEmail);
+        console.log(`SUCCESS: Calendar event created (${source}). ID: ${calData.id}. Attendees: ${organizerEmail}, ${participantEmail}`);
         return Response.json({
-          success: true, method: 'google_calendar',
-          message: `Convite enviado de ${senderEmail} para ${comp.email_participante} com opções de Aceitar/Recusar`,
-          google_event_id: calData.id, meeting_link: newMeetLink || comp.meeting_link
+          success: true,
+          method: 'google_calendar',
+          source: source,
+          message: `Evento criado na agenda com convite para ${organizerEmail} e ${participantEmail}`,
+          google_event_id: calData.id,
+          meeting_link: newMeetLink || comp.meeting_link
         });
+      } catch (err) {
+        console.error(`Calendar API failed (${source}):`, err.message);
       }
-
-      const calErr = await calRes.text();
-      console.error('Google Calendar API error (user token):', calRes.status, calErr);
-    } catch (calErr) {
-      console.error('Google Calendar error (user token):', calErr.message);
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // ATTEMPT 2: Gmail API via USER'S OWN token with MIME + .ics
+    // STRATEGY 2: Gmail MIME with .ics (fallback — sends calendar invite via email)
+    // Try user's Gmail, then shared Gmail connector
     // ══════════════════════════════════════════════════════════════════
+    
+    console.log('Calendar API failed for all sources. Falling back to Gmail MIME with .ics');
+    
+    // Get shared Gmail token
+    let sharedGmailToken = null;
+    let sharedGmailEmail = null;
     try {
-      console.log('Fallback: Enviando email MIME via Gmail do usuário:', senderEmail);
-
-      const icsContent = buildICS(comp, startDate, endDate, organizerName, senderEmail, location);
-      const emailHTML = buildEmailHTML(comp, organizerName, senderEmail, dayStr, timeStart, timeEnd, location);
-      const plainText = buildPlainText(comp, organizerName, senderEmail, dayStr, timeStart, timeEnd, location);
-      const mimeMessage = buildMIME(comp, icsContent, emailHTML, plainText, organizerName, senderEmail, subject);
-      const rawEncoded = urlSafeBase64(mimeMessage);
-
-      const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${userAccessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw: rawEncoded })
+      const gmailConn = await base44.asServiceRole.connectors.getConnection('gmail');
+      sharedGmailToken = gmailConn.accessToken;
+      // Get the email of the shared Gmail account
+      const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+        headers: { 'Authorization': `Bearer ${sharedGmailToken}` }
       });
-
-      if (gmailRes.ok) {
-        await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
-        console.log('SUCCESS: Email sent via user Gmail:', senderEmail, 'to', comp.email_participante);
-        return Response.json({
-          success: true, method: 'gmail_ics',
-          message: `Convite enviado de ${senderEmail} para ${comp.email_participante} via email com calendário`,
-          google_event_id: null
-        });
+      if (profileRes.ok) {
+        const profile = await profileRes.json();
+        sharedGmailEmail = profile.emailAddress;
       }
-
-      const gmailErr = await gmailRes.text();
-      console.error('Gmail API error (user token):', gmailRes.status, gmailErr);
-    } catch (gmailErr) {
-      console.error('Gmail error (user token):', gmailErr.message);
+    } catch (e) {
+      console.log('Shared Gmail connector not available:', e.message);
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // ATTEMPT 3: Fallback via Gmail shared connector (MIME com .ics)
-    // ══════════════════════════════════════════════════════════════════
-    try {
-      console.log('Fallback: Enviando via Gmail shared connector com .ics');
-      const icsContentFb = buildICS(comp, startDate, endDate, organizerName, senderEmail, location);
-      const emailHTMLFb = buildEmailHTML(comp, organizerName, senderEmail, dayStr, timeStart, timeEnd, location);
-      const plainTextFb = buildPlainText(comp, organizerName, senderEmail, dayStr, timeStart, timeEnd, location);
-      
-      const { accessToken: gmailSharedFb } = await base44.asServiceRole.connectors.getConnection('gmail');
-      
-      const mimeFb = buildMIME(comp, icsContentFb, emailHTMLFb, plainTextFb, organizerName, senderEmail, subject);
-      const rawFb = urlSafeBase64(mimeFb);
-      
-      const fbRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${gmailSharedFb}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw: rawFb })
-      });
-      
-      if (fbRes.ok) {
-        // Cópia para organizador
-        if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
-          try {
-            const mimeOrgFb = buildMIMEForRecipient(comp, icsContentFb, emailHTMLFb, plainTextFb, organizerName, senderEmail, `[Cópia] ${subject}`, organizerEmail);
-            await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${gmailSharedFb}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ raw: urlSafeBase64(mimeOrgFb) })
-            });
-          } catch (e) { console.error('Erro cópia organizador:', e.message); }
-        }
+    // Build ICS and HTML
+    const senderEmail = sharedGmailEmail || organizerEmail;
+    const icsContent = buildICS(comp, startDate, endDate, organizerName, senderEmail, participantEmail, location);
+    const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
+
+    // Gmail sources to try
+    const gmailSources = [];
+    if (userAuth) {
+      gmailSources.push({ token: userAuth.access_token, email: userAuth.google_email, source: 'user_gmail' });
+    }
+    if (sharedGmailToken) {
+      gmailSources.push({ token: sharedGmailToken, email: sharedGmailEmail || 'shared', source: 'shared_gmail' });
+    }
+
+    for (const { token, email: gmailEmail, source } of gmailSources) {
+      try {
+        console.log(`Tentando enviar MIME com .ics via ${source} (${gmailEmail})`);
         
+        // Send to participant
+        await sendGmailMIME(token, participantEmail, organizerName, gmailEmail, subject, emailHTML, icsContent);
+        console.log(`Email com .ics enviado para participante: ${participantEmail}`);
+        
+        // Send to organizer (if different)
+        if (organizerEmail.toLowerCase() !== participantEmail.toLowerCase()) {
+          try {
+            await sendGmailMIME(token, organizerEmail, organizerName, gmailEmail, subject, emailHTML, icsContent);
+            console.log(`Email com .ics enviado para organizador: ${organizerEmail}`);
+          } catch (copyErr) {
+            console.error('Erro ao enviar .ics para organizador:', copyErr.message);
+          }
+        }
+
         await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
-        console.log('SUCCESS: Convite com .ics enviado via Gmail shared (fallback) para', comp.email_participante);
-        return Response.json({ success: true, method: 'gmail_shared_ics', message: `Convite com calendário enviado para ${comp.email_participante}` });
+        return Response.json({
+          success: true,
+          method: 'gmail_ics',
+          source: source,
+          message: `Convite com .ics enviado para ${participantEmail} e ${organizerEmail}`
+        });
+      } catch (err) {
+        console.error(`Gmail MIME failed (${source}):`, err.message);
       }
-      
-      const fbErr = await fbRes.text();
-      console.error('Gmail shared connector fallback error:', fbRes.status, fbErr);
-    } catch (sendErr) {
-      console.error('Gmail shared connector fallback failed:', sendErr.message);
     }
 
-    console.error('ALL methods failed for user', user.email, '-> invite to', comp.email_participante);
-    return Response.json({
-      success: false,
-      error: 'Não foi possível enviar o convite. Tente novamente mais tarde.'
-    }, { status: 500 });
+    // ══════════════════════════════════════════════════════════════════
+    // STRATEGY 3: Platform SendEmail (last resort — no .ics attachment)
+    // ══════════════════════════════════════════════════════════════════
+    try {
+      console.log('Fallback final: SendEmail da plataforma (sem .ics)');
+      await base44.integrations.Core.SendEmail({
+        to: participantEmail,
+        subject: subject,
+        body: emailHTML,
+        from_name: organizerName
+      });
+      if (organizerEmail.toLowerCase() !== participantEmail.toLowerCase()) {
+        await base44.integrations.Core.SendEmail({
+          to: organizerEmail,
+          subject: subject,
+          body: emailHTML,
+          from_name: organizerName
+        });
+      }
+      await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+      return Response.json({ success: true, method: 'platform_email', message: `Convite enviado (sem .ics) para ${participantEmail}` });
+    } catch (finalErr) {
+      console.error('All methods failed:', finalErr.message);
+    }
+
+    return Response.json({ success: false, error: 'Não foi possível enviar o convite.' }, { status: 500 });
 
   } catch (error) {
-    console.error('Fatal error in enviarConviteCompromisso:', error.message);
+    console.error('Fatal error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

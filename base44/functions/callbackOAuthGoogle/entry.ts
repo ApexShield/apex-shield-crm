@@ -34,7 +34,11 @@ Deno.serve(async (req) => {
       return errorHtml("Credenciais OAuth não configuradas");
     }
 
+    // Build redirect URI from the actual request URL origin to match what iniciarOAuthGoogle sent
+    const requestUrl = new URL(req.url);
     const REDIRECT_URI = `https://app--apex-shield-crm--69587402a43b69a04695a178.base44.app/api/apps/${BASE44_APP_ID}/functions/callbackOAuthGoogle`;
+    console.log("Request URL origin:", requestUrl.origin, "Full URL:", req.url);
+    console.log("Using REDIRECT_URI:", REDIRECT_URI);
 
     console.log("Callback OAuth recebido. Email:", userEmail);
 
@@ -123,7 +127,12 @@ Deno.serve(async (req) => {
       `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
-    const appUrl = 'https://app--apex-shield-crm--69587402a43b69a04695a178.base44.app/Compromissos';
+    // Derive app URL from the request URL - strip /api/apps/... path
+    const reqUrl = new URL(req.url);
+    const apiPathIndex = reqUrl.pathname.indexOf('/api/apps/');
+    const basePath = apiPathIndex > -1 ? reqUrl.pathname.substring(0, apiPathIndex) : '';
+    const appUrl = `${reqUrl.origin}${basePath}/Compromissos`;
+    console.log("App redirect URL:", appUrl);
 
     return new Response(`
       <html>

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, CheckCircle2, Repeat, Mail, XCircle } from "lucide-react";
+import { Calendar, Plus, Clock, CalendarDays, ChevronLeft, ChevronRight, Link2, Repeat, Mail } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, eachDayOfInterval, getDay, endOfWeek } from "date-fns";
@@ -422,17 +422,14 @@ export default function Compromissos() {
                     </div>
                   ))}
                   <div className="border-t border-white/10 pt-2 mt-2">
+                    <p className="text-[10px] text-indigo-300 font-semibold mb-1.5">Status dos Lembretes</p>
                     <div className="flex items-center gap-2">
-                      <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-white" /></span>
-                      <span className="text-xs text-indigo-200">Presença confirmada</span>
+                      <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black text-white">1</span>
+                      <span className="text-xs text-indigo-200">Lembrete 1h enviado</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center"><Clock className="w-2.5 h-2.5 text-white" /></span>
-                      <span className="text-xs text-indigo-200">Aguardando confirmação</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="bg-red-500 rounded-full w-4 h-4 flex items-center justify-center"><XCircle className="w-2.5 h-2.5 text-white" /></span>
-                      <span className="text-xs text-indigo-200">Convite recusado</span>
+                      <span className="bg-green-500 rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black text-white">2</span>
+                      <span className="text-xs text-indigo-200">Lembrete 30min enviado</span>
                     </div>
                   </div>
                 </div>
@@ -475,19 +472,10 @@ export default function Compromissos() {
                                             onClick={(e) => { if (!snap.isDragging) { e.stopPropagation(); handleEditEvent(event); } }}>
                                             <div className="flex items-center gap-1">
                                               <span className="truncate flex-1">{event.titulo}</span>
-                                              {event.email_participante && event.convidado_confirmou && (
-                                                <span className="flex-shrink-0 bg-green-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Presença confirmada">
-                                                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                                                </span>
-                                              )}
-                                              {event.email_participante && event.convidado_recusou && (
-                                                <span className="flex-shrink-0 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Convite recusado">
-                                                  <XCircle className="w-3.5 h-3.5 text-white" />
-                                                </span>
-                                              )}
-                                              {event.email_participante && !event.convidado_confirmou && !event.convidado_recusou && (
-                                                <span className="flex-shrink-0 bg-yellow-500 rounded-full w-5 h-5 flex items-center justify-center shadow-md" title="Aguardando confirmação">
-                                                  <Clock className="w-3 h-3 text-white" />
+                                              {event.email_participante && (event.lembrete_1h_enviado || event.lembrete_30min_enviado) && (
+                                                <span className={`flex-shrink-0 rounded-full w-5 h-5 flex items-center justify-center shadow-md text-[10px] font-black text-white ${event.lembrete_30min_enviado ? 'bg-green-500' : 'bg-yellow-500'}`}
+                                                  title={event.lembrete_30min_enviado ? 'Lembrete 30min enviado' : 'Lembrete 1h enviado'}>
+                                                  {event.lembrete_30min_enviado ? '2' : '1'}
                                                 </span>
                                               )}
                                             </div>
@@ -607,19 +595,23 @@ export default function Compromissos() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    {editingEvent.convidado_confirmou && <CheckCircle2 className="w-5 h-5 text-green-400" />}
-                    {editingEvent.convidado_recusou && <XCircle className="w-5 h-5 text-red-400" />}
-                    {!editingEvent.convidado_confirmou && !editingEvent.convidado_recusou && <Clock className="w-5 h-5 text-yellow-400" />}
+                    {editingEvent.lembrete_30min_enviado ? (
+                      <span className="bg-green-500 rounded-full w-6 h-6 flex items-center justify-center text-xs font-black text-white">2</span>
+                    ) : editingEvent.lembrete_1h_enviado ? (
+                      <span className="bg-yellow-500 rounded-full w-6 h-6 flex items-center justify-center text-xs font-black text-white">1</span>
+                    ) : (
+                      <Clock className="w-5 h-5 text-slate-400" />
+                    )}
                     <span className="text-sm text-white">
-                      {editingEvent.convidado_confirmou ? 'Presença confirmada' : editingEvent.convidado_recusou ? 'Convite recusado' : 'Aguardando resposta'}
+                      {editingEvent.lembrete_30min_enviado ? 'Lembrete de 30min enviado' : editingEvent.lembrete_1h_enviado ? 'Lembrete de 1h enviado' : 'Nenhum lembrete enviado ainda'}
                     </span>
                   </div>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                    editingEvent.convidado_confirmou ? 'bg-green-500/20 text-green-300' : 
-                    editingEvent.convidado_recusou ? 'bg-red-500/20 text-red-300' : 
-                    'bg-yellow-500/20 text-yellow-300'
+                    editingEvent.lembrete_30min_enviado ? 'bg-green-500/20 text-green-300' : 
+                    editingEvent.lembrete_1h_enviado ? 'bg-yellow-500/20 text-yellow-300' : 
+                    'bg-slate-500/20 text-slate-300'
                   }`}>
-                    {editingEvent.convidado_confirmou ? '✅ Confirmado' : editingEvent.convidado_recusou ? '✕ Recusado' : '⏳ Pendente'}
+                    {editingEvent.lembrete_30min_enviado ? '✅ 2/2 enviados' : editingEvent.lembrete_1h_enviado ? '⏳ 1/2 enviado' : '0/2 enviados'}
                   </span>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={handleSendInvite} disabled={sendingInvite}

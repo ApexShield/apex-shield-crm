@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Clock, ChevronRight, ChevronLeft, MapPin, Video, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
+import { Plus, Clock, ChevronRight, ChevronLeft, MapPin, Video, CalendarDays } from "lucide-react";
 import { format, isSameDay, startOfWeek, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -41,19 +41,10 @@ function EventCard({ event, onClick }) {
           {/* Title row */}
           <div className="flex items-center gap-2 mb-1">
             <span className="font-bold text-white text-sm truncate flex-1">{event.titulo}</span>
-            {event.email_participante && event.convidado_confirmou && (
-              <span className="bg-emerald-500 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <CheckCircle2 className="w-3 h-3 text-white" />
-              </span>
-            )}
-            {event.email_participante && event.convidado_recusou && (
-              <span className="bg-red-500 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <XCircle className="w-3 h-3 text-white" />
-              </span>
-            )}
-            {event.email_participante && !event.convidado_confirmou && !event.convidado_recusou && (
-              <span className="bg-amber-500 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <Clock className="w-2.5 h-2.5 text-white" />
+            {event.email_participante && (event.lembrete_1h_enviado || event.lembrete_30min_enviado) && (
+              <span className={`rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 shadow-sm text-[10px] font-black text-white ${event.lembrete_30min_enviado ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                title={event.lembrete_30min_enviado ? 'Lembrete 30min enviado' : 'Lembrete 1h enviado'}>
+                {event.lembrete_30min_enviado ? '2' : '1'}
               </span>
             )}
           </div>

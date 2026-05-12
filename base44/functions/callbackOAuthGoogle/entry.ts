@@ -132,22 +132,18 @@ Deno.serve(async (req) => {
             <h2 style="color:#10b981;margin-bottom:10px;">APEX SHIELD CRM</h2>
             <h3 style="color:#10b981;margin-bottom:10px;">Conectado com sucesso!</h3>
             <p style="color:#64748b;margin-bottom:20px;">Conta Google: <strong>${googleUser.email}</strong></p>
-            <p style="color:#64748b;font-size:14px;">Conexão salva! Fechando...</p>
-            <div id="manual-close" style="display:none;margin-top:20px;">
-              <p style="color:#94a3b8;font-size:13px;">A janela não fechou automaticamente.</p>
-              <button onclick="window.close()" style="margin-top:8px;padding:10px 32px;border-radius:8px;background:#10b981;color:white;border:none;cursor:pointer;font-weight:bold;font-size:14px;">Fechar esta janela</button>
-            </div>
+            <p style="color:#64748b;font-size:14px;">Conexão salva! Redirecionando...</p>
           </div>
           <script>
             if(window.opener && !window.opener.closed){
               window.opener.postMessage({type:'google_auth_complete'},'*');
             }
-            // Try to close after 2 seconds
+            // Try to close first, then redirect as fallback
             setTimeout(function(){
               window.close();
-              // If window.close() didn't work (browser restriction), show manual button
+              // If window.close() didn't work, redirect to app
               setTimeout(function(){
-                document.getElementById('manual-close').style.display='block';
+                window.location.href = '/Compromissos';
               }, 500);
             },2000);
           </script>

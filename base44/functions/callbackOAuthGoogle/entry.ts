@@ -127,12 +127,7 @@ Deno.serve(async (req) => {
       `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
-    // Derive app URL from the request URL - strip /api/apps/... path
-    const reqUrl = new URL(req.url);
-    const apiPathIndex = reqUrl.pathname.indexOf('/api/apps/');
-    const basePath = apiPathIndex > -1 ? reqUrl.pathname.substring(0, apiPathIndex) : '';
-    const appUrl = `${reqUrl.origin}${basePath}/Compromissos`;
-    console.log("App redirect URL:", appUrl);
+    const appUrl = 'https://apex-shield-crm.base44.app/Compromissos';
 
     return new Response(`
       <html>

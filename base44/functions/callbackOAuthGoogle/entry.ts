@@ -133,10 +133,23 @@ Deno.serve(async (req) => {
             <h3 style="color:#10b981;margin-bottom:10px;">Conectado com sucesso!</h3>
             <p style="color:#64748b;margin-bottom:20px;">Conta Google: <strong>${googleUser.email}</strong></p>
             <p style="color:#64748b;font-size:14px;">Conexão salva! Fechando...</p>
+            <div id="manual-close" style="display:none;margin-top:20px;">
+              <p style="color:#94a3b8;font-size:13px;">A janela não fechou automaticamente.</p>
+              <button onclick="window.close()" style="margin-top:8px;padding:10px 32px;border-radius:8px;background:#10b981;color:white;border:none;cursor:pointer;font-weight:bold;font-size:14px;">Fechar esta janela</button>
+            </div>
           </div>
           <script>
-            if(window.opener && !window.opener.closed){window.opener.postMessage({type:'google_auth_complete'},'*');}
-            setTimeout(()=>{window.close();},2000);
+            if(window.opener && !window.opener.closed){
+              window.opener.postMessage({type:'google_auth_complete'},'*');
+            }
+            // Try to close after 2 seconds
+            setTimeout(function(){
+              window.close();
+              // If window.close() didn't work (browser restriction), show manual button
+              setTimeout(function(){
+                document.getElementById('manual-close').style.display='block';
+              }, 500);
+            },2000);
           </script>
         </body>
       </html>

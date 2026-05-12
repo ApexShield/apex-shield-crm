@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 export default function GoogleCalendarStatus() {
   const [connecting, setConnecting] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: connectionStatus, isLoading } = useQuery({
     queryKey: ["google-calendar-status"],
@@ -23,12 +24,24 @@ export default function GoogleCalendarStatus() {
       const { authUrl } = res.data;
       if (authUrl) {
         const popup = window.open(authUrl, "_blank", "width=500,height=600");
+        
+        // Listen for postMessage from callback page
+        const messageHandler = (event) => {
+          if (event.data?.type === 'google_auth_complete') {
+            window.removeEventListener('message', messageHandler);
+            setConnecting(false);
+            queryClient.invalidateQueries({ queryKey: ["google-calendar-status"] });
+          }
+        };
+        window.addEventListener('message', messageHandler);
+        
+        // Also poll popup.closed as fallback
         const timer = setInterval(() => {
           if (!popup || popup.closed) {
             clearInterval(timer);
+            window.removeEventListener('message', messageHandler);
             setConnecting(false);
-            // Re-check connection
-            window.location.reload();
+            queryClient.invalidateQueries({ queryKey: ["google-calendar-status"] });
           }
         }, 1000);
       }

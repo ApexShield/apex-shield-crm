@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Users, BarChart3, Calendar, Bot, MoreHorizontal, Cake, Megaphone, Calculator, Target, Wallet, GitBranch, X } from "lucide-react";
+import { Users, BarChart3, Calendar, Bot, MoreHorizontal, Cake, Megaphone, Calculator, Target, Wallet, GitBranch, X, LayoutDashboard } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MAIN_ITEMS = [
+  { icon: LayoutDashboard, label: "Painel", page: "PainelPrincipal" },
   { icon: Users, label: "Leads", page: "Leads" },
-  { icon: BarChart3, label: "Dashboard", page: "DashboardAtividades" },
   { icon: Calendar, label: "Agenda", page: "Compromissos" },
   { icon: Bot, label: "Agente", page: "AgenteApex" },
 ];
 
 const MORE_ITEMS = [
+  { icon: BarChart3, label: "Dashboard", page: "DashboardAtividades", color: "from-indigo-500 to-purple-500" },
   { icon: Cake, label: "Aniversariantes", page: "Aniversariantes", color: "from-pink-500 to-rose-500" },
   { icon: Megaphone, label: "Campanhas", page: "Campanhas", color: "from-orange-500 to-amber-500" },
   { icon: Calculator, label: "Calculadora", page: "CalculadoraRapida", color: "from-blue-500 to-cyan-500" },

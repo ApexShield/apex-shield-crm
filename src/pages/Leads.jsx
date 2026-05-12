@@ -516,6 +516,7 @@ export default function Leads() {
                 <TableRow className="border-white/10">
                   {[
                     { key: "codigo", label: "Cód" },
+                    { key: "qualificacao", label: "Qual." },
                     { key: "nome", label: "Nome" },
                     { key: "data_contato", label: "Data Contato" },
                     { key: "agendar_visita", label: "Data Visita" },
@@ -562,6 +563,12 @@ export default function Leads() {
                       style={{ color: cor }}
                     >
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {cliente.qualificacao === "quente" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-red-500/30 text-red-300">🔥 QUENTE</span>}
+                        {cliente.qualificacao === "frio" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-500/30 text-blue-300">❄️ FRIO</span>}
+                        {cliente.qualificacao === "neutro" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-gray-500/30 text-gray-300">⚡ NEUTRO</span>}
+                        {!cliente.qualificacao && <span className="text-white/30">—</span>}
+                      </TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.nome}</TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">
                         {cliente.data_contato ? (() => {

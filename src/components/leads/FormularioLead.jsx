@@ -67,6 +67,7 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   const getEmptyFormData = () => ({
     codigo: nextCodigo || "",
     status: "AB Fone",
+    qualificacao: "",
     data_cadastro: new Date().toISOString().split('T')[0],
     nome: "",
     cpf: "",
@@ -444,6 +445,17 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                         <SelectItem value="Venda Feita">Venda Feita</SelectItem>
                         <SelectItem value="Entrega de Apólice">Entrega de Apólice</SelectItem>
                         <SelectItem value="Encerrado">Encerrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Qualificação:</Label>
+                    <Select value={formData.qualificacao || undefined} onValueChange={(v) => setFormData(prev => ({...prev, qualificacao: v}))}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="quente">🔥 Quente</SelectItem>
+                        <SelectItem value="frio">❄️ Frio</SelectItem>
+                        <SelectItem value="neutro">⚡ Neutro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

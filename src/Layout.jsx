@@ -16,6 +16,7 @@ import DeleteAccountDialog from "./components/mobile/DeleteAccountDialog";
 import PullToRefresh from "./components/mobile/PullToRefresh";
 
 const navigation = [
+  { name: "Painel Principal", icon: BarChart3, page: "PainelPrincipal" },
   { name: "Leads", icon: Users, page: "Leads" },
   { name: "Dashboard Atividades", icon: BarChart3, page: "DashboardAtividades" },
   { name: "Compromissos", icon: CalendarIcon, page: "Compromissos" },
@@ -45,7 +46,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
 
   // Main pages that show the menu icon; sub-pages show back arrow
-  const MAIN_PAGES = ["Leads", "DashboardAtividades", "Compromissos", "AgenteApex", "Home", "BoasVindas"];
+  const MAIN_PAGES = ["PainelPrincipal", "Leads", "DashboardAtividades", "Compromissos", "AgenteApex", "Home", "BoasVindas"];
   const isMainPage = MAIN_PAGES.includes(currentPageName) || location.pathname === "/";
 
   const isPublicPage = PUBLIC_PAGES.includes(currentPageName);

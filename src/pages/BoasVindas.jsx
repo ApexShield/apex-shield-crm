@@ -40,7 +40,7 @@ export default function BoasVindas() {
 
   useEffect(() => {
     if (currentUser?.aceite_politica_privacidade) {
-      navigate(createPageUrl("Leads"));
+      navigate(createPageUrl("PainelPrincipal"));
     }
   }, [currentUser, navigate]);
 
@@ -50,7 +50,7 @@ export default function BoasVindas() {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       setShowProfileDialog(false);
       setShowPrivacyDialog(false);
-      navigate(createPageUrl("Leads"));
+      navigate(createPageUrl("PainelPrincipal"));
     }
   });
 

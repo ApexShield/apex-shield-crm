@@ -30,6 +30,15 @@
       "default": "AB Fone",
       "description": "Status do lead no funil"
     },
+    "qualificacao": {
+      "type": "string",
+      "enum": [
+        "quente",
+        "frio",
+        "neutro"
+      ],
+      "description": "Qualifica\u00e7\u00e3o do lead: quente, frio ou neutro"
+    },
     "telefone": {
       "type": "string",
       "description": "Telefone de contato"
@@ -132,7 +141,7 @@
     },
     "patrimonio_imoveis": {
       "type": "string",
-      "description": "Patrim\u00f4nio - Im\u00f3veis (casa, apto, lotes)"
+      "description": "Patrim\u00f4nio - Im\u00f3veis"
     },
     "patrimonio_veiculos": {
       "type": "string",
@@ -140,7 +149,7 @@
     },
     "patrimonio_investimentos": {
       "type": "string",
-      "description": "Patrim\u00f4nio - Investimentos/Aplica\u00e7\u00f5es financeiras"
+      "description": "Patrim\u00f4nio - Investimentos"
     },
     "patrimonio_poupanca": {
       "type": "string",
@@ -148,7 +157,7 @@
     },
     "patrimonio_previdencia": {
       "type": "string",
-      "description": "Patrim\u00f4nio - Previd\u00eancia privada"
+      "description": "Patrim\u00f4nio - Previd\u00eancia"
     },
     "patrimonio_outros": {
       "type": "string",

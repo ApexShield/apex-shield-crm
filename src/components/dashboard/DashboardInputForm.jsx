@@ -58,7 +58,9 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
     const initial = {};
     METRICS.forEach(m => {
       const val = existingRecord ? (existingRecord[m.key] || 0) : 0;
-      initial[m.key] = val === 0 ? "" : String(val);
+      let strVal = val === 0 ? "" : String(val);
+      if (m.type === "float" && strVal) strVal = strVal.replace(".", ",");
+      initial[m.key] = strVal;
     });
     return initial;
   });
@@ -75,7 +77,7 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
     const numericValues = {};
     METRICS.forEach(m => {
       const v = values[m.key];
-      numericValues[m.key] = v === "" ? 0 : parseFloat(v) || 0;
+      numericValues[m.key] = v === "" ? 0 : parseFloat(String(v).replace(",", ".")) || 0;
     });
 
     const payload = {
@@ -141,17 +143,21 @@ export default function DashboardInputForm({ open, onClose, existingRecord }) {
                   value={values[m.key]}
                   onChange={e => {
                     let raw = e.target.value;
-                    // Allow only digits (and dot for floats)
+                    // Allow digits, dot and comma for floats
                     if (m.type === "float") {
+                      // Replace comma with dot for internal handling
+                      raw = raw.replace(",", ".");
                       raw = raw.replace(/[^0-9.]/g, "");
                       // Only one dot allowed
                       const parts = raw.split(".");
                       if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
+                      // Display with comma for Brazilian users
+                      raw = raw.replace(".", ",");
                     } else {
                       raw = raw.replace(/[^0-9]/g, "");
                     }
-                    // Remove leading zeros (but keep "0." for floats)
-                    if (raw.length > 1 && raw[0] === "0" && raw[1] !== ".") {
+                    // Remove leading zeros (but keep "0," for floats)
+                    if (raw.length > 1 && raw[0] === "0" && raw[1] !== ",") {
                       raw = raw.replace(/^0+/, "");
                     }
                     setValues(prev => ({ ...prev, [m.key]: raw }));

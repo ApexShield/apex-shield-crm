@@ -127,33 +127,38 @@ export default function Compromissos() {
       }
       const result = await base44.entities.Compromisso.create(data);
 
-      // Sync with Google Calendar
-      try {
-        const calRes = await base44.functions.invoke('criarEventoCalendar', {
-          summary: data.titulo,
-          description: data.descricao || '',
-          startDateTime: data.data_inicio,
-          endDateTime: data.data_fim,
-          location: data.modalidade === 'presencial' ? (data.endereco || '') : '',
-          attendees: data.email_participante ? [{ email: data.email_participante }] : [],
-        });
-        if (calRes.data?.success && calRes.data.eventId) {
-          const updateData = { google_event_id: calRes.data.eventId };
-          if (calRes.data.meetingLink && !data.meeting_link) updateData.meeting_link = calRes.data.meetingLink;
-          await base44.entities.Compromisso.update(result.id, updateData);
-        }
-      } catch (err) {
-        console.error('Google Calendar sync error (create):', err);
-      }
-
-      // Send invite email if participant email is provided
-      if (data.email_participante) {
+      // Fire-and-forget: sync with Google Calendar + send invite (don't block UI)
+      const bgTasks = async () => {
+        // Sync with Google Calendar
         try {
-          await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: result.id });
+          const calRes = await base44.functions.invoke('criarEventoCalendar', {
+            summary: data.titulo,
+            description: data.descricao || '',
+            startDateTime: data.data_inicio,
+            endDateTime: data.data_fim,
+            location: data.modalidade === 'presencial' ? (data.endereco || '') : '',
+            attendees: data.email_participante ? [{ email: data.email_participante }] : [],
+          });
+          if (calRes.data?.success && calRes.data.eventId) {
+            const updateData = { google_event_id: calRes.data.eventId };
+            if (calRes.data.meetingLink && !data.meeting_link) updateData.meeting_link = calRes.data.meetingLink;
+            await base44.entities.Compromisso.update(result.id, updateData);
+          }
         } catch (err) {
-          console.error('Erro ao enviar convite:', err);
+          console.error('Google Calendar sync error (create):', err);
         }
-      }
+
+        // Send invite email if participant email is provided
+        if (data.email_participante) {
+          try {
+            await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: result.id });
+          } catch (err) {
+            console.error('Erro ao enviar convite:', err);
+          }
+        }
+      };
+      bgTasks(); // don't await — runs in background
+
       return result;
     },
     onSuccess: () => {
@@ -170,31 +175,33 @@ export default function Compromissos() {
       const { id, ...updateData } = updatePayload;
       await base44.entities.Compromisso.update(id, updateData);
 
-      // Sync with Google Calendar if event has google_event_id
-      const existingEvent = compromissos.find(c => c.id === id);
-      if (existingEvent?.google_event_id) {
-        try {
-          await base44.functions.invoke('atualizarEventoCalendar', {
-            eventId: existingEvent.google_event_id,
-            summary: updateData.titulo,
-            description: updateData.descricao || '',
-            startDateTime: updateData.data_inicio,
-            endDateTime: updateData.data_fim,
-            location: updateData.modalidade === 'presencial' ? (updateData.endereco || '') : '',
-            attendees: updateData.email_participante ? [{ email: updateData.email_participante }] : [],
-          });
-        } catch (err) {
-          console.error('Google Calendar sync error (update):', err);
+      // Fire-and-forget: sync calendar + send invite (don't block UI)
+      const bgTasks = async () => {
+        const existingEvent = compromissos.find(c => c.id === id);
+        if (existingEvent?.google_event_id) {
+          try {
+            await base44.functions.invoke('atualizarEventoCalendar', {
+              eventId: existingEvent.google_event_id,
+              summary: updateData.titulo,
+              description: updateData.descricao || '',
+              startDateTime: updateData.data_inicio,
+              endDateTime: updateData.data_fim,
+              location: updateData.modalidade === 'presencial' ? (updateData.endereco || '') : '',
+              attendees: updateData.email_participante ? [{ email: updateData.email_participante }] : [],
+            });
+          } catch (err) {
+            console.error('Google Calendar sync error (update):', err);
+          }
         }
-      }
-
-      if (sendEmail && updateData.email_participante) {
-        try {
-          await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: id });
-        } catch (err) {
-          console.error('Erro ao enviar email de atualização:', err);
+        if (sendEmail && updateData.email_participante) {
+          try {
+            await base44.functions.invoke('enviarConviteCompromisso', { compromisso_id: id });
+          } catch (err) {
+            console.error('Erro ao enviar email de atualização:', err);
+          }
         }
-      }
+      };
+      bgTasks(); // don't await — runs in background
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compromissos'] });

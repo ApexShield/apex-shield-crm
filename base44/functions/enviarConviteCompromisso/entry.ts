@@ -17,6 +17,7 @@ function buildICS(comp, startDate, endDate, organizerName, organizerEmail, locat
     `DESCRIPTION:${(comp.descricao || 'Compromisso agendado via Apex Shield CRM').replace(/\n/g, '\\n')}`,
     `LOCATION:${location}`,
     `ORGANIZER;CN=${organizerName}:mailto:${organizerEmail}`,
+    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=${organizerName}:mailto:${organizerEmail}`,
     `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${comp.email_participante}:mailto:${comp.email_participante}`,
     'STATUS:CONFIRMED','SEQUENCE:0',
     'BEGIN:VALARM','TRIGGER:-PT1H','ACTION:DISPLAY','DESCRIPTION:Lembrete - 1 hora antes','END:VALARM',
@@ -213,7 +214,10 @@ Deno.serve(async (req) => {
         location: location,
         start: { dateTime: comp.data_inicio, timeZone: 'America/Sao_Paulo' },
         end: { dateTime: (comp.data_fim || new Date(startDate.getTime() + 3600000).toISOString()), timeZone: 'America/Sao_Paulo' },
-        attendees: [{ email: comp.email_participante, responseStatus: 'needsAction' }],
+        attendees: [
+          { email: senderEmail, responseStatus: 'accepted', self: true },
+          { email: comp.email_participante, responseStatus: 'needsAction' }
+        ],
         guestsCanModify: false,
         guestsCanSeeOtherGuests: false,
         reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 60 }, { method: 'popup', minutes: 30 }] }

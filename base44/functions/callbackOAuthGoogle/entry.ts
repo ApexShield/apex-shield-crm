@@ -123,29 +123,32 @@ Deno.serve(async (req) => {
       `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
+    const appUrl = 'https://app--apex-shield-crm--69587402a43b69a04695a178.base44.app/Compromissos';
+
     return new Response(`
       <html>
         <head><meta charset="UTF-8"><title>APEX SHIELD CRM - Conectado</title></head>
-        <body style="font-family:Arial;padding:40px;text-align:center;background:linear-gradient(to bottom right,#10b981,#3b82f6);margin:0;">
-          <div style="background:white;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;margin:0 auto;">
+        <body style="font-family:Arial;padding:40px;text-align:center;background:linear-gradient(to bottom right,#10b981,#3b82f6);margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;">
+          <div style="background:white;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;width:100%;">
             <div style="font-size:60px;margin-bottom:20px;">✅</div>
             <h2 style="color:#10b981;margin-bottom:10px;">APEX SHIELD CRM</h2>
             <h3 style="color:#10b981;margin-bottom:10px;">Conectado com sucesso!</h3>
-            <p style="color:#64748b;margin-bottom:20px;">Conta Google: <strong>${googleUser.email}</strong></p>
-            <p style="color:#64748b;font-size:14px;">Conexão salva! Redirecionando...</p>
+            <p style="color:#64748b;margin-bottom:24px;">Conta Google: <strong>${googleUser.email}</strong></p>
+            <a href="${appUrl}" style="display:inline-block;background:#10b981;color:white;padding:14px 40px;border-radius:12px;font-weight:bold;font-size:16px;text-decoration:none;box-shadow:0 4px 12px rgba(16,185,129,0.4);">
+              ✓ Voltar para o CRM
+            </a>
+            <p style="color:#94a3b8;font-size:12px;margin-top:16px;">Você será redirecionado automaticamente...</p>
           </div>
           <script>
             if(window.opener && !window.opener.closed){
               window.opener.postMessage({type:'google_auth_complete'},'*');
             }
-            // Try to close first, then redirect as fallback
             setTimeout(function(){
-              window.close();
-              // If window.close() didn't work, redirect to app
+              try { window.close(); } catch(e) {}
               setTimeout(function(){
-                window.location.href = '/Compromissos';
-              }, 500);
-            },2000);
+                window.location.href = '${appUrl}';
+              }, 300);
+            }, 3000);
           </script>
         </body>
       </html>

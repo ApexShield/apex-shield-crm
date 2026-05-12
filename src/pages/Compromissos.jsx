@@ -290,7 +290,7 @@ export default function Compromissos() {
     e.preventDefault();
     if (editingEvent) {
       const updatePayload = { ...formData, id: editingEvent.id };
-      if (editingEvent.email_participante) {
+      if (editingEvent.email_participante || formData.email_participante) {
         setPendingUpdateData(updatePayload);
         setShowEmailConfirm(true);
       } else {

@@ -75,16 +75,19 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
       }
       const participanteEmail = emailConvidado || cliente?.email;
 
+      // Ignorar IDs temporários (lead ainda não salvo no banco)
+      const clienteId = (cliente?.id && !String(cliente.id).startsWith('temp-')) ? cliente.id : "";
+
       const compromisso = await base44.entities.Compromisso.create({
         ...dataToSubmit,
-        cliente_id: cliente?.id || "",
+        cliente_id: clienteId,
         cliente_nome: cliente?.nome || "",
         email_participante: participanteEmail || "",
         owner_email: user?.email || ""
       });
 
       // Atualizar status do lead conforme tipo de compromisso
-      if (cliente?.id) {
+      if (clienteId) {
         let novoStatus = null;
         if (tipoCompromisso === "AB Visita") {
           novoStatus = "AB Visita";

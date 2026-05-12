@@ -92,18 +92,23 @@ export default function Compromissos() {
     enabled: !!user
   });
 
-  // Fetch Google Calendar events
+  // Fetch Google Calendar events (individual per user via app user connector)
   const { data: googleEvents = [] } = useQuery({
     queryKey: ['google-calendar-events', fetchRange.start, fetchRange.end],
     queryFn: async () => {
-      const res = await base44.functions.invoke('listarEventosCalendar', {
-        dataInicio: fetchRange.start,
-        dataFim: fetchRange.end
-      });
-      return res.data?.eventos || [];
+      try {
+        const res = await base44.functions.invoke('listarEventosCalendar', {
+          dataInicio: fetchRange.start,
+          dataFim: fetchRange.end
+        });
+        return res.data?.eventos || [];
+      } catch {
+        // User hasn't connected their Google Calendar yet — return empty
+        return [];
+      }
     },
     enabled: !!user,
-    retry: 2,
+    retry: 1,
     refetchInterval: 120000,
   });
 

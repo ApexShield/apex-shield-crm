@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const CONNECTOR_ID = '6a02b60d6f5e1f53c2e11c6e';
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -14,8 +16,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Campos obrigatórios: eventId, summary, startDateTime, endDateTime' }, { status: 400 });
     }
 
-    // Usar app connector nativo — sem OAuth manual
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
+    // Usar app user connector — cada usuário usa sua própria conta Google
+    const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(CONNECTOR_ID);
 
     const event = {
       summary,

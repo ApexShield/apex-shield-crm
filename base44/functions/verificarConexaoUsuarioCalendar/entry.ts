@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const CONNECTOR_ID = '6a02b60d6f5e1f53c2e11c6e';
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -8,8 +10,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Usar app connector nativo — verificar se está conectado
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
+    // Usar app user connector — verifica a conexão individual do usuário
+    const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(CONNECTOR_ID);
 
     // Testar se o token funciona fazendo uma chamada simples
     const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary', {

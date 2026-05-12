@@ -526,17 +526,19 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Estado Civil:</Label>
-                    <Select value={formData.estado_civil || undefined} onValueChange={(v) => setFormData(prev => ({...prev, estado_civil: v, regime_casamento: v !== "CASADO" ? "" : prev.regime_casamento, data_casamento: v !== "CASADO" ? "" : prev.data_casamento}))}>
+                    <Select value={formData.estado_civil || undefined} onValueChange={(v) => setFormData(prev => ({...prev, estado_civil: v, regime_casamento: (v !== "CASADO" && v !== "UNIÃO ESTÁVEL") ? "" : prev.regime_casamento, data_casamento: (v !== "CASADO" && v !== "UNIÃO ESTÁVEL") ? "" : prev.data_casamento}))}>
+
                       <SelectTrigger tabIndex={23} className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="SOLTEIRO">SOLTEIRO</SelectItem>
                         <SelectItem value="CASADO">CASADO</SelectItem>
+                        <SelectItem value="UNIÃO ESTÁVEL">UNIÃO ESTÁVEL</SelectItem>
                         <SelectItem value="DIVORCIADO">DIVORCIADO</SelectItem>
                         <SelectItem value="VIÚVO">VIÚVO</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {formData.estado_civil === "CASADO" && (
+                  {(formData.estado_civil === "CASADO" || formData.estado_civil === "UNIÃO ESTÁVEL") && (
                     <>
                       <div>
                         <Label className="text-[11px]">Regime:</Label>

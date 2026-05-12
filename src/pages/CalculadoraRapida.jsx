@@ -130,7 +130,7 @@ export default function CalculadoraRapida() {
     }
     // Cônjuge conta como +1 dependente
     const ec = (cliente.estado_civil || "").toLowerCase();
-    if (ec.includes("casado") || ec.includes("casada")) {
+    if (ec.includes("casado") || ec.includes("casada") || ec.includes("união estável")) {
       deps += 1;
     }
     return deps;
@@ -148,7 +148,16 @@ export default function CalculadoraRapida() {
         profissao: cliente.profissao || "",
         genero: cliente.genero || prev.genero,
         renda_mensal: cliente.renda || "",
-        gastos_mensais: cliente.custo_mensal_fixo || "",
+        gastos_mensais: (() => {
+          const fixoFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos'];
+          const varFields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+          const allFields = [...fixoFields, ...varFields];
+          const total = allFields.reduce((sum, f) => {
+            const val = (cliente[f] || '').toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
+            return sum + (parseFloat(val) || 0);
+          }, 0);
+          return total > 0 ? total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : (cliente.custo_mensal_fixo || "");
+        })(),
         patrimonio_bruto: cliente.patrimonio || "",
         patrimonio_financeiro: prev.patrimonio_financeiro,
         altura: cliente.altura || "",
@@ -201,7 +210,7 @@ export default function CalculadoraRapida() {
     if (idade >= 55) return "Momento crucial para garantir sucessão e legado";
     if (idade >= 45) return "Momento de consolidação patrimonial e planejamento sucessório";
     if (dependentes > 0) return "Momento de proteger os dependentes e garantir educação";
-    if ((estadoCivil || "").toLowerCase().includes("casado")) return "Momento de construir proteção familiar";
+    if ((estadoCivil || "").toLowerCase().includes("casado") || (estadoCivil || "").toLowerCase().includes("união estável")) return "Momento de construir proteção familiar";
     return "Momento de estabelecer bases de proteção financeira";
   };
 

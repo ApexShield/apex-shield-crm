@@ -19,11 +19,17 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         'Nome': 'João Silva',
         'Telefone': '(11) 98765-4321',
         'Email': 'joao@email.com',
+        'Status': 'AB Fone',
+        'Empresa': '',
+        'Cargo': '',
       },
       {
         'Nome': 'Maria Santos',
         'Telefone': '(21) 91234-5678',
         'Email': 'maria@email.com',
+        'Status': 'Novo',
+        'Empresa': '',
+        'Cargo': '',
       }
     ];
 
@@ -69,7 +75,10 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         'Data Contato': cliente.data_contato || '',
         'Agendar Visita': cliente.agendar_visita || '',
         'Data Cadastro': cliente.data_cadastro || '',
-        'Número Indicações': cliente.num_indicacoes || '0'
+        'Número Indicações': cliente.num_indicacoes || '0',
+        'Observações': Array.isArray(cliente.observacoes) && cliente.observacoes.length > 0
+          ? cliente.observacoes.map(obs => `[${obs.data || ''}] ${obs.texto || ''}`).join(' | ')
+          : ''
       }));
 
       // Criar workbook
@@ -109,14 +118,26 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         return;
       }
 
-      // Mapear dados do Excel para o formato do sistema (apenas Nome, Telefone, Email)
-      const leadsToImport = jsonData.map(row => ({
-        nome: row['Nome'] || '',
-        status: 'AB Fone',
-        telefone: row['Telefone'] ? String(row['Telefone']) : '',
-        email: row['Email'] || '',
-        data_cadastro: new Date().toISOString().split('T')[0],
-      })).filter(lead => lead.nome); // Obrigatório: apenas nome
+      // Status válidos no sistema
+      const STATUS_VALIDOS = ['Novo', 'AB Fone', 'AB Visita', 'AB Fechamento', 'Delay', 'Análise', 'Venda Feita', 'Entrega de Apólice', 'Encerrado'];
+
+      // Mapear dados do Excel para o formato do sistema
+      const leadsToImport = jsonData.map(row => {
+        const statusPlanilha = row['Status'] ? String(row['Status']).trim() : '';
+        const statusFinal = STATUS_VALIDOS.includes(statusPlanilha) ? statusPlanilha : 'Novo';
+
+        return {
+          nome: row['Nome'] || '',
+          status: statusFinal,
+          telefone: row['Telefone'] ? String(row['Telefone']) : '',
+          email: row['Email'] || '',
+          empresa: row['Empresa'] || '',
+          cargo: row['Cargo'] || '',
+          fonte_prospeccao: row['Fonte Prospecção'] || '',
+          profissao: row['Profissão'] || '',
+          data_cadastro: new Date().toISOString().split('T')[0],
+        };
+      }).filter(lead => lead.nome); // Obrigatório: apenas nome
 
       // Obter leads existentes e usuário atual
       const user = await base44.auth.me();
@@ -260,7 +281,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
                 <div className="flex-1">
                   <h4 className="font-bold text-indigo-900 mb-1">Template de Importação</h4>
                   <p className="text-sm text-gray-700 mb-3">
-                   Baixe o template com as 3 colunas: <strong>Nome</strong>, <strong>Telefone</strong> e <strong>Email</strong>. Preencha com seus dados e faça o upload.
+                   Baixe o template com as colunas básicas. Preencha com seus dados e faça o upload. A coluna <strong>Status</strong> é opcional — se vazia, será definido como "Novo".
                   </p>
                   <Button
                     onClick={handleDownloadTemplate}
@@ -278,7 +299,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-gray-700">
-                  <strong>Importante:</strong> O arquivo deve ter apenas 3 colunas: <strong className="text-red-600">Nome</strong> (obrigatório), <strong>Telefone</strong> e <strong>Email</strong>. Todos os leads serão importados com status "AB Fone".
+                  <strong>Importante:</strong> A coluna <strong className="text-red-600">Nome</strong> é obrigatória. Se a planilha tiver a coluna <strong>Status</strong>, o sistema respeitará o valor. Caso contrário, será definido como <strong>"Novo"</strong>.
                 </div>
               </div>
             </div>

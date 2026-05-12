@@ -284,11 +284,11 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   };
 
   const handleUpperCase = (field, value, e) => {
-    // Preservar posição do cursor
     const input = e?.target;
-    const pos = input?.selectionStart;
+    const supportsSelection = input && input.type !== 'email' && input.type !== 'number';
+    const pos = supportsSelection ? input.selectionStart : null;
     setFormData(prev => ({ ...prev, [field]: value.toUpperCase() }));
-    if (input) {
+    if (supportsSelection && pos != null) {
       requestAnimationFrame(() => {
         input.setSelectionRange(pos, pos);
       });

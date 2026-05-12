@@ -1,4 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { format } from "date-fns";
+import { CalendarCheck } from "lucide-react";
 
 const COLORS = ["#3b82f6", "#f59e0b", "#10b981", "#8b5cf6"];
 
@@ -28,6 +30,12 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
 
   const propostasFechadas = clientes.filter(c => c.status === "Venda Feita" && c.dados_apolice).length;
 
+  // Vendas no período — clientes convertidos (data_conversao_cliente no range)
+  const vendasNoPeriodo = clientes.filter(c =>
+    c.is_cliente && c.data_conversao_cliente && inRange(c.data_conversao_cliente)
+  );
+  const totalVendasPeriodo = vendasNoPeriodo.length;
+
   // Calcular PA total
   const paTotal = clientes
     .filter(c => c.status === "Venda Feita" && c.dados_apolice)
@@ -46,7 +54,38 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
   ].filter(d => d.value > 0);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Bloco Vendas / Conversões no Período */}
+      <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-4">
+        <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+          <CalendarCheck className="w-4 h-4 text-emerald-400" />
+          Conversões no Período
+        </h3>
+        <div className="text-center mb-3">
+          <span className="text-4xl font-black text-emerald-400">{totalVendasPeriodo}</span>
+          <p className="text-white/50 text-xs mt-1">leads convertidos em clientes</p>
+        </div>
+        {vendasNoPeriodo.length > 0 ? (
+          <div className="space-y-1.5 max-h-40 overflow-y-auto">
+            {vendasNoPeriodo.slice(0, 10).map(c => (
+              <div key={c.id} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-1.5">
+                <span className="text-white text-xs font-medium truncate flex-1">{c.nome}</span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-emerald-300 text-[10px] font-bold">{c.status}</span>
+                  <span className="text-white/40 text-[10px]">
+                    {c.data_conversao_cliente ? format(new Date(c.data_conversao_cliente), "dd/MM") : "—"}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {vendasNoPeriodo.length > 10 && (
+              <p className="text-white/40 text-[10px] text-center">+{vendasNoPeriodo.length - 10} mais...</p>
+            )}
+          </div>
+        ) : (
+          <p className="text-white/40 text-xs text-center py-6">Nenhuma conversão no período</p>
+        )}
+      </div>
       {/* Gráfico de Barras - Reuniões */}
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-4">
         <h3 className="text-white font-bold text-sm mb-3">Quantidade de Reuniões</h3>

@@ -13,6 +13,7 @@ import CriarClienteDialog from "../components/clientes/CriarClienteDialog";
 import FormularioLead from "../components/leads/FormularioLead";
 import DocumentosDialog from "../components/leads/DocumentosDialog";
 import ApoliceDialog from "../components/leads/ApoliceDialog";
+import FluxoPipeline from "../components/FluxoPipeline";
 
 export default function ClientesConvertidos() {
   const [busca, setBusca] = usePersistedState("clientes_busca", "");
@@ -181,6 +182,9 @@ export default function ClientesConvertidos() {
           sortDirection={sortDirection} setSortDirection={setSortDirection}
           onClear={handleClearFilters}
         />
+
+        {/* Fluxo Pipeline */}
+        <FluxoPipeline tipo="cliente" activeStatus={selectedCliente?.status} />
 
         {/* Desktop Table */}
         <ClienteListView

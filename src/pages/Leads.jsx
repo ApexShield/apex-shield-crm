@@ -27,6 +27,7 @@ import LeadCard from "../components/mobile/LeadCard";
 import MobileLeadList from "../components/mobile/MobileLeadList";
 import PullToRefresh from "../components/mobile/PullToRefresh";
 import ConverterClienteDialog from "../components/leads/ConverterClienteDialog";
+import FluxoPipeline from "../components/FluxoPipeline";
 
 // Status de leads (pré-conversão): Novo → AB Fone → AB Visita
 // Após conversão em cliente, o registro sai deste painel e vai para o Painel de Clientes
@@ -510,6 +511,9 @@ export default function Leads() {
             <FunilVendas clientes={clientes} />
           </div>
         </div>
+
+        {/* Fluxo Pipeline */}
+        <FluxoPipeline tipo="lead" activeStatus={selectedLead?.status} />
 
         {/* Table (Desktop) */}
         <div className="hidden md:block bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">

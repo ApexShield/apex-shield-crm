@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUpDown, ArrowUp, ArrowDown, Phone, Shield, ShieldOff, Users } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Phone, Shield, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { format, differenceInYears, parseISO } from "date-fns";
 
 function calcularIdade(dataNasc) {
@@ -19,10 +19,10 @@ function getPessoasAsseguradas(cliente) {
   const titularTemSeguro = !!cliente.dados_apolice?.produto;
   const conjugeTemSeguro = cliente.dados_apolice?.funeral_individual_conjuge === "Sim";
 
-  if (titularTemSeguro && conjugeTemSeguro) return { label: "Ambos com Seguro", color: "text-emerald-400" };
-  if (!titularTemSeguro && !conjugeTemSeguro) return { label: "Ambos sem Seguro", color: "text-red-400" };
-  if (titularTemSeguro && !conjugeTemSeguro) return { label: "Cônjuge sem Seguro", color: "text-amber-400" };
-  return { label: "Titular sem Seguro", color: "text-orange-400" };
+  if (titularTemSeguro && conjugeTemSeguro) return { label: "Ambos com Seguro", color: "text-emerald-400", icon: ShieldCheck, iconColor: "text-emerald-400" };
+  if (!titularTemSeguro && !conjugeTemSeguro) return { label: "Ambos sem Seguro", color: "text-red-400", icon: ShieldX, iconColor: "text-red-400" };
+  if (titularTemSeguro && !conjugeTemSeguro) return { label: "Cônjuge sem Seguro", color: "text-amber-400", icon: ShieldAlert, iconColor: "text-amber-400" };
+  return { label: "Titular sem Seguro", color: "text-orange-400", icon: ShieldAlert, iconColor: "text-orange-400" };
 }
 
 const STATUS_COLORS = {
@@ -85,7 +85,16 @@ export default function ClienteListView({
                   onClick={() => onSelect(cliente)}
                   onDoubleClick={() => onDoubleClick(cliente)}
                 >
-                  <TableCell className="font-bold text-white whitespace-nowrap text-sm">{cliente.nome || "—"}</TableCell>
+                  <TableCell className="font-bold text-white whitespace-nowrap text-sm">
+                    <span className="flex items-center gap-1.5">
+                      {cliente.nome || "—"}
+                      {(() => {
+                        const a = getPessoasAsseguradas(cliente);
+                        const Icon = a.icon;
+                        return <Icon className={`w-4 h-4 flex-shrink-0 ${a.iconColor}`} title={a.label} />;
+                      })()}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-white/80 whitespace-nowrap text-xs">{cliente.profissao || "—"}</TableCell>
                   <TableCell className="text-white/70 whitespace-nowrap text-xs">
                     {cliente.data_nascimento ? format(parseISO(cliente.data_nascimento), "dd/MM/yyyy") : "—"}

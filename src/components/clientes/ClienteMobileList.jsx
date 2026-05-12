@@ -1,4 +1,4 @@
-import { Phone, Shield, ShieldOff } from "lucide-react";
+import { Phone, Shield, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 
 function calcularIdade(dataNasc) {
@@ -13,10 +13,10 @@ function calcularIdade(dataNasc) {
 function getPessoasAsseguradas(cliente) {
   const titularTemSeguro = !!cliente.dados_apolice?.produto;
   const conjugeTemSeguro = cliente.dados_apolice?.funeral_individual_conjuge === "Sim";
-  if (titularTemSeguro && conjugeTemSeguro) return { label: "Ambos c/ Seguro", color: "text-emerald-400" };
-  if (!titularTemSeguro && !conjugeTemSeguro) return { label: "Ambos s/ Seguro", color: "text-red-400" };
-  if (titularTemSeguro && !conjugeTemSeguro) return { label: "Cônjuge s/ Seguro", color: "text-amber-400" };
-  return { label: "Titular s/ Seguro", color: "text-orange-400" };
+  if (titularTemSeguro && conjugeTemSeguro) return { label: "Ambos c/ Seguro", color: "text-emerald-400", icon: ShieldCheck };
+  if (!titularTemSeguro && !conjugeTemSeguro) return { label: "Ambos s/ Seguro", color: "text-red-400", icon: ShieldX };
+  if (titularTemSeguro && !conjugeTemSeguro) return { label: "Cônjuge s/ Seguro", color: "text-amber-400", icon: ShieldAlert };
+  return { label: "Titular s/ Seguro", color: "text-orange-400", icon: ShieldAlert };
 }
 
 const STATUS_COLORS = {
@@ -42,7 +42,10 @@ export default function ClienteMobileList({ dados, selectedCliente, onSelect, on
             className={`rounded-lg px-3 py-2.5 border transition-all ${selectedCliente?.id === cliente.id ? "border-emerald-400 bg-emerald-500/20 ring-1 ring-emerald-400/50" : "border-white/10 bg-white/5"}`}
           >
             <div className="flex items-center justify-between">
-              <p className="font-bold text-white text-sm truncate flex-1">{cliente.nome}</p>
+              <p className="font-bold text-white text-sm truncate flex-1 flex items-center gap-1.5">
+                {cliente.nome}
+                {(() => { const a = getPessoasAsseguradas(cliente); const Icon = a.icon; return <Icon className={`w-4 h-4 flex-shrink-0 ${a.color}`} />; })()}
+              </p>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white ml-2 flex-shrink-0"
                 style={{ backgroundColor: STATUS_COLORS[cliente.status] || "#666" }}>
                 {cliente.status}

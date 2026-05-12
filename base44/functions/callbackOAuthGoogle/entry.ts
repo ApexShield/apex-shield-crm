@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
-    const appUrl = 'https://apex-shield-crm.base44.app/Compromissos';
+    const appUrl = 'https://app--apex-shield-crm--69587402a43b69a04695a178.base44.app/Compromissos';
 
     return new Response(`
       <html>

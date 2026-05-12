@@ -255,12 +255,12 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             <div><Label className="text-white mb-2 block">Horário Início *</Label>
               <div className="flex gap-2">
                 <Select value={formData.data_inicio ? (() => { try { const d = parseISO(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "HH"); } catch { return ""; } })() : ""}
-                  onValueChange={(hour) => { const d = new Date(formData.data_inicio || Date.now()); if (isNaN(d.getTime())) return; d.setHours(parseInt(hour)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
+                  onValueChange={(hour) => { const d = formData.data_inicio ? new Date(formData.data_inicio) : new Date(); if (isNaN(d.getTime())) d.setTime(Date.now()); d.setHours(parseInt(hour)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="H" /></SelectTrigger>
                   <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 4).map(h => <SelectItem key={h} value={String(h).padStart(2, '0')}>{String(h).padStart(2, '0')}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={formData.data_inicio ? (() => { try { const d = parseISO(formData.data_inicio); return isNaN(d.getTime()) ? "" : format(d, "mm"); } catch { return ""; } })() : ""}
-                  onValueChange={(minute) => { const d = new Date(formData.data_inicio || Date.now()); if (isNaN(d.getTime())) return; d.setMinutes(parseInt(minute)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
+                  onValueChange={(minute) => { const d = formData.data_inicio ? new Date(formData.data_inicio) : new Date(); if (isNaN(d.getTime())) d.setTime(Date.now()); d.setMinutes(parseInt(minute)); const ed = new Date(d); ed.setHours(ed.getHours()+1); setFormData({ ...formData, data_inicio: d.toISOString(), data_fim: ed.toISOString() }); }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="M" /></SelectTrigger>
                   <SelectContent>{['00', '15', '30', '45'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                 </Select>
@@ -269,12 +269,12 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
             <div><Label className="text-white mb-2 block">Horário Fim *</Label>
               <div className="flex gap-2">
                 <Select value={formData.data_fim ? (() => { try { const d = parseISO(formData.data_fim); return isNaN(d.getTime()) ? "" : format(d, "HH"); } catch { return ""; } })() : ""}
-                  onValueChange={(hour) => { const d = new Date(formData.data_fim || Date.now()); if (isNaN(d.getTime())) return; d.setHours(parseInt(hour)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
+                  onValueChange={(hour) => { const d = formData.data_fim ? new Date(formData.data_fim) : new Date(); if (isNaN(d.getTime())) d.setTime(Date.now()); d.setHours(parseInt(hour)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="H" /></SelectTrigger>
                   <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 4).map(h => <SelectItem key={h} value={String(h).padStart(2, '0')}>{String(h).padStart(2, '0')}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={formData.data_fim ? (() => { try { const d = parseISO(formData.data_fim); return isNaN(d.getTime()) ? "" : format(d, "mm"); } catch { return ""; } })() : ""}
-                  onValueChange={(minute) => { const d = new Date(formData.data_fim || Date.now()); if (isNaN(d.getTime())) return; d.setMinutes(parseInt(minute)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
+                  onValueChange={(minute) => { const d = formData.data_fim ? new Date(formData.data_fim) : new Date(); if (isNaN(d.getTime())) d.setTime(Date.now()); d.setMinutes(parseInt(minute)); setFormData({ ...formData, data_fim: d.toISOString() }); }}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white flex-1"><SelectValue placeholder="M" /></SelectTrigger>
                   <SelectContent>{['00', '15', '30', '45'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                 </Select>

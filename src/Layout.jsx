@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2, ArrowLeft, Headphones
+  Users, Menu, X, LogOut, ChevronRight, Briefcase, Calendar as CalendarIcon, Bot, BarChart3, Megaphone, Crown, Ticket, Target, Trash2, ArrowLeft, Headphones, UserCheck
 } from "lucide-react";
 import { getHierarchyConfig } from "./components/UserHierarchyConfig";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import PullToRefresh from "./components/mobile/PullToRefresh";
 const navigation = [
   { name: "Painel Principal", icon: BarChart3, page: "PainelPrincipal" },
   { name: "Leads", icon: Users, page: "Leads" },
+  { name: "Clientes", icon: UserCheck, page: "ClientesConvertidos" },
   { name: "Dashboard Atividades", icon: BarChart3, page: "DashboardAtividades" },
   { name: "Compromissos", icon: CalendarIcon, page: "Compromissos" },
   { name: "Aniversariantes", icon: Users, page: "Aniversariantes" },

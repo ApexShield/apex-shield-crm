@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3, Users, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Plus, Edit, Trash2, FileText, Download, Upload, TrendingUp, BarChart3, Users, ArrowUpDown, ArrowUp, ArrowDown, UserCheck } from "lucide-react";
 import usePersistedState from "../hooks/usePersistedState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import ImportExportLeads from "../components/leads/ImportExportLeads";
 import LeadCard from "../components/mobile/LeadCard";
 import MobileLeadList from "../components/mobile/MobileLeadList";
 import PullToRefresh from "../components/mobile/PullToRefresh";
+import ConverterClienteDialog from "../components/leads/ConverterClienteDialog";
 
 // Configuração dos status com cores do VBA
 const STATUS_CONFIG = [
@@ -58,6 +59,7 @@ export default function Leads() {
   const [showApolice, setShowApolice] = useState(false);
   const [showRelatorios, setShowRelatorios] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
+  const [showConverterDialog, setShowConverterDialog] = useState(false);
 
   // Listener para abrir apólice do formulário
   useEffect(() => {
@@ -340,6 +342,12 @@ export default function Leads() {
       data.status = data.status || "AB Fone";
       data.data_cadastro = data.data_cadastro || new Date().toISOString().split('T')[0];
     } else if (data.status !== editingLead.status) {
+      // Trava: se estiver indo para AB Fechamento sem ser cliente convertido, bloquear
+      const statusPreConversao = ["Novo", "AB Fone", "AB Visita"];
+      if (data.status === "AB Fechamento" && !data.is_cliente && statusPreConversao.includes(editingLead.status)) {
+        alert("⚠️ Para avançar para AB Fechamento, o lead precisa ser convertido em cliente primeiro.");
+        return;
+      }
       // Rastrear mudança de status com histórico
       const mudanca = {
         de: editingLead.status,
@@ -562,7 +570,12 @@ export default function Leads() {
                       }}
                       style={{ color: cor }}
                     >
-                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.codigo || cliente.id.slice(-4).toUpperCase()}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">
+                        <span className="flex items-center gap-1">
+                          {cliente.codigo || cliente.id.slice(-4).toUpperCase()}
+                          {cliente.is_cliente && <UserCheck className="w-3 h-3 text-emerald-400" title="Cliente convertido" />}
+                        </span>
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {cliente.qualificacao === "quente" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-red-500/30 text-red-300">🔥 QUENTE</span>}
                         {cliente.qualificacao === "frio" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-500/30 text-blue-300">❄️ FRIO</span>}
@@ -682,11 +695,19 @@ export default function Leads() {
             <Upload className="w-5 h-5 mr-2" />
             Import
           </Button>
+          <Button
+            onClick={() => { if (selectedLead && !selectedLead.is_cliente) setShowConverterDialog(true); else if (selectedLead?.is_cliente) alert("Este lead já é um cliente convertido."); }}
+            disabled={!selectedLead}
+            className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 font-bold px-6 py-6 text-sm"
+          >
+            <UserCheck className="w-5 h-5 mr-2" />
+            Converter Cliente
+          </Button>
         </div>
 
         {/* Mobile Action Bar - fixed above BottomNav, 44px touch targets */}
         <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 border-t border-indigo-500/30 px-1.5 py-1.5" style={{ background: "linear-gradient(to right, rgba(30,27,75,0.97), rgba(49,46,129,0.97))" }}>
-          <div className="dense-touch grid grid-cols-6 gap-1">
+          <div className="dense-touch grid grid-cols-7 gap-1">
             <Button
               onClick={() => { setEditingLead(null); setShowForm(true); }}
               size="sm"
@@ -738,6 +759,15 @@ export default function Leads() {
               <Upload className="w-4 h-4" />
               <span className="mobile-text-xxs">Import</span>
             </Button>
+            <Button
+              onClick={() => { if (selectedLead && !selectedLead.is_cliente) setShowConverterDialog(true); }}
+              disabled={!selectedLead || selectedLead?.is_cliente}
+              size="sm"
+              className="bg-emerald-500 hover:bg-emerald-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span className="mobile-text-xxs">Conv.</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -780,6 +810,29 @@ export default function Leads() {
         onClose={() => setShowImportExport(false)}
         clientes={clientes}
         onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
+      />
+
+      <ConverterClienteDialog
+        open={showConverterDialog}
+        onClose={() => setShowConverterDialog(false)}
+        lead={selectedLead}
+        onConvert={async (dados) => {
+          if (!selectedLead) return;
+          await updateMutation.mutateAsync({
+            id: selectedLead.id,
+            data: {
+              cpf: dados.cpf,
+              nome: dados.nome,
+              email: dados.email,
+              telefone: dados.telefone,
+              is_cliente: true,
+              data_conversao_cliente: new Date().toISOString()
+            }
+          });
+          setShowConverterDialog(false);
+          alert("✅ Lead convertido em cliente com sucesso! Agora aparece no Painel de Clientes.");
+          queryClient.invalidateQueries({ queryKey: ["clientes"] });
+        }}
       />
     </div>
   );

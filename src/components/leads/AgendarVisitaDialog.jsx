@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Loader2 } from "lucide-react";
+import { Clock, Loader2, UserCheck, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import ConverterClienteDialog from "./ConverterClienteDialog";
 
 const COLORS = [
   { value: "#0891b2", label: "Azul Pavão - Agendado", tipo: "agendado" },
@@ -36,6 +37,8 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   });
   const [validando, setValidando] = useState(false);
   const [erro, setErro] = useState("");
+  const [showConverterDialog, setShowConverterDialog] = useState(false);
+  const [convertedData, setConvertedData] = useState(null);
 
   // Fetch default meeting link from user profile
   const { data: currentUser } = useQuery({
@@ -59,6 +62,13 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     if (tipoCompromisso === "Fechamento" && !subTipoFechamento) { setErro("Selecione a fase do fechamento"); return; }
     if (!formData.titulo || !formData.data_inicio || !formData.data_fim) { setErro("Preencha todos os campos obrigatórios"); return; }
     if (!formData.modalidade) { setErro("Selecione a modalidade"); return; }
+
+    // Trava: Para agendar Fechamento, lead precisa ser convertido em cliente
+    const statusPreConversao = ["Novo", "AB Fone", "AB Visita"];
+    if (tipoCompromisso === "Fechamento" && cliente && !cliente.is_cliente && statusPreConversao.includes(cliente.status)) {
+      setShowConverterDialog(true);
+      return;
+    }
 
     const startDate = parseISO(formData.data_inicio);
     const endDate = parseISO(formData.data_fim);
@@ -157,13 +167,48 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     setErro("");
   };
 
+  const handleConversion = async (dados) => {
+    // Convert the lead to client in the database
+    const clienteId = (cliente?.id && !String(cliente.id).startsWith('temp-')) ? cliente.id : "";
+    if (clienteId) {
+      await base44.entities.Cliente.update(clienteId, {
+        cpf: dados.cpf,
+        nome: dados.nome,
+        email: dados.email,
+        telefone: dados.telefone,
+        is_cliente: true,
+        data_conversao_cliente: new Date().toISOString()
+      });
+      // Update the local cliente ref so the form can proceed
+      if (cliente) {
+        cliente.is_cliente = true;
+        cliente.cpf = dados.cpf;
+        cliente.nome = dados.nome;
+        cliente.email = dados.email;
+        cliente.telefone = dados.telefone;
+      }
+    }
+    setConvertedData(dados);
+    setShowConverterDialog(false);
+    // Now auto-submit the form after conversion
+    // We need to trigger submit manually
+    document.getElementById('agendar-visita-form')?.requestSubmit();
+  };
+
   return (
+    <>
+    <ConverterClienteDialog
+      open={showConverterDialog}
+      onClose={() => setShowConverterDialog(false)}
+      lead={cliente}
+      onConvert={handleConversion}
+    />
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/20 w-[95vw]">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">🗓️ Editar Compromisso</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id="agendar-visita-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-indigo-500/20 border-2 border-indigo-400/50 rounded-xl p-4 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">👆</span>
@@ -314,5 +359,6 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

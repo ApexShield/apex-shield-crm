@@ -30,6 +30,16 @@
       "default": "AB Fone",
       "description": "Status do lead no funil"
     },
+    "is_cliente": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o lead foi convertido em cliente"
+    },
+    "data_conversao_cliente": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data em que o lead foi convertido em cliente"
+    },
     "qualificacao": {
       "type": "string",
       "enum": [

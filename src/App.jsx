@@ -16,6 +16,7 @@ import Suporte from './pages/Suporte';
 import ExcluirConta from './pages/ExcluirConta';
 import SimuladorReenquadramento from './pages/SimuladorReenquadramento';
 import PainelPrincipal from './pages/PainelPrincipal';
+import ClientesConvertidos from './pages/ClientesConvertidos';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -101,6 +102,11 @@ const AuthenticatedApp = () => {
       <Route path="/PainelPrincipal" element={
         <LayoutWrapper currentPageName="PainelPrincipal">
           <PainelPrincipal />
+        </LayoutWrapper>
+      } />
+      <Route path="/ClientesConvertidos" element={
+        <LayoutWrapper currentPageName="ClientesConvertidos">
+          <ClientesConvertidos />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

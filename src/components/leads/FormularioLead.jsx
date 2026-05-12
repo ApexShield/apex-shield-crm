@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import AgendarVisitaDialog from "./AgendarVisitaDialog";
 import EnderecoComGoogleMaps from "../EnderecoComGoogleMaps";
+import ConverterClienteDialog from "./ConverterClienteDialog";
 
 const formatPhone = (value) => {
   const numbers = value.replace(/\D/g, "").slice(0, 11);
@@ -58,6 +59,8 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
   const [showAgendarVisita, setShowAgendarVisita] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [showConverterDialog, setShowConverterDialog] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
@@ -433,7 +436,16 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                   </div>
                   <div>
                     <Label className="text-[11px]">Status:</Label>
-                    <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
+                    <Select value={formData.status} onValueChange={(v) => {
+                      // Trava: para avançar para AB Fechamento, lead precisa ser convertido em cliente
+                      const statusPreConversao = ["Novo", "AB Fone", "AB Visita"];
+                      if (v === "AB Fechamento" && lead && !lead.is_cliente && statusPreConversao.includes(lead.status)) {
+                        setPendingStatusChange(v);
+                        setShowConverterDialog(true);
+                        return;
+                      }
+                      setFormData(prev => ({...prev, status: v}));
+                    }}>
                       <SelectTrigger tabIndex={2} className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Novo">Novo</SelectItem>
@@ -1176,6 +1188,28 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
         />
       </DialogContent>
     </Dialog>
+
+    {/* Dialog de Conversão Lead -> Cliente */}
+    <ConverterClienteDialog
+      open={showConverterDialog}
+      onClose={() => { setShowConverterDialog(false); setPendingStatusChange(null); }}
+      lead={lead ? { ...lead, ...formData } : formData}
+      onConvert={async (dados) => {
+        // Update form with filled data + mark as cliente + change status
+        setFormData(prev => ({
+          ...prev,
+          cpf: dados.cpf,
+          nome: dados.nome,
+          email: dados.email,
+          telefone: dados.telefone,
+          status: pendingStatusChange || "AB Fechamento",
+          is_cliente: true,
+          data_conversao_cliente: new Date().toISOString()
+        }));
+        setShowConverterDialog(false);
+        setPendingStatusChange(null);
+      }}
+    />
 
     {/* Dialog de Confirmação de Dados Não Salvos */}
     <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>

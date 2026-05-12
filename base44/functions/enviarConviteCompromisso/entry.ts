@@ -74,11 +74,15 @@ function base64Encode(str) {
 }
 
 function buildMIME(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject) {
+  return buildMIMEForRecipient(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject, comp.email_participante);
+}
+
+function buildMIMEForRecipient(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject, toEmail) {
   const boundary = `----=_Part_${Date.now()}_main`;
   const altBoundary = `----=_Part_${Date.now()}_alt`;
   const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
   return [
-    `From: ${organizerName} <${organizerEmail}>`,`To: ${comp.email_participante}`,`Subject: ${encodedSubject}`,
+    `From: ${organizerName} <${organizerEmail}>`,`To: ${toEmail}`,`Subject: ${encodedSubject}`,
     `MIME-Version: 1.0`,`Content-Type: multipart/mixed; boundary="${boundary}"`,``,
     `--${boundary}`,`Content-Type: multipart/alternative; boundary="${altBoundary}"`,``,
     `--${altBoundary}`,`Content-Type: text/plain; charset=UTF-8`,`Content-Transfer-Encoding: base64`,``,base64Encode(plainText),``,
@@ -168,49 +172,76 @@ Deno.serve(async (req) => {
     const userAuth = await getUserGoogleToken(base44, user.email);
     
     if (!userAuth) {
-      console.log(`Usuário ${user.email} não tem Google conectado. Usando SendEmail como fallback.`);
+      console.log(`Usuário ${user.email} não tem Google conectado. Usando Gmail shared connector como fallback.`);
       
-      // FALLBACK: Enviar via SendEmail da plataforma
+      // FALLBACK: Enviar via Gmail shared connector (suporta MIME com .ics anexo)
       try {
+        const icsContent = buildICS(comp, startDate, endDate, organizerName, organizerEmail, location);
         const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
+        const plainText = buildPlainText(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
         
-        // Enviar para o participante
-        await base44.integrations.Core.SendEmail({
-          to: comp.email_participante,
-          subject: subject,
-          body: emailHTML,
-          from_name: organizerName
+        const { accessToken: gmailSharedToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+        
+        // Enviar para o participante (MIME com .ics)
+        const mimeParticipant = buildMIME(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, subject);
+        const rawParticipant = urlSafeBase64(mimeParticipant);
+        
+        const sendRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${gmailSharedToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw: rawParticipant })
         });
         
-        // Enviar cópia para o próprio organizador
+        if (!sendRes.ok) {
+          const errText = await sendRes.text();
+          console.error('Gmail shared connector send error:', sendRes.status, errText);
+          throw new Error(`Gmail API error: ${sendRes.status}`);
+        }
+        
+        console.log('SUCCESS: Convite com .ics enviado via Gmail shared connector para', comp.email_participante);
+        
+        // Enviar cópia para o próprio organizador (MIME com .ics)
         if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
           try {
-            await base44.integrations.Core.SendEmail({
-              to: organizerEmail,
-              subject: `[Cópia] ${subject}`,
-              body: emailHTML,
-              from_name: organizerName
+            const mimeOrganizer = buildMIMEForRecipient(comp, icsContent, emailHTML, plainText, organizerName, organizerEmail, `[Cópia] ${subject}`, organizerEmail);
+            const rawOrganizer = urlSafeBase64(mimeOrganizer);
+            
+            await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${gmailSharedToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ raw: rawOrganizer })
             });
-            console.log('Cópia do convite enviada para organizador:', organizerEmail);
+            console.log('Cópia com .ics enviada para organizador:', organizerEmail);
           } catch (copyErr) {
             console.error('Erro ao enviar cópia para organizador:', copyErr.message);
           }
         }
         
         await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
-        console.log('SUCCESS: Convite enviado via SendEmail para', comp.email_participante);
         
         return Response.json({
           success: true,
-          method: 'platform_email',
-          message: `Convite enviado para ${comp.email_participante} via email do sistema`
+          method: 'gmail_shared_ics',
+          message: `Convite com calendário enviado para ${comp.email_participante} e ${organizerEmail}`
         });
       } catch (sendErr) {
-        console.error('Erro ao enviar via SendEmail:', sendErr.message);
-        return Response.json({
-          success: false,
-          error: 'Não foi possível enviar o convite por email. Tente novamente ou conecte sua conta Google.'
-        }, { status: 500 });
+        console.error('Erro ao enviar via Gmail shared connector:', sendErr.message);
+        
+        // Fallback final: SendEmail sem .ics
+        try {
+          const emailHTMLFallback = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
+          await base44.integrations.Core.SendEmail({
+            to: comp.email_participante,
+            subject: subject,
+            body: emailHTMLFallback,
+            from_name: organizerName
+          });
+          await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+          return Response.json({ success: true, method: 'platform_email', message: `Convite enviado (sem .ics) para ${comp.email_participante}` });
+        } catch (finalErr) {
+          console.error('SendEmail fallback also failed:', finalErr.message);
+          return Response.json({ success: false, error: 'Não foi possível enviar o convite.' }, { status: 500 });
+        }
       }
     }
 
@@ -309,44 +340,47 @@ Deno.serve(async (req) => {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // ATTEMPT 3: Fallback via SendEmail da plataforma
+    // ATTEMPT 3: Fallback via Gmail shared connector (MIME com .ics)
     // ══════════════════════════════════════════════════════════════════
     try {
-      console.log('Fallback final: Enviando via SendEmail da plataforma');
-      const emailHTML = buildEmailHTML(comp, organizerName, organizerEmail, dayStr, timeStart, timeEnd, location);
+      console.log('Fallback: Enviando via Gmail shared connector com .ics');
+      const icsContentFb = buildICS(comp, startDate, endDate, organizerName, senderEmail, location);
+      const emailHTMLFb = buildEmailHTML(comp, organizerName, senderEmail, dayStr, timeStart, timeEnd, location);
+      const plainTextFb = buildPlainText(comp, organizerName, senderEmail, dayStr, timeStart, timeEnd, location);
       
-      await base44.integrations.Core.SendEmail({
-        to: comp.email_participante,
-        subject: subject,
-        body: emailHTML,
-        from_name: organizerName
+      const { accessToken: gmailSharedFb } = await base44.asServiceRole.connectors.getConnection('gmail');
+      
+      const mimeFb = buildMIME(comp, icsContentFb, emailHTMLFb, plainTextFb, organizerName, senderEmail, subject);
+      const rawFb = urlSafeBase64(mimeFb);
+      
+      const fbRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${gmailSharedFb}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw: rawFb })
       });
       
-      // Enviar cópia para o próprio organizador
-      if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
-        try {
-          await base44.integrations.Core.SendEmail({
-            to: organizerEmail,
-            subject: `[Cópia] ${subject}`,
-            body: emailHTML,
-            from_name: organizerName
-          });
-          console.log('Cópia do convite enviada para organizador:', organizerEmail);
-        } catch (copyErr) {
-          console.error('Erro ao enviar cópia para organizador:', copyErr.message);
+      if (fbRes.ok) {
+        // Cópia para organizador
+        if (organizerEmail && organizerEmail.toLowerCase() !== comp.email_participante.toLowerCase()) {
+          try {
+            const mimeOrgFb = buildMIMEForRecipient(comp, icsContentFb, emailHTMLFb, plainTextFb, organizerName, senderEmail, `[Cópia] ${subject}`, organizerEmail);
+            await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${gmailSharedFb}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ raw: urlSafeBase64(mimeOrgFb) })
+            });
+          } catch (e) { console.error('Erro cópia organizador:', e.message); }
         }
+        
+        await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
+        console.log('SUCCESS: Convite com .ics enviado via Gmail shared (fallback) para', comp.email_participante);
+        return Response.json({ success: true, method: 'gmail_shared_ics', message: `Convite com calendário enviado para ${comp.email_participante}` });
       }
       
-      await base44.entities.Compromisso.update(comp.id, { email_enviado: true });
-      console.log('SUCCESS: Convite enviado via SendEmail (fallback) para', comp.email_participante);
-      
-      return Response.json({
-        success: true,
-        method: 'platform_email',
-        message: `Convite enviado para ${comp.email_participante} via email do sistema`
-      });
+      const fbErr = await fbRes.text();
+      console.error('Gmail shared connector fallback error:', fbRes.status, fbErr);
     } catch (sendErr) {
-      console.error('SendEmail fallback also failed:', sendErr.message);
+      console.error('Gmail shared connector fallback failed:', sendErr.message);
     }
 
     console.error('ALL methods failed for user', user.email, '-> invite to', comp.email_participante);

@@ -28,18 +28,15 @@ import MobileLeadList from "../components/mobile/MobileLeadList";
 import PullToRefresh from "../components/mobile/PullToRefresh";
 import ConverterClienteDialog from "../components/leads/ConverterClienteDialog";
 
-// Configuração dos status com cores do VBA
+// Status de leads (pré-conversão): Novo → AB Fone → AB Visita
+// Após conversão em cliente, o registro sai deste painel e vai para o Painel de Clientes
+const LEAD_STATUSES = ["Novo", "AB Fone", "AB Visita"];
+
 const STATUS_CONFIG = [
   { value: "", label: "TODOS", color: "rgb(25, 55, 109)", textColor: "white", bgLight: "rgb(200, 215, 235)" },
   { value: "Novo", label: "NOVO", color: "rgb(128, 0, 128)", textColor: "white", bgLight: "rgb(230, 200, 230)" },
   { value: "AB Fone", label: "AB FONE", color: "rgb(255, 105, 180)", textColor: "white", bgLight: "rgb(255, 220, 235)" },
   { value: "AB Visita", label: "AB VISITA", color: "rgb(135, 206, 250)", textColor: "black", bgLight: "rgb(220, 240, 255)" },
-  { value: "AB Fechamento", label: "AB FECHAMENTO", color: "rgb(255, 215, 0)", textColor: "black", bgLight: "rgb(255, 250, 205)" },
-  { value: "Delay", label: "DELAY", color: "rgb(0, 255, 255)", textColor: "black", bgLight: "rgb(200, 255, 255)" },
-  { value: "Análise", label: "ANÁLISE", color: "rgb(165, 42, 42)", textColor: "white", bgLight: "rgb(230, 200, 200)" },
-  { value: "Venda Feita", label: "VENDA FEITA", color: "rgb(34, 139, 34)", textColor: "white", bgLight: "rgb(200, 240, 200)" },
-  { value: "Entrega de Apólice", label: "ENTREGA APÓLICE", color: "rgb(200, 162, 200)", textColor: "black", bgLight: "rgb(230, 210, 230)" },
-  { value: "Encerrado", label: "ENCERRADO", color: "rgb(105, 105, 105)", textColor: "white", bgLight: "rgb(220, 220, 220)" },
 ];
 
 export default function Leads() {
@@ -171,6 +168,10 @@ export default function Leads() {
     if (usuarioFiltro && usuarioFiltro !== "todos") {
       leadsFiltrados = leadsFiltrados.filter(c => c.created_by === usuarioFiltro);
     }
+    
+    // Mostrar apenas leads (não convertidos em cliente)
+    // Leads ficam neste painel até serem convertidos
+    leadsFiltrados = leadsFiltrados.filter(c => !c.is_cliente && LEAD_STATUSES.includes(c.status));
     
     return leadsFiltrados;
   }, [allClientes, user, usuarioFiltro, usuariosVisiveis]);
@@ -342,12 +343,6 @@ export default function Leads() {
       data.status = data.status || "AB Fone";
       data.data_cadastro = data.data_cadastro || new Date().toISOString().split('T')[0];
     } else if (data.status !== editingLead.status) {
-      // Trava: se estiver indo para AB Fechamento sem ser cliente convertido, bloquear
-      const statusPreConversao = ["Novo", "AB Fone", "AB Visita"];
-      if (data.status === "AB Fechamento" && !data.is_cliente && statusPreConversao.includes(editingLead.status)) {
-        alert("⚠️ Para avançar para AB Fechamento, o lead precisa ser convertido em cliente primeiro.");
-        return;
-      }
       // Rastrear mudança de status com histórico
       const mudanca = {
         de: editingLead.status,
@@ -411,7 +406,7 @@ export default function Leads() {
               </div>
               <div>
                 <h1 className="text-xl md:text-3xl font-black text-white">Dashboard de Leads</h1>
-                <p className="text-sm text-indigo-300">Gerencie seus clientes e oportunidades</p>
+                <p className="text-sm text-indigo-300">Prospecção: Novo → AB Fone → AB Visita → Converter em Cliente</p>
               </div>
             </div>
             {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
@@ -571,10 +566,7 @@ export default function Leads() {
                       style={{ color: cor }}
                     >
                       <TableCell className="font-bold text-white whitespace-nowrap">
-                        <span className="flex items-center gap-1">
-                          {cliente.codigo || cliente.id.slice(-4).toUpperCase()}
-                          {cliente.is_cliente && <UserCheck className="w-3 h-3 text-emerald-400" title="Cliente convertido" />}
-                        </span>
+                        {cliente.codigo || cliente.id.slice(-4).toUpperCase()}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {cliente.qualificacao === "quente" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-red-500/30 text-red-300">🔥 QUENTE</span>}
@@ -696,12 +688,12 @@ export default function Leads() {
             Import
           </Button>
           <Button
-            onClick={() => { if (selectedLead && !selectedLead.is_cliente) setShowConverterDialog(true); else if (selectedLead?.is_cliente) alert("Este lead já é um cliente convertido."); }}
+            onClick={() => { if (selectedLead) setShowConverterDialog(true); }}
             disabled={!selectedLead}
             className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 font-bold px-6 py-6 text-sm"
           >
             <UserCheck className="w-5 h-5 mr-2" />
-            Converter Cliente
+            Converter em Cliente
           </Button>
         </div>
 
@@ -760,8 +752,8 @@ export default function Leads() {
               <span className="mobile-text-xxs">Import</span>
             </Button>
             <Button
-              onClick={() => { if (selectedLead && !selectedLead.is_cliente) setShowConverterDialog(true); }}
-              disabled={!selectedLead || selectedLead?.is_cliente}
+              onClick={() => { if (selectedLead) setShowConverterDialog(true); }}
+              disabled={!selectedLead}
               size="sm"
               className="bg-emerald-500 hover:bg-emerald-600 font-bold text-xs h-11 px-0 flex flex-col items-center justify-center gap-0.5 rounded-md"
             >
@@ -818,6 +810,7 @@ export default function Leads() {
         lead={selectedLead}
         onConvert={async (dados) => {
           if (!selectedLead) return;
+          const historicoAtual = selectedLead.historico_status || [];
           await updateMutation.mutateAsync({
             id: selectedLead.id,
             data: {
@@ -826,11 +819,17 @@ export default function Leads() {
               email: dados.email,
               telefone: dados.telefone,
               is_cliente: true,
-              data_conversao_cliente: new Date().toISOString()
+              status: "AB Fechamento",
+              data_conversao_cliente: new Date().toISOString(),
+              historico_status: [
+                ...historicoAtual,
+                { de: selectedLead.status, para: "AB Fechamento", data: format(new Date(), "dd/MM/yyyy HH:mm"), timestamp: Date.now() }
+              ]
             }
           });
           setShowConverterDialog(false);
-          alert("✅ Lead convertido em cliente com sucesso! Agora aparece no Painel de Clientes.");
+          setSelectedLead(null);
+          alert("✅ Lead convertido em cliente e avançado para AB Fechamento! Agora aparece no Painel de Clientes.");
           queryClient.invalidateQueries({ queryKey: ["clientes"] });
         }}
       />

@@ -1,16 +1,11 @@
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
+// Funil mostra apenas os status de leads (pré-conversão)
 const STATUS_COLORS = {
   "Novo": "#800080",
   "AB Fone": "#FF69B4",
   "AB Visita": "#87CEEB",
-  "AB Fechamento": "#FFD700",
-  "Delay": "#00FFFF",
-  "Análise": "#A52A2A",
-  "Venda Feita": "#228B22",
-  "Entrega de Apólice": "#C8A2C8",
-  "Encerrado": "#696969"
 };
 
 export default function FunilVendas({ clientes }) {

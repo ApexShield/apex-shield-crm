@@ -21,6 +21,7 @@ function getPessoasAsseguradas(cliente) {
 
 const STATUS_COLORS = {
   "AB Fechamento": "rgb(255, 215, 0)",
+  "Delay": "rgb(0, 255, 255)",
   "Análise": "rgb(165, 42, 42)",
   "Venda Feita": "rgb(34, 139, 34)",
   "Entrega de Apólice": "rgb(200, 162, 200)",

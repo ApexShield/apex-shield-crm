@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
   { value: "AB Fechamento", label: "AB Fechamento" },
+  { value: "Delay", label: "Delay" },
   { value: "Análise", label: "Análise" },
   { value: "Venda Feita", label: "Venda Feita" },
   { value: "Entrega de Apólice", label: "Entrega de Apólice" },

@@ -168,20 +168,27 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
   };
 
   const handleConversion = async (dados) => {
-    // Convert the lead to client in the database
+    // Convert the lead to client and advance to AB Fechamento
     const clienteId = (cliente?.id && !String(cliente.id).startsWith('temp-')) ? cliente.id : "";
     if (clienteId) {
+      const historicoAtual = cliente?.historico_status || [];
       await base44.entities.Cliente.update(clienteId, {
         cpf: dados.cpf,
         nome: dados.nome,
         email: dados.email,
         telefone: dados.telefone,
         is_cliente: true,
-        data_conversao_cliente: new Date().toISOString()
+        status: "AB Fechamento",
+        data_conversao_cliente: new Date().toISOString(),
+        historico_status: [
+          ...historicoAtual,
+          { de: cliente?.status || "", para: "AB Fechamento", data: new Date().toISOString(), timestamp: Date.now() }
+        ]
       });
       // Update the local cliente ref so the form can proceed
       if (cliente) {
         cliente.is_cliente = true;
+        cliente.status = "AB Fechamento";
         cliente.cpf = dados.cpf;
         cliente.nome = dados.nome;
         cliente.email = dados.email;
@@ -191,7 +198,6 @@ export default function AgendarVisitaDialog({ open, onClose, cliente, user, onSa
     setConvertedData(dados);
     setShowConverterDialog(false);
     // Now auto-submit the form after conversion
-    // We need to trigger submit manually
     document.getElementById('agendar-visita-form')?.requestSubmit();
   };
 

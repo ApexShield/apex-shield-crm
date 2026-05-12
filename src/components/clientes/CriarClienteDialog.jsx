@@ -18,7 +18,7 @@ const formatCPF = (value) => {
 };
 
 const STATUS_OPTIONS = [
-  "AB Fechamento", "Análise", "Venda Feita", "Entrega de Apólice"
+  "AB Fechamento", "Delay", "Análise", "Venda Feita", "Entrega de Apólice"
 ];
 
 export default function CriarClienteDialog({ open, onClose, onCreate, isLoading }) {

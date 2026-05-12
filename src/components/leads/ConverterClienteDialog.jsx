@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCheck, AlertTriangle } from "lucide-react";
+import { UserCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 const formatPhone = (value) => {
   const numbers = value.replace(/\D/g, "").slice(0, 11);
@@ -16,15 +16,31 @@ const formatCPF = (value) => {
 };
 
 export default function ConverterClienteDialog({ open, onClose, lead, onConvert }) {
-  const [cpf, setCpf] = useState(lead?.cpf || "");
-  const [nome, setNome] = useState(lead?.nome || "");
-  const [email, setEmail] = useState(lead?.email || "");
-  const [telefone, setTelefone] = useState(lead?.telefone || "");
+  const [cpf, setCpf] = useState("");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [erros, setErros] = useState([]);
+
+  // Puxar dados existentes do lead sempre que o dialog abrir ou o lead mudar
+  useEffect(() => {
+    if (open && lead) {
+      setCpf(lead.cpf || "");
+      setNome(lead.nome || "");
+      setEmail(lead.email || "");
+      setTelefone(lead.telefone || "");
+      setErros([]);
+    }
+  }, [open, lead]);
+
+  const isFieldValid = (field, value) => {
+    if (field === "cpf") return value.replace(/\D/g, "").length >= 11;
+    return !!value.trim();
+  };
 
   const handleConvert = () => {
     const missing = [];
-    if (!nome.trim()) missing.push("Nome");
+    if (!nome.trim()) missing.push("Nome Completo");
     if (!cpf.trim() || cpf.replace(/\D/g, "").length < 11) missing.push("CPF (completo)");
     if (!email.trim()) missing.push("Email");
     if (!telefone.trim()) missing.push("Telefone");
@@ -38,6 +54,11 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
     onConvert({ cpf, nome, email, telefone });
   };
 
+  const FieldStatus = ({ valid }) => (
+    valid ? <CheckCircle2 className="w-4 h-4 text-emerald-400 absolute right-3 top-1/2 -translate-y-1/2" />
+      : <AlertTriangle className="w-4 h-4 text-amber-400 absolute right-3 top-1/2 -translate-y-1/2" />
+  );
+
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent className="bg-slate-900 border-white/20 max-w-md">
@@ -48,26 +69,44 @@ export default function ConverterClienteDialog({ open, onClose, lead, onConvert 
           </AlertDialogTitle>
           <AlertDialogDescription className="text-indigo-200">
             Para avançar para AB Fechamento, o lead precisa ser convertido em cliente.
-            Preencha os campos obrigatórios abaixo:
+            Os dados abaixo foram puxados do cadastro. Verifique e complete os campos obrigatórios:
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-3 py-2">
-          <div>
+          <div className="relative">
             <Label className="text-white text-xs">Nome Completo *</Label>
-            <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())} className="bg-white/10 border-white/20 text-white h-9" />
+            <div className="relative">
+              <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())}
+                className="bg-white/10 border-white/20 text-white h-9 pr-10" />
+              <FieldStatus valid={isFieldValid("nome", nome)} />
+            </div>
           </div>
           <div>
             <Label className="text-white text-xs">CPF *</Label>
-            <Input value={cpf} onChange={(e) => setCpf(formatCPF(e.target.value))} maxLength={14} placeholder="000.000.000-00" className="bg-white/10 border-white/20 text-white h-9" />
+            <div className="relative">
+              <Input value={cpf} onChange={(e) => setCpf(formatCPF(e.target.value))}
+                maxLength={14} placeholder="000.000.000-00"
+                className="bg-white/10 border-white/20 text-white h-9 pr-10" />
+              <FieldStatus valid={isFieldValid("cpf", cpf)} />
+            </div>
           </div>
           <div>
             <Label className="text-white text-xs">Email *</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value.toUpperCase())} className="bg-white/10 border-white/20 text-white h-9" />
+            <div className="relative">
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value.toUpperCase())}
+                className="bg-white/10 border-white/20 text-white h-9 pr-10" />
+              <FieldStatus valid={isFieldValid("email", email)} />
+            </div>
           </div>
           <div>
             <Label className="text-white text-xs">Telefone *</Label>
-            <Input value={telefone} onChange={(e) => setTelefone(formatPhone(e.target.value))} maxLength={15} className="bg-white/10 border-white/20 text-white h-9" />
+            <div className="relative">
+              <Input value={telefone} onChange={(e) => setTelefone(formatPhone(e.target.value))}
+                maxLength={15}
+                className="bg-white/10 border-white/20 text-white h-9 pr-10" />
+              <FieldStatus valid={isFieldValid("telefone", telefone)} />
+            </div>
           </div>
 
           {erros.length > 0 && (

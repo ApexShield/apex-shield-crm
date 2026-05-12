@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function DashboardExport({ data, ano }) {
+export default function DashboardExport({ data, ano, modo = "individual" }) {
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
-    const response = await base44.functions.invoke("exportDashboard", { ano });
+    const response = await base44.functions.invoke("exportDashboard", { ano, modo });
     const { base64, filename } = response.data;
     
     const byteCharacters = atob(base64);

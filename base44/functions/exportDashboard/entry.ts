@@ -258,49 +258,198 @@ function buildSheet(data) {
   return ws;
 }
 
+// Sanitize sheet name for Excel (max 31 chars, no special chars)
+function sanitizeSheetName(name) {
+  return (name || "Sem Nome").replace(/[\\\/\?\*\[\]:]/g, "").substring(0, 31);
+}
+
+// Helper functions for hierarchy (same as getDashboardEquipe)
+function findSubordinates(allUsers, leaderEmail, leaderId) {
+  return allUsers.filter(u => {
+    if (u.email === leaderEmail) return false;
+    const lEmail = u.lider_email || (u.data && u.data.lider_email);
+    const lId = u.lider_id || (u.data && u.data.lider_id);
+    return (lEmail === leaderEmail || (leaderId && lId === leaderId));
+  });
+}
+
+function findAllDescendants(allUsers, leaderEmail, leaderId) {
+  const directSubs = findSubordinates(allUsers, leaderEmail, leaderId);
+  let all = [...directSubs];
+  for (const sub of directSubs) {
+    const subSubs = findAllDescendants(allUsers, sub.email, sub.id);
+    all = all.concat(subSubs);
+  }
+  return all;
+}
+
+function getUserField(u, field) {
+  if (u[field] !== undefined && u[field] !== null && u[field] !== '') return u[field];
+  if (u.data && u.data[field] !== undefined && u.data[field] !== null && u.data[field] !== '') return u.data[field];
+  return undefined;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { ano } = await req.json();
+    const { ano, modo } = await req.json();
     if (!ano) return Response.json({ error: 'ano obrigatório' }, { status: 400 });
 
     const anoNum = (ano === "todos" || ano === null) ? null : parseInt(ano);
-    console.log('Fetching data for ano:', anoNum, 'user:', user.email);
+    const tipoHierarquia = user.tipo_hierarquia;
+    const isEquipe = modo === "equipe";
+    console.log('Export for user:', user.email, '| tipo:', tipoHierarquia, '| ano:', anoNum, '| modo:', modo);
 
-    let data;
-    if (anoNum) {
-      data = await base44.entities.DashboardDiario.filter({ ano: anoNum }, '-data', 5000);
-    } else {
-      data = await base44.entities.DashboardDiario.list('-data', 5000);
-    }
-    console.log('Data found:', data.length, 'records');
-
-    const wb = XLSX.utils.book_new();
-
-    if (anoNum) {
-      // Single year — one sheet named with the year
-      const ws = buildSheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, String(anoNum));
-    } else {
-      // "Todos" — separate sheet per year
-      const years = [...new Set(data.map(d => Number(d.ano)))].sort();
-      if (years.length === 0) {
-        const ws = buildSheet([]);
-        XLSX.utils.book_append_sheet(wb, ws, "Sem Dados");
+    // ────────────────────────────────
+    // INDIVIDUAL: relatório pessoal (corretor ou líder em "meus dados")
+    // ────────────────────────────────
+    if (!isEquipe || !tipoHierarquia || tipoHierarquia === "Corretor") {
+      let data;
+      if (anoNum) {
+        data = await base44.entities.DashboardDiario.filter({ ano: anoNum }, '-data', 5000);
       } else {
-        for (const year of years) {
-          const yearData = data.filter(d => Number(d.ano) === year);
-          const ws = buildSheet(yearData);
-          XLSX.utils.book_append_sheet(wb, ws, String(year));
+        data = await base44.entities.DashboardDiario.list('-data', 5000);
+      }
+      console.log('Corretor data:', data.length, 'records');
+
+      const wb = XLSX.utils.book_new();
+      if (anoNum) {
+        XLSX.utils.book_append_sheet(wb, buildSheet(data), String(anoNum));
+      } else {
+        const years = [...new Set(data.map(d => Number(d.ano)))].sort();
+        if (years.length === 0) {
+          XLSX.utils.book_append_sheet(wb, buildSheet([]), "Sem Dados");
+        } else {
+          for (const year of years) {
+            XLSX.utils.book_append_sheet(wb, buildSheet(data.filter(d => Number(d.ano) === year)), String(year));
+          }
         }
       }
+
+      const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
+      return Response.json({ base64: buf, filename: `relatorio_dashboard_${anoNum || 'todos'}.xlsx` });
+    }
+
+    // ────────────────────────────────
+    // LÍDER: relatório da equipe
+    // ────────────────────────────────
+    const allUsers = await base44.asServiceRole.entities.User.list();
+    let allRecords;
+    if (anoNum) {
+      allRecords = await base44.asServiceRole.entities.DashboardDiario.filter({ ano: anoNum }, '-data', 5000);
+    } else {
+      allRecords = await base44.asServiceRole.entities.DashboardDiario.list('-data', 5000);
+    }
+    console.log('All records fetched:', allRecords.length);
+
+    // Normalize records (flatten .data if present)
+    const normalizedRecords = allRecords.map(r => {
+      if (r.data && typeof r.data === 'object' && r.data.dia_semana) {
+        return { ...r.data, created_by: r.created_by };
+      }
+      return r;
+    });
+
+    const wb = XLSX.utils.book_new();
+    const usedSheetNames = new Set();
+    function uniqueSheetName(base) {
+      let name = sanitizeSheetName(base);
+      let counter = 1;
+      while (usedSheetNames.has(name)) {
+        const suffix = ` (${counter})`;
+        name = sanitizeSheetName(base).substring(0, 31 - suffix.length) + suffix;
+        counter++;
+      }
+      usedSheetNames.add(name);
+      return name;
+    }
+
+    if (tipoHierarquia === "Líder de Unidade") {
+      // ── Líder de Unidade ──
+      const subordinates = findSubordinates(allUsers, user.email, user.id);
+      const allUnitEmails = [user.email, ...subordinates.map(u => u.email)];
+      const unitRecords = normalizedRecords.filter(r => allUnitEmails.includes(r.created_by));
+
+      // Aba 1: TOTAL DA EQUIPE
+      const totalSheetName = uniqueSheetName("TOTAL EQUIPE");
+      XLSX.utils.book_append_sheet(wb, buildSheet(unitRecords), totalSheetName);
+
+      // Aba do próprio líder
+      const leaderRecords = normalizedRecords.filter(r => r.created_by === user.email);
+      if (leaderRecords.length > 0) {
+        const leaderSheetName = uniqueSheetName(user.full_name || user.email);
+        XLSX.utils.book_append_sheet(wb, buildSheet(leaderRecords), leaderSheetName);
+      }
+
+      // Uma aba por corretor subordinado
+      for (const sub of subordinates) {
+        const subRecords = normalizedRecords.filter(r => r.created_by === sub.email);
+        const sheetName = uniqueSheetName(sub.full_name || sub.email);
+        XLSX.utils.book_append_sheet(wb, buildSheet(subRecords), sheetName);
+      }
+
+      console.log(`Líder de Unidade: ${subordinates.length} corretores, ${unitRecords.length} registros total`);
+
+    } else if (tipoHierarquia === "Líder de Agência") {
+      // ── Líder de Agência ──
+      const allDescendants = findAllDescendants(allUsers, user.email, user.id);
+      const allTeamEmails = [user.email, ...allDescendants.map(u => u.email)];
+      const allTeamRecords = normalizedRecords.filter(r => allTeamEmails.includes(r.created_by));
+
+      // Aba 1: TOTAL AGÊNCIA
+      const totalSheetName = uniqueSheetName("TOTAL AGÊNCIA");
+      XLSX.utils.book_append_sheet(wb, buildSheet(allTeamRecords), totalSheetName);
+
+      // Abas por unidade + corretores dentro de cada unidade
+      const directSubs = findSubordinates(allUsers, user.email, user.id);
+      const unitLeaders = directSubs.filter(u => getUserField(u, 'tipo_hierarquia') === "Líder de Unidade");
+      const directBrokers = directSubs.filter(u => getUserField(u, 'tipo_hierarquia') !== "Líder de Unidade");
+
+      for (const leader of unitLeaders) {
+        const unitMembers = findSubordinates(allUsers, leader.email, leader.id);
+        const allUnitEmails = [leader.email, ...unitMembers.map(u => u.email)];
+        const unitRecords = normalizedRecords.filter(r => allUnitEmails.includes(r.created_by));
+        const unitName = getUserField(leader, 'unidade_nome') || `Unidade ${leader.full_name || leader.email}`;
+
+        // Aba da unidade (total)
+        const unitSheetName = uniqueSheetName(`UN - ${unitName}`);
+        XLSX.utils.book_append_sheet(wb, buildSheet(unitRecords), unitSheetName);
+
+        // Aba do líder de unidade
+        const leaderRecords = normalizedRecords.filter(r => r.created_by === leader.email);
+        if (leaderRecords.length > 0) {
+          const leaderSheet = uniqueSheetName(leader.full_name || leader.email);
+          XLSX.utils.book_append_sheet(wb, buildSheet(leaderRecords), leaderSheet);
+        }
+
+        // Abas dos corretores da unidade
+        for (const m of unitMembers) {
+          const memberRecords = normalizedRecords.filter(r => r.created_by === m.email);
+          const memberSheet = uniqueSheetName(m.full_name || m.email);
+          XLSX.utils.book_append_sheet(wb, buildSheet(memberRecords), memberSheet);
+        }
+      }
+
+      // Corretores diretos (sem unidade)
+      for (const b of directBrokers) {
+        const bRecords = normalizedRecords.filter(r => r.created_by === b.email);
+        const bSheet = uniqueSheetName(b.full_name || b.email);
+        XLSX.utils.book_append_sheet(wb, buildSheet(bRecords), bSheet);
+      }
+
+      console.log(`Líder de Agência: ${allDescendants.length} membros, ${allTeamRecords.length} registros total`);
     }
 
     const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
-    return Response.json({ base64: buf, filename: `relatorio_dashboard_${anoNum || 'todos'}.xlsx` });
+    const label = anoNum || 'todos';
+    const filename = tipoHierarquia === "Líder de Agência"
+      ? `relatorio_agencia_${label}.xlsx`
+      : `relatorio_equipe_${label}.xlsx`;
+
+    return Response.json({ base64: buf, filename });
   } catch (error) {
     console.error('Export error:', error.message, error.stack);
     return Response.json({ error: error.message }, { status: 500 });

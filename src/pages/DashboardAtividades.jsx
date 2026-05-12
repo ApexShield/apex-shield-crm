@@ -120,6 +120,9 @@ export default function DashboardAtividades() {
               </Button>
             </>
           )}
+          {viewMode === "equipe" && isLider && (
+            <DashboardExport data={[]} ano={ano} modo="equipe" />
+          )}
         </div>
       </motion.div>
 

@@ -29,15 +29,22 @@ import PullToRefresh from "../components/mobile/PullToRefresh";
 import ConverterClienteDialog from "../components/leads/ConverterClienteDialog";
 import FluxoPipeline from "../components/FluxoPipeline";
 
-// Status de leads (pré-conversão): Novo → AB Fone → AB Visita
-// Após conversão em cliente, o registro sai deste painel e vai para o Painel de Clientes
-const LEAD_STATUSES = ["Novo", "AB Fone", "AB Visita"];
+// Todos os status possíveis de um lead/cliente no funil
+// Leads convertidos (is_cliente=true) saem deste painel e vão para o Painel de Clientes
+// "Encerrado" NÃO exige conversão — um lead pode ser encerrado diretamente
+const ALL_STATUSES = ["Novo", "AB Fone", "AB Visita", "AB Fechamento", "Delay", "Análise", "Venda Feita", "Entrega de Apólice", "Encerrado"];
 
 const STATUS_CONFIG = [
   { value: "", label: "TODOS", color: "rgb(25, 55, 109)", textColor: "white", bgLight: "rgb(200, 215, 235)" },
   { value: "Novo", label: "NOVO", color: "rgb(128, 0, 128)", textColor: "white", bgLight: "rgb(230, 200, 230)" },
   { value: "AB Fone", label: "AB FONE", color: "rgb(255, 105, 180)", textColor: "white", bgLight: "rgb(255, 220, 235)" },
   { value: "AB Visita", label: "AB VISITA", color: "rgb(135, 206, 250)", textColor: "black", bgLight: "rgb(220, 240, 255)" },
+  { value: "AB Fechamento", label: "AB FECH.", color: "rgb(255, 215, 0)", textColor: "black", bgLight: "rgb(255, 245, 200)" },
+  { value: "Delay", label: "DELAY", color: "rgb(0, 255, 255)", textColor: "black", bgLight: "rgb(200, 255, 255)" },
+  { value: "Análise", label: "ANÁLISE", color: "rgb(165, 42, 42)", textColor: "white", bgLight: "rgb(230, 200, 200)" },
+  { value: "Venda Feita", label: "VENDA", color: "rgb(34, 139, 34)", textColor: "white", bgLight: "rgb(200, 235, 200)" },
+  { value: "Entrega de Apólice", label: "ENTREGA", color: "rgb(200, 162, 200)", textColor: "black", bgLight: "rgb(235, 220, 235)" },
+  { value: "Encerrado", label: "ENCERR.", color: "rgb(105, 105, 105)", textColor: "white", bgLight: "rgb(210, 210, 210)" },
 ];
 
 export default function Leads() {
@@ -170,9 +177,9 @@ export default function Leads() {
       leadsFiltrados = leadsFiltrados.filter(c => c.created_by === usuarioFiltro);
     }
     
-    // Mostrar apenas leads (não convertidos em cliente)
-    // Leads ficam neste painel até serem convertidos
-    leadsFiltrados = leadsFiltrados.filter(c => !c.is_cliente && LEAD_STATUSES.includes(c.status));
+    // Mostrar apenas leads que NÃO foram convertidos em cliente
+    // Leads convertidos (is_cliente=true) vão para o Painel de Clientes
+    leadsFiltrados = leadsFiltrados.filter(c => !c.is_cliente);
     
     return leadsFiltrados;
   }, [allClientes, user, usuarioFiltro, usuariosVisiveis]);
@@ -444,7 +451,7 @@ export default function Leads() {
               </div>
               <div>
                 <h1 className="text-xl md:text-3xl font-black text-white">Dashboard de Leads</h1>
-                <p className="text-sm text-indigo-300">Prospecção: Novo → AB Fone → AB Visita → Converter em Cliente</p>
+                <p className="text-sm text-indigo-300">Funil completo: Novo → AB Fone → AB Visita → AB Fechamento → Venda Feita → Encerrado</p>
               </div>
             </div>
             {(user?.role === "admin" || user?.tipo_hierarquia === "Líder de Agência" || user?.tipo_hierarquia === "Líder de Unidade") && usuariosVisiveis.length > 0 && (
@@ -487,7 +494,7 @@ export default function Leads() {
             </h3>
             
             {/* Grid de Botões de Status - 44px touch targets on mobile */}
-            <div className="dense-touch grid grid-cols-5 md:grid-cols-5 gap-1 md:gap-2 mb-2 md:mb-4">
+            <div className="dense-touch grid grid-cols-5 md:grid-cols-5 lg:grid-cols-10 gap-1 md:gap-2 mb-2 md:mb-4">
               {STATUS_CONFIG.map((status) => (
                 <motion.button
                   key={status.value}
@@ -549,8 +556,8 @@ export default function Leads() {
           </div>
         </div>
 
-        {/* Fluxo Pipeline */}
-        <FluxoPipeline tipo="lead" activeStatus={selectedLead?.status} />
+        {/* Fluxo Pipeline - mostra o fluxo completo (lead → conversão → cliente) */}
+        <FluxoPipeline tipo={selectedLead?.is_cliente ? "cliente" : "lead"} activeStatus={selectedLead?.status} />
 
         {/* Table (Desktop) */}
         <div className="hidden md:block bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden mb-6">

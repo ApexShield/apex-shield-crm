@@ -18,17 +18,22 @@ const CLIENTE_STEPS = [
 
 export default function FluxoPipeline({ tipo = "lead", activeStatus }) {
   const isLead = tipo === "lead";
-  const steps = isLead ? LEAD_STEPS : CLIENTE_STEPS;
+  const ALL_STEPS = [...LEAD_STEPS, ...CLIENTE_STEPS];
 
-  const activeIndex = steps.findIndex(s => s.value === activeStatus);
+  // Determine where activeStatus falls in the full flow
+  const leadIdx = LEAD_STEPS.findIndex(s => s.value === activeStatus);
+  const clienteIdx = CLIENTE_STEPS.findIndex(s => s.value === activeStatus);
+  const isActiveInLead = leadIdx >= 0;
+  const isActiveInCliente = clienteIdx >= 0;
+  const isConverted = !isLead; // tipo="cliente" means already converted
 
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3 md:p-4 mb-4">
       <div className="flex items-center gap-1 mb-2">
         <span className="text-white/60 text-[10px] uppercase tracking-wider font-bold">
-          {isLead ? "Fluxo do Lead" : "Fluxo do Cliente"}
+          Fluxo do {isLead ? "Lead" : "Cliente"}
         </span>
-        {!isLead && (
+        {isConverted && (
           <span className="text-emerald-400 text-[10px] ml-auto flex items-center gap-1">
             <UserCheck className="w-3 h-3" /> Convertido
           </span>
@@ -37,81 +42,65 @@ export default function FluxoPipeline({ tipo = "lead", activeStatus }) {
 
       {/* Full flow overview on desktop */}
       <div className="hidden md:flex items-center gap-0">
-        {isLead && (
-          <>
-            {LEAD_STEPS.map((step, i) => (
-              <StepItem
-                key={step.value}
-                step={step}
-                isActive={step.value === activeStatus}
-                isPast={activeIndex > i}
-                isFirst={i === 0}
-                isLast={false}
-              />
-            ))}
-            <div className="flex items-center mx-1">
-              <div className="w-6 h-6 rounded-full bg-emerald-500/30 border-2 border-emerald-500/50 flex items-center justify-center">
-                <UserCheck className="w-3 h-3 text-emerald-400" />
-              </div>
-            </div>
-            {CLIENTE_STEPS.map((step, i) => (
-              <StepItem
-                key={step.value}
-                step={step}
-                isActive={false}
-                isPast={false}
-                isFirst={false}
-                isLast={i === CLIENTE_STEPS.length - 1}
-                dimmed
-              />
-            ))}
-          </>
-        )}
-        {!isLead && (
-          <>
-            {LEAD_STEPS.map((step, i) => (
-              <StepItem
-                key={step.value}
-                step={step}
-                isActive={false}
-                isPast={true}
-                isFirst={i === 0}
-                isLast={false}
-                dimmed
-              />
-            ))}
-            <div className="flex items-center mx-1">
-              <div className="w-6 h-6 rounded-full bg-emerald-500 border-2 border-emerald-400 flex items-center justify-center">
-                <UserCheck className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            {CLIENTE_STEPS.map((step, i) => (
-              <StepItem
-                key={step.value}
-                step={step}
-                isActive={step.value === activeStatus}
-                isPast={activeIndex > i}
-                isFirst={false}
-                isLast={i === CLIENTE_STEPS.length - 1}
-              />
-            ))}
-          </>
-        )}
+        {LEAD_STEPS.map((step, i) => {
+          let isActive = step.value === activeStatus;
+          let isPast = false;
+          if (isActiveInLead) isPast = i < leadIdx;
+          if (isActiveInCliente || isConverted) isPast = true;
+          return (
+            <StepItem
+              key={step.value}
+              step={step}
+              isActive={isActive}
+              isPast={isPast && !isActive}
+              isFirst={i === 0}
+              isLast={false}
+            />
+          );
+        })}
+        <div className="flex items-center mx-1">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
+            isConverted || isActiveInCliente
+              ? "bg-emerald-500 border-emerald-400"
+              : "bg-emerald-500/30 border-emerald-500/50"
+          }`}>
+            <UserCheck className={`w-3 h-3 ${isConverted || isActiveInCliente ? "text-white" : "text-emerald-400"}`} />
+          </div>
+        </div>
+        {CLIENTE_STEPS.map((step, i) => {
+          let isActive = step.value === activeStatus;
+          let isPast = isActiveInCliente ? i < clienteIdx : false;
+          let dimmed = !isActiveInCliente && !isConverted;
+          return (
+            <StepItem
+              key={step.value}
+              step={step}
+              isActive={isActive}
+              isPast={isPast && !isActive}
+              isFirst={false}
+              isLast={i === CLIENTE_STEPS.length - 1}
+              dimmed={dimmed && !isActive}
+            />
+          );
+        })}
       </div>
 
-      {/* Mobile: only current pipeline steps */}
+      {/* Mobile: all steps in scrollable row */}
       <div className="flex md:hidden items-center gap-0 overflow-x-auto no-scrollbar">
-        {steps.map((step, i) => (
-          <StepItem
-            key={step.value}
-            step={step}
-            isActive={step.value === activeStatus}
-            isPast={activeIndex > i}
-            isFirst={i === 0}
-            isLast={i === steps.length - 1}
-            compact
-          />
-        ))}
+        {ALL_STEPS.map((step, i) => {
+          const fullIdx = ALL_STEPS.findIndex(s => s.value === activeStatus);
+          return (
+            <StepItem
+              key={step.value}
+              step={step}
+              isActive={step.value === activeStatus}
+              isPast={fullIdx >= 0 && i < fullIdx}
+              isFirst={i === 0}
+              isLast={i === ALL_STEPS.length - 1}
+              compact
+            />
+          );
+        })}
       </div>
     </div>
   );

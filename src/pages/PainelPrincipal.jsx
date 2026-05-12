@@ -53,7 +53,11 @@ export default function PainelPrincipal() {
   const compromissos = useMemo(() => {
     if (!user || !allCompromissos.length) return [];
     if (user.role === "admin") return allCompromissos;
-    return allCompromissos.filter(c => c.created_by === user.email || c.owner_email === user.email);
+    return allCompromissos.filter(c => 
+      c.created_by === user.email || 
+      c.owner_email === user.email || 
+      (c.email_participante && c.email_participante.toLowerCase() === user.email.toLowerCase())
+    );
   }, [allCompromissos, user]);
 
   const handleResetDates = () => {

@@ -1,56 +1,16 @@
-import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 export default function GoogleCalendarStatus() {
-  const [connecting, setConnecting] = useState(false);
-  const queryClient = useQueryClient();
-
   const { data: connectionStatus, isLoading } = useQuery({
     queryKey: ["google-calendar-status"],
     queryFn: async () => {
       const res = await base44.functions.invoke("verificarConexaoUsuarioCalendar", {});
       return res.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
-
-  const handleConnect = async () => {
-    setConnecting(true);
-    try {
-      const res = await base44.functions.invoke("iniciarOAuthGoogle", {});
-      const { authUrl } = res.data;
-      if (authUrl) {
-        const popup = window.open(authUrl, "_blank", "width=500,height=600");
-        
-        // Listen for postMessage from callback page
-        const messageHandler = (event) => {
-          if (event.data?.type === 'google_auth_complete') {
-            window.removeEventListener('message', messageHandler);
-            setConnecting(false);
-            queryClient.invalidateQueries({ queryKey: ["google-calendar-status"] });
-          }
-        };
-        window.addEventListener('message', messageHandler);
-        
-        // Also poll popup.closed as fallback
-        const timer = setInterval(() => {
-          if (!popup || popup.closed) {
-            clearInterval(timer);
-            window.removeEventListener('message', messageHandler);
-            setConnecting(false);
-            queryClient.invalidateQueries({ queryKey: ["google-calendar-status"] });
-          }
-        }, 1000);
-      }
-    } catch (err) {
-      console.error("Erro ao conectar:", err);
-      setConnecting(false);
-      alert("Erro ao iniciar conexão com Google. Tente novamente.");
-    }
-  };
 
   if (isLoading) {
     return (
@@ -78,24 +38,14 @@ export default function GoogleCalendarStatus() {
   }
 
   return (
-    <Button
-      onClick={handleConnect}
-      disabled={connecting}
-      variant="outline"
-      size="sm"
-      className="bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20 text-xs gap-1.5"
-    >
-      {connecting ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      ) : (
-        <AlertCircle className="w-3.5 h-3.5" />
-      )}
-      <span className="hidden sm:inline">
-        {connecting ? "Conectando..." : "Conectar Google Calendar"}
+    <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5">
+      <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+      <span className="text-xs text-amber-300 font-medium hidden sm:inline">
+        Google Calendar desconectado
       </span>
-      <span className="sm:hidden">
-        {connecting ? "..." : "Conectar Google"}
+      <span className="text-xs text-amber-300 font-medium sm:hidden">
+        Google ✗
       </span>
-    </Button>
+    </div>
   );
 }

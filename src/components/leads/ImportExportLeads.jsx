@@ -22,6 +22,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         'Status': 'AB Fone',
         'Empresa': '',
         'Cargo': '',
+        'Data Cadastro': '2025-01-15',
       },
       {
         'Nome': 'Maria Santos',
@@ -30,6 +31,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
         'Status': 'Novo',
         'Empresa': '',
         'Cargo': '',
+        'Data Cadastro': '',
       }
     ];
 
@@ -135,7 +137,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
           cargo: row['Cargo'] || '',
           fonte_prospeccao: row['Fonte Prospecção'] || '',
           profissao: row['Profissão'] || '',
-          data_cadastro: new Date().toISOString().split('T')[0],
+          data_cadastro: row['Data Cadastro'] ? String(row['Data Cadastro']).trim() : new Date().toISOString().split('T')[0],
         };
       }).filter(lead => lead.nome); // Obrigatório: apenas nome
 
@@ -222,7 +224,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <FileSpreadsheet className="w-6 h-6" style={{ color: '#0096D8' }} />
@@ -230,25 +232,25 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* EXPORTAR */}
-          <div className="bg-green-50 p-6 rounded-lg border-2 border-green-200">
-            <h3 className="font-bold text-lg mb-3 flex items-center gap-2 text-green-700">
-              <Download className="w-5 h-5" />
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-green-700">
+              <Download className="w-4 h-4" />
               Exportar Leads
             </h3>
-            <p className="text-sm text-gray-700 mb-4">
-              Baixe todos os seus leads em formato Excel (.xlsx) para backup ou análise externa.
+            <p className="text-xs text-gray-700 mb-2">
+              Baixe todos os seus leads em formato Excel (.xlsx).
             </p>
-            <div className="bg-white p-3 rounded border border-green-200 mb-4">
-              <p className="text-sm">
+            <div className="bg-white p-2 rounded border border-green-200 mb-2">
+              <p className="text-xs">
                 <strong>Total de leads:</strong> {clientes.length}
               </p>
             </div>
             <Button
               onClick={handleExport}
               disabled={exporting || clientes.length === 0}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 text-sm"
             >
               {exporting ? (
                 <>
@@ -265,23 +267,23 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
           </div>
 
           {/* IMPORTAR */}
-          <div className="bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
-            <h3 className="font-bold text-lg mb-3 flex items-center gap-2 text-blue-700">
-              <Upload className="w-5 h-5" />
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-blue-700">
+              <Upload className="w-4 h-4" />
               Importar Leads
             </h3>
-            <p className="text-sm text-gray-700 mb-4">
+            <p className="text-xs text-gray-700 mb-3">
               Carregue múltiplos leads de uma vez através de um arquivo Excel.
             </p>
 
             {/* Template de Importação */}
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border-2 border-indigo-200 mb-4">
-              <div className="flex items-start gap-3">
-                <FileSpreadsheet className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-3 rounded-lg border border-indigo-200 mb-3">
+              <div className="flex items-start gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="font-bold text-indigo-900 mb-1">Template de Importação</h4>
-                  <p className="text-sm text-gray-700 mb-3">
-                   Baixe o template com as colunas básicas. Preencha com seus dados e faça o upload. A coluna <strong>Status</strong> é opcional — se vazia, será definido como "Novo".
+                  <h4 className="font-bold text-xs text-indigo-900 mb-1">Template de Importação</h4>
+                  <p className="text-xs text-gray-700 mb-2">
+                   Baixe o template, preencha e faça upload. Status é opcional — padrão "Novo".
                   </p>
                   <Button
                     onClick={handleDownloadTemplate}
@@ -295,7 +297,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               </div>
             </div>
 
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-300 mb-4">
+            <div className="bg-yellow-50 p-2 rounded border border-yellow-300 mb-3">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-gray-700">
@@ -323,7 +325,7 @@ export default function ImportExportLeads({ open, onClose, clientes, onImportSuc
               <Button
                 onClick={handleImport}
                 disabled={!selectedFile || importing}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm"
               >
                 {importing ? (
                   <>

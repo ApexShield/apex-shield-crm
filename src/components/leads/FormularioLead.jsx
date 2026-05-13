@@ -476,6 +476,10 @@ export default function FormularioLead({ open, onClose, lead, onSave, isLoading,
                     <Input tabIndex={3} type="date" value={formData.data_cadastro} onChange={(e) => setFormData(prev => ({...prev, data_cadastro: e.target.value}))} className="h-8 text-xs" />
                   </div>
                   <div>
+                    <Label className="text-[11px]">Data da Conversão:</Label>
+                    <Input type="date" value={formData.data_conversao_cliente ? formData.data_conversao_cliente.split('T')[0] : ""} onChange={(e) => setFormData(prev => ({...prev, data_conversao_cliente: e.target.value ? new Date(e.target.value).toISOString() : ""}))} className="h-8 text-xs" />
+                  </div>
+                  <div>
                     <Label className="text-[11px]">Nome Completo:</Label>
                     <Input tabIndex={4} autoFocus={!lead} value={formData.nome} onChange={(e) => handleUpperCase('nome', e.target.value, e)} className="h-8 text-xs" />
                   </div>

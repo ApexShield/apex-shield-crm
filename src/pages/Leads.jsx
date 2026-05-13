@@ -359,6 +359,8 @@ export default function Leads() {
         timestamp: Date.now()
       };
       data.historico_status = [...(editingLead.historico_status || []), mudanca];
+      // Atualizar data da conversão ao mudar status
+      data.data_conversao_cliente = new Date().toISOString();
     }
     
     try {

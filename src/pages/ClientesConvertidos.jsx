@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserCheck, Edit, FileText, TrendingUp, Plus } from "lucide-react";
+import { UserCheck, Edit, FileText, TrendingUp, Plus, Upload } from "lucide-react";
 import usePersistedState from "../hooks/usePersistedState";
 import { Button } from "@/components/ui/button";
 import { format, parseISO, isAfter, isBefore, startOfDay } from "date-fns";
@@ -14,6 +14,7 @@ import FormularioLead from "../components/leads/FormularioLead";
 import DocumentosDialog from "../components/leads/DocumentosDialog";
 import ApoliceDialog from "../components/leads/ApoliceDialog";
 import FluxoPipeline from "../components/FluxoPipeline";
+import ImportExportLeads from "../components/leads/ImportExportLeads";
 
 export default function ClientesConvertidos() {
   const [busca, setBusca] = usePersistedState("clientes_busca", "");
@@ -29,6 +30,7 @@ export default function ClientesConvertidos() {
   const [showDocumentos, setShowDocumentos] = useState(false);
   const [showApolice, setShowApolice] = useState(false);
   const [showCriarCliente, setShowCriarCliente] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
 
   // Listener para abrir apólice do formulário (idêntico ao Leads)
   useEffect(() => {
@@ -230,11 +232,15 @@ export default function ClientesConvertidos() {
             className="bg-gradient-to-r from-pink-500 to-rose-600 font-bold px-6 py-6">
             <TrendingUp className="w-5 h-5 mr-2" />Apólice
           </Button>
+          <Button onClick={() => setShowImportExport(true)}
+            className="bg-gradient-to-r from-indigo-500 to-blue-600 font-bold px-6 py-6">
+            <Upload className="w-5 h-5 mr-2" />Import/Export
+          </Button>
         </div>
 
         {/* Mobile Action Bar */}
         <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 border-t border-emerald-500/30 px-1.5 py-1.5" style={{ background: "linear-gradient(to right, rgba(6,78,59,0.97), rgba(4,47,46,0.97))" }}>
-          <div className="dense-touch grid grid-cols-3 gap-1">
+          <div className="dense-touch grid grid-cols-4 gap-1">
             <Button onClick={() => { if (selectedCliente) handleDoubleClick(selectedCliente); }} disabled={!selectedCliente}
               size="sm" className="bg-orange-500 font-bold text-xs h-11 flex flex-col items-center justify-center gap-0.5 rounded-md">
               <Edit className="w-4 h-4" /><span className="mobile-text-xxs">Editar</span>
@@ -246,6 +252,10 @@ export default function ClientesConvertidos() {
             <Button onClick={() => setShowApolice(true)} disabled={!selectedCliente}
               size="sm" className="bg-pink-500 font-bold text-xs h-11 flex flex-col items-center justify-center gap-0.5 rounded-md">
               <TrendingUp className="w-4 h-4" /><span className="mobile-text-xxs">Apólice</span>
+            </Button>
+            <Button onClick={() => setShowImportExport(true)}
+              size="sm" className="bg-indigo-500 font-bold text-xs h-11 flex flex-col items-center justify-center gap-0.5 rounded-md">
+              <Upload className="w-4 h-4" /><span className="mobile-text-xxs">Import</span>
             </Button>
           </div>
         </div>
@@ -260,6 +270,14 @@ export default function ClientesConvertidos() {
         onClose={() => setShowCriarCliente(false)}
         onCreate={(data) => createMutation.mutate(data)}
         isLoading={createMutation.isPending}
+      />
+
+      <ImportExportLeads
+        open={showImportExport}
+        onClose={() => setShowImportExport(false)}
+        clientes={clientes}
+        onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })}
+        mode="cliente"
       />
 
       {selectedCliente && (

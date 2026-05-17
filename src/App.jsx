@@ -43,9 +43,13 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+      // Allow public pages to render without login
+      const publicPaths = ['/', '/Home', '/PoliticaPrivacidade', '/TermosServico', '/Suporte', '/ExcluirConta', '/BoasVindas'];
+      const currentPath = window.location.pathname;
+      if (!publicPaths.some(p => currentPath === p || currentPath.endsWith(p))) {
+        navigateToLogin();
+        return null;
+      }
     }
   }
 

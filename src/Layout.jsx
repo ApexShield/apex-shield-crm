@@ -77,7 +77,7 @@ export default function Layout({ children, currentPageName }) {
   const queryClient = useQueryClient();
 
   const handleLogout = () => {
-    base44.auth.logout();
+    base44.auth.logout("/");
   };
 
   const handlePullRefresh = useCallback(async () => {

@@ -611,7 +611,7 @@ export default function Leads() {
                       key={cliente.id}
                       className={`cursor-pointer border-white/5 transition-colors ${
                         selectedLead?.id === cliente.id 
-                          ? 'bg-indigo-500/30 ring-1 ring-indigo-400/50' 
+                          ? 'bg-[#00ff88]/20 ring-2 ring-[#00ff88] shadow-[0_0_15px_rgba(0,255,136,0.3)]' 
                           : 'hover:bg-white/10'
                       }`}
                       onClick={() => setSelectedLead(cliente)}
@@ -659,7 +659,8 @@ export default function Leads() {
                             href={`https://wa.me/55${cliente.telefone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:underline text-green-400"
+                            className="hover:underline font-bold"
+                            style={{ color: "#00ff88", textShadow: "0 0 6px rgba(0,255,136,0.5)" }}
                           >
                             {cliente.telefone}
                           </a>

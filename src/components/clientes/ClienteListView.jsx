@@ -95,7 +95,7 @@ export default function ClienteListView({
               return (
                 <TableRow
                   key={cliente.id}
-                  className={`cursor-pointer border-white/5 transition-colors ${selectedCliente?.id === cliente.id ? "bg-emerald-500/30 ring-1 ring-emerald-400/50" : "hover:bg-white/10"}`}
+                  className={`cursor-pointer border-white/5 transition-colors ${selectedCliente?.id === cliente.id ? "bg-[#00ff88]/20 ring-2 ring-[#00ff88] shadow-[0_0_15px_rgba(0,255,136,0.3)]" : "hover:bg-white/10"}`}
                   onClick={() => onSelect(cliente)}
                   onDoubleClick={() => onDoubleClick(cliente)}
                 >
@@ -119,7 +119,8 @@ export default function ClienteListView({
                   <TableCell className="whitespace-nowrap text-xs">
                     {cliente.telefone ? (
                       <a href={`https://wa.me/55${cliente.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
-                        className="text-green-400 hover:underline flex items-center gap-1">
+                        className="hover:underline flex items-center gap-1 font-bold"
+                        style={{ color: "#00ff88", textShadow: "0 0 6px rgba(0,255,136,0.5)" }}>
                         <Phone className="w-3 h-3" />{cliente.telefone}
                       </a>
                     ) : "—"}

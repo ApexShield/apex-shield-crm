@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import FormularioLead from "../components/leads/FormularioLead";
 import DocumentosDialog from "../components/leads/DocumentosDialog";
@@ -234,8 +234,15 @@ export default function Leads() {
     }
 
     return filtered.sort((a, b) => {
-      let valA = a[sortColumn] || "";
-      let valB = b[sortColumn] || "";
+      let valA, valB;
+
+      if (sortColumn === "dias_sem_contato") {
+        valA = a.data_contato ? differenceInDays(new Date(), new Date(a.data_contato)) : 9999;
+        valB = b.data_contato ? differenceInDays(new Date(), new Date(b.data_contato)) : 9999;
+      } else {
+        valA = a[sortColumn] || "";
+        valB = b[sortColumn] || "";
+      }
 
       if (["data_contato", "agendar_visita", "created_date", "data_cadastro"].includes(sortColumn)) {
         valA = valA ? new Date(valA).getTime() : 0;
@@ -569,6 +576,7 @@ export default function Leads() {
                 <TableRow className="border-white/10">
                   {[
                     { key: "codigo", label: "Cód" },
+                    { key: "dias_sem_contato", label: "Dias s/ Contato" },
                     { key: "qualificacao", label: "Qual." },
                     { key: "nome", label: "Nome" },
                     { key: "data_contato", label: "Data Contato" },
@@ -576,12 +584,10 @@ export default function Leads() {
                     { key: "status", label: "Status" },
                     { key: "telefone", label: "Telefone" },
                     { key: "email", label: "E-mail" },
-                    { key: "empresa", label: "Empresa" },
-                    { key: "cargo", label: "Cargo" },
-                    { key: "fonte_prospeccao", label: "Fonte" },
+                    { key: "custo_mensal_fixo", label: "Custo Total" },
+                    { key: "profissao", label: "Profissão" },
                     { key: "renda", label: "Renda" },
                     { key: "idade", label: "Idade" },
-                    { key: "profissao", label: "Profissão" },
                     { key: "created_by", label: "Proprietário" },
                   ].map(col => (
                     <TableHead
@@ -617,6 +623,14 @@ export default function Leads() {
                     >
                       <TableCell className="font-bold text-white whitespace-nowrap">
                         {cliente.codigo || cliente.id.slice(-4).toUpperCase()}
+                      </TableCell>
+                      <TableCell className="font-bold whitespace-nowrap text-center">
+                        {(() => {
+                          if (!cliente.data_contato) return <span className="text-white/30">—</span>;
+                          const dias = differenceInDays(new Date(), new Date(cliente.data_contato));
+                          const color = dias > 30 ? "text-red-400" : dias > 14 ? "text-yellow-400" : "text-green-400";
+                          return <span className={color}>{dias}d</span>;
+                        })()}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {cliente.qualificacao === "quente" && <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-red-500/30 text-red-300">🔥 QUENTE</span>}
@@ -661,12 +675,10 @@ export default function Leads() {
                           </a>
                         ) : <span className="text-white/50">—</span>}
                       </TableCell>
-                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.empresa || "—"}</TableCell>
-                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.cargo || "—"}</TableCell>
-                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.fonte_prospeccao || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.custo_mensal_fixo || "—"}</TableCell>
+                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.profissao || "—"}</TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.renda || "—"}</TableCell>
                       <TableCell className="font-bold text-white whitespace-nowrap">{cliente.idade || "—"}</TableCell>
-                      <TableCell className="font-bold text-white whitespace-nowrap">{cliente.profissao || "—"}</TableCell>
                       <TableCell className="font-bold text-white/70 text-xs whitespace-nowrap" title={cliente.created_by || "—"}>{cliente.created_by || "—"}</TableCell>
                     </TableRow>
                   );

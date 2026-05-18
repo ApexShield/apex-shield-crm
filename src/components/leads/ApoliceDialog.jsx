@@ -26,6 +26,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
     periodo_cobertura: "",
     frequencia_pagamento: "",
     plano_singular: "",
+    pessoas_asseguradas: "",
     
     // Prêmio e Beneficiários
     total_premio_iof: "",
@@ -121,6 +122,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
         periodo_cobertura: "",
         frequencia_pagamento: "",
         plano_singular: "",
+        pessoas_asseguradas: "",
         morte_decrescente_capital: "",
         morte_decrescente_periodo: "",
         morte_acidental_capital: "",
@@ -517,6 +519,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
       periodo_cobertura: "",
       frequencia_pagamento: "",
       plano_singular: "",
+      pessoas_asseguradas: "",
       total_premio_iof: "",
       beneficiarios: [],
       premio_morte: "",
@@ -615,6 +618,19 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                   onChange={(e) => handleCurrencyChange('capital_morte', e.target.value)}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Pessoas Asseguradas:</Label>
+              <Select value={formData.pessoas_asseguradas || ""} onValueChange={(v) => setFormData({...formData, pessoas_asseguradas: v})}>
+                <SelectTrigger><SelectValue placeholder="Automático (baseado na apólice)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ambos com Seguro">Ambos com Seguro</SelectItem>
+                  <SelectItem value="Cônjuge sem Seguro">Cônjuge sem Seguro</SelectItem>
+                  <SelectItem value="Titular sem Seguro">Titular sem Seguro</SelectItem>
+                  <SelectItem value="Ambos sem Seguro">Ambos sem Seguro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {formData.produto === "Vida Total Singular" && (

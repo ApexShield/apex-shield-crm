@@ -16,6 +16,20 @@ function getProduto(cliente) {
 }
 
 function getPessoasAsseguradas(cliente) {
+  // Se houver valor manual definido, usar ele
+  const manual = cliente.dados_apolice?.pessoas_asseguradas;
+  if (manual) {
+    const configMap = {
+      "Ambos com Seguro": { color: "text-emerald-400", icon: ShieldCheck, iconColor: "text-emerald-400" },
+      "Cônjuge sem Seguro": { color: "text-amber-400", icon: ShieldAlert, iconColor: "text-amber-400" },
+      "Titular sem Seguro": { color: "text-orange-400", icon: ShieldAlert, iconColor: "text-orange-400" },
+      "Ambos sem Seguro": { color: "text-red-400", icon: ShieldX, iconColor: "text-red-400" },
+    };
+    const cfg = configMap[manual] || configMap["Ambos sem Seguro"];
+    return { label: manual, ...cfg };
+  }
+
+  // Fallback automático
   const titularTemSeguro = !!cliente.dados_apolice?.produto;
   const conjugeTemSeguro = cliente.dados_apolice?.funeral_individual_conjuge === "Sim";
 

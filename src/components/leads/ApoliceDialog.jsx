@@ -27,6 +27,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
     frequencia_pagamento: "",
     plano_singular: "",
     pessoas_asseguradas: "",
+    data_implantacao: "",
     
     // Prêmio e Beneficiários
     total_premio_iof: "",
@@ -123,6 +124,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
         frequencia_pagamento: "",
         plano_singular: "",
         pessoas_asseguradas: "",
+        data_implantacao: "",
         morte_decrescente_capital: "",
         morte_decrescente_periodo: "",
         morte_acidental_capital: "",
@@ -191,6 +193,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
         type: "object",
         properties: {
           cpf: { type: "string", description: "CPF do segurado" },
+          data_apolice: { type: "string", description: "Data de início de vigência / data da apólice / data de emissão no formato DD/MM/YYYY. Pode aparecer como 'Início de Vigência', 'Data de Emissão', 'Vigência a partir de' ou similar." },
           produto_nome: { type: "string", description: "Nome do produto/seguro exatamente como aparece no documento (ex: VIDA SEGURA, Vida Singular, Vida Total, Vida Total Singular). Geralmente está no topo da primeira página." },
           plano_codigo: { type: "string", description: "Código do plano se houver (ex: VS20, VT10, VSG25)" },
           periodicidade_premio: { type: "string", description: "Periodicidade de pagamento dos prêmios - Mensal ou Anual" },
@@ -464,10 +467,17 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
         console.log("Coberturas mapeadas:", JSON.stringify(formUpdates, null, 2));
         console.log("Beneficiários:", JSON.stringify(beneficiarios, null, 2));
         
+        // Data de implantação
+        let dataImplantacao = "";
+        if (data.data_apolice) {
+          dataImplantacao = normData(data.data_apolice);
+        }
+        
         // Mesclar dados extraídos
         setFormData(prev => ({
           ...prev,
           produto: produtoFinal || prev.produto,
+          data_implantacao: dataImplantacao || prev.data_implantacao,
           tipo_cobertura: tipoCobertura || prev.tipo_cobertura,
           periodo_cobertura: periodoCobertura || prev.periodo_cobertura,
           frequencia_pagamento: freq || prev.frequencia_pagamento,
@@ -520,6 +530,7 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
       frequencia_pagamento: "",
       plano_singular: "",
       pessoas_asseguradas: "",
+      data_implantacao: "",
       total_premio_iof: "",
       beneficiarios: [],
       premio_morte: "",
@@ -618,6 +629,15 @@ export default function ApoliceDialog({ open, onClose, cliente, onSave, isLoadin
                   onChange={(e) => handleCurrencyChange('capital_morte', e.target.value)}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Data de Implantação (Início de Vigência):</Label>
+              <Input
+                type="date"
+                value={formData.data_implantacao || ""}
+                onChange={(e) => setFormData({...formData, data_implantacao: e.target.value})}
+              />
             </div>
 
             <div>

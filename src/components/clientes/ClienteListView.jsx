@@ -68,6 +68,7 @@ export default function ClienteListView({
     { key: "estado_civil", label: "Estado Civil" },
     { key: "filhos", label: "Filhos" },
     { key: "produto", label: "Produtos" },
+    { key: "data_implantacao", label: "Dt. Implantação" },
     { key: "pessoas_asseguradas", label: "Pessoas Asseguradas" },
     { key: "status", label: "Status" },
   ];
@@ -132,6 +133,11 @@ export default function ClienteListView({
                       <Shield className="w-3 h-3" />{getProduto(cliente)}
                     </span>
                   </TableCell>
+                  <TableCell className="whitespace-nowrap text-xs text-white/80">
+                    {cliente.dados_apolice?.data_implantacao 
+                      ? format(parseISO(cliente.dados_apolice.data_implantacao), "dd/MM/yyyy") 
+                      : "—"}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-xs">
                     <span className={`font-bold ${assegurados.color}`}>{assegurados.label}</span>
                   </TableCell>
@@ -146,7 +152,7 @@ export default function ClienteListView({
             })}
             {dados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="text-center text-white/50 py-12">
+                <TableCell colSpan={11} className="text-center text-white/50 py-12">
                   Nenhum cliente encontrado.
                 </TableCell>
               </TableRow>

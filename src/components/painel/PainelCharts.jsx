@@ -19,7 +19,7 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
 
   const isFechamento = (c) => {
     const t = (c.titulo || "").trim();
-    return t.startsWith("F ") || t.startsWith("F2") || c.status_origem === "AB Fechamento";
+    return /^F\s/i.test(t) || /^F\d/i.test(t) || c.status_origem === "AB Fechamento";
   };
   const fechamentos = compromissos.filter(c =>
     isFechamento(c) && inRange(c.data_inicio)

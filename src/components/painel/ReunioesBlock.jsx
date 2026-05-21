@@ -57,10 +57,10 @@ export default function ReunioesBlock({ compromissos, clientes, dataInicio, data
     inRange(c.data_inicio)
   ).map(c => ({ nome: c.cliente_nome || c.titulo, data: c.data_inicio }));
 
-  // Reuniões de Fechamento = compromissos cujo título começa com "F " ou "F2", ou status_origem AB Fechamento
+  // Reuniões de Fechamento = título começa com "F " ou "F" seguido de número (F2, F3, F4...), ou status_origem AB Fechamento
   const isFechamento = (c) => {
     const t = (c.titulo || "").trim();
-    return t.startsWith("F ") || t.startsWith("F2") || t.startsWith("F2 ") || c.status_origem === "AB Fechamento";
+    return /^F\s/i.test(t) || /^F\d/i.test(t) || c.status_origem === "AB Fechamento";
   };
   const fechamentos = compromissos.filter(c =>
     isFechamento(c) && inRange(c.data_inicio)

@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserCheck, Edit, FileText, TrendingUp, Plus, Upload } from "lucide-react";
+import { UserCheck, Edit, FileText, TrendingUp, Plus, Upload, CalendarSearch, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import usePersistedState from "../hooks/usePersistedState";
 import { Button } from "@/components/ui/button";
 import { format, parseISO, isAfter, isBefore, startOfDay } from "date-fns";
@@ -31,6 +32,7 @@ export default function ClientesConvertidos() {
   const [showApolice, setShowApolice] = useState(false);
   const [showCriarCliente, setShowCriarCliente] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
+  const [preenchendoDatas, setPreenchendoDatas] = useState(false);
 
   // Listener para abrir apólice do formulário (idêntico ao Leads)
   useEffect(() => {
@@ -158,6 +160,28 @@ export default function ClientesConvertidos() {
     setShowApolice(false);
   };
 
+  const handlePreencherDatas = async () => {
+    const semData = clientes.filter(c => !c.dados_apolice?.data_implantacao && c.documentos?.length > 0);
+    if (semData.length === 0) {
+      toast.info("Todos os clientes com documentos já possuem data de implantação.");
+      return;
+    }
+    if (!confirm(`Será feita a leitura dos documentos de ${semData.length} cliente(s) para extrair a data de implantação. Isso pode levar alguns minutos. Continuar?`)) return;
+    
+    setPreenchendoDatas(true);
+    toast.info(`Processando ${semData.length} cliente(s)... Aguarde.`);
+    try {
+      const response = await base44.functions.invoke('preencherDataImplantacao', {});
+      const r = response.data;
+      toast.success(`Concluído! ${r.sucesso} preenchida(s), ${r.erro} erro(s), ${r.sem_documentos} sem docs.`);
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+    } catch (err) {
+      toast.error("Erro ao processar: " + err.message);
+    } finally {
+      setPreenchendoDatas(false);
+    }
+  };
+
   const handleClearFilters = () => {
     setBusca(""); setFiltroStatus("all"); setDataInicial(""); setDataFinal("");
     setSortColumn("data_conversao_cliente"); setSortDirection("desc");
@@ -235,6 +259,11 @@ export default function ClientesConvertidos() {
           <Button onClick={() => setShowImportExport(true)}
             className="bg-gradient-to-r from-indigo-500 to-blue-600 font-bold px-6 py-6">
             <Upload className="w-5 h-5 mr-2" />Import/Export
+          </Button>
+          <Button onClick={handlePreencherDatas} disabled={preenchendoDatas}
+            className="bg-gradient-to-r from-teal-500 to-cyan-600 font-bold px-6 py-6">
+            {preenchendoDatas ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <CalendarSearch className="w-5 h-5 mr-2" />}
+            {preenchendoDatas ? "Processando..." : "Preencher Datas Implantação"}
           </Button>
         </div>
 

@@ -17,10 +17,12 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
     inRange(c.data_inicio)
   ).length;
 
+  const isFechamento = (c) => {
+    const t = (c.titulo || "").trim();
+    return t.startsWith("F ") || t.startsWith("F2") || c.status_origem === "AB Fechamento";
+  };
   const fechamentos = compromissos.filter(c =>
-    (c.tipo === "agendado" || c.tipo === "reuniao_realizada") &&
-    c.status_origem === "AB Fechamento" &&
-    inRange(c.data_inicio)
+    isFechamento(c) && inRange(c.data_inicio)
   ).length;
 
   const parseCurrency = (val) => {

@@ -57,11 +57,13 @@ export default function ReunioesBlock({ compromissos, clientes, dataInicio, data
     inRange(c.data_inicio)
   ).map(c => ({ nome: c.cliente_nome || c.titulo, data: c.data_inicio }));
 
-  // Reuniões de Fechamento = compromissos com status AB Fechamento
+  // Reuniões de Fechamento = compromissos cujo título começa com "F " ou "F2", ou status_origem AB Fechamento
+  const isFechamento = (c) => {
+    const t = (c.titulo || "").trim();
+    return t.startsWith("F ") || t.startsWith("F2") || t.startsWith("F2 ") || c.status_origem === "AB Fechamento";
+  };
   const fechamentos = compromissos.filter(c =>
-    (c.tipo === "agendado" || c.tipo === "reuniao_realizada") &&
-    c.status_origem === "AB Fechamento" &&
-    inRange(c.data_inicio)
+    isFechamento(c) && inRange(c.data_inicio)
   ).map(c => ({ nome: c.cliente_nome || c.titulo, data: c.data_inicio }));
 
   // Propostas Fechadas = clientes com status Venda Feita no período

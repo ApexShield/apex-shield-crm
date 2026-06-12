@@ -112,7 +112,11 @@ export default function ClienteListView({
                   </TableCell>
                   <TableCell className="text-white/80 whitespace-nowrap text-xs">{cliente.profissao || "—"}</TableCell>
                   <TableCell className="text-white/70 whitespace-nowrap text-xs">
-                    {cliente.data_nascimento ? format(parseISO(cliente.data_nascimento), "dd/MM/yyyy") : "—"}
+                    {(() => {
+                      if (!cliente.data_nascimento) return "—";
+                      const parsed = parseISO(cliente.data_nascimento);
+                      return isNaN(parsed.getTime()) ? "—" : format(parsed, "dd/MM/yyyy");
+                    })()}
                   </TableCell>
                   <TableCell className="text-white/80 whitespace-nowrap text-xs font-bold">
                     {calcularIdade(cliente.data_nascimento)}

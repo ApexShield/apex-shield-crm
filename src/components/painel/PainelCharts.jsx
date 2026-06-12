@@ -102,6 +102,7 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
               <XAxis dataKey="name" tick={{ fill: "#e2e8f0", fontSize: 11 }} />
               <YAxis tick={{ fill: "#e2e8f0", fontSize: 11 }} allowDecimals={false} />
               <Tooltip
+                cursor={{ fill: 'transparent' }}
                 contentStyle={{ backgroundColor: "#1e1b4b", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, color: "#fff" }}
               />
               <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
@@ -132,7 +133,7 @@ export default function PainelCharts({ compromissos, clientes, dataInicio, dataF
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: "#1e1b4b", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, color: "#fff" }} />
+                <Tooltip cursor={false} contentStyle={{ backgroundColor: "#1e1b4b", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, color: "#fff" }} />
                 <Legend wrapperStyle={{ color: "#e2e8f0", fontSize: 11 }} />
               </PieChart>
             </ResponsiveContainer>

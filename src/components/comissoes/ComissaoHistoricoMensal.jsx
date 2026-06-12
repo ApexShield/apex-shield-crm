@@ -134,6 +134,7 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
               <XAxis dataKey="mes" tick={{ fill: "#e2e8f0", fontSize: 10 }} />
               <YAxis tick={{ fill: "#e2e8f0", fontSize: 10 }} />
               <Tooltip
+                cursor={{ fill: 'transparent' }}
                 contentStyle={{ backgroundColor: "#1e1b4b", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, color: "#fff" }}
                 formatter={(value) => [fmtCurrency(value), "Valor"]}
                 labelFormatter={(label) => {

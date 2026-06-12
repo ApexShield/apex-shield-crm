@@ -147,6 +147,7 @@ export default function GraficoPremiacoes({ clientes, comissoes, angariacao }) {
               <XAxis dataKey="name" tick={{ fill: "#e2e8f0", fontSize: 12 }} />
               <YAxis tick={{ fill: "#e2e8f0", fontSize: 11 }} />
               <Tooltip
+                cursor={{ fill: 'transparent' }}
                 contentStyle={{ backgroundColor: "#1e1b4b", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, color: "#fff" }}
                 formatter={(value) => [fmtCurrency(value), ""]}
               />

@@ -59,7 +59,7 @@ export default function DashboardCharts({ data }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip cursor={{ stroke: 'rgba(255,255,255,0.2)' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey="ligacoes_realizadas" name="Ligações" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }}>
               <LabelList dataKey="ligacoes_realizadas" position="top" style={{ fontSize: 10, fontWeight: 600, fill: "#6366f1" }} />
@@ -85,7 +85,7 @@ export default function DashboardCharts({ data }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis type="number" tick={{ fontSize: 11 }} />
             <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={100} />
-            <Tooltip />
+            <Tooltip cursor={{ fill: 'transparent' }} />
             <Bar dataKey="value" name="Total" radius={[0, 6, 6, 0]}>
               {conversionData.map((_, idx) => (
                 <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
@@ -104,7 +104,7 @@ export default function DashboardCharts({ data }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip cursor={{ fill: 'transparent' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="ligacoes_realizadas" name="Ligações" fill="#6366f1" radius={[4, 4, 0, 0]}>
               <LabelList content={CustomLabel} />

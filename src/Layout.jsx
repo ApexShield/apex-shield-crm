@@ -11,6 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ConvitesDialog from "./components/ConvitesDialog";
 import AniversariantesPopup from "./components/AniversariantesPopup";
+import ComissaoExpiracaoLayout from "./components/comissoes/ComissaoExpiracaoLayout";
 import BottomNav from "./components/mobile/BottomNav";
 import DeleteAccountDialog from "./components/mobile/DeleteAccountDialog";
 import PullToRefresh from "./components/mobile/PullToRefresh";
@@ -25,7 +26,7 @@ const navigation = [
   { name: "Calculadora Rápida", icon: Briefcase, page: "CalculadoraRapida" },
   { name: "Campanhas", icon: Megaphone, page: "Campanhas" },
   { name: "Metas", icon: Target, page: "Metas" },
-  { name: "Comissões e Premiações", icon: Briefcase, page: "Comissoes" },
+  { name: "Comissões", icon: Briefcase, page: "Comissoes" },
   { name: "Gestão Financeira", icon: Users, page: "GestaoCustos" },
   { name: "Gestão de Usuários", icon: Users, page: "GestaoUsuarios", adminOnly: true },
   { name: "Gerenciar Cupons", icon: Ticket, page: "GerenciarCupons", adminOnly: true },
@@ -264,6 +265,7 @@ export default function Layout({ children, currentPageName }) {
       />
 
       <AniversariantesPopup />
+      <ComissaoExpiracaoLayout />
 
       <DeleteAccountDialog
         open={showDeleteAccount}

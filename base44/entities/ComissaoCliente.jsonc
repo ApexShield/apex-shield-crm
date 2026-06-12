@@ -1,0 +1,113 @@
+{
+  "name": "ComissaoCliente",
+  "type": "object",
+  "properties": {
+    "cliente_id": {
+      "type": "string",
+      "description": "ID do cliente vinculado"
+    },
+    "cliente_nome": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "produto": {
+      "type": "string",
+      "description": "Produto do cliente"
+    },
+    "valor_comissao": {
+      "type": "number",
+      "description": "Valor mensal da comiss\u00e3o pago pela seguradora (R$)"
+    },
+    "data_adesao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de ades\u00e3o/in\u00edcio do pagamento"
+    },
+    "data_expiracao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de expira\u00e7\u00e3o (12 meses ap\u00f3s ades\u00e3o)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativa",
+        "expirada",
+        "renovada"
+      ],
+      "default": "ativa",
+      "description": "Status da comiss\u00e3o"
+    },
+    "notificacao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a notifica\u00e7\u00e3o de expira\u00e7\u00e3o j\u00e1 foi exibida"
+    },
+    "historico_renovacoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "data_renovacao": {
+            "type": "string"
+          },
+          "valor_anterior": {
+            "type": "number"
+          },
+          "valor_novo": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de renova\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "cliente_id",
+    "cliente_nome",
+    "produto",
+    "valor_comissao",
+    "data_adesao"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

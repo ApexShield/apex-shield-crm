@@ -23,20 +23,22 @@ const TIPOS_COMISSAO = [
   {
     value: "Angariação",
     label: "Angariação",
-    desc: "Paga mensalmente. Informe apenas o valor.",
+    desc: "Pagamento único de valor variável. Informe o valor e a data de pagamento.",
     icon: Award,
     color: "from-amber-500 to-orange-600",
     borderColor: "border-amber-500/40",
-    needsCliente: false
+    needsCliente: false,
+    pagamentoUnico: true
   },
   {
     value: "Bônus",
     label: "Bônus",
-    desc: "Pago a cada 3 meses. Informe apenas o valor.",
+    desc: "Pagamento único de valor variável. Informe o valor e a data de pagamento.",
     icon: Gift,
     color: "from-purple-500 to-indigo-600",
     borderColor: "border-purple-500/40",
-    needsCliente: false
+    needsCliente: false,
+    pagamentoUnico: true
   }
 ];
 
@@ -106,17 +108,20 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
     }
 
     setSaving(true);
-    const dataExp = format(addMonths(new Date(dataAdesao + "T12:00:00"), 12), "yyyy-MM-dd");
+    const isPagamentoUnico = tipoConfig?.pagamentoUnico;
+    const dataExp = isPagamentoUnico
+      ? dataAdesao // sem expiração para pagamento único
+      : format(addMonths(new Date(dataAdesao + "T12:00:00"), 12), "yyyy-MM-dd");
 
     await base44.entities.ComissaoCliente.create({
       cliente_id: selectedCliente?.id || "",
-      cliente_nome: selectedCliente?.nome || (tipoComissao === "Angariação" ? "Angariação" : "Bônus"),
+      cliente_nome: selectedCliente?.nome || tipoComissao,
       tipo_comissao: tipoComissao,
       produto: produto || tipoComissao,
       valor_comissao: parseFloat(valorComissao),
       data_adesao: dataAdesao,
       data_expiracao: dataExp,
-      status: "ativa",
+      status: isPagamentoUnico ? "pago" : "ativa",
       notificacao_enviada: false,
       historico_renovacoes: []
     });
@@ -148,7 +153,9 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
     }
   };
 
-  const frequenciaLabel = tipoComissao === "Bônus" ? "Valor do Bônus Trimestral (R$)" : "Valor Mensal (R$)";
+  const isUnico = tipoConfig?.pagamentoUnico;
+  const frequenciaLabel = isUnico ? `Valor Recebido (R$)` : "Valor da Comissão Mensal (R$)";
+  const dataLabel = isUnico ? "Data de Pagamento" : "Data de Início";
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) { resetForm(); onClose(); } }}>
@@ -263,8 +270,8 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
                   <p className="text-white font-bold text-xs">{tipoConfig.label}</p>
                   <p className="text-white/40 text-[10px]">
                     {tipoComissao === "Venda" && "Mensal por 12 meses"}
-                    {tipoComissao === "Angariação" && "Pagamento mensal"}
-                    {tipoComissao === "Bônus" && "Pagamento a cada 3 meses"}
+                    {tipoComissao === "Angariação" && "Pagamento único — valor variável"}
+                    {tipoComissao === "Bônus" && "Pagamento único — valor variável"}
                   </p>
                 </div>
               </div>
@@ -303,12 +310,12 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
             </div>
 
             <div>
-              <Label className="text-white/70 text-xs">Data de Início</Label>
+              <Label className="text-white/70 text-xs">{dataLabel}</Label>
               <Input type="date" value={dataAdesao} onChange={e => setDataAdesao(e.target.value)}
                 className="bg-white/10 border-white/20 text-white text-sm" />
             </div>
 
-            {dataAdesao && (
+            {dataAdesao && !isUnico && (
               <p className="text-xs text-white/40">
                 Expira em: {format(addMonths(new Date(dataAdesao + "T12:00:00"), 12), "dd/MM/yyyy")} (12 meses)
               </p>

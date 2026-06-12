@@ -14,7 +14,16 @@ function safeFmtDate(dateStr) {
   return isValid(d) ? format(d, "dd/MM/yyyy") : "—";
 }
 
+function isPagamentoUnico(comissao) {
+  return comissao.tipo_comissao === "Bônus" || comissao.tipo_comissao === "Angariação";
+}
+
 function getStatusInfo(comissao) {
+  // Pagamentos únicos (Bônus/Angariação) não expiram
+  if (isPagamentoUnico(comissao)) {
+    return { label: "Pago", color: "text-cyan-400", icon: CheckCircle, urgente: false, diasRestantes: 999 };
+  }
+
   const hoje = new Date();
   const exp = parseISO(comissao.data_expiracao);
   if (!isValid(exp)) return { label: "—", color: "text-white/50", icon: Clock, urgente: false };
@@ -65,10 +74,10 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
               <TableHead className="text-white text-xs font-bold">Cliente</TableHead>
               <TableHead className="text-white text-xs font-bold">Tipo</TableHead>
               <TableHead className="text-white text-xs font-bold">Produto</TableHead>
-              <TableHead className="text-white text-xs font-bold text-center">Valor/Mês</TableHead>
-              <TableHead className="text-white text-xs font-bold text-center">Adesão</TableHead>
+              <TableHead className="text-white text-xs font-bold text-center">Valor</TableHead>
+              <TableHead className="text-white text-xs font-bold text-center">Data</TableHead>
               <TableHead className="text-white text-xs font-bold text-center">Expiração</TableHead>
-              <TableHead className="text-white text-xs font-bold text-center">Meses Pagos</TableHead>
+              <TableHead className="text-white text-xs font-bold text-center">Progresso</TableHead>
               <TableHead className="text-white text-xs font-bold text-center">Status</TableHead>
               <TableHead className="text-white text-xs font-bold w-20"></TableHead>
             </TableRow>
@@ -100,9 +109,15 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                   <TableCell className="text-cyan-300 text-xs">{c.produto}</TableCell>
                   <TableCell className="text-emerald-400 text-xs font-black text-center">{fmtCurrency(c.valor_comissao)}</TableCell>
                   <TableCell className="text-white/70 text-xs text-center">{safeFmtDate(c.data_adesao)}</TableCell>
-                  <TableCell className="text-white/70 text-xs text-center">{safeFmtDate(c.data_expiracao)}</TableCell>
                   <TableCell className="text-white/70 text-xs text-center">
-                    <span className="font-bold">{mesesPagos}</span>/12
+                    {isPagamentoUnico(c) ? "—" : safeFmtDate(c.data_expiracao)}
+                  </TableCell>
+                  <TableCell className="text-white/70 text-xs text-center">
+                    {isPagamentoUnico(c) ? (
+                      <span className="text-cyan-400 font-bold">Único</span>
+                    ) : (
+                      <><span className="font-bold">{mesesPagos}</span>/12</>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs text-center">
                     <span className={`flex items-center justify-center gap-1 ${statusInfo.color} font-bold`}>

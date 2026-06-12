@@ -134,9 +134,12 @@ export default function ClienteListView({
                     </span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-white/80">
-                    {cliente.dados_apolice?.data_implantacao 
-                      ? format(parseISO(cliente.dados_apolice.data_implantacao), "dd/MM/yyyy") 
-                      : "—"}
+                    {(() => {
+                      const di = cliente.dados_apolice?.data_implantacao;
+                      if (!di) return "—";
+                      const parsed = parseISO(di);
+                      return isNaN(parsed.getTime()) ? "—" : format(parsed, "dd/MM/yyyy");
+                    })()}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs">
                     <span className={`font-bold ${assegurados.color}`}>{assegurados.label}</span>

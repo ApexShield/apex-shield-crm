@@ -1,0 +1,91 @@
+{
+  "name": "CampanhaEnvio",
+  "type": "object",
+  "properties": {
+    "campanha_id": {
+      "type": "string",
+      "description": "ID da campanha"
+    },
+    "cliente_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "cliente_nome": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "canal": {
+      "type": "string",
+      "enum": [
+        "email",
+        "whatsapp"
+      ],
+      "description": "Canal de envio"
+    },
+    "destino": {
+      "type": "string",
+      "description": "Email ou telefone do destinat\u00e1rio"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "enviado",
+        "erro",
+        "pendente"
+      ],
+      "default": "pendente",
+      "description": "Status do envio"
+    },
+    "erro_detalhe": {
+      "type": "string",
+      "description": "Detalhe do erro se houver"
+    },
+    "mensagem_enviada": {
+      "type": "string",
+      "description": "Mensagem que foi enviada"
+    }
+  },
+  "required": [
+    "campanha_id",
+    "canal",
+    "destino"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "name": "Agencia",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da ag\u00eancia"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da ag\u00eancia"
+    },
+    "lider_agencia_id": {
+      "type": "string",
+      "description": "ID do l\u00edder da ag\u00eancia"
+    },
+    "lider_agencia_email": {
+      "type": "string",
+      "description": "Email do l\u00edder da ag\u00eancia"
+    },
+    "lider_agencia_nome": {
+      "type": "string",
+      "description": "Nome do l\u00edder da ag\u00eancia"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Status da ag\u00eancia"
+    }
+  },
+  "required": [
+    "nome",
+    "lider_agencia_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.lider_agencia_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.lider_agencia_email": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

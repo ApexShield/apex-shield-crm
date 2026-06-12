@@ -1,0 +1,50 @@
+{
+  "name": "UserGoogleAuth",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio no sistema"
+    },
+    "google_email": {
+      "type": "string",
+      "description": "Email da conta Google conectada"
+    },
+    "access_token": {
+      "type": "string",
+      "description": "Token de acesso OAuth"
+    },
+    "refresh_token": {
+      "type": "string",
+      "description": "Token de refresh OAuth"
+    },
+    "token_expiry": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de expira\u00e7\u00e3o do token"
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Escopos autorizados"
+    }
+  },
+  "required": [
+    "user_email",
+    "google_email",
+    "access_token"
+  ],
+  "rls": {
+    "read": {
+      "data.user_email": "{{user.email}}"
+    },
+    "update": {
+      "data.user_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_email": "{{user.email}}"
+    }
+  }
+}

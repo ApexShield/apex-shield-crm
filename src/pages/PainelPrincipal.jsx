@@ -26,7 +26,7 @@ export default function PainelPrincipal() {
   const [dataInicio, setDataInicio] = useState(defaults.inicio);
   const [dataFim, setDataFim] = useState(defaults.fim);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => base44.auth.me()
   });
@@ -66,7 +66,7 @@ export default function PainelPrincipal() {
     setDataFim(d.fim);
   };
 
-  const isLoading = loadingClientes || loadingCompromissos;
+  const isLoading = loadingUser || loadingClientes || loadingCompromissos || !user;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-3 md:p-6">

@@ -1,0 +1,132 @@
+{
+  "name": "DashboardDiario",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do registro"
+    },
+    "dia_semana": {
+      "type": "string",
+      "enum": [
+        "Segunda feira",
+        "Ter\u00e7a feira",
+        "Quarta feira",
+        "Quinta feira",
+        "Sexta Feira"
+      ],
+      "description": "Dia da semana"
+    },
+    "semana": {
+      "type": "number",
+      "description": "N\u00famero da semana no ano (1-52)"
+    },
+    "ano": {
+      "type": "number",
+      "description": "Ano do registro"
+    },
+    "ligacoes_realizadas": {
+      "type": "number",
+      "default": 0,
+      "description": "Liga\u00e7\u00f5es realizadas"
+    },
+    "ligacoes_atendidas": {
+      "type": "number",
+      "default": 0,
+      "description": "Liga\u00e7\u00f5es atendidas"
+    },
+    "agendamentos_feitos": {
+      "type": "number",
+      "default": 0,
+      "description": "Agendamentos feitos"
+    },
+    "abs_marcadas": {
+      "type": "number",
+      "default": 0,
+      "description": "ABs que estavam marcadas para o dia"
+    },
+    "abs_realizadas": {
+      "type": "number",
+      "default": 0,
+      "description": "ABs que foram realizadas"
+    },
+    "f_agendados": {
+      "type": "number",
+      "default": 0,
+      "description": "F agendados para o dia"
+    },
+    "f_realizados": {
+      "type": "number",
+      "default": 0,
+      "description": "F realizados"
+    },
+    "n_protocoladas": {
+      "type": "number",
+      "default": 0,
+      "description": "N protocoladas"
+    },
+    "recs": {
+      "type": "number",
+      "default": 0,
+      "description": "RECS"
+    },
+    "pa": {
+      "type": "number",
+      "default": 0,
+      "description": "PA (Pr\u00eamio Anual)"
+    },
+    "cs": {
+      "type": "number",
+      "default": 0,
+      "description": "CS (Capital Segurado)"
+    }
+  },
+  "required": [
+    "data",
+    "dia_semana",
+    "semana",
+    "ano"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

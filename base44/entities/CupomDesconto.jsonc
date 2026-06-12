@@ -1,0 +1,86 @@
+{
+  "name": "CupomDesconto",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo do cupom (ex: APEX10)"
+    },
+    "desconto_percentual": {
+      "type": "number",
+      "enum": [
+        10,
+        20,
+        30
+      ],
+      "description": "Percentual de desconto"
+    },
+    "stripe_coupon_id": {
+      "type": "string",
+      "description": "ID do cupom no Stripe"
+    },
+    "stripe_promotion_code_id": {
+      "type": "string",
+      "description": "ID do promotion code no Stripe"
+    },
+    "max_usos": {
+      "type": "number",
+      "description": "N\u00famero m\u00e1ximo de usos (0 = ilimitado)"
+    },
+    "usos_realizados": {
+      "type": "number",
+      "default": 0,
+      "description": "N\u00famero de usos realizados"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o cupom est\u00e1 ativo"
+    },
+    "data_expiracao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de expira\u00e7\u00e3o do cupom"
+    },
+    "duracao": {
+      "type": "string",
+      "enum": [
+        "once",
+        "repeating",
+        "forever"
+      ],
+      "default": "once",
+      "description": "Dura\u00e7\u00e3o do desconto: once (1\u00ba m\u00eas), repeating (X meses), forever (sempre)"
+    },
+    "duracao_meses": {
+      "type": "number",
+      "description": "Meses de dura\u00e7\u00e3o (se repeating)"
+    }
+  },
+  "required": [
+    "codigo",
+    "desconto_percentual"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

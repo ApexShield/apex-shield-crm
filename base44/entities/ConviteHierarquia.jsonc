@@ -1,0 +1,117 @@
+{
+  "name": "ConviteHierarquia",
+  "type": "object",
+  "properties": {
+    "email_convidado": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio convidado"
+    },
+    "tipo_hierarquia": {
+      "type": "string",
+      "description": "Tipo de hierarquia oferecido"
+    },
+    "agencia_id": {
+      "type": "string",
+      "description": "ID da ag\u00eancia"
+    },
+    "agencia_nome": {
+      "type": "string",
+      "description": "Nome da ag\u00eancia"
+    },
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade (se aplic\u00e1vel)"
+    },
+    "unidade_nome": {
+      "type": "string",
+      "description": "Nome da unidade (se aplic\u00e1vel)"
+    },
+    "lider_id": {
+      "type": "string",
+      "description": "ID de quem convidou"
+    },
+    "lider_email": {
+      "type": "string",
+      "description": "Email de quem convidou"
+    },
+    "lider_nome": {
+      "type": "string",
+      "description": "Nome de quem convidou"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "aceito",
+        "recusado"
+      ],
+      "default": "pendente",
+      "description": "Status do convite"
+    },
+    "data_resposta": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da resposta ao convite"
+    }
+  },
+  "required": [
+    "email_convidado",
+    "tipo_hierarquia",
+    "agencia_id",
+    "lider_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.lider_email": "{{user.email}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.email_convidado": "{{user.email}}"
+        },
+        {
+          "data.lider_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.email_convidado": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.lider_email": "{{user.email}}",
+          "data.status": "pendente"
+        }
+      ]
+    }
+  }
+}

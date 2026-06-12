@@ -2,6 +2,16 @@
   "name": "User",
   "type": "object",
   "properties": {
+    "aceite_termos": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se o usu\u00e1rio aceitou os Termos de Servi\u00e7o e Pol\u00edtica de Privacidade"
+    },
+    "data_aceite_termos": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora do aceite dos Termos de Servi\u00e7o e Pol\u00edtica de Privacidade"
+    },
     "aceite_politica_privacidade": {
       "type": "boolean",
       "default": false,
@@ -89,7 +99,6 @@
     }
   },
   "required": [
-    "data_aceite_politica",
     "alias_usuario",
     "tipo_hierarquia",
     "agencia_id",

@@ -8,6 +8,7 @@ import AdicionarComissaoDialog from "../components/comissoes/AdicionarComissaoDi
 import RenovarComissaoDialog from "../components/comissoes/RenovarComissaoDialog";
 import ComissaoListagem from "../components/comissoes/ComissaoListagem";
 import ResumoMesAtual from "../components/comissoes/ResumoMesAtual";
+import ComissaoHistoricoMensal from "../components/comissoes/ComissaoHistoricoMensal";
 import ComissaoExpiracaoPopup from "../components/comissoes/ComissaoExpiracaoPopup";
 
 export default function Comissoes() {
@@ -58,6 +59,9 @@ export default function Comissoes() {
 
         {/* Resumo do mês */}
         <ResumoMesAtual comissoes={comissoes} />
+
+        {/* Histórico mensal + filtros */}
+        <ComissaoHistoricoMensal comissoes={comissoes} />
 
         {/* Lista de comissões */}
         {isLoading ? (

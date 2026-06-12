@@ -145,10 +145,17 @@ export default function ClientesConvertidos() {
     onSettled: () => { queryClient.invalidateQueries({ queryKey: ["clientes"] }); setShowCriarCliente(false); }
   });
 
+  // Statuses que pertencem ao funil de leads (pré-venda)
+  const STATUSES_LEAD = ["Novo", "AB Fone", "AB Visita", "Delay"];
+
   const handleSave = async (data) => {
     if (!editingCliente) return;
     if (data.status !== editingCliente.status) {
       data.historico_status = [...(editingCliente.historico_status || []), { de: editingCliente.status, para: data.status, data: format(new Date(), "dd/MM/yyyy HH:mm"), timestamp: Date.now() }];
+      // Se o status voltou para um status de lead, desconverter o cliente
+      if (STATUSES_LEAD.includes(data.status)) {
+        data.is_cliente = false;
+      }
     }
     await updateMutation.mutateAsync({ id: editingCliente.id, data });
   };

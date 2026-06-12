@@ -3,20 +3,54 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, UserCheck, AlertTriangle } from "lucide-react";
+import { Search, UserCheck, AlertTriangle, DollarSign, Gift, Award, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { addMonths, format } from "date-fns";
 
 const STATUSES_PERMITIDOS = ["Venda Feita", "Entrega de Apólice", "Encerrado"];
 
+const TIPOS_COMISSAO = [
+  {
+    value: "Venda",
+    label: "Comissão de Venda",
+    desc: "Paga mensalmente por 12 meses. Requer seleção de cliente e produto.",
+    icon: DollarSign,
+    color: "from-emerald-500 to-green-600",
+    borderColor: "border-emerald-500/40",
+    needsCliente: true
+  },
+  {
+    value: "Angariação",
+    label: "Angariação",
+    desc: "Paga mensalmente. Informe apenas o valor.",
+    icon: Award,
+    color: "from-amber-500 to-orange-600",
+    borderColor: "border-amber-500/40",
+    needsCliente: false
+  },
+  {
+    value: "Bônus",
+    label: "Bônus",
+    desc: "Pago a cada 3 meses. Informe apenas o valor.",
+    icon: Gift,
+    color: "from-purple-500 to-indigo-600",
+    borderColor: "border-purple-500/40",
+    needsCliente: false
+  }
+];
+
 export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdded }) {
+  const [step, setStep] = useState("tipo"); // tipo | cliente | form
+  const [tipoComissao, setTipoComissao] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [produto, setProduto] = useState("");
   const [valorComissao, setValorComissao] = useState("");
   const [dataAdesao, setDataAdesao] = useState(format(new Date(), "yyyy-MM-dd"));
   const [saving, setSaving] = useState(false);
+
+  const tipoConfig = TIPOS_COMISSAO.find(t => t.value === tipoComissao);
 
   const clientesFiltrados = useMemo(() => {
     if (!search.trim()) return clientes.slice(0, 20);
@@ -39,26 +73,46 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
     return motivos;
   };
 
+  const handleSelectTipo = (tipo) => {
+    setTipoComissao(tipo);
+    const config = TIPOS_COMISSAO.find(t => t.value === tipo);
+    if (config.needsCliente) {
+      setStep("cliente");
+    } else {
+      setStep("form");
+    }
+  };
+
   const handleSelectCliente = (cliente) => {
     setSelectedCliente(cliente);
     setProduto(cliente.dados_apolice?.produto || "");
+    setStep("form");
   };
 
   const handleSave = async () => {
-    if (!selectedCliente || !produto || !valorComissao || !dataAdesao) {
+    if (!valorComissao || !dataAdesao) {
       toast.error("Preencha todos os campos");
       return;
     }
-    if (!clienteElegivel(selectedCliente)) {
-      toast.error("Este cliente não está elegível para comissão");
-      return;
+    if (tipoConfig?.needsCliente) {
+      if (!selectedCliente || !produto) {
+        toast.error("Preencha todos os campos");
+        return;
+      }
+      if (!clienteElegivel(selectedCliente)) {
+        toast.error("Este cliente não está elegível para comissão");
+        return;
+      }
     }
+
     setSaving(true);
     const dataExp = format(addMonths(new Date(dataAdesao + "T12:00:00"), 12), "yyyy-MM-dd");
+
     await base44.entities.ComissaoCliente.create({
-      cliente_id: selectedCliente.id,
-      cliente_nome: selectedCliente.nome,
-      produto,
+      cliente_id: selectedCliente?.id || "",
+      cliente_nome: selectedCliente?.nome || (tipoComissao === "Angariação" ? "Angariação" : "Bônus"),
+      tipo_comissao: tipoComissao,
+      produto: produto || tipoComissao,
       valor_comissao: parseFloat(valorComissao),
       data_adesao: dataAdesao,
       data_expiracao: dataExp,
@@ -66,7 +120,8 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
       notificacao_enviada: false,
       historico_renovacoes: []
     });
-    toast.success(`Comissão de ${selectedCliente.nome} adicionada!`);
+
+    toast.success(`${tipoComissao} adicionada com sucesso!`);
     setSaving(false);
     resetForm();
     onAdded();
@@ -74,6 +129,8 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
   };
 
   const resetForm = () => {
+    setStep("tipo");
+    setTipoComissao(null);
     setSearch("");
     setSelectedCliente(null);
     setProduto("");
@@ -81,14 +138,63 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
     setDataAdesao(format(new Date(), "yyyy-MM-dd"));
   };
 
+  const handleBack = () => {
+    if (step === "form" && tipoConfig?.needsCliente) {
+      setSelectedCliente(null);
+      setStep("cliente");
+    } else if (step === "form" || step === "cliente") {
+      setStep("tipo");
+      setTipoComissao(null);
+    }
+  };
+
+  const frequenciaLabel = tipoComissao === "Bônus" ? "Valor do Bônus Trimestral (R$)" : "Valor Mensal (R$)";
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) { resetForm(); onClose(); } }}>
       <DialogContent className="max-w-lg bg-slate-900 border-white/20 text-white compact-form">
         <DialogHeader>
-          <DialogTitle className="text-white font-bold">Adicionar Comissão de Cliente</DialogTitle>
+          <DialogTitle className="text-white font-bold flex items-center gap-2">
+            {step !== "tipo" && (
+              <Button variant="ghost" size="icon" onClick={handleBack} className="text-white/50 hover:text-white h-7 w-7">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            {step === "tipo" && "Adicionar Comissão"}
+            {step === "cliente" && `${tipoComissao} — Selecionar Cliente`}
+            {step === "form" && `${tipoComissao} — Dados`}
+          </DialogTitle>
         </DialogHeader>
 
-        {!selectedCliente ? (
+        {/* Step 1: Tipo de comissão */}
+        {step === "tipo" && (
+          <div className="space-y-3">
+            <p className="text-white/50 text-xs">Selecione o tipo de comissão:</p>
+            {TIPOS_COMISSAO.map(tipo => {
+              const Icon = tipo.icon;
+              return (
+                <button
+                  key={tipo.value}
+                  onClick={() => handleSelectTipo(tipo.value)}
+                  className={`w-full text-left p-4 rounded-xl border ${tipo.borderColor} bg-white/5 hover:bg-white/10 transition-all`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${tipo.color} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm">{tipo.label}</p>
+                      <p className="text-white/50 text-xs">{tipo.desc}</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Step 2: Selecionar cliente (só para Venda) */}
+        {step === "cliente" && (
           <div className="space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -109,11 +215,12 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
                 return (
                   <button
                     key={c.id}
-                    onClick={() => handleSelectCliente(c)}
+                    onClick={() => elegivel && handleSelectCliente(c)}
+                    disabled={!elegivel}
                     className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
                       elegivel
-                        ? "hover:bg-emerald-500/20 border border-transparent hover:border-emerald-500/30"
-                        : "hover:bg-red-500/10 border border-transparent hover:border-red-500/20"
+                        ? "hover:bg-emerald-500/20 border border-transparent hover:border-emerald-500/30 cursor-pointer"
+                        : "opacity-60 border border-transparent cursor-not-allowed"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -141,62 +248,75 @@ export default function AdicionarComissaoDialog({ open, onClose, clientes, onAdd
               })}
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* Step 3: Formulário */}
+        {step === "form" && (
           <div className="space-y-4">
-            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-white">{selectedCliente.nome}</p>
-                  <p className="text-xs text-white/50">{selectedCliente.telefone} • {selectedCliente.status}</p>
+            {/* Info do tipo selecionado */}
+            {tipoConfig && (
+              <div className={`flex items-center gap-3 bg-white/5 rounded-lg p-3 border ${tipoConfig.borderColor}`}>
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tipoConfig.color} flex items-center justify-center flex-shrink-0`}>
+                  <tipoConfig.icon className="w-4 h-4 text-white" />
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedCliente(null)} className="text-white/50 hover:text-white text-xs">
-                  Trocar
-                </Button>
+                <div>
+                  <p className="text-white font-bold text-xs">{tipoConfig.label}</p>
+                  <p className="text-white/40 text-[10px]">
+                    {tipoComissao === "Venda" && "Mensal por 12 meses"}
+                    {tipoComissao === "Angariação" && "Pagamento mensal"}
+                    {tipoComissao === "Bônus" && "Pagamento a cada 3 meses"}
+                  </p>
+                </div>
               </div>
+            )}
+
+            {/* Info do cliente (só para Venda) */}
+            {selectedCliente && (
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-white">{selectedCliente.nome}</p>
+                    <p className="text-xs text-white/50">{selectedCliente.telefone} • {selectedCliente.status}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => { setSelectedCliente(null); setStep("cliente"); }} className="text-white/50 hover:text-white text-xs">
+                    Trocar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Produto (só para Venda) */}
+            {tipoComissao === "Venda" && (
+              <div>
+                <Label className="text-white/70 text-xs">Produto</Label>
+                <Input value={produto} onChange={e => setProduto(e.target.value)}
+                  placeholder="Ex: VS10, VT65..."
+                  className="bg-white/10 border-white/20 text-white text-sm" />
+              </div>
+            )}
+
+            <div>
+              <Label className="text-white/70 text-xs">{frequenciaLabel}</Label>
+              <Input type="number" step="0.01" value={valorComissao} onChange={e => setValorComissao(e.target.value)}
+                placeholder="Ex: 150.00"
+                className="bg-white/10 border-white/20 text-white text-sm" />
             </div>
 
-            {!clienteElegivel(selectedCliente) ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-red-300 font-bold text-sm">Cliente não elegível</p>
-                    {getMotivoBloqueio(selectedCliente).map((m, i) => (
-                      <p key={i} className="text-red-300/80 text-xs mt-1">• {m}</p>
-                    ))}
-                    <p className="text-red-300/60 text-xs mt-2">O cliente precisa estar convertido e com status "Venda Feita" ou posterior para receber comissão.</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <Label className="text-white/70 text-xs">Produto</Label>
-                  <Input value={produto} onChange={e => setProduto(e.target.value)}
-                    placeholder="Ex: VS10, VT65..."
-                    className="bg-white/10 border-white/20 text-white text-sm" />
-                </div>
-                <div>
-                  <Label className="text-white/70 text-xs">Valor da Comissão Mensal (R$)</Label>
-                  <Input type="number" step="0.01" value={valorComissao} onChange={e => setValorComissao(e.target.value)}
-                    placeholder="Ex: 150.00"
-                    className="bg-white/10 border-white/20 text-white text-sm" />
-                </div>
-                <div>
-                  <Label className="text-white/70 text-xs">Data de Adesão</Label>
-                  <Input type="date" value={dataAdesao} onChange={e => setDataAdesao(e.target.value)}
-                    className="bg-white/10 border-white/20 text-white text-sm" />
-                </div>
-                {dataAdesao && (
-                  <p className="text-xs text-white/40">
-                    Expira em: {format(addMonths(new Date(dataAdesao + "T12:00:00"), 12), "dd/MM/yyyy")} (12 meses)
-                  </p>
-                )}
-                <Button onClick={handleSave} disabled={saving} className="w-full bg-emerald-500 hover:bg-emerald-600 font-bold">
-                  {saving ? "Salvando..." : "Salvar Comissão"}
-                </Button>
-              </>
+            <div>
+              <Label className="text-white/70 text-xs">Data de Início</Label>
+              <Input type="date" value={dataAdesao} onChange={e => setDataAdesao(e.target.value)}
+                className="bg-white/10 border-white/20 text-white text-sm" />
+            </div>
+
+            {dataAdesao && (
+              <p className="text-xs text-white/40">
+                Expira em: {format(addMonths(new Date(dataAdesao + "T12:00:00"), 12), "dd/MM/yyyy")} (12 meses)
+              </p>
             )}
+
+            <Button onClick={handleSave} disabled={saving} className="w-full bg-emerald-500 hover:bg-emerald-600 font-bold">
+              {saving ? "Salvando..." : `Salvar ${tipoComissao}`}
+            </Button>
           </div>
         )}
       </DialogContent>

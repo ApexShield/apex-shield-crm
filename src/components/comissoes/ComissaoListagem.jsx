@@ -63,6 +63,7 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
           <TableHeader className="sticky top-0 bg-slate-800/95 z-10">
             <TableRow className="border-white/10">
               <TableHead className="text-white text-xs font-bold">Cliente</TableHead>
+              <TableHead className="text-white text-xs font-bold">Tipo</TableHead>
               <TableHead className="text-white text-xs font-bold">Produto</TableHead>
               <TableHead className="text-white text-xs font-bold text-center">Valor/Mês</TableHead>
               <TableHead className="text-white text-xs font-bold text-center">Adesão</TableHead>
@@ -75,7 +76,7 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
           <TableBody>
             {sortedComissoes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-white/50 py-8 text-xs">
+                <TableCell colSpan={9} className="text-center text-white/50 py-8 text-xs">
                   Nenhuma comissão cadastrada. Clique em "Adicionar Comissão" para começar.
                 </TableCell>
               </TableRow>
@@ -86,6 +87,16 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
               return (
                 <TableRow key={c.id} className={`border-white/5 hover:bg-white/5 ${statusInfo.urgente ? "bg-amber-500/5" : ""}`}>
                   <TableCell className="text-white text-xs font-bold">{c.cliente_nome}</TableCell>
+                  <TableCell className="text-xs">
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      c.tipo_comissao === "Venda" ? "bg-emerald-500/20 text-emerald-300" :
+                      c.tipo_comissao === "Angariação" ? "bg-amber-500/20 text-amber-300" :
+                      c.tipo_comissao === "Bônus" ? "bg-purple-500/20 text-purple-300" :
+                      "bg-white/10 text-white/60"
+                    }`}>
+                      {c.tipo_comissao || "Venda"}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-cyan-300 text-xs">{c.produto}</TableCell>
                   <TableCell className="text-emerald-400 text-xs font-black text-center">{fmtCurrency(c.valor_comissao)}</TableCell>
                   <TableCell className="text-white/70 text-xs text-center">{safeFmtDate(c.data_adesao)}</TableCell>

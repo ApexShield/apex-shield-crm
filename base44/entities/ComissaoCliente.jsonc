@@ -10,6 +10,16 @@
       "type": "string",
       "description": "Nome do cliente"
     },
+    "tipo_comissao": {
+      "type": "string",
+      "enum": [
+        "Venda",
+        "B\u00f4nus",
+        "Angaria\u00e7\u00e3o"
+      ],
+      "default": "Venda",
+      "description": "Tipo de comiss\u00e3o: Venda (mensal 12 meses), B\u00f4nus (trimestral), Angaria\u00e7\u00e3o (mensal)"
+    },
     "produto": {
       "type": "string",
       "description": "Produto do cliente"
@@ -65,7 +75,7 @@
   "required": [
     "cliente_id",
     "cliente_nome",
-    "produto",
+    "tipo_comissao",
     "valor_comissao",
     "data_adesao"
   ],

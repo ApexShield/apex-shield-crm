@@ -18,7 +18,7 @@ import FluxoPipeline from "../components/FluxoPipeline";
 import ImportExportLeads from "../components/leads/ImportExportLeads";
 
 export default function ClientesConvertidos() {
-  const [busca, setBusca] = usePersistedState("clientes_busca", "");
+  const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = usePersistedState("clientes_filtroStatus", "all");
   const [dataInicial, setDataInicial] = usePersistedState("clientes_dataInicial", "");
   const [dataFinal, setDataFinal] = usePersistedState("clientes_dataFinal", "");

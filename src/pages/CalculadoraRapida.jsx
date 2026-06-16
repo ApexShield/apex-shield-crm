@@ -130,10 +130,40 @@ export default function CalculadoraRapida() {
     return deps;
   };
 
+  const parseValor = (valor) => {
+    if (!valor) return 0;
+    return parseFloat(valor.toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
+  };
+
+  const calcularPatrimonioTotal = (cliente) => {
+    const campos = ['patrimonio_imoveis', 'patrimonio_veiculos', 'patrimonio_investimentos', 'patrimonio_poupanca', 'patrimonio_previdencia', 'patrimonio_outros'];
+    const soma = campos.reduce((sum, f) => sum + parseValor(cliente[f]), 0);
+    if (soma > 0) return soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    // Fallback: campo patrimônio consolidado
+    return cliente.patrimonio || "";
+  };
+
+  const calcularPatrimonioFinanceiro = (cliente) => {
+    const campos = ['patrimonio_investimentos', 'patrimonio_poupanca', 'patrimonio_previdencia'];
+    const soma = campos.reduce((sum, f) => sum + parseValor(cliente[f]), 0);
+    if (soma > 0) return soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return "";
+  };
+
   const handleClienteChange = (cliente) => {
     if (!cliente) { setClienteSelecionado(""); setFormData(formDataInicial); return; }
     setClienteSelecionado(cliente.id);
     const deps = calcularDependentes(cliente);
+
+    // Calcular custos mensais somando campos individuais
+    const fixoFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos'];
+    const varFields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+    const allCustoFields = [...fixoFields, ...varFields];
+    const totalCustos = allCustoFields.reduce((sum, f) => sum + parseValor(cliente[f]), 0);
+    const gastosMensais = totalCustos > 0
+      ? totalCustos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+      : (cliente.custo_mensal_fixo || "");
+
     setFormData(prev => ({
       ...prev,
       data_nascimento: cliente.data_nascimento || "",
@@ -141,18 +171,9 @@ export default function CalculadoraRapida() {
       profissao: cliente.profissao || "",
       genero: cliente.genero || prev.genero,
       renda_mensal: cliente.renda || "",
-      gastos_mensais: (() => {
-        const fixoFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos'];
-        const varFields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
-        const allFields = [...fixoFields, ...varFields];
-        const total = allFields.reduce((sum, f) => {
-          const val = (cliente[f] || '').toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
-          return sum + (parseFloat(val) || 0);
-        }, 0);
-        return total > 0 ? total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : (cliente.custo_mensal_fixo || "");
-      })(),
-      patrimonio_bruto: cliente.patrimonio || "",
-      patrimonio_financeiro: prev.patrimonio_financeiro,
+      gastos_mensais: gastosMensais,
+      patrimonio_bruto: calcularPatrimonioTotal(cliente),
+      patrimonio_financeiro: calcularPatrimonioFinanceiro(cliente),
       altura: cliente.altura || "",
       peso: cliente.peso || "",
       imc_manual: cliente.imc || "",

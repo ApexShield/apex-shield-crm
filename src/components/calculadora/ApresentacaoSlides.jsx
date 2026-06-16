@@ -267,8 +267,14 @@ export default function ApresentacaoSlides({ analise, formData, cliente, consult
   const downloadPDF = async () => {
     const container = document.getElementById("slides-container");
     if (!container) return;
+    // Temporarily make visible with fixed dimensions so html2canvas can render gradients
+    container.style.display = "block";
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    container.style.width = "1280px";
+
     const pages = container.querySelectorAll(".pdf-page");
-    const pdf = new jsPDF("l", "mm", "a4"); // landscape
+    const pdf = new jsPDF("l", "mm", "a4");
     for (let i = 0; i < pages.length; i++) {
       const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true, backgroundColor: "#f8fafc" });
       const imgData = canvas.toDataURL("image/png");
@@ -276,6 +282,13 @@ export default function ApresentacaoSlides({ analise, formData, cliente, consult
       if (i > 0) pdf.addPage();
       pdf.addImage(imgData, "PNG", 0, 0, w, Math.min(h, 210));
     }
+
+    // Hide again
+    container.style.display = "";
+    container.style.position = "";
+    container.style.left = "";
+    container.style.width = "";
+
     pdf.save(`Apresentacao_${cliente?.nome?.replace(/\s/g, "_") || "Cliente"}.pdf`);
   };
 

@@ -7,18 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Calculator, Download, FileText, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, XCircle, Search } from "lucide-react";
+import { Calculator, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import ClienteSearchBox from "../components/calculadora/ClienteSearchBox";
+import CamposObrigatorios, { validarCampos } from "../components/calculadora/CamposObrigatorios";
+import ApresentacaoSlides from "../components/calculadora/ApresentacaoSlides";
 
 export default function CalculadoraRapida() {
   const [clienteSelecionado, setClienteSelecionado] = useState("");
   const [showConfigAvancadas, setShowConfigAvancadas] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [analiseGerada, setAnaliseGerada] = useState(null);
-  const [buscaCliente, setBuscaCliente] = useState("");
 
   const formDataInicial = {
     data_nascimento: "",
@@ -72,23 +71,18 @@ export default function CalculadoraRapida() {
     queryFn: () => base44.auth.me()
   });
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes-calculadora", user?.email],
-    queryFn: () => base44.entities.Cliente.filter({ created_by: user.email }),
-    enabled: !!user?.email
+  const { data: allClientes = [] } = useQuery({
+    queryKey: ["clientes-calculadora"],
+    queryFn: () => base44.entities.Cliente.filter({}, "-created_date", 5000),
+    enabled: !!user
   });
 
-  // Lista de clientes ordenada alfabeticamente e filtrada pela busca
-  const clientesFiltrados = useMemo(() => {
-    const sorted = [...clientes].sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
-    if (!buscaCliente.trim()) return sorted;
-    const termo = buscaCliente.toLowerCase();
-    return sorted.filter(c =>
-      (c.nome || "").toLowerCase().includes(termo) ||
-      (c.email || "").toLowerCase().includes(termo) ||
-      (c.telefone || "").toLowerCase().includes(termo)
-    );
-  }, [clientes, buscaCliente]);
+  // Somente clientes convertidos (is_cliente = true), ordenados alfabeticamente
+  const clientes = useMemo(() => {
+    return allClientes
+      .filter(c => c.is_cliente === true)
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+  }, [allClientes]);
 
   const formatarMoeda = (valor) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -136,45 +130,42 @@ export default function CalculadoraRapida() {
     return deps;
   };
 
-  const handleClienteChange = (clienteId) => {
-    setClienteSelecionado(clienteId);
-    const cliente = clientes.find(c => c.id === clienteId);
-    if (cliente) {
-      const deps = calcularDependentes(cliente);
-      setFormData(prev => ({
-        ...prev,
-        data_nascimento: cliente.data_nascimento || "",
-        estado_civil: cliente.estado_civil || "",
-        profissao: cliente.profissao || "",
-        genero: cliente.genero || prev.genero,
-        renda_mensal: cliente.renda || "",
-        gastos_mensais: (() => {
-          const fixoFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos'];
-          const varFields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
-          const allFields = [...fixoFields, ...varFields];
-          const total = allFields.reduce((sum, f) => {
-            const val = (cliente[f] || '').toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
-            return sum + (parseFloat(val) || 0);
-          }, 0);
-          return total > 0 ? total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : (cliente.custo_mensal_fixo || "");
-        })(),
-        patrimonio_bruto: cliente.patrimonio || "",
-        patrimonio_financeiro: prev.patrimonio_financeiro,
-        altura: cliente.altura || "",
-        peso: cliente.peso || "",
-        imc_manual: cliente.imc || "",
-        fumou_12_meses: (cliente.fuma || "").toLowerCase() === "sim",
-        condicao_saude: prev.condicao_saude,
-        dependentes: deps
-      }));
-    }
+  const handleClienteChange = (cliente) => {
+    if (!cliente) { setClienteSelecionado(""); setFormData(formDataInicial); return; }
+    setClienteSelecionado(cliente.id);
+    const deps = calcularDependentes(cliente);
+    setFormData(prev => ({
+      ...prev,
+      data_nascimento: cliente.data_nascimento || "",
+      estado_civil: cliente.estado_civil || "",
+      profissao: cliente.profissao || "",
+      genero: cliente.genero || prev.genero,
+      renda_mensal: cliente.renda || "",
+      gastos_mensais: (() => {
+        const fixoFields = ['custo_agua','custo_energia','custo_internet','custo_gas','custo_aluguel','custo_escola','custo_plano_saude_fixo','custo_transporte','custo_alimentacao','custo_cartao_credito','custo_outros_fixos'];
+        const varFields = ['custo_lazer','custo_hobbies','custo_vestuario','custo_viagens','custo_outros_variaveis'];
+        const allFields = [...fixoFields, ...varFields];
+        const total = allFields.reduce((sum, f) => {
+          const val = (cliente[f] || '').toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
+          return sum + (parseFloat(val) || 0);
+        }, 0);
+        return total > 0 ? total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : (cliente.custo_mensal_fixo || "");
+      })(),
+      patrimonio_bruto: cliente.patrimonio || "",
+      patrimonio_financeiro: prev.patrimonio_financeiro,
+      altura: cliente.altura || "",
+      peso: cliente.peso || "",
+      imc_manual: cliente.imc || "",
+      fumou_12_meses: (cliente.fuma || "").toLowerCase() === "sim",
+      condicao_saude: prev.condicao_saude,
+      dependentes: deps
+    }));
   };
 
   const limparCalculadora = () => {
     setFormData(formDataInicial);
     setClienteSelecionado("");
     setAnaliseGerada(null);
-    setBuscaCliente("");
   };
 
   const imc = useMemo(() => {
@@ -302,33 +293,20 @@ export default function CalculadoraRapida() {
   };
 
   const gerarApresentacao = async () => {
+    const { isValid, faltantes } = validarCampos(formData);
+    if (!isValid) {
+      alert(`Preencha os campos obrigatórios antes de gerar: ${faltantes.map(f => f.label).join(", ")}`);
+      return;
+    }
     setGenerating(true);
     const analise = calcularProtecao();
     setAnaliseGerada(analise);
     setTimeout(() => {
       setGenerating(false);
       setTimeout(() => {
-        document.getElementById("apresentacao-completa")?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById("apresentacao-resultado")?.scrollIntoView({ behavior: "smooth" });
       }, 100);
-    }, 1500);
-  };
-
-  const downloadPDF = async () => {
-    const elemento = document.getElementById("apresentacao-completa");
-    if (!elemento) return;
-    const pdf = new jsPDF("p", "mm", "a4");
-    const elementsToCapture = elemento.querySelectorAll(".pdf-page");
-    for (let i = 0; i < elementsToCapture.length; i++) {
-      const canvas = await html2canvas(elementsToCapture[i], { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    }
-    const cliente = clientes.find(c => c.id === clienteSelecionado);
-    const nomeArquivo = cliente ? `Analise_Seguro_${cliente.nome.replace(/\s/g, "_")}.pdf` : "Analise_Seguro.pdf";
-    pdf.save(nomeArquivo);
+    }, 1000);
   };
 
   const clienteInfo = useMemo(() => clientes.find(c => c.id === clienteSelecionado), [clienteSelecionado, clientes]);
@@ -365,38 +343,19 @@ export default function CalculadoraRapida() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Seleção de Cliente com busca */}
+            {/* Seleção de Cliente com busca listbox */}
             <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-3 md:p-4 rounded-xl border-2 border-indigo-400">
-              <Label className="text-white mb-1.5 block text-sm md:text-lg font-bold">Selecione um contato existente</Label>
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  value={buscaCliente}
-                  onChange={(e) => setBuscaCliente(e.target.value)}
-                  placeholder="Buscar por nome, email ou telefone..."
-                  className="pl-10 bg-white border-2 border-indigo-400 text-gray-900 font-semibold h-12"
-                />
-              </div>
-              <Select value={clienteSelecionado} onValueChange={handleClienteChange}>
-                <SelectTrigger className="bg-white border-2 border-indigo-400 text-gray-900 font-semibold h-12 text-base shadow-lg">
-                  <SelectValue placeholder="🔍 Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60 bg-white">
-                  {clientesFiltrados.map(c => (
-                    <SelectItem
-                      key={c.id}
-                      value={c.id}
-                      className="text-gray-900 font-medium hover:bg-indigo-100 focus:bg-indigo-100 cursor-pointer py-2"
-                    >
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                  {clientesFiltrados.length === 0 && (
-                    <div className="px-4 py-3 text-gray-500 text-sm">Nenhum cliente encontrado</div>
-                  )}
-                </SelectContent>
-              </Select>
+              <Label className="text-white mb-1.5 block text-sm md:text-lg font-bold">Selecione um cliente do painel</Label>
+              <p className="text-indigo-300/60 text-xs mb-2">Somente clientes convertidos aparecem aqui ({clientes.length} disponíveis)</p>
+              <ClienteSearchBox
+                clientes={clientes}
+                onSelect={handleClienteChange}
+                selectedId={clienteSelecionado}
+              />
             </div>
+
+            {/* Validação de campos */}
+            {clienteSelecionado && <CamposObrigatorios formData={formData} />}
 
             {/* Dados Básicos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -712,212 +671,14 @@ export default function CalculadoraRapida() {
 
         {/* Resultado */}
         {analiseGerada && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-            <Button onClick={downloadPDF} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-6">
-              <Download className="w-5 h-5 mr-2" /> Baixar Apresentação (PDF)
-            </Button>
-
-            <div id="apresentacao-completa" className="space-y-4">
-              {/* Página 1 - Capa */}
-              <div className="pdf-page bg-white p-8 md:p-12 rounded-xl space-y-8">
-                <div className="text-center py-12 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl text-white">
-                  <h1 className="text-4xl md:text-5xl font-black mb-4">Análise de Necessidades de Proteção</h1>
-                  <p className="text-xl md:text-2xl mb-6 opacity-90">Estudo Personalizado de Seguro de Vida</p>
-                  {clienteInfo && <p className="text-lg opacity-80 mb-4">Cliente: {clienteInfo.nome}</p>}
-                  <div className="bg-white/20 backdrop-blur-sm inline-block px-8 py-4 rounded-xl">
-                    <p className="text-xl font-bold">Apresentado por: {user?.full_name || "Consultor"}</p>
-                  </div>
-                </div>
-
-                {/* Contexto */}
-                <div className="border-l-8 border-yellow-500 bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-r-2xl">
-                  <h2 className="text-2xl font-black text-gray-800 mb-4">📊 Contexto Personalizado</h2>
-                  <div className="space-y-2 text-lg text-gray-800">
-                    <p><strong className="text-orange-700">Situação Familiar:</strong> {formData.estado_civil || "—"}, {formData.dependentes} dependente(s)</p>
-                    <p><strong className="text-orange-700">Momento de Vida:</strong> {analiseGerada.momentoVida}</p>
-                    <p><strong className="text-orange-700">Fatores de Risco:</strong> {analiseGerada.fatoresRisco.length > 0 ? analiseGerada.fatoresRisco.join(", ") : "Nenhum identificado"}</p>
-                  </div>
-                </div>
-
-                {/* Total */}
-                <div className="text-center py-12 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border-4 border-indigo-200">
-                  <h3 className="text-gray-600 text-2xl mb-4">Proteção Total Recomendada</h3>
-                  <p className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
-                    {formatarMoeda(analiseGerada.total)}
-                  </p>
-                </div>
-
-                {/* Perfil */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border-2 border-blue-200">
-                    <h3 className="text-xl font-black text-blue-900 mb-3">👤 Perfil Pessoal</h3>
-                    <div className="space-y-1 text-gray-700">
-                      <p><strong>Idade:</strong> {analiseGerada.idade} anos</p>
-                      <p><strong>Estado Civil:</strong> {formData.estado_civil || "—"}</p>
-                      <p><strong>Profissão:</strong> {formData.profissao || "—"}</p>
-                      <p><strong>Dependentes:</strong> {formData.dependentes}</p>
-                      {analiseGerada.imc > 0 && <p><strong>IMC:</strong> {analiseGerada.imc} - {analiseGerada.statusIMC}</p>}
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200">
-                    <h3 className="text-xl font-black text-green-900 mb-3">💰 Situação Financeira</h3>
-                    <div className="space-y-1 text-gray-700">
-                      <p><strong>Renda Mensal:</strong> {formatarMoeda(analiseGerada.renda)}</p>
-                      <p><strong>Gastos Mensais:</strong> {formatarMoeda(analiseGerada.gastos)}</p>
-                      <p><strong>Patrimônio:</strong> {formatarMoeda(analiseGerada.patrimonioBruto)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sucessão */}
-              {formData.modulos.sucessao && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-purple-500 bg-gradient-to-r from-purple-50 to-indigo-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-purple-900 mb-2">📋 Sucessão</h3>
-                    <p className="text-5xl font-black text-purple-600 mb-4">{formatarMoeda(analiseGerada.sucessao)}</p>
-                    <p className="text-gray-700 text-lg mb-4">
-                      <strong>Custos de inventário:</strong><br/>
-                      ITCMD ({formData.parametros.itcmd}%) + Advogado ({formData.parametros.advogado}%) + Cartório ({formData.parametros.cartorio}%) = <strong>{analiseGerada.taxaTotal.toFixed(1)}% do patrimônio</strong>
-                    </p>
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                      <p className="text-gray-700">Quando uma pessoa falece, seus bens ficam indisponíveis até a conclusão do inventário. Este capital cobre os custos de ITCMD, advogado e cartório para realizar o inventário e a devida sucessão patrimonial.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Proteção Familiar */}
-              {formData.modulos.protecao_familiar && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-green-900 mb-2">❤️ Proteção Familiar</h3>
-                    <p className="text-5xl font-black text-green-600 mb-4">{formatarMoeda(analiseGerada.protecaoFamiliar)}</p>
-                    <p className="text-gray-700 text-lg mb-4">
-                      <strong>Tipo:</strong> {PROTECAO_FAMILIAR_LABELS[analiseGerada.protecaoFamiliarTipo] || analiseGerada.protecaoFamiliarTipo}<br/>
-                      <strong>Cobertura de assistência familiar para garantir tranquilidade em momentos difíceis.</strong>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Doenças Graves */}
-              {formData.modulos.doencas_graves && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-red-500 bg-gradient-to-r from-red-50 to-pink-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-red-900 mb-2">💔 Doenças Graves</h3>
-                    <p className="text-5xl font-black text-red-600 mb-4">{formatarMoeda(analiseGerada.doencasGraves)}</p>
-                    <p className="text-gray-700 text-lg mb-4">
-                      Cobertura de <strong>{analiseGerada.doencasGravesMeses} vezes o rendimento mensal</strong> ({formatarMoeda(analiseGerada.renda)}).<br/>
-                      Garante seu padrão de vida durante o tratamento de doenças como câncer, infarto e AVC.
-                    </p>
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                      <p className="text-gray-700">Estima-se que um em cada cinco homens ou mulheres desenvolverão câncer. 70% dos pacientes com doenças graves reduzem sua renda durante o tratamento.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Invalidez */}
-              {formData.modulos.invalidez && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-orange-900 mb-2">🦽 Invalidez</h3>
-                    <p className="text-5xl font-black text-orange-600 mb-4">{formatarMoeda(analiseGerada.invalidezTotal)}</p>
-                    <p className="text-gray-700 text-lg mb-4">
-                      <strong>Cálculo:</strong> Renda mensal ({formatarMoeda(analiseGerada.renda)}) - 20% de queda = {formatarMoeda(analiseGerada.rendaReduzida20)}/mês × 100 = {formatarMoeda(analiseGerada.invalidezTotal)}<br/><br/>
-                      Este capital, aplicado a 1% ao mês, gera um rendimento mensal de <strong>{formatarMoeda(analiseGerada.invalidezTotal * 0.01)}</strong>, que se equipara à renda mensal reduzida de 20% pela tendência natural da invalidez.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Incapacidade Temporária */}
-              {formData.modulos.incapacidade_temporaria && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-blue-500 bg-gradient-to-r from-blue-50 to-cyan-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-blue-900 mb-2">📋 Renda por Incapacidade Temporária</h3>
-                    <p className="text-5xl font-black text-blue-600 mb-4">{formatarMoeda(analiseGerada.diariaIncapacidade)}/dia</p>
-                    <p className="text-gray-700 text-lg mb-4">
-                      <strong>Cálculo:</strong> Renda mensal ({formatarMoeda(analiseGerada.renda)}) ÷ 30 = {formatarMoeda(analiseGerada.diariaIncapacidade)}/dia
-                    </p>
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
-                      <p className="text-gray-700"><strong>⚠️ Importante:</strong> Para este benefício, o valor da renda mensal precisa ser comprovado documentalmente.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Diária de Internação */}
-              {formData.modulos.diaria_internacao && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-pink-500 bg-gradient-to-r from-pink-50 to-rose-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-pink-900 mb-2">🏥 Diária de Internação Hospitalar</h3>
-                    <p className="text-5xl font-black text-pink-600 mb-4">{formatarMoeda(analiseGerada.diariaInternacao)}/dia</p>
-                    <p className="text-gray-700 text-lg">Benefício diário para cobrir despesas extras durante internações hospitalares, como alimentação, transporte e acompanhante.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Cirurgias */}
-              {formData.modulos.cirurgias && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-teal-500 bg-gradient-to-r from-teal-50 to-cyan-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-teal-900 mb-2">🩺 Cirurgias</h3>
-                    <p className="text-5xl font-black text-teal-600 mb-4">{formatarMoeda(analiseGerada.cirurgias)}</p>
-                    <p className="text-gray-700 text-lg">Cobertura para procedimentos cirúrgicos — valor equivalente à cobertura de Fratura Óssea. Pode complementar plano de saúde ou ser a única proteção. O valor pode ser usado livremente.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Fratura Óssea */}
-              {formData.modulos.fratura_ossea && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-amber-500 bg-gradient-to-r from-amber-50 to-yellow-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-amber-900 mb-2">🦴 Fratura Óssea</h3>
-                    <p className="text-5xl font-black text-amber-600 mb-4">{formatarMoeda(analiseGerada.fraturaOssea)}</p>
-                    <p className="text-gray-700 text-lg mb-4">
-                      Em caso de acidente que resulte em fratura óssea, o segurado receberá como indenização o pagamento de um <strong>percentual do Capital Segurado</strong>, calculada e paga com base na lista de Fraturas de ossos ou grupo de ossos cobertos.
-                    </p>
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                      <p className="text-gray-700 text-sm">* Disponível nas Condições Gerais do produto — a lista completa de fraturas e percentuais aplicáveis pode ser consultada junto à seguradora.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Assistência Funeral */}
-              {formData.modulos.assistencia_funeral && (
-                <div className="pdf-page bg-white p-8 md:p-12 rounded-xl">
-                  <div className="border-l-8 border-gray-500 bg-gradient-to-r from-gray-50 to-slate-50 p-8 rounded-r-2xl shadow-lg">
-                    <h3 className="text-3xl font-black text-gray-900 mb-2">⛪ Assistência Funeral</h3>
-                    <p className="text-5xl font-black text-gray-600 mb-4">{formatarMoeda(analiseGerada.assistenciaFuneral)}</p>
-                    <p className="text-gray-700 text-lg">Plano Familiar — Em momentos difíceis, sua família não deve se preocupar com despesas.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Aviso Final */}
-              <div className="pdf-page bg-white p-8 md:p-12 rounded-xl space-y-8">
-                <div className="border-4 border-red-400 bg-gradient-to-br from-red-50 to-orange-50 p-8 rounded-2xl">
-                  <h3 className="text-2xl font-black text-red-800 mb-4 flex items-center gap-3">
-                    <AlertTriangle className="w-8 h-8" /> AVISO IMPORTANTE
-                  </h3>
-                  <div className="space-y-3 text-gray-800 leading-relaxed">
-                    <p><strong>Este documento apresenta uma análise de necessidades de proteção financeira</strong>, elaborado com base nas informações fornecidas pelo cliente. Os valores e coberturas aqui apresentados são sugestões orientativas.</p>
-                    <p><strong>Não constitui proposta comercial vinculante.</strong> As coberturas, valores de prêmio, carências, exclusões e demais condições devem ser consultadas diretamente com as seguradoras.</p>
-                    <p><strong>Este estudo tem finalidade exclusivamente educacional e consultiva.</strong></p>
-                  </div>
-                </div>
-
-                <div className="text-center py-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl text-white">
-                  <h2 className="text-4xl font-black mb-4">Proteja seu futuro hoje mesmo</h2>
-                  <p className="text-xl mb-6 max-w-2xl mx-auto">Entre em contato para uma proposta personalizada</p>
-                  <p className="text-sm opacity-80">Documento gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
-                  <p className="text-xs opacity-70 mt-2">Consultor: {user?.full_name || "Consultor"}</p>
-                </div>
-              </div>
-            </div>
+          <motion.div id="apresentacao-resultado" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <ApresentacaoSlides
+              analise={analiseGerada}
+              formData={formData}
+              cliente={clienteInfo}
+              consultor={user?.full_name || "Consultor"}
+              modulos={formData.modulos}
+            />
           </motion.div>
         )}
       </div>

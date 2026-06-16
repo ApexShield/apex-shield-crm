@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Download, Shield, Heart, Brain, Bone, Stethoscope, Building, Umbrella, Cross, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Shield, Heart, Brain, Bone, Stethoscope, Building, Cross, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import PptxGenJS from "pptxgenjs";
 
 const fmtBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
@@ -42,10 +41,6 @@ function SlideCapa({ cliente, consultor }) {
       </div>
       <div className="px-8 pb-4 flex justify-between items-end">
         <p className="text-xs text-gray-400">Consultoria: {consultor}</p>
-        <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-blue-900" />
-          <span className="text-blue-900 font-black text-sm">APEX SHIELD</span>
-        </div>
       </div>
     </SlideWrapper>
   );
@@ -144,9 +139,6 @@ function SlideTotal({ analise, formData, consultor }) {
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
           className="mt-6 flex items-center gap-4">
-          <Shield className="w-10 h-10 text-blue-900" />
-          <span className="text-blue-900 font-black text-lg">APEX SHIELD</span>
-          <span className="text-gray-400 mx-2">•</span>
           <span className="text-gray-500 text-sm">Em parceria com MetLife</span>
         </motion.div>
       </div>
@@ -264,32 +256,169 @@ export default function ApresentacaoSlides({ analise, formData, cliente, consult
   const next = () => { if (currentSlide < slides.length - 1) goTo(currentSlide + 1); };
   const prev = () => { if (currentSlide > 0) goTo(currentSlide - 1); };
 
-  const downloadPDF = async () => {
-    const container = document.getElementById("slides-container");
-    if (!container) return;
-    // Temporarily make visible with fixed dimensions so html2canvas can render gradients
-    container.style.display = "block";
-    container.style.position = "absolute";
-    container.style.left = "-9999px";
-    container.style.width = "1280px";
+  const downloadPPT = async () => {
+    const pptx = new PptxGenJS();
+    pptx.layout = "LAYOUT_WIDE";
+    pptx.author = consultor || "Consultor";
+    pptx.title = `Apresentação - ${cliente?.nome || "Cliente"}`;
 
-    const pages = container.querySelectorAll(".pdf-page");
-    const pdf = new jsPDF("l", "mm", "a4");
-    for (let i = 0; i < pages.length; i++) {
-      const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true, backgroundColor: "#f8fafc" });
-      const imgData = canvas.toDataURL("image/png");
-      const w = 297, h = (canvas.height * w) / canvas.width;
-      if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, 0, w, Math.min(h, 210));
+    const BLUE_DARK = "0F172A";
+    const LIME = "65A30D";
+    const BLUE_600 = "2563EB";
+    const BLUE_900 = "1E3A5F";
+    const WHITE = "FFFFFF";
+    const GRAY = "94A3B8";
+
+    const addDecoCircles = (s) => {
+      s.addShape(pptx.ShapeType.ellipse, { x: 11.5, y: -0.5, w: 1.8, h: 1.8, fill: { color: BLUE_900, transparency: 85 } });
+      s.addShape(pptx.ShapeType.ellipse, { x: -0.4, y: 6.2, w: 1.2, h: 1.2, fill: { color: LIME, transparency: 80 } });
+    };
+
+    // CAPA
+    const s1 = pptx.addSlide();
+    s1.background = { fill: "F8FAFC" };
+    addDecoCircles(s1);
+    s1.addText("PROTEÇÃO", { x: 2, y: 2.0, w: 9, h: 0.8, fontSize: 36, bold: true, color: LIME, align: "center" });
+    s1.addText("FINANCEIRA", { x: 2, y: 2.7, w: 9, h: 1.2, fontSize: 60, bold: true, color: BLUE_900, align: "center" });
+    s1.addShape(pptx.ShapeType.rect, { x: 4.5, y: 4.0, w: 4, h: 0.06, fill: { color: LIME } });
+    s1.addText((cliente?.nome || "Cliente").toUpperCase(), { x: 2, y: 4.3, w: 9, h: 0.6, fontSize: 22, color: BLUE_900, align: "center" });
+    s1.addText(`Consultoria: ${consultor}`, { x: 0.5, y: 7.0, w: 5, h: 0.3, fontSize: 10, color: GRAY });
+
+    // BRIEFING
+    const filhosNomes = cliente?.filhos_info?.map(f => f.nome).filter(Boolean).join(" e ") || `${formData.dependentes} dependente(s)`;
+    const s2 = pptx.addSlide();
+    s2.background = { fill: "F8FAFC" };
+    s2.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 1.2, fill: { color: BLUE_900 } });
+    s2.addText("BRIEFING", { x: 0, y: 0, w: 13.33, h: 1.2, fontSize: 44, bold: true, color: WHITE, align: "center", valign: "middle" });
+
+    const circles = [
+      { label: (formData.profissao || "PROFISSIONAL").toUpperCase(), color: LIME },
+      { label: `${analise.idade} ANOS`, color: BLUE_600 },
+      { label: `Construir o presente para garantir o melhor para ${filhosNomes || "sua família"}`, color: BLUE_900 }
+    ];
+    circles.forEach((c, i) => {
+      s2.addShape(pptx.ShapeType.ellipse, { x: 1.5 + i * 3.8, y: 2, w: 2.8, h: 2.8, fill: { color: c.color } });
+      s2.addText(c.label, { x: 1.5 + i * 3.8, y: 2.2, w: 2.8, h: 2.4, fontSize: i === 2 ? 10 : 18, bold: true, color: WHITE, align: "center", valign: "middle", wrap: true });
+    });
+
+    const briefData = [
+      ["Renda Mensal:", fmtBRL(analise.renda)],
+      ["Custo Mensal:", fmtBRL(analise.gastos)],
+      ["Patrimônio:", fmtBRL(analise.patrimonioBruto)],
+      ["Filhos:", filhosNomes || "—"]
+    ];
+    briefData.forEach((d, i) => {
+      s2.addText(d[0], { x: 0.5 + i * 3.2, y: 5.5, w: 3, h: 0.3, fontSize: 10, bold: true, color: LIME });
+      s2.addText(d[1], { x: 0.5 + i * 3.2, y: 5.85, w: 3, h: 0.3, fontSize: 12, bold: true, color: BLUE_DARK });
+    });
+
+    // PONTOS IMPORTANTES
+    const s3 = pptx.addSlide();
+    s3.background = { fill: "F8FAFC" };
+    addDecoCircles(s3);
+    s3.addText("PONTOS IMPORTANTES DO SEGURO\nDE VIDA E EM VIDA", { x: 1.5, y: 2.5, w: 10, h: 2.5, fontSize: 40, bold: true, color: BLUE_900, align: "center", valign: "middle" });
+
+    // COBERTURAS
+    const addCoberturaSlide = (title, valor, bgColor, descLines) => {
+      const sl = pptx.addSlide();
+      sl.background = { fill: "F8FAFC" };
+      sl.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 0.9, fill: { color: LIME } });
+      sl.addText("COBERTURAS ESSENCIAIS", { x: 0, y: 0, w: 13.33, h: 0.9, fontSize: 32, bold: true, color: WHITE, align: "center", valign: "middle" });
+
+      sl.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 1.3, w: 5.8, h: 5.5, rectRadius: 0.2, fill: { color: bgColor } });
+      sl.addText(title, { x: 0.8, y: 1.8, w: 5.2, h: 0.6, fontSize: 22, bold: true, color: WHITE });
+      sl.addText(fmtBRL(valor), { x: 0.8, y: 2.6, w: 5.2, h: 0.8, fontSize: 40, bold: true, color: WHITE });
+
+      sl.addShape(pptx.ShapeType.roundRect, { x: 6.8, y: 1.3, w: 6, h: 5.5, rectRadius: 0.2, fill: { color: "F1F5F9" }, line: { color: "E2E8F0", width: 1 } });
+      sl.addText(descLines.join("\n"), { x: 7.1, y: 1.6, w: 5.4, h: 5, fontSize: 12, color: "334155", valign: "top", wrap: true, lineSpacing: 18 });
+    };
+
+    if (modulos.invalidez) {
+      addCoberturaSlide("INVALIDEZ ACIDENTAL MAJORADA", analise.invalidezTotal, "1E3A8A", [
+        "O que é?",
+        "Cobertura de Invalidez Permanente Total ou Parcial por Acidente com cláusula de Majoração.",
+        "",
+        "Benefícios:",
+        "• Perda total da visão de um olho: 100% do capital",
+        "• Perda total da audição de um ouvido: 100% do capital",
+        "• Perda total da fala: 100% do capital"
+      ]);
     }
 
-    // Hide again
-    container.style.display = "";
-    container.style.position = "";
-    container.style.left = "";
-    container.style.width = "";
+    if (modulos.fratura_ossea) {
+      addCoberturaSlide("FRATURA ÓSSEA", analise.fraturaOssea, "4D7C0F", [
+        "Recurso destinado à manutenção do padrão de vida e despesas de reabilitação.",
+        "",
+        "Exemplos de cobertura:",
+        "• Crânio/Vértebras: 100%",
+        "• Pelve/Quadril/Fêmur: 50%",
+        "• Braço/Perna/Clavícula: 25%"
+      ]);
+    }
 
-    pdf.save(`Apresentacao_${cliente?.nome?.replace(/\s/g, "_") || "Cliente"}.pdf`);
+    if (modulos.cirurgias) {
+      addCoberturaSlide("CIRURGIAS", analise.cirurgias, "3730A3", [
+        "O que é?",
+        "Cobertura que garante pagamento em parcela única para intervenções cirúrgicas específicas.",
+        "",
+        "Principais cirurgias:",
+        "• Revascularização Miocárdica",
+        "• Cirurgia da Aorta / Válvulas Cardíacas",
+        "• Transplante de Órgãos"
+      ]);
+    }
+
+    if (modulos.doencas_graves) {
+      addCoberturaSlide("DOENÇAS GRAVES", analise.doencasGraves, "0F172A", [
+        "MAIS PROTEÇÃO — 32 Coberturas",
+        "",
+        "Oncológica: Câncer, Transplante de Medula",
+        "Cardíaca/Renal: Infarto, By-pass, Transplantes",
+        "Neurológica: AVC, Parkinson, Alzheimer",
+        "Hepática: Cirrose, Hepatite, Transplantes"
+      ]);
+    }
+
+    if (modulos.sucessao) {
+      addCoberturaSlide("CAPITAL SEGURADO FALECIMENTO", analise.sucessao, "172554", [
+        "Proteção personalizada com coberturas que garantem segurança financeira nos momentos mais difíceis.",
+        "",
+        `Custos de inventário: ITCMD + Advogado + Cartório = ${analise.taxaTotal?.toFixed(1)}% do patrimônio`,
+        "",
+        "Assistência familiar para que toda a família tenha o suporte devido."
+      ]);
+    }
+
+    if (modulos.assistencia_funeral) {
+      addCoberturaSlide("AMPARO FUNERAL FAMILIAR", analise.assistenciaFuneral, "047857", [
+        "Cobertura que oferece apoio completo na organização do funeral, desde o transporte até a escolha do sepultamento ou cremação.",
+        "",
+        "Permite que a família se concentre no luto sem se preocupar com burocracias ou custos elevados."
+      ]);
+    }
+
+    if (modulos.diaria_internacao) {
+      addCoberturaSlide("DIÁRIA POR INTERNAÇÃO HOSPITALAR", analise.diariaInternacao, "1E3A8A", [
+        `${fmtBRL(analise.diariaInternacao)} POR DIA`,
+        "",
+        "• Suporte financeiro diário",
+        "• Manutenção do padrão de vida",
+        "• Reserva para despesas extras",
+        "• Cobertura imediata"
+      ]);
+    }
+
+    // TOTAL
+    const sTotal = pptx.addSlide();
+    sTotal.background = { fill: "F8FAFC" };
+    addDecoCircles(sTotal);
+    sTotal.addShape(pptx.ShapeType.roundRect, { x: 2, y: 2, w: 9, h: 1.2, rectRadius: 0.15, fill: { color: LIME } });
+    sTotal.addText(`MAIS DE ${fmtBRL(analise.total)} EM COBERTURAS`, { x: 2, y: 2, w: 9, h: 1.2, fontSize: 26, bold: true, italic: true, color: WHITE, align: "center", valign: "middle" });
+    sTotal.addShape(pptx.ShapeType.roundRect, { x: 2.5, y: 3.8, w: 8, h: 1.8, rectRadius: 0.2, fill: { color: BLUE_600 } });
+    sTotal.addText("PROTEJA SEU PADRÃO DE VIDA E SUA FAMÍLIA", { x: 2.5, y: 3.8, w: 8, h: 1.8, fontSize: 28, bold: true, color: WHITE, align: "center", valign: "middle" });
+    sTotal.addText("Em parceria com MetLife", { x: 4, y: 6.2, w: 5, h: 0.4, fontSize: 12, color: GRAY, align: "center" });
+
+    pptx.writeFile({ fileName: `Apresentacao_${cliente?.nome?.replace(/\s/g, "_") || "Cliente"}.pptx` });
   };
 
   return (
@@ -329,14 +458,9 @@ export default function ApresentacaoSlides({ analise, formData, cliente, consult
 
       <p className="text-center text-white/40 text-xs">Slide {currentSlide + 1} de {slides.length}</p>
 
-      {/* Hidden full render for PDF */}
-      <div id="slides-container" className="hidden">
-        {slides.map((s) => <div key={s.id}>{s.render()}</div>)}
-      </div>
-
       {/* Download */}
-      <Button onClick={downloadPDF} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-6 text-lg">
-        <Download className="w-5 h-5 mr-2" /> Baixar Apresentação (PDF)
+      <Button onClick={downloadPPT} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-6 text-lg">
+        <Download className="w-5 h-5 mr-2" /> Baixar Apresentação (PPT)
       </Button>
     </div>
   );

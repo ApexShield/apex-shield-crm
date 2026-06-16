@@ -79,61 +79,60 @@ export default function ClientesConvertidos() {
     else { setSortColumn(column); setSortDirection("desc"); }
   };
 
-  const dadosFiltrados = useMemo(() => {
-    let filtered = clientes;
+  // Compute filtered data directly (no useMemo) to avoid stale closure issues
+  let dadosFiltrados = [...clientes];
 
-    // Status filter
-    if (filtroStatus && filtroStatus !== "all") {
-      filtered = filtered.filter(c => c.status === filtroStatus);
-    }
+  // Status filter
+  if (filtroStatus && filtroStatus !== "all") {
+    dadosFiltrados = dadosFiltrados.filter(c => c.status === filtroStatus);
+  }
 
-    // Date range filter
-    if (dataInicial) {
-      const start = startOfDay(parseISO(dataInicial));
-      filtered = filtered.filter(c => {
-        const d = c.data_conversao_cliente || c.created_date;
-        return d && !isBefore(startOfDay(new Date(d)), start);
-      });
-    }
-    if (dataFinal) {
-      const end = startOfDay(parseISO(dataFinal));
-      filtered = filtered.filter(c => {
-        const d = c.data_conversao_cliente || c.created_date;
-        return d && !isAfter(startOfDay(new Date(d)), end);
-      });
-    }
-
-    // Master search
-    if (busca) {
-      const t = busca.toLowerCase().trim();
-      filtered = filtered.filter(c => {
-        const fields = [
-          c.nome, c.cpf, c.email, c.telefone, c.profissao, c.empresa,
-          c.cargo, c.estado_civil, c.endereco, c.fonte_prospeccao,
-          c.dados_apolice?.produto, c.codigo
-        ];
-        return fields.some(f => f && String(f).toLowerCase().includes(t))
-          || c.telefone?.replace(/\D/g, "").includes(busca.replace(/\D/g, ""));
-      });
-    }
-
-    // Sort
-    const col = sortColumn || "data_conversao_cliente";
-    return [...filtered].sort((a, b) => {
-      let valA, valB;
-      if (col === "idade") {
-        valA = a.data_nascimento || ""; valB = b.data_nascimento || "";
-      } else if (col === "produto") {
-        valA = a.dados_apolice?.produto || ""; valB = b.dados_apolice?.produto || "";
-      } else {
-        valA = a[col] || ""; valB = b[col] || "";
-      }
-      if (typeof valA === "string") { valA = valA.toLowerCase(); valB = (valB || "").toLowerCase(); }
-      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
-      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
-      return 0;
+  // Date range filter
+  if (dataInicial) {
+    const start = startOfDay(parseISO(dataInicial));
+    dadosFiltrados = dadosFiltrados.filter(c => {
+      const d = c.data_conversao_cliente || c.created_date;
+      return d && !isBefore(startOfDay(new Date(d)), start);
     });
-  }, [clientes, filtroStatus, dataInicial, dataFinal, busca, sortColumn, sortDirection]);
+  }
+  if (dataFinal) {
+    const end = startOfDay(parseISO(dataFinal));
+    dadosFiltrados = dadosFiltrados.filter(c => {
+      const d = c.data_conversao_cliente || c.created_date;
+      return d && !isAfter(startOfDay(new Date(d)), end);
+    });
+  }
+
+  // Master search
+  if (busca && busca.trim()) {
+    const t = busca.toLowerCase().trim();
+    dadosFiltrados = dadosFiltrados.filter(c => {
+      const fields = [
+        c.nome, c.cpf, c.email, c.telefone, c.profissao, c.empresa,
+        c.cargo, c.estado_civil, c.endereco, c.fonte_prospeccao,
+        c.dados_apolice?.produto, c.codigo
+      ];
+      return fields.some(f => f && String(f).toLowerCase().includes(t))
+        || (c.telefone && c.telefone.replace(/\D/g, "").includes(busca.replace(/\D/g, "")));
+    });
+  }
+
+  // Sort
+  const sortCol = sortColumn || "data_conversao_cliente";
+  dadosFiltrados.sort((a, b) => {
+    let valA, valB;
+    if (sortCol === "idade") {
+      valA = a.data_nascimento || ""; valB = b.data_nascimento || "";
+    } else if (sortCol === "produto") {
+      valA = a.dados_apolice?.produto || ""; valB = b.dados_apolice?.produto || "";
+    } else {
+      valA = a[sortCol] || ""; valB = b[sortCol] || "";
+    }
+    if (typeof valA === "string") { valA = valA.toLowerCase(); valB = (valB || "").toLowerCase(); }
+    if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+    if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => await base44.entities.Cliente.update(id, data),

@@ -175,56 +175,67 @@ export default function Relatorios({ open, onClose, clientes }) {
     const hot40 = clientes.filter(c => c.status === "AB Fone" && c.data_contato === hoje);
     const dataFormatada = format(new Date(hoje + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR });
 
-    // Preencher até 50 linhas
     const leads = [...hot40];
     while (leads.length < 50) leads.push(null);
 
-    const ROW_H = '18px';
+    // Tentativa cell builder (stacked: title + "Atendeu?" + ☐ Sim  ☐ Não)
+    const tentativaCell = (color) => `
+      <td style="border:1px solid #cbd5e1;padding:1px 2px;text-align:center;vertical-align:middle;background:${color}10;">
+        <div style="font-size:9px;font-weight:700;color:${color};line-height:1.1;">Atendeu?</div>
+        <div style="font-size:9px;color:#0f172a;margin-top:1px;font-weight:600;">☐ Sim&nbsp;&nbsp;☐ Não</div>
+      </td>`;
+
+    const tentativaCellEmpty = (color) => `
+      <td style="border:1px solid #cbd5e1;padding:1px 2px;text-align:center;vertical-align:middle;background:${color}10;">
+        <div style="font-size:9px;font-weight:700;color:${color};line-height:1.1;">Atendeu?</div>
+        <div style="font-size:9px;color:#0f172a;margin-top:1px;font-weight:600;">☐ Sim&nbsp;&nbsp;☐ Não</div>
+      </td>`;
 
     const buildRow = (lead, idx) => {
       const bg = idx % 2 === 0 ? '#ffffff' : '#f0f4f8';
-      const cellStyle = `padding:2px 4px;border:1px solid #cbd5e1;font-size:8px;height:${ROW_H};line-height:${ROW_H};`;
+      const c = `padding:2px 4px;border:1px solid #cbd5e1;font-size:8px;vertical-align:middle;`;
       if (!lead) {
-        return `
-          <tr style="background:${bg};">
-            <td style="${cellStyle}text-align:center;color:#94a3b8;">${idx + 1}</td>
-            <td style="${cellStyle}">&nbsp;</td>
-            <td style="${cellStyle}">&nbsp;</td>
-            <td style="${cellStyle}">&nbsp;</td>
-            <td style="${cellStyle}">&nbsp;</td>
-            <td style="${cellStyle}text-align:center;">&nbsp;</td>
-            <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
-            <td style="${cellStyle}text-align:center;">&nbsp;</td>
-            <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
-            <td style="${cellStyle}text-align:center;">&nbsp;</td>
-            <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
-            <td style="${cellStyle}">&nbsp;</td>
-            <td style="${cellStyle}">&nbsp;</td>
-          </tr>`;
-      }
-      const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 35) : "";
-      const visitaAnterior = lead.agendar_visita ? format(new Date(lead.agendar_visita), "dd/MM HH:mm", { locale: ptBR }) : "";
-      const dataCriacao = lead.data_cadastro ? format(new Date(lead.data_cadastro + 'T12:00:00'), "dd/MM/yy", { locale: ptBR }) : "";
-      return `
-        <tr style="background:${bg};">
-          <td style="${cellStyle}text-align:center;font-weight:bold;color:#0f172a;">${idx + 1}</td>
-          <td style="${cellStyle}font-weight:800;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lead.nome || ""}</td>
-          <td style="${cellStyle}font-weight:800;color:#059669;">${lead.telefone || '—'}</td>
-          <td style="${cellStyle}color:#2563eb;overflow:hidden;text-overflow:ellipsis;">${lead.email || '—'}</td>
-          <td style="${cellStyle}text-align:center;color:#64748b;font-size:7px;">${visitaAnterior}</td>
-          <td style="${cellStyle}text-align:center;">&nbsp;</td>
-          <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
-          <td style="${cellStyle}text-align:center;">&nbsp;</td>
-          <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
-          <td style="${cellStyle}text-align:center;">&nbsp;</td>
-          <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
-          <td style="${cellStyle}text-align:center;font-size:7px;">${dataCriacao}</td>
-          <td style="${cellStyle}font-size:7px;color:#475569;overflow:hidden;text-overflow:ellipsis;">${lastObs}</td>
+        return `<tr style="background:${bg};height:20px;">
+          <td style="${c}text-align:center;color:#94a3b8;">${idx + 1}</td>
+          <td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td>
+          ${tentativaCellEmpty('#AFCB3A')}
+          ${tentativaCellEmpty('#0096D8')}
+          ${tentativaCellEmpty('#7c3aed')}
+          <td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td>
         </tr>`;
+      }
+      const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 50) : "";
+      const visitaAnt = lead.agendar_visita ? format(new Date(lead.agendar_visita), "dd/MM", { locale: ptBR }) : "";
+      const visitaAntHora = lead.agendar_visita ? format(new Date(lead.agendar_visita), "HH:mm") : "";
+      const dataCriacao = lead.data_cadastro ? format(new Date(lead.data_cadastro + 'T12:00:00'), "dd/MM/yy", { locale: ptBR }) : "";
+      return `<tr style="background:${bg};height:20px;">
+        <td style="${c}text-align:center;font-weight:bold;color:#0f172a;">${idx + 1}</td>
+        <td style="${c}font-weight:800;color:#0f172a;white-space:nowrap;">${lead.nome || ""}</td>
+        <td style="${c}font-weight:800;color:#059669;white-space:nowrap;">${lead.telefone || '—'}</td>
+        <td style="${c}text-align:center;color:#64748b;font-size:7px;">${visitaAnt}</td>
+        <td style="${c}text-align:center;color:#64748b;font-size:7px;">${visitaAntHora}</td>
+        <td style="${c}">&nbsp;</td>
+        <td style="${c}">&nbsp;</td>
+        ${tentativaCell('#AFCB3A')}
+        ${tentativaCell('#0096D8')}
+        ${tentativaCell('#7c3aed')}
+        <td style="${c}text-align:center;font-size:7px;">${dataCriacao}</td>
+        <td style="${c}font-size:7px;color:#475569;">${lastObs}</td>
+      </tr>`;
     };
 
+    // Calculate max name width for auto-sizing
+    const maxNameLen = Math.max(...hot40.map(l => (l?.nome || "").length), 10);
+    const nameColW = Math.min(Math.max(maxNameLen * 7, 120), 260);
+
     const html = `
-      <div id="relatorio-container" style="width:1120px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
+      <div id="relatorio-container" style="width:1180px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
         
         <!-- HEADER -->
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;padding-bottom:6px;border-bottom:3px solid #0f172a;">
@@ -240,9 +251,9 @@ export default function Relatorios({ open, onClose, clientes }) {
           </div>
         </div>
 
-        <!-- STATS - apenas Total Leads -->
+        <!-- STATS -->
         <div style="display:flex;gap:6px;margin-bottom:4px;">
-          <div style="width:160px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:4px;padding:3px 8px;text-align:center;">
+          <div style="width:140px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:4px;padding:3px 8px;text-align:center;">
             <div style="font-size:7px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Total Leads</div>
             <div style="font-size:15px;font-weight:900;color:#ffffff;">${hot40.length}</div>
           </div>
@@ -252,34 +263,32 @@ export default function Relatorios({ open, onClose, clientes }) {
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
           <colgroup>
             <col style="width:22px"/>
-            <col style="width:160px"/>
-            <col style="width:95px"/>
-            <col style="width:120px"/>
-            <col style="width:62px"/>
-            <col style="width:38px"/>
+            <col style="width:${nameColW}px"/>
+            <col style="width:80px"/>
+            <col style="width:44px"/>
+            <col style="width:36px"/>
             <col style="width:42px"/>
-            <col style="width:38px"/>
-            <col style="width:42px"/>
-            <col style="width:38px"/>
-            <col style="width:42px"/>
-            <col style="width:52px"/>
-            <col style="width:90px"/>
+            <col style="width:36px"/>
+            <col style="width:80px"/>
+            <col style="width:80px"/>
+            <col style="width:80px"/>
+            <col style="width:48px"/>
+            <col/>
           </colgroup>
           <thead>
             <tr style="background:linear-gradient(90deg,#0f172a,#1e3a5f);color:#ffffff;">
               <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;">Nº</th>
               <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
               <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📧 EMAIL</th>
               <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">VISITA ANT.</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">ATENDEU?</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">ATENDEU?</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">ATENDEU?</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">HORA</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">📅 VISITA</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">🕐 HORA</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª TENTATIVA</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª TENTATIVA</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª TENTATIVA</th>
               <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBS</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBSERVAÇÕES</th>
             </tr>
           </thead>
           <tbody>

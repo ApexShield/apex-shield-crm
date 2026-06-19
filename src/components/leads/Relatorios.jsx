@@ -179,86 +179,72 @@ export default function Relatorios({ open, onClose, clientes }) {
     const leads = [...hot40];
     while (leads.length < 50) leads.push(null);
 
+    const ROW_H = '18px';
+
     const buildRow = (lead, idx) => {
+      const bg = idx % 2 === 0 ? '#ffffff' : '#f0f4f8';
+      const cellStyle = `padding:2px 4px;border:1px solid #cbd5e1;font-size:8px;height:${ROW_H};line-height:${ROW_H};`;
       if (!lead) {
         return `
-          <tr style="background:${idx % 2 === 0 ? '#ffffff' : '#f0f4f8'};">
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;color:#94a3b8;">${idx + 1}</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:6px;">☐S ☐N</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:6px;">☐S ☐N</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:6px;">☐S ☐N</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
-            <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;">&nbsp;</td>
+          <tr style="background:${bg};">
+            <td style="${cellStyle}text-align:center;color:#94a3b8;">${idx + 1}</td>
+            <td style="${cellStyle}">&nbsp;</td>
+            <td style="${cellStyle}">&nbsp;</td>
+            <td style="${cellStyle}">&nbsp;</td>
+            <td style="${cellStyle}">&nbsp;</td>
+            <td style="${cellStyle}text-align:center;">&nbsp;</td>
+            <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
+            <td style="${cellStyle}text-align:center;">&nbsp;</td>
+            <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
+            <td style="${cellStyle}text-align:center;">&nbsp;</td>
+            <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
+            <td style="${cellStyle}">&nbsp;</td>
+            <td style="${cellStyle}">&nbsp;</td>
           </tr>`;
       }
-      const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 30) : "";
-      const visitaDate = lead.agendar_visita ? format(new Date(lead.agendar_visita), "dd/MM", { locale: ptBR }) : "";
-      const visitaHora = lead.agendar_visita ? format(new Date(lead.agendar_visita), "HH:mm") : "";
-      const dataCriacao = lead.data_cadastro ? lead.data_cadastro.substring(5).replace("-", "/") : "";
+      const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 35) : "";
+      const visitaAnterior = lead.agendar_visita ? format(new Date(lead.agendar_visita), "dd/MM HH:mm", { locale: ptBR }) : "";
+      const dataCriacao = lead.data_cadastro ? format(new Date(lead.data_cadastro + 'T12:00:00'), "dd/MM/yy", { locale: ptBR }) : "";
       return `
-        <tr style="background:${idx % 2 === 0 ? '#ffffff' : '#f0f4f8'};">
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;font-weight:bold;color:#0f172a;">${idx + 1}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;max-width:110px;">${(lead.nome || "").substring(0, 24)}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;color:#059669;">${lead.telefone || '—'}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:6px;color:#2563eb;max-width:90px;overflow:hidden;">${(lead.email || '—').substring(0, 22)}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;">&nbsp;</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:6px;">☐S ☐N</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;">&nbsp;</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:6px;">☐S ☐N</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:7px;">&nbsp;</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;text-align:center;font-size:6px;">☐S ☐N</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;text-align:center;">${dataCriacao}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;text-align:center;">${visitaDate}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:7px;text-align:center;">${visitaHora}</td>
-          <td style="padding:1px 3px;border:1px solid #d1d5db;font-size:6px;color:#475569;max-width:80px;overflow:hidden;">${lastObs}</td>
+        <tr style="background:${bg};">
+          <td style="${cellStyle}text-align:center;font-weight:bold;color:#0f172a;">${idx + 1}</td>
+          <td style="${cellStyle}font-weight:800;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lead.nome || ""}</td>
+          <td style="${cellStyle}font-weight:800;color:#059669;">${lead.telefone || '—'}</td>
+          <td style="${cellStyle}color:#2563eb;overflow:hidden;text-overflow:ellipsis;">${lead.email || '—'}</td>
+          <td style="${cellStyle}text-align:center;color:#64748b;font-size:7px;">${visitaAnterior}</td>
+          <td style="${cellStyle}text-align:center;">&nbsp;</td>
+          <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
+          <td style="${cellStyle}text-align:center;">&nbsp;</td>
+          <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
+          <td style="${cellStyle}text-align:center;">&nbsp;</td>
+          <td style="${cellStyle}text-align:center;font-size:7px;">☐S ☐N</td>
+          <td style="${cellStyle}text-align:center;font-size:7px;">${dataCriacao}</td>
+          <td style="${cellStyle}font-size:7px;color:#475569;overflow:hidden;text-overflow:ellipsis;">${lastObs}</td>
         </tr>`;
     };
 
     const html = `
-      <div id="relatorio-container" style="width:1120px;padding:12px 16px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
+      <div id="relatorio-container" style="width:1120px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
         
-        <!-- HEADER BAND -->
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;padding-bottom:8px;border-bottom:3px solid #0f172a;">
-          <img src="${LOGO_URL}" style="width:50px;height:50px;object-fit:contain;" crossorigin="anonymous" />
+        <!-- HEADER -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;padding-bottom:6px;border-bottom:3px solid #0f172a;">
+          <img src="${LOGO_URL}" style="width:42px;height:42px;object-fit:contain;" crossorigin="anonymous" />
           <div style="flex:1;">
-            <div style="display:flex;align-items:baseline;gap:8px;">
-              <span style="font-size:18px;font-weight:900;color:#0f172a;letter-spacing:1px;">APEX SHIELD CRM</span>
-              <span style="font-size:9px;color:#64748b;letter-spacing:0.5px;">CORRETORA DE SEGUROS</span>
-            </div>
-            <div style="font-size:12px;font-weight:700;color:#AFCB3A;margin-top:1px;">Relatório Hot40</div>
+            <span style="font-size:16px;font-weight:900;color:#0f172a;letter-spacing:1px;">APEX SHIELD CRM</span>
+            <div style="font-size:11px;font-weight:700;color:#AFCB3A;margin-top:1px;">Relatório Hot40</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:8px;color:#94a3b8;">Data de Contato</div>
-            <div style="font-size:14px;font-weight:800;color:#0f172a;">${dataFormatada}</div>
+            <div style="font-size:7px;color:#94a3b8;">Data de Contato</div>
+            <div style="font-size:13px;font-weight:800;color:#0f172a;">${dataFormatada}</div>
             <div style="font-size:7px;color:#94a3b8;">Gerado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
           </div>
         </div>
 
-        <!-- STATS BAR -->
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <div style="flex:1;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:4px;padding:4px 8px;text-align:center;">
+        <!-- STATS - apenas Total Leads -->
+        <div style="display:flex;gap:6px;margin-bottom:4px;">
+          <div style="width:160px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:4px;padding:3px 8px;text-align:center;">
             <div style="font-size:7px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Total Leads</div>
-            <div style="font-size:16px;font-weight:900;color:#ffffff;">${hot40.length}</div>
-          </div>
-          <div style="flex:1;background:linear-gradient(135deg,#AFCB3A,#84cc16);border-radius:4px;padding:4px 8px;text-align:center;">
-            <div style="font-size:7px;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">C/ Telefone</div>
-            <div style="font-size:16px;font-weight:900;color:#ffffff;">${hot40.filter(l => l?.telefone).length}</div>
-          </div>
-          <div style="flex:1;background:linear-gradient(135deg,#0096D8,#0284c7);border-radius:4px;padding:4px 8px;text-align:center;">
-            <div style="font-size:7px;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">C/ Email</div>
-            <div style="font-size:16px;font-weight:900;color:#ffffff;">${hot40.filter(l => l?.email).length}</div>
-          </div>
-          <div style="flex:1;background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:4px;padding:4px 8px;text-align:center;">
-            <div style="font-size:7px;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">C/ Visita</div>
-            <div style="font-size:16px;font-weight:900;color:#ffffff;">${hot40.filter(l => l?.agendar_visita).length}</div>
+            <div style="font-size:15px;font-weight:900;color:#ffffff;">${hot40.length}</div>
           </div>
         </div>
 
@@ -266,36 +252,34 @@ export default function Relatorios({ open, onClose, clientes }) {
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
           <colgroup>
             <col style="width:22px"/>
-            <col style="width:115px"/>
-            <col style="width:82px"/>
+            <col style="width:160px"/>
             <col style="width:95px"/>
+            <col style="width:120px"/>
+            <col style="width:62px"/>
             <col style="width:38px"/>
-            <col style="width:40px"/>
-            <col style="width:38px"/>
-            <col style="width:40px"/>
-            <col style="width:38px"/>
-            <col style="width:40px"/>
-            <col style="width:48px"/>
             <col style="width:42px"/>
-            <col style="width:36px"/>
-            <col style="width:85px"/>
+            <col style="width:38px"/>
+            <col style="width:42px"/>
+            <col style="width:38px"/>
+            <col style="width:42px"/>
+            <col style="width:52px"/>
+            <col style="width:90px"/>
           </colgroup>
           <thead>
             <tr style="background:linear-gradient(90deg,#0f172a,#1e3a5f);color:#ffffff;">
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;">Nº</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:left;">📧 EMAIL</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª</th>
-              <th style="padding:3px 2px;font-size:5px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">ATENDEU?</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª</th>
-              <th style="padding:3px 2px;font-size:5px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">ATENDEU?</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª</th>
-              <th style="padding:3px 2px;font-size:5px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">ATENDEU?</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">📅 VISITA</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">🕐 HORA</th>
-              <th style="padding:3px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBS</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;">Nº</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📧 EMAIL</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">VISITA ANT.</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">ATENDEU?</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">ATENDEU?</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª</th>
+              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">ATENDEU?</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
+              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBS</th>
             </tr>
           </thead>
           <tbody>
@@ -304,9 +288,9 @@ export default function Relatorios({ open, onClose, clientes }) {
         </table>
 
         <!-- FOOTER -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:2px solid #0f172a;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:2px solid #0f172a;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <img src="${LOGO_URL}" style="width:16px;height:16px;object-fit:contain;" crossorigin="anonymous" />
+            <img src="${LOGO_URL}" style="width:14px;height:14px;object-fit:contain;" crossorigin="anonymous" />
             <span style="font-size:7px;color:#64748b;font-weight:600;">APEX SHIELD CRM — Gestão Profissional de Seguros</span>
           </div>
           <span style="font-size:6px;color:#94a3b8;">© ${new Date().getFullYear()} Todos os direitos reservados</span>
@@ -321,7 +305,6 @@ export default function Relatorios({ open, onClose, clientes }) {
     document.body.appendChild(container);
 
     try {
-      // Wait for logo to load
       const imgs = container.querySelectorAll('img');
       await Promise.all([...imgs].map(img => new Promise(r => { if (img.complete) r(); else { img.onload = r; img.onerror = r; } })));
 
@@ -333,7 +316,7 @@ export default function Relatorios({ open, onClose, clientes }) {
       });
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape
+      const pdf = new jsPDF('l', 'mm', 'a4');
       const pageW = 297;
       const pageH = 210;
       const imgW = pageW;

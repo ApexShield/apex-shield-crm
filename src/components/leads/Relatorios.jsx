@@ -175,21 +175,21 @@ export default function Relatorios({ open, onClose, clientes }) {
     const hot40 = clientes.filter(c => c.status === "AB Fone" && c.data_contato === hoje);
     const dataFormatada = format(new Date(hoje + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR });
 
-    const leads = [...hot40];
-    while (leads.length < 50) leads.push(null);
+    const leads = [...hot40.slice(0, 30)];
+    while (leads.length < 30) leads.push(null);
 
     // Tentativa cell builder (stacked: "Atendeu?" + ☐ Sim  ☐ Não)
     const tentativaCell = (color) => `
-      <td style="border:1px solid #cbd5e1;padding:3px 4px;text-align:center;vertical-align:middle;background:${color}08;">
-        <div style="font-size:8px;font-weight:800;color:${color};line-height:1.2;white-space:nowrap;">Atendeu?</div>
-        <div style="font-size:9px;color:#0f172a;margin-top:2px;font-weight:800;white-space:nowrap;">☐ Sim&nbsp;&nbsp;&nbsp;☐ Não</div>
+      <td style="border:1px solid #cbd5e1;padding:4px 5px;text-align:center;vertical-align:middle;background:${color}08;">
+        <div style="font-size:9px;font-weight:800;color:${color};line-height:1.2;white-space:nowrap;">Atendeu?</div>
+        <div style="font-size:10px;color:#0f172a;margin-top:2px;font-weight:800;white-space:nowrap;">☐ Sim&nbsp;&nbsp;&nbsp;☐ Não</div>
       </td>`;
 
     const buildRow = (lead, idx) => {
       const bg = idx % 2 === 0 ? '#ffffff' : '#f0f4f8';
-      const c = `padding:3px 4px;border:1px solid #cbd5e1;font-size:8px;vertical-align:middle;`;
+      const c = `padding:4px 5px;border:1px solid #cbd5e1;font-size:9px;vertical-align:middle;`;
       if (!lead) {
-        return `<tr style="background:${bg};height:22px;">
+        return `<tr style="background:${bg};height:28px;">
           <td style="${c}text-align:center;color:#94a3b8;">${idx + 1}</td>
           <td style="${c}">&nbsp;</td>
           <td style="${c}">&nbsp;</td>
@@ -204,11 +204,11 @@ export default function Relatorios({ open, onClose, clientes }) {
           <td style="${c}">&nbsp;</td>
         </tr>`;
       }
-      const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 50) : "";
+      const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 55) : "";
       const visitaAnt = lead.agendar_visita ? format(new Date(lead.agendar_visita), "dd/MM", { locale: ptBR }) : "";
       const visitaAntHora = lead.agendar_visita ? format(new Date(lead.agendar_visita), "HH:mm") : "";
       const dataCriacao = lead.data_cadastro ? format(new Date(lead.data_cadastro + 'T12:00:00'), "dd/MM/yy", { locale: ptBR }) : "";
-      return `<tr style="background:${bg};height:22px;">
+      return `<tr style="background:${bg};height:28px;">
         <td style="${c}text-align:center;font-weight:bold;color:#0f172a;">${idx + 1}</td>
         <td style="${c}font-weight:800;color:#0f172a;white-space:nowrap;">${lead.nome || ""}</td>
         <td style="${c}font-weight:800;color:#059669;white-space:nowrap;">${lead.telefone || '—'}</td>
@@ -220,7 +220,7 @@ export default function Relatorios({ open, onClose, clientes }) {
         ${tentativaCell('#0096D8')}
         ${tentativaCell('#7c3aed')}
         <td style="${c}text-align:center;font-weight:700;">${dataCriacao}</td>
-        <td style="${c}font-size:7px;color:#475569;">${lastObs}</td>
+        <td style="${c}font-size:8px;color:#475569;">${lastObs}</td>
       </tr>`;
     };
 
@@ -271,18 +271,18 @@ export default function Relatorios({ open, onClose, clientes }) {
           </colgroup>
           <thead>
             <tr style="background:linear-gradient(90deg,#0f172a,#1e3a5f);color:#ffffff;">
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;">Nº</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">VISITA ANT.</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">HORA</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">📅 VISITA</th>
-              <th style="padding:4px 2px;font-size:6px;border:1px solid #334155;font-weight:700;text-align:center;">🕐 HORA</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª TENTATIVA</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª TENTATIVA</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª TENTATIVA</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
-              <th style="padding:4px 2px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBSERVAÇÕES</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;">Nº</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
+              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">VISITA ANT.</th>
+              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">HORA</th>
+              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">📅 VISITA</th>
+              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">🕐 HORA</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª TENTATIVA</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª TENTATIVA</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª TENTATIVA</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
+              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBSERVAÇÕES</th>
             </tr>
           </thead>
           <tbody>
@@ -381,7 +381,7 @@ export default function Relatorios({ open, onClose, clientes }) {
               <p className="text-base text-gray-700 leading-relaxed">
                 {tipoRelatorio === 'resumo' 
                   ? 'Relatório completo com análise de movimentação, quantidade de leads por etapa e variações detalhadas de status.'
-                  : 'PDF profissional com até 50 leads AB FONE, colunas de tentativas com check de atendimento, data de visita e observações.'}
+                  : 'PDF profissional com até 30 leads AB FONE por folha, colunas de tentativas com check de atendimento, data de visita e observações.'}
               </p>
             </div>
 

@@ -178,24 +178,18 @@ export default function Relatorios({ open, onClose, clientes }) {
     const leads = [...hot40];
     while (leads.length < 50) leads.push(null);
 
-    // Tentativa cell builder (stacked: title + "Atendeu?" + ☐ Sim  ☐ Não)
+    // Tentativa cell builder (stacked: "Atendeu?" + ☐ Sim  ☐ Não)
     const tentativaCell = (color) => `
-      <td style="border:1px solid #cbd5e1;padding:1px 2px;text-align:center;vertical-align:middle;background:${color}10;">
-        <div style="font-size:9px;font-weight:700;color:${color};line-height:1.1;">Atendeu?</div>
-        <div style="font-size:9px;color:#0f172a;margin-top:1px;font-weight:600;">☐ Sim&nbsp;&nbsp;☐ Não</div>
-      </td>`;
-
-    const tentativaCellEmpty = (color) => `
-      <td style="border:1px solid #cbd5e1;padding:1px 2px;text-align:center;vertical-align:middle;background:${color}10;">
-        <div style="font-size:9px;font-weight:700;color:${color};line-height:1.1;">Atendeu?</div>
-        <div style="font-size:9px;color:#0f172a;margin-top:1px;font-weight:600;">☐ Sim&nbsp;&nbsp;☐ Não</div>
+      <td style="border:1px solid #cbd5e1;padding:3px 4px;text-align:center;vertical-align:middle;background:${color}08;">
+        <div style="font-size:8px;font-weight:800;color:${color};line-height:1.2;white-space:nowrap;">Atendeu?</div>
+        <div style="font-size:9px;color:#0f172a;margin-top:2px;font-weight:800;white-space:nowrap;">☐ Sim&nbsp;&nbsp;&nbsp;☐ Não</div>
       </td>`;
 
     const buildRow = (lead, idx) => {
       const bg = idx % 2 === 0 ? '#ffffff' : '#f0f4f8';
-      const c = `padding:2px 4px;border:1px solid #cbd5e1;font-size:8px;vertical-align:middle;`;
+      const c = `padding:3px 4px;border:1px solid #cbd5e1;font-size:8px;vertical-align:middle;`;
       if (!lead) {
-        return `<tr style="background:${bg};height:20px;">
+        return `<tr style="background:${bg};height:22px;">
           <td style="${c}text-align:center;color:#94a3b8;">${idx + 1}</td>
           <td style="${c}">&nbsp;</td>
           <td style="${c}">&nbsp;</td>
@@ -203,9 +197,9 @@ export default function Relatorios({ open, onClose, clientes }) {
           <td style="${c}">&nbsp;</td>
           <td style="${c}">&nbsp;</td>
           <td style="${c}">&nbsp;</td>
-          ${tentativaCellEmpty('#AFCB3A')}
-          ${tentativaCellEmpty('#0096D8')}
-          ${tentativaCellEmpty('#7c3aed')}
+          ${tentativaCell('#AFCB3A')}
+          ${tentativaCell('#0096D8')}
+          ${tentativaCell('#7c3aed')}
           <td style="${c}">&nbsp;</td>
           <td style="${c}">&nbsp;</td>
         </tr>`;
@@ -214,18 +208,18 @@ export default function Relatorios({ open, onClose, clientes }) {
       const visitaAnt = lead.agendar_visita ? format(new Date(lead.agendar_visita), "dd/MM", { locale: ptBR }) : "";
       const visitaAntHora = lead.agendar_visita ? format(new Date(lead.agendar_visita), "HH:mm") : "";
       const dataCriacao = lead.data_cadastro ? format(new Date(lead.data_cadastro + 'T12:00:00'), "dd/MM/yy", { locale: ptBR }) : "";
-      return `<tr style="background:${bg};height:20px;">
+      return `<tr style="background:${bg};height:22px;">
         <td style="${c}text-align:center;font-weight:bold;color:#0f172a;">${idx + 1}</td>
         <td style="${c}font-weight:800;color:#0f172a;white-space:nowrap;">${lead.nome || ""}</td>
         <td style="${c}font-weight:800;color:#059669;white-space:nowrap;">${lead.telefone || '—'}</td>
-        <td style="${c}text-align:center;color:#64748b;font-size:7px;">${visitaAnt}</td>
-        <td style="${c}text-align:center;color:#64748b;font-size:7px;">${visitaAntHora}</td>
+        <td style="${c}text-align:center;font-weight:700;color:#0f172a;">${visitaAnt}</td>
+        <td style="${c}text-align:center;font-weight:700;color:#0f172a;">${visitaAntHora}</td>
         <td style="${c}">&nbsp;</td>
         <td style="${c}">&nbsp;</td>
         ${tentativaCell('#AFCB3A')}
         ${tentativaCell('#0096D8')}
         ${tentativaCell('#7c3aed')}
-        <td style="${c}text-align:center;font-size:7px;">${dataCriacao}</td>
+        <td style="${c}text-align:center;font-weight:700;">${dataCriacao}</td>
         <td style="${c}font-size:7px;color:#475569;">${lastObs}</td>
       </tr>`;
     };
@@ -235,7 +229,7 @@ export default function Relatorios({ open, onClose, clientes }) {
     const nameColW = Math.min(Math.max(maxNameLen * 7, 120), 260);
 
     const html = `
-      <div id="relatorio-container" style="width:1180px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
+      <div id="relatorio-container" style="width:1240px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
         
         <!-- HEADER -->
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;padding-bottom:6px;border-bottom:3px solid #0f172a;">
@@ -262,17 +256,17 @@ export default function Relatorios({ open, onClose, clientes }) {
         <!-- TABLE -->
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
           <colgroup>
-            <col style="width:22px"/>
+            <col style="width:20px"/>
             <col style="width:${nameColW}px"/>
-            <col style="width:80px"/>
-            <col style="width:44px"/>
+            <col style="width:78px"/>
+            <col style="width:40px"/>
             <col style="width:36px"/>
-            <col style="width:42px"/>
+            <col style="width:40px"/>
             <col style="width:36px"/>
-            <col style="width:80px"/>
-            <col style="width:80px"/>
-            <col style="width:80px"/>
-            <col style="width:48px"/>
+            <col style="width:95px"/>
+            <col style="width:95px"/>
+            <col style="width:95px"/>
+            <col style="width:46px"/>
             <col/>
           </colgroup>
           <thead>

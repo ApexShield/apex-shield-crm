@@ -175,33 +175,26 @@ export default function Relatorios({ open, onClose, clientes }) {
     const hot40 = clientes.filter(c => c.status === "AB Fone" && c.data_contato === hoje);
     const dataFormatada = format(new Date(hoje + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR });
 
-    const leads = [...hot40.slice(0, 30)];
-    while (leads.length < 30) leads.push(null);
+    const ROWS_PER_PAGE = 30;
+    const totalPages = Math.max(1, Math.ceil(hot40.length / ROWS_PER_PAGE));
 
-    // Tentativa cell builder (stacked: "Atendeu?" + ☐ Sim  ☐ Não)
     const tentativaCell = (color) => `
       <td style="border:1px solid #cbd5e1;padding:4px 5px;text-align:center;vertical-align:middle;background:${color}08;">
         <div style="font-size:9px;font-weight:800;color:${color};line-height:1.2;white-space:nowrap;">Atendeu?</div>
         <div style="font-size:10px;color:#0f172a;margin-top:2px;font-weight:800;white-space:nowrap;">☐ Sim&nbsp;&nbsp;&nbsp;☐ Não</div>
       </td>`;
 
-    const buildRow = (lead, idx) => {
-      const bg = idx % 2 === 0 ? '#ffffff' : '#f0f4f8';
+    const buildRow = (lead, globalIdx) => {
+      const bg = globalIdx % 2 === 0 ? '#ffffff' : '#f0f4f8';
       const c = `padding:4px 5px;border:1px solid #cbd5e1;font-size:9px;vertical-align:middle;`;
       if (!lead) {
         return `<tr style="background:${bg};height:28px;">
-          <td style="${c}text-align:center;color:#94a3b8;">${idx + 1}</td>
-          <td style="${c}">&nbsp;</td>
-          <td style="${c}">&nbsp;</td>
-          <td style="${c}">&nbsp;</td>
-          <td style="${c}">&nbsp;</td>
-          <td style="${c}">&nbsp;</td>
-          <td style="${c}">&nbsp;</td>
-          ${tentativaCell('#AFCB3A')}
-          ${tentativaCell('#0096D8')}
-          ${tentativaCell('#7c3aed')}
-          <td style="${c}">&nbsp;</td>
-          <td style="${c}">&nbsp;</td>
+          <td style="${c}text-align:center;color:#94a3b8;">${globalIdx + 1}</td>
+          <td style="${c}">&nbsp;</td><td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td><td style="${c}">&nbsp;</td>
+          <td style="${c}">&nbsp;</td><td style="${c}">&nbsp;</td>
+          ${tentativaCell('#AFCB3A')}${tentativaCell('#0096D8')}${tentativaCell('#7c3aed')}
+          <td style="${c}">&nbsp;</td><td style="${c}">&nbsp;</td>
         </tr>`;
       }
       const lastObs = lead.observacoes?.length > 0 ? lead.observacoes[lead.observacoes.length - 1]?.texto?.substring(0, 55) : "";
@@ -209,123 +202,118 @@ export default function Relatorios({ open, onClose, clientes }) {
       const visitaAntHora = lead.agendar_visita ? format(new Date(lead.agendar_visita), "HH:mm") : "";
       const dataCriacao = lead.data_cadastro ? format(new Date(lead.data_cadastro + 'T12:00:00'), "dd/MM/yy", { locale: ptBR }) : "";
       return `<tr style="background:${bg};height:28px;">
-        <td style="${c}text-align:center;font-weight:bold;color:#0f172a;">${idx + 1}</td>
+        <td style="${c}text-align:center;font-weight:bold;color:#0f172a;">${globalIdx + 1}</td>
         <td style="${c}font-weight:800;color:#0f172a;white-space:nowrap;">${lead.nome || ""}</td>
         <td style="${c}font-weight:800;color:#059669;white-space:nowrap;">${lead.telefone || '—'}</td>
         <td style="${c}text-align:center;font-weight:700;color:#0f172a;">${visitaAnt}</td>
         <td style="${c}text-align:center;font-weight:700;color:#0f172a;">${visitaAntHora}</td>
-        <td style="${c}">&nbsp;</td>
-        <td style="${c}">&nbsp;</td>
-        ${tentativaCell('#AFCB3A')}
-        ${tentativaCell('#0096D8')}
-        ${tentativaCell('#7c3aed')}
+        <td style="${c}">&nbsp;</td><td style="${c}">&nbsp;</td>
+        ${tentativaCell('#AFCB3A')}${tentativaCell('#0096D8')}${tentativaCell('#7c3aed')}
         <td style="${c}text-align:center;font-weight:700;">${dataCriacao}</td>
         <td style="${c}font-size:8px;color:#475569;">${lastObs}</td>
       </tr>`;
     };
 
-    // Calculate max name width for auto-sizing
     const maxNameLen = Math.max(...hot40.map(l => (l?.nome || "").length), 10);
     const nameColW = Math.min(Math.max(maxNameLen * 7, 120), 260);
 
-    const html = `
-      <div id="relatorio-container" style="width:1240px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
-        
-        <!-- HEADER -->
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;padding-bottom:6px;border-bottom:3px solid #0f172a;">
-          <img src="${LOGO_URL}" style="width:42px;height:42px;object-fit:contain;" crossorigin="anonymous" />
-          <div style="flex:1;">
-            <span style="font-size:16px;font-weight:900;color:#0f172a;letter-spacing:1px;">APEX SHIELD CRM</span>
-            <div style="font-size:11px;font-weight:700;color:#AFCB3A;margin-top:1px;">Relatório Hot40</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:7px;color:#94a3b8;">Data de Contato</div>
-            <div style="font-size:13px;font-weight:800;color:#0f172a;">${dataFormatada}</div>
-            <div style="font-size:7px;color:#94a3b8;">Gerado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
-          </div>
-        </div>
+    const colgroupHtml = `<colgroup>
+      <col style="width:20px"/><col style="width:${nameColW}px"/><col style="width:78px"/>
+      <col style="width:40px"/><col style="width:36px"/><col style="width:40px"/><col style="width:36px"/>
+      <col style="width:95px"/><col style="width:95px"/><col style="width:95px"/>
+      <col style="width:46px"/><col/>
+    </colgroup>`;
 
-        <!-- STATS -->
-        <div style="display:flex;gap:6px;margin-bottom:4px;">
-          <div style="width:140px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:4px;padding:3px 8px;text-align:center;">
-            <div style="font-size:7px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Total Leads</div>
-            <div style="font-size:15px;font-weight:900;color:#ffffff;">${hot40.length}</div>
-          </div>
-        </div>
+    const theadHtml = `<thead>
+      <tr style="background:linear-gradient(90deg,#0f172a,#1e3a5f);color:#ffffff;">
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;">Nº</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
+        <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">VISITA ANT.</th>
+        <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">HORA</th>
+        <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">📅 VISITA</th>
+        <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">🕐 HORA</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª TENTATIVA</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª TENTATIVA</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª TENTATIVA</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
+        <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBSERVAÇÕES</th>
+      </tr>
+    </thead>`;
 
-        <!-- TABLE -->
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-          <colgroup>
-            <col style="width:20px"/>
-            <col style="width:${nameColW}px"/>
-            <col style="width:78px"/>
-            <col style="width:40px"/>
-            <col style="width:36px"/>
-            <col style="width:40px"/>
-            <col style="width:36px"/>
-            <col style="width:95px"/>
-            <col style="width:95px"/>
-            <col style="width:95px"/>
-            <col style="width:46px"/>
-            <col/>
-          </colgroup>
-          <thead>
-            <tr style="background:linear-gradient(90deg,#0f172a,#1e3a5f);color:#ffffff;">
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;">Nº</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📋 NOME</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📞 CELULAR</th>
-              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">VISITA ANT.</th>
-              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">HORA</th>
-              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">📅 VISITA</th>
-              <th style="padding:5px 3px;font-size:7px;border:1px solid #334155;font-weight:700;text-align:center;">🕐 HORA</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#AFCB3A;color:#0f172a;">1ª TENTATIVA</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#0096D8;">2ª TENTATIVA</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;background:#7c3aed;">3ª TENTATIVA</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:center;">📅 CRIAÇÃO</th>
-              <th style="padding:5px 3px;font-size:8px;border:1px solid #334155;font-weight:700;text-align:left;">📝 OBSERVAÇÕES</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${leads.map((lead, idx) => buildRow(lead, idx)).join('')}
-          </tbody>
-        </table>
-
-        <!-- FOOTER -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:2px solid #0f172a;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <img src="${LOGO_URL}" style="width:14px;height:14px;object-fit:contain;" crossorigin="anonymous" />
-            <span style="font-size:7px;color:#64748b;font-weight:600;">APEX SHIELD CRM — Gestão Profissional de Seguros</span>
+    const buildPageHtml = (pageIdx) => {
+      const start = pageIdx * ROWS_PER_PAGE;
+      const rowsHtml = [];
+      for (let i = 0; i < ROWS_PER_PAGE; i++) {
+        const globalIdx = start + i;
+        rowsHtml.push(buildRow(hot40[globalIdx] || null, globalIdx));
+      }
+      return `
+        <div class="hot40-page" style="width:1240px;padding:10px 14px;font-family:'Segoe UI',Arial,sans-serif;background:#ffffff;box-sizing:border-box;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;padding-bottom:6px;border-bottom:3px solid #0f172a;">
+            <img src="${LOGO_URL}" style="width:42px;height:42px;object-fit:contain;" crossorigin="anonymous" />
+            <div style="flex:1;">
+              <span style="font-size:16px;font-weight:900;color:#0f172a;letter-spacing:1px;">APEX SHIELD CRM</span>
+              <div style="font-size:11px;font-weight:700;color:#AFCB3A;margin-top:1px;">Relatório Hot40</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:7px;color:#94a3b8;">Data de Contato</div>
+              <div style="font-size:13px;font-weight:800;color:#0f172a;">${dataFormatada}</div>
+              <div style="font-size:7px;color:#94a3b8;">Gerado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })} — Pág. ${pageIdx + 1}/${totalPages}</div>
+            </div>
           </div>
-          <span style="font-size:6px;color:#94a3b8;">© ${new Date().getFullYear()} Todos os direitos reservados</span>
-        </div>
-      </div>
-    `;
+          ${pageIdx === 0 ? `<div style="display:flex;gap:6px;margin-bottom:4px;">
+            <div style="width:140px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:4px;padding:3px 8px;text-align:center;">
+              <div style="font-size:7px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Total Leads</div>
+              <div style="font-size:15px;font-weight:900;color:#ffffff;">${hot40.length}</div>
+            </div>
+          </div>` : ''}
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+            ${colgroupHtml}
+            ${theadHtml}
+            <tbody>${rowsHtml.join('')}</tbody>
+          </table>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:2px solid #0f172a;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <img src="${LOGO_URL}" style="width:14px;height:14px;object-fit:contain;" crossorigin="anonymous" />
+              <span style="font-size:7px;color:#64748b;font-weight:600;">APEX SHIELD CRM — Gestão Profissional de Seguros</span>
+            </div>
+            <span style="font-size:6px;color:#94a3b8;">© ${new Date().getFullYear()} Todos os direitos reservados</span>
+          </div>
+        </div>`;
+    };
 
     const container = document.createElement('div');
-    container.innerHTML = html;
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     document.body.appendChild(container);
+
+    for (let p = 0; p < totalPages; p++) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = buildPageHtml(p);
+      container.appendChild(wrapper);
+    }
 
     try {
       const imgs = container.querySelectorAll('img');
       await Promise.all([...imgs].map(img => new Promise(r => { if (img.complete) r(); else { img.onload = r; img.onerror = r; } })));
 
-      const canvas = await html2canvas(container.querySelector('#relatorio-container'), {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: true
-      });
-
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('l', 'mm', 'a4');
       const pageW = 297;
       const pageH = 210;
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
+      const pageBlocks = container.querySelectorAll('.hot40-page');
 
-      pdf.addImage(imgData, 'PNG', 0, 0, imgW, Math.min(imgH, pageH));
+      for (let i = 0; i < pageBlocks.length; i++) {
+        if (i > 0) pdf.addPage();
+        const canvas = await html2canvas(pageBlocks[i], {
+          scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = pageW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, imgW, Math.min(imgH, pageH));
+      }
+
       pdf.save(`Apex_Shield_HOT40_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
     } finally {
       document.body.removeChild(container);

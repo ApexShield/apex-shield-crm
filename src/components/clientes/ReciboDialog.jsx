@@ -31,6 +31,23 @@ export default function ReciboDialog({ open, onClose, cliente }) {
     formData.endereco && formData.numero && formData.bairro && formData.cep &&
     formData.cidade && formData.estado && formData.produto && formData.proposta;
 
+  // Convert an image URL to base64 data URI so html2canvas can render it
+  const imageToBase64 = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve("");
+      img.src = url;
+    });
+  };
+
   const gerarRecibo = async () => {
     setGerando(true);
     const nome = (cliente?.nome || "").toUpperCase();
@@ -44,7 +61,8 @@ export default function ReciboDialog({ open, onClose, cliente }) {
 
     const u = (val) => `<span style="border-bottom:1px solid #333;padding:0 6px;min-width:60px;display:inline-block;">${val || "&nbsp;"}</span>`;
 
-    const METLIFE_LOGO = "https://media.base44.com/images/public/69587402a43b69a04695a178/07c0bcb1e_generated_image.png";
+    // Pre-load logo as base64 so html2canvas can render it
+    const logoBase64 = await imageToBase64("https://media.base44.com/images/public/69587402a43b69a04695a178/07c0bcb1e_generated_image.png");
 
     const colorBarHtml = `<div style="display:flex;height:38px;width:100%;">
       <div style="flex:1;background:#4BA946;"></div>
@@ -52,6 +70,9 @@ export default function ReciboDialog({ open, onClose, cliente }) {
       <div style="flex:1;background:#00A4E4;"></div>
       <div style="flex:0.8;background:#0072BC;"></div>
     </div>`;
+
+    const logoImg = logoBase64 ? `<img src="${logoBase64}" style="height:50px;object-fit:contain;" />` : "";
+    const logoImgSmall = logoBase64 ? `<img src="${logoBase64}" style="height:32px;object-fit:contain;" />` : "";
 
     const html = `
       <div id="recibo-container" style="width:700px;min-height:990px;font-family:'Times New Roman',Times,serif;background:#ffffff;box-sizing:border-box;font-size:15px;line-height:2;color:#1a1a1a;position:relative;display:flex;flex-direction:column;">
@@ -62,7 +83,7 @@ export default function ReciboDialog({ open, onClose, cliente }) {
         <div style="flex:1;padding:20px 55px 30px;position:relative;">
           <!-- Header: Logo + Premio -->
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">
-            <img src="${METLIFE_LOGO}" style="height:50px;object-fit:contain;" crossorigin="anonymous" />
+            ${logoImg}
             <div style="text-align:right;">
               <div style="font-size:14px;">Prêmio: ${u("R$ " + formData.premio)}</div>
               <div style="font-size:14px;margin-top:4px;">Mensal ( ${checkMensal} )&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anual ( ${checkAnual} )</div>
@@ -94,7 +115,7 @@ export default function ReciboDialog({ open, onClose, cliente }) {
 
           <!-- Footer: MetLife logo bottom-right -->
           <div style="position:absolute;bottom:20px;right:0;">
-            <img src="${METLIFE_LOGO}" style="height:32px;object-fit:contain;" crossorigin="anonymous" />
+            ${logoImgSmall}
           </div>
         </div>
 
@@ -111,7 +132,7 @@ export default function ReciboDialog({ open, onClose, cliente }) {
 
     try {
       const canvas = await html2canvas(container.querySelector("#recibo-container"), {
-        scale: 2, backgroundColor: "#ffffff"
+        scale: 2, backgroundColor: "#ffffff", useCORS: true
       });
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");

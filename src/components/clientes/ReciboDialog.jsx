@@ -62,7 +62,7 @@ export default function ReciboDialog({ open, onClose, cliente }) {
     const u = (val) => `<span style="border-bottom:1px solid #333;padding:0 6px;min-width:60px;display:inline-block;">${val || "&nbsp;"}</span>`;
 
     // Pre-load logo as base64 so html2canvas can render it
-    const logoBase64 = await imageToBase64("https://media.base44.com/images/public/69587402a43b69a04695a178/07c0bcb1e_generated_image.png");
+    const logoBase64 = await imageToBase64("https://media.base44.com/images/public/69587402a43b69a04695a178/f7a13bd12_generated_image.png");
 
     const colorBarHtml = `<div style="display:flex;height:38px;width:100%;">
       <div style="flex:1;background:#4BA946;"></div>
@@ -71,8 +71,8 @@ export default function ReciboDialog({ open, onClose, cliente }) {
       <div style="flex:0.8;background:#0072BC;"></div>
     </div>`;
 
-    const logoImg = logoBase64 ? `<img src="${logoBase64}" style="height:50px;object-fit:contain;" />` : "";
-    const logoImgSmall = logoBase64 ? `<img src="${logoBase64}" style="height:32px;object-fit:contain;" />` : "";
+    const logoImg = logoBase64 ? `<img src="${logoBase64}" style="height:90px;object-fit:contain;" />` : "";
+    const logoImgSmall = logoBase64 ? `<img src="${logoBase64}" style="height:45px;object-fit:contain;" />` : "";
 
     const html = `
       <div id="recibo-container" style="width:700px;min-height:990px;font-family:'Times New Roman',Times,serif;background:#ffffff;box-sizing:border-box;font-size:15px;line-height:2;color:#1a1a1a;position:relative;display:flex;flex-direction:column;">

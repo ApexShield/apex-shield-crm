@@ -44,26 +44,25 @@ export default function ReciboDialog({ open, onClose, cliente }) {
 
     const u = (val) => `<span style="border-bottom:1px solid #333;padding:0 6px;min-width:60px;display:inline-block;">${val || "&nbsp;"}</span>`;
 
-    // MetLife logo as inline SVG data URI for reliable rendering in html2canvas
-    const METLIFE_LOGO_SVG = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50"><path d="M10 8 L22 38 L34 8 L38 8 L38 42 L34 42 L34 14 L22 42 L10 14 L10 42 L6 42 L6 8 Z" fill="#00A94F"/><text x="42" y="34" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#333">MetLife</text><path d="M42 38 L120 38" stroke="#00A94F" stroke-width="2"/></svg>`)}`;
+    const METLIFE_LOGO = "https://media.base44.com/images/public/69587402a43b69a04695a178/07c0bcb1e_generated_image.png";
 
     const colorBarHtml = `<div style="display:flex;height:38px;width:100%;">
       <div style="flex:1;background:#4BA946;"></div>
-      <div style="flex:1;background:#8DC63F;"></div>
+      <div style="flex:1.2;background:#8DC63F;"></div>
       <div style="flex:1;background:#00A4E4;"></div>
-      <div style="flex:1;background:#0072BC;"></div>
+      <div style="flex:0.8;background:#0072BC;"></div>
     </div>`;
 
     const html = `
-      <div id="recibo-container" style="width:700px;min-height:990px;font-family:'Times New Roman',Times,serif;background:#ffffff;box-sizing:border-box;font-size:15px;line-height:2;color:#1a1a1a;position:relative;">
+      <div id="recibo-container" style="width:700px;min-height:990px;font-family:'Times New Roman',Times,serif;background:#ffffff;box-sizing:border-box;font-size:15px;line-height:2;color:#1a1a1a;position:relative;display:flex;flex-direction:column;">
         
         <!-- Top color bar -->
         ${colorBarHtml}
 
-        <div style="padding:20px 55px 30px;">
+        <div style="flex:1;padding:20px 55px 30px;position:relative;">
           <!-- Header: Logo + Premio -->
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">
-            <img src="${METLIFE_LOGO_SVG}" style="height:45px;object-fit:contain;" />
+            <img src="${METLIFE_LOGO}" style="height:50px;object-fit:contain;" crossorigin="anonymous" />
             <div style="text-align:right;">
               <div style="font-size:14px;">Prêmio: ${u("R$ " + formData.premio)}</div>
               <div style="font-size:14px;margin-top:4px;">Mensal ( ${checkMensal} )&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anual ( ${checkAnual} )</div>
@@ -94,8 +93,8 @@ export default function ReciboDialog({ open, onClose, cliente }) {
           </div>
 
           <!-- Footer: MetLife logo bottom-right -->
-          <div style="position:absolute;bottom:50px;right:55px;">
-            <img src="${METLIFE_LOGO_SVG}" style="height:30px;object-fit:contain;" />
+          <div style="position:absolute;bottom:20px;right:0;">
+            <img src="${METLIFE_LOGO}" style="height:32px;object-fit:contain;" crossorigin="anonymous" />
           </div>
         </div>
 

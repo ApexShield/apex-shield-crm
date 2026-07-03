@@ -139,7 +139,7 @@ export default function Layout({ children, currentPageName }) {
             </Button>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               if (item.adminOnly && (!user || user.role !== "admin")) return null;
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserCheck, Edit, FileText, TrendingUp, Plus, Upload, CalendarSearch, Loader2 } from "lucide-react";
+import { UserCheck, Edit, FileText, TrendingUp, Plus, Upload, CalendarSearch, Loader2, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import usePersistedState from "../hooks/usePersistedState";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import DocumentosDialog from "../components/leads/DocumentosDialog";
 import ApoliceDialog from "../components/leads/ApoliceDialog";
 import FluxoPipeline from "../components/FluxoPipeline";
 import ImportExportLeads from "../components/leads/ImportExportLeads";
+import ReciboDialog from "../components/clientes/ReciboDialog";
 
 export default function ClientesConvertidos() {
   const [busca, setBusca] = useState("");
@@ -33,6 +34,7 @@ export default function ClientesConvertidos() {
   const [showCriarCliente, setShowCriarCliente] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
   const [preenchendoDatas, setPreenchendoDatas] = useState(false);
+  const [showRecibo, setShowRecibo] = useState(false);
 
   // Listener para abrir apólice do formulário (idêntico ao Leads)
   useEffect(() => {
@@ -271,6 +273,10 @@ export default function ClientesConvertidos() {
             {preenchendoDatas ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <CalendarSearch className="w-5 h-5 mr-2" />}
             {preenchendoDatas ? "Processando..." : "Preencher Datas Implantação"}
           </Button>
+          <Button onClick={() => setShowRecibo(true)} disabled={!selectedCliente}
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 font-bold px-6 py-6">
+            <Receipt className="w-5 h-5 mr-2" />Emitir Recibo
+          </Button>
         </div>
 
         {/* Mobile Action Bar */}
@@ -321,6 +327,7 @@ export default function ClientesConvertidos() {
             onUpdate={() => queryClient.invalidateQueries({ queryKey: ["clientes"] })} />
           <ApoliceDialog open={showApolice} onClose={() => setShowApolice(false)} cliente={selectedCliente}
             onSave={handleSaveApolice} isLoading={updateMutation.isPending} />
+          <ReciboDialog open={showRecibo} onClose={() => setShowRecibo(false)} cliente={selectedCliente} />
         </>
       )}
     </div>

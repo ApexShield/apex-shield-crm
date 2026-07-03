@@ -44,12 +44,21 @@ export default function ReciboDialog({ open, onClose, cliente }) {
 
     const u = (val) => `<span style="border-bottom:1px solid #333;padding:0 6px;min-width:60px;display:inline-block;">${val || "&nbsp;"}</span>`;
 
+    const METLIFE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/MetLife_logo.svg/512px-MetLife_logo.svg.png";
+
     const html = `
-      <div id="recibo-container" style="width:700px;padding:50px 60px;font-family:'Times New Roman',Times,serif;background:#ffffff;box-sizing:border-box;font-size:15px;line-height:2;color:#1a1a1a;">
+      <div id="recibo-container" style="width:700px;min-height:990px;padding:40px 55px 30px;font-family:'Times New Roman',Times,serif;background:#ffffff;box-sizing:border-box;font-size:15px;line-height:2;color:#1a1a1a;position:relative;">
         
-        <div style="text-align:right;margin-bottom:30px;">
-          <div style="font-size:14px;">Prêmio: ${u("R$ " + formData.premio)}</div>
-          <div style="font-size:14px;margin-top:4px;">Mensal ( ${checkMensal} )&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anual ( ${checkAnual} )</div>
+        <!-- Top green accent bar -->
+        <div style="position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#4BA946,#00A4E4);"></div>
+
+        <!-- Header: Logo + Premio -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">
+          <img src="${METLIFE_LOGO}" style="height:50px;object-fit:contain;" crossorigin="anonymous" />
+          <div style="text-align:right;">
+            <div style="font-size:14px;">Prêmio: ${u("R$ " + formData.premio)}</div>
+            <div style="font-size:14px;margin-top:4px;">Mensal ( ${checkMensal} )&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anual ( ${checkAnual} )</div>
+          </div>
         </div>
 
         <div style="text-align:justify;">
@@ -73,6 +82,11 @@ export default function ReciboDialog({ open, onClose, cliente }) {
           <div style="border-top:1px solid #333;width:350px;margin:0 auto;padding-top:6px;font-size:13px;">
             [ASSINATURA IDÊNTICA AO DOCUMENTO DE IDENTIFICAÇÃO]
           </div>
+        </div>
+
+        <!-- Footer: MetLife logo bottom-right -->
+        <div style="position:absolute;bottom:25px;right:55px;">
+          <img src="${METLIFE_LOGO}" style="height:28px;object-fit:contain;" crossorigin="anonymous" />
         </div>
       </div>
     `;

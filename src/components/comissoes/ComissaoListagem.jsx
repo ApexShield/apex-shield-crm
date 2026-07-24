@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2, RefreshCw, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash2, RefreshCw, AlertTriangle, CheckCircle, Clock, Pencil, Check, X } from "lucide-react";
 import { format, parseISO, differenceInDays, isValid } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -19,16 +20,13 @@ function isPagamentoUnico(comissao) {
 }
 
 function getStatusInfo(comissao) {
-  // Pagamentos únicos (Bônus/Angariação) não expiram
   if (isPagamentoUnico(comissao)) {
     return { label: "Pago", color: "text-cyan-400", icon: CheckCircle, urgente: false, diasRestantes: 999 };
   }
-
   const hoje = new Date();
   const exp = parseISO(comissao.data_expiracao);
   if (!isValid(exp)) return { label: "—", color: "text-white/50", icon: Clock, urgente: false };
   const diasRestantes = differenceInDays(exp, hoje);
-
   if (comissao.status === "expirada" || diasRestantes < 0) {
     return { label: "Expirada", color: "text-red-400", icon: AlertTriangle, urgente: true, diasRestantes };
   }
@@ -39,9 +37,47 @@ function getStatusInfo(comissao) {
 }
 
 export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
+
   const handleDelete = async (id) => {
     await base44.entities.ComissaoCliente.delete(id);
     toast.success("Comissão removida");
+    onRefresh();
+  };
+
+  const startEdit = (c) => {
+    setEditingId(c.id);
+    setEditData({
+      valor_comissao: c.valor_comissao || 0,
+      produto: c.produto || "",
+      data_adesao: c.data_adesao || "",
+      data_expiracao: c.data_expiracao || ""
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditData({});
+  };
+
+  const saveEdit = async (id) => {
+    setSaving(true);
+    const updates = {
+      valor_comissao: parseFloat(editData.valor_comissao) || 0,
+      produto: editData.produto,
+      data_adesao: editData.data_adesao
+    };
+    const comissao = comissoes.find(c => c.id === id);
+    if (!isPagamentoUnico(comissao)) {
+      updates.data_expiracao = editData.data_expiracao;
+    }
+    await base44.entities.ComissaoCliente.update(id, updates);
+    toast.success("Comissão atualizada");
+    setEditingId(null);
+    setEditData({});
+    setSaving(false);
     onRefresh();
   };
 
@@ -65,6 +101,8 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
     return Math.min(Math.max(mesesPassados, 0), 12);
   };
 
+  const isEditing = (id) => editingId === id;
+
   return (
     <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
       <div className="overflow-x-auto max-h-[500px]">
@@ -79,7 +117,7 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
               <TableHead className="text-white text-xs font-bold text-center">Expiração</TableHead>
               <TableHead className="text-white text-xs font-bold text-center">Progresso</TableHead>
               <TableHead className="text-white text-xs font-bold text-center">Status</TableHead>
-              <TableHead className="text-white text-xs font-bold w-20"></TableHead>
+              <TableHead className="text-white text-xs font-bold w-24"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -93,6 +131,8 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
               const statusInfo = getStatusInfo(c);
               const Icon = statusInfo.icon;
               const mesesPagos = calcMesesToPaid(c);
+              const editing = isEditing(c.id);
+
               return (
                 <TableRow key={c.id} className={`border-white/5 hover:bg-white/5 ${statusInfo.urgente ? "bg-amber-500/5" : ""}`}>
                   <TableCell className="text-white text-xs font-bold">{c.cliente_nome}</TableCell>
@@ -106,11 +146,32 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                       {c.tipo_comissao || "Venda"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-cyan-300 text-xs">{c.produto}</TableCell>
-                  <TableCell className="text-emerald-400 text-xs font-black text-center">{fmtCurrency(c.valor_comissao)}</TableCell>
-                  <TableCell className="text-white/70 text-xs text-center">{safeFmtDate(c.data_adesao)}</TableCell>
+                  <TableCell className="text-cyan-300 text-xs">
+                    {editing ? (
+                      <Input value={editData.produto} onChange={e => setEditData(p => ({ ...p, produto: e.target.value }))}
+                        className="compact-form h-7 bg-white/10 border-white/20 text-white text-xs w-20" />
+                    ) : c.produto}
+                  </TableCell>
+                  <TableCell className="text-emerald-400 text-xs font-black text-center">
+                    {editing ? (
+                      <Input type="number" step="0.01" value={editData.valor_comissao}
+                        onChange={e => setEditData(p => ({ ...p, valor_comissao: e.target.value }))}
+                        className="compact-form h-7 bg-white/10 border-white/20 text-white text-xs w-24 text-center" />
+                    ) : fmtCurrency(c.valor_comissao)}
+                  </TableCell>
                   <TableCell className="text-white/70 text-xs text-center">
-                    {isPagamentoUnico(c) ? "—" : safeFmtDate(c.data_expiracao)}
+                    {editing ? (
+                      <Input type="date" value={editData.data_adesao}
+                        onChange={e => setEditData(p => ({ ...p, data_adesao: e.target.value }))}
+                        className="compact-form h-7 bg-white/10 border-white/20 text-white text-xs w-32" />
+                    ) : safeFmtDate(c.data_adesao)}
+                  </TableCell>
+                  <TableCell className="text-white/70 text-xs text-center">
+                    {isPagamentoUnico(c) ? "—" : editing ? (
+                      <Input type="date" value={editData.data_expiracao}
+                        onChange={e => setEditData(p => ({ ...p, data_expiracao: e.target.value }))}
+                        className="compact-form h-7 bg-white/10 border-white/20 text-white text-xs w-32" />
+                    ) : safeFmtDate(c.data_expiracao)}
                   </TableCell>
                   <TableCell className="text-white/70 text-xs text-center">
                     {isPagamentoUnico(c) ? (
@@ -127,16 +188,35 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {statusInfo.urgente && (
-                        <Button size="icon" variant="ghost" onClick={() => onRenovar(c)}
-                          className="text-amber-400 hover:text-amber-300 h-7 w-7" title="Renovar">
-                          <RefreshCw className="w-3 h-3" />
-                        </Button>
+                      {editing ? (
+                        <>
+                          <Button size="icon" variant="ghost" onClick={() => saveEdit(c.id)} disabled={saving}
+                            className="text-emerald-400 hover:text-emerald-300 h-7 w-7" title="Salvar">
+                            <Check className="w-3 h-3" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={cancelEdit}
+                            className="text-white/50 hover:text-white h-7 w-7" title="Cancelar">
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="icon" variant="ghost" onClick={() => startEdit(c)}
+                            className="text-cyan-400 hover:text-cyan-300 h-7 w-7" title="Editar">
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          {statusInfo.urgente && (
+                            <Button size="icon" variant="ghost" onClick={() => onRenovar(c)}
+                              className="text-amber-400 hover:text-amber-300 h-7 w-7" title="Renovar">
+                              <RefreshCw className="w-3 h-3" />
+                            </Button>
+                          )}
+                          <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}
+                            className="text-red-400 hover:text-red-300 h-7 w-7" title="Remover">
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </>
                       )}
-                      <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}
-                        className="text-red-400 hover:text-red-300 h-7 w-7" title="Remover">
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

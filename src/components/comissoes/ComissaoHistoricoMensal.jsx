@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Calendar, Filter } from "lucide-react";
@@ -162,10 +162,18 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
                 wrapperStyle={{ fontSize: 11, color: "#e2e8f0" }}
                 formatter={(value) => <span style={{ color: "#e2e8f0" }}>{value}</span>}
               />
-              <Bar dataKey="comissao" name="Comissão" fill="#10b981" stackId="stack" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="angariacao" name="Angariação" fill="#3b82f6" stackId="stack" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="inadimplencia" name="Inadimplência" fill="#f97316" stackId="neg" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="cancelamento" name="Cancelamento" fill="#ef4444" stackId="neg" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="comissao" name="Comissão" fill="#10b981" stackId="stack" radius={[0, 0, 0, 0]}>
+                <LabelList dataKey="comissao" position="center" fill="#fff" fontSize={9} fontWeight="bold" formatter={(v) => v > 0 ? `R$${v.toFixed(0)}` : ""} />
+              </Bar>
+              <Bar dataKey="angariacao" name="Angariação" fill="#3b82f6" stackId="stack" radius={[0, 0, 0, 0]}>
+                <LabelList dataKey="angariacao" position="center" fill="#fff" fontSize={9} fontWeight="bold" formatter={(v) => v > 0 ? `R$${v.toFixed(0)}` : ""} />
+              </Bar>
+              <Bar dataKey="inadimplencia" name="Inadimplência" fill="#f97316" stackId="neg" radius={[0, 0, 0, 0]}>
+                <LabelList dataKey="inadimplencia" position="center" fill="#fff" fontSize={9} fontWeight="bold" formatter={(v) => v > 0 ? `R$${v.toFixed(0)}` : ""} />
+              </Bar>
+              <Bar dataKey="cancelamento" name="Cancelamento" fill="#ef4444" stackId="neg" radius={[0, 0, 0, 0]}>
+                <LabelList dataKey="cancelamento" position="center" fill="#fff" fontSize={9} fontWeight="bold" formatter={(v) => v > 0 ? `R$${v.toFixed(0)}` : ""} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

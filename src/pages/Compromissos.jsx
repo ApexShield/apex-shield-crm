@@ -16,6 +16,7 @@ import { ptBR } from "date-fns/locale";
 import CompromissoFixoDialog from "../components/compromissos/CompromissoFixoDialog";
 import MobileAgendaView from "../components/compromissos/MobileAgendaView";
 import CorretorSelector from "../components/compromissos/CorretorSelector";
+import GoogleCalendarStatus from "../components/compromissos/GoogleCalendarStatus";
 
 
 const HOURS = Array.from({ length: 20 }, (_, i) => i + 4);
@@ -423,6 +424,7 @@ export default function Compromissos() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap items-center">
+              <GoogleCalendarStatus />
               {isLeader && teamMembers.length > 0 && (
                 <CorretorSelector teamMembers={teamMembers} selectedEmail={selectedCorretor} onSelect={setSelectedCorretor} />
               )}
@@ -443,9 +445,8 @@ export default function Compromissos() {
       {/* Mobile header */}
       <div className="md:hidden px-4 pt-3 pb-2 space-y-2">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-black text-white">Agenda</h1>
-          </div>
+          <h1 className="text-lg font-black text-white">Agenda</h1>
+          <GoogleCalendarStatus />
         </div>
         {isLeader && teamMembers.length > 0 && (
           <CorretorSelector teamMembers={teamMembers} selectedEmail={selectedCorretor} onSelect={setSelectedCorretor} />

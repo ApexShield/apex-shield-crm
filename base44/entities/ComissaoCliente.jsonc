@@ -15,10 +15,12 @@
       "enum": [
         "Venda",
         "B\u00f4nus",
-        "Angaria\u00e7\u00e3o"
+        "Angaria\u00e7\u00e3o",
+        "Cancelamento",
+        "Inadimpl\u00eancia"
       ],
       "default": "Venda",
-      "description": "Tipo de comiss\u00e3o: Venda (mensal 12 meses), B\u00f4nus (pagamento \u00fanico), Angaria\u00e7\u00e3o (pagamento \u00fanico)"
+      "description": "Tipo de comiss\u00e3o"
     },
     "produto": {
       "type": "string",
@@ -38,13 +40,27 @@
       "format": "date",
       "description": "Data de expira\u00e7\u00e3o (12 meses ap\u00f3s ades\u00e3o, s\u00f3 para Venda)"
     },
+    "data_cancelamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do cancelamento (s\u00f3 para tipo Cancelamento)"
+    },
+    "comissao_vinculada_id": {
+      "type": "string",
+      "description": "ID da comiss\u00e3o de venda vinculada (para Cancelamento)"
+    },
+    "mes_inadimplencia": {
+      "type": "string",
+      "description": "M\u00eas da inadimpl\u00eancia no formato YYYY-MM"
+    },
     "status": {
       "type": "string",
       "enum": [
         "ativa",
         "expirada",
         "renovada",
-        "pago"
+        "pago",
+        "cancelada"
       ],
       "default": "ativa",
       "description": "Status da comiss\u00e3o"

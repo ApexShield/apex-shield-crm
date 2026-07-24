@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Calendar, Filter } from "lucide-react";
@@ -8,12 +8,31 @@ import { ptBR } from "date-fns/locale";
 
 const fmtCurrency = (v) => (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const data = payload[0]?.payload;
+  return (
+    <div className="bg-slate-800 border border-white/20 rounded-lg p-3 shadow-xl">
+      <p className="text-white font-bold text-sm mb-2">{data?.mesCompleto || label}</p>
+      {payload.map((entry, i) => (
+        <div key={i} className="flex items-center gap-2 text-xs">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.fill || entry.color }} />
+          <span className="text-white/70">{entry.name}:</span>
+          <span className="text-white font-bold">{fmtCurrency(entry.value)}</span>
+        </div>
+      ))}
+      <div className="border-t border-white/10 mt-2 pt-2">
+        <p className="text-xs text-white/70">Saldo: <span className="text-white font-bold">{fmtCurrency((data?.comissao || 0) + (data?.angariacao || 0) - (data?.inadimplencia || 0) - (data?.cancelamento || 0))}</span></p>
+      </div>
+    </div>
+  );
+};
+
 export default function ComissaoHistoricoMensal({ comissoes }) {
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroInicio, setFiltroInicio] = useState("");
   const [filtroFim, setFiltroFim] = useState("");
 
-  // Gerar dados de comissões por mês (últimos 12 meses)
   const dadosMensais = useMemo(() => {
     const hoje = new Date();
     const meses = [];
@@ -22,45 +41,63 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
       const inicioMes = startOfMonth(mes);
       const fimMes = endOfMonth(mes);
 
-      let totalMes = 0;
-      let qtdAtivas = 0;
+      let comissaoTotal = 0;
+      let angariacaoTotal = 0;
+      let inadimplenciaTotal = 0;
+      let cancelamentoTotal = 0;
 
       comissoes.forEach(c => {
-        const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
         const adesao = parseISO(c.data_adesao);
 
-        if (isPagUnico) {
-          // Pagamento único: contabilizar apenas no mês de lançamento
-          if (isValid(adesao) && isWithinInterval(adesao, { start: inicioMes, end: fimMes })) {
-            totalMes += c.valor_comissao || 0;
-            qtdAtivas++;
+        if (c.tipo_comissao === "Inadimplência") {
+          // Inadimplência: contar no mês de competência
+          if (c.mes_inadimplencia) {
+            const [ano, mesNum] = c.mes_inadimplencia.split("-").map(Number);
+            if (inicioMes.getFullYear() === ano && inicioMes.getMonth() === mesNum - 1) {
+              inadimplenciaTotal += c.valor_comissao || 0;
+            }
           }
           return;
         }
 
-        const expiracao = parseISO(c.data_expiracao);
-        if (!isValid(adesao) || !isValid(expiracao)) return;
-
-        // Comissão recorrente estava ativa nesse mês?
-        if (!isAfter(adesao, fimMes) && !isBefore(expiracao, inicioMes)) {
-          totalMes += c.valor_comissao || 0;
-          qtdAtivas++;
+        if (c.tipo_comissao === "Cancelamento") {
+          // Cancelamento: mostrar o valor cancelado no mês do cancelamento
+          const dataCancelamento = c.data_cancelamento ? parseISO(c.data_cancelamento) : adesao;
+          if (isValid(dataCancelamento) && isWithinInterval(dataCancelamento, { start: inicioMes, end: fimMes })) {
+            cancelamentoTotal += c.valor_comissao || 0;
+          }
+          return;
         }
 
-        // Considerar renovações passadas
-        (c.historico_renovacoes || []).forEach(r => {
-          if (!r.data_renovacao) return;
-          const dataRenov = new Date(r.data_renovacao);
-          // Valor anterior era ativo antes da renovação
-          // Simplificar: já contado acima pelo período principal
-        });
+        if (c.tipo_comissao === "Angariação") {
+          if (isValid(adesao) && isWithinInterval(adesao, { start: inicioMes, end: fimMes })) {
+            angariacaoTotal += c.valor_comissao || 0;
+          }
+          return;
+        }
+
+        if (c.tipo_comissao === "Bônus") {
+          if (isValid(adesao) && isWithinInterval(adesao, { start: inicioMes, end: fimMes })) {
+            comissaoTotal += c.valor_comissao || 0;
+          }
+          return;
+        }
+
+        // Venda (recorrente)
+        const expiracao = parseISO(c.data_expiracao);
+        if (!isValid(adesao) || !isValid(expiracao)) return;
+        if (!isAfter(adesao, fimMes) && !isBefore(expiracao, inicioMes)) {
+          comissaoTotal += c.valor_comissao || 0;
+        }
       });
 
       meses.push({
         mes: format(mes, "MMM/yy", { locale: ptBR }),
         mesCompleto: format(mes, "MMMM yyyy", { locale: ptBR }),
-        valor: Math.round(totalMes * 100) / 100,
-        qtd: qtdAtivas,
+        comissao: Math.round(comissaoTotal * 100) / 100,
+        angariacao: Math.round(angariacaoTotal * 100) / 100,
+        inadimplencia: Math.round(inadimplenciaTotal * 100) / 100,
+        cancelamento: Math.round(cancelamentoTotal * 100) / 100,
         inicioMes,
         fimMes
       });
@@ -68,10 +105,9 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
     return meses;
   }, [comissoes]);
 
-  // Filtrar comissões por cliente e período
+  // Filtrar comissões
   const comissoesFiltradas = useMemo(() => {
     let filtradas = [...comissoes];
-
     if (filtroCliente.trim()) {
       const term = filtroCliente.toLowerCase();
       filtradas = filtradas.filter(c =>
@@ -79,31 +115,17 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
         (c.produto || "").toLowerCase().includes(term)
       );
     }
-
     if (filtroInicio) {
       const inicio = parseISO(filtroInicio);
-      if (isValid(inicio)) {
-        filtradas = filtradas.filter(c => {
-          const adesao = parseISO(c.data_adesao);
-          return isValid(adesao) && !isBefore(adesao, inicio);
-        });
-      }
+      if (isValid(inicio)) filtradas = filtradas.filter(c => { const a = parseISO(c.data_adesao); return isValid(a) && !isBefore(a, inicio); });
     }
-
     if (filtroFim) {
       const fim = parseISO(filtroFim);
-      if (isValid(fim)) {
-        filtradas = filtradas.filter(c => {
-          const adesao = parseISO(c.data_adesao);
-          return isValid(adesao) && !isAfter(adesao, fim);
-        });
-      }
+      if (isValid(fim)) filtradas = filtradas.filter(c => { const a = parseISO(c.data_adesao); return isValid(a) && !isAfter(a, fim); });
     }
-
     return filtradas;
   }, [comissoes, filtroCliente, filtroInicio, filtroFim]);
 
-  // Calcular total recebido por cliente (meses pagos * valor)
   const calcMesesPagos = (c) => {
     const adesao = parseISO(c.data_adesao);
     const exp = parseISO(c.data_expiracao);
@@ -115,48 +137,35 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
   };
 
   const totalFiltrado = comissoesFiltradas.reduce((acc, c) => {
+    if (c.tipo_comissao === "Cancelamento" || c.tipo_comissao === "Inadimplência") return acc - (c.valor_comissao || 0);
     const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
     if (isPagUnico) return acc + (c.valor_comissao || 0);
     return acc + (c.valor_comissao || 0) * calcMesesPagos(c);
   }, 0);
-  const totalRenovacoes = comissoesFiltradas.reduce((acc, c) => acc + (c.historico_renovacoes?.length || 0), 0);
-
-  const renderLabel = (props) => {
-    const { x, y, width, value } = props;
-    if (!value) return null;
-    return (
-      <text x={x + width / 2} y={y - 6} fill="#fff" textAnchor="middle" fontSize={10} fontWeight="bold">
-        {fmtCurrency(value)}
-      </text>
-    );
-  };
 
   return (
     <div className="space-y-4">
-      {/* Gráfico mensal */}
+      {/* Gráfico mensal - barras empilhadas */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-4">
         <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
           <Calendar className="w-4 h-4 text-emerald-400" />
           Comissões por Mês (Últimos 12 meses)
         </h4>
-        <div className="h-52">
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dadosMensais}>
+            <BarChart data={dadosMensais} stackOffset="sign">
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="mes" tick={{ fill: "#e2e8f0", fontSize: 10 }} />
               <YAxis tick={{ fill: "#e2e8f0", fontSize: 10 }} />
-              <Tooltip
-                cursor={{ fill: 'transparent' }}
-                contentStyle={{ backgroundColor: "#1e1b4b", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, color: "#fff" }}
-                formatter={(value) => [fmtCurrency(value), "Valor"]}
-                labelFormatter={(label) => {
-                  const item = dadosMensais.find(d => d.mes === label);
-                  return item?.mesCompleto || label;
-                }}
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+              <Legend
+                wrapperStyle={{ fontSize: 11, color: "#e2e8f0" }}
+                formatter={(value) => <span style={{ color: "#e2e8f0" }}>{value}</span>}
               />
-              <Bar dataKey="valor" fill="#10b981" radius={[4, 4, 0, 0]}>
-                <LabelList dataKey="valor" content={renderLabel} />
-              </Bar>
+              <Bar dataKey="comissao" name="Comissão" fill="#10b981" stackId="stack" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="angariacao" name="Angariação" fill="#3b82f6" stackId="stack" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="inadimplencia" name="Inadimplência" fill="#f97316" stackId="neg" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="cancelamento" name="Cancelamento" fill="#ef4444" stackId="neg" radius={[0, 0, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -173,12 +182,8 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
             <Label className="text-white/70 text-xs">Buscar Cliente</Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-              <Input
-                value={filtroCliente}
-                onChange={e => setFiltroCliente(e.target.value)}
-                placeholder="Nome ou produto..."
-                className="pl-8 bg-white/10 border-white/20 text-white text-xs"
-              />
+              <Input value={filtroCliente} onChange={e => setFiltroCliente(e.target.value)}
+                placeholder="Nome ou produto..." className="pl-8 bg-white/10 border-white/20 text-white text-xs" />
             </div>
           </div>
           <div>
@@ -193,8 +198,8 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
           </div>
           <div className="flex items-end">
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2 w-full text-center">
-              <p className="text-white/60 text-[10px]">Total Recebido</p>
-              <p className="text-emerald-400 font-black text-sm">{fmtCurrency(totalFiltrado)}</p>
+              <p className="text-white/60 text-[10px]">Total Líquido</p>
+              <p className={`font-black text-sm ${totalFiltrado >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmtCurrency(totalFiltrado)}</p>
             </div>
           </div>
         </div>
@@ -204,31 +209,28 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
       {(filtroCliente || filtroInicio || filtroFim) && (
         <div className="bg-white/5 rounded-xl border border-white/10 p-4">
           <h4 className="text-white font-bold text-xs mb-2">
-            Resultado: {comissoesFiltradas.length} comissão(ões) encontrada(s)
+            Resultado: {comissoesFiltradas.length} registro(s) encontrado(s)
           </h4>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {comissoesFiltradas.length === 0 ? (
               <p className="text-white/50 text-xs text-center py-4">Nenhuma comissão encontrada</p>
             ) : comissoesFiltradas.map(c => {
+              const isNeg = c.tipo_comissao === "Cancelamento" || c.tipo_comissao === "Inadimplência";
               const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
-              const mesesPagos = isPagUnico ? 1 : calcMesesPagos(c);
-              const totalCliente = isPagUnico ? (c.valor_comissao || 0) : (c.valor_comissao || 0) * mesesPagos;
+              const mesesPagos = isPagUnico || isNeg ? 1 : calcMesesPagos(c);
+              const totalCliente = isNeg ? -(c.valor_comissao || 0) : isPagUnico ? (c.valor_comissao || 0) : (c.valor_comissao || 0) * mesesPagos;
               return (
                 <div key={c.id} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-xs font-bold truncate">{c.cliente_nome}</p>
                     <p className="text-white/50 text-[10px]">
-                      {isPagUnico
-                        ? `${c.tipo_comissao} • ${fmtCurrency(c.valor_comissao)} • Pagamento único`
-                        : `${c.produto} • ${fmtCurrency(c.valor_comissao)}/mês • ${mesesPagos} meses pagos`
-                      }
-                      {(c.historico_renovacoes?.length || 0) > 0 && (
-                        <span className="text-amber-400 ml-1">• {c.historico_renovacoes.length}x renovada</span>
-                      )}
+                      {c.tipo_comissao} • {fmtCurrency(Math.abs(c.valor_comissao))}
+                      {!isPagUnico && !isNeg && ` • ${mesesPagos} meses pagos`}
+                      {c.tipo_comissao === "Inadimplência" && c.mes_inadimplencia && ` • Ref: ${c.mes_inadimplencia}`}
                     </p>
                   </div>
-                  <span className="text-emerald-400 text-xs font-black flex-shrink-0 ml-2">
-                    {fmtCurrency(totalCliente)}
+                  <span className={`text-xs font-black flex-shrink-0 ml-2 ${isNeg ? "text-red-400" : "text-emerald-400"}`}>
+                    {isNeg ? "-" : ""}{fmtCurrency(Math.abs(totalCliente))}
                   </span>
                 </div>
               );

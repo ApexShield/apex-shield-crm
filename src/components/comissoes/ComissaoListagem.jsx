@@ -19,7 +19,17 @@ function isPagamentoUnico(comissao) {
   return comissao.tipo_comissao === "Bônus" || comissao.tipo_comissao === "Angariação";
 }
 
+function isNegativo(comissao) {
+  return comissao.tipo_comissao === "Cancelamento" || comissao.tipo_comissao === "Inadimplência";
+}
+
 function getStatusInfo(comissao) {
+  if (isNegativo(comissao)) {
+    if (comissao.tipo_comissao === "Cancelamento") {
+      return { label: "Cancelada", color: "text-red-400", icon: AlertTriangle, urgente: false, diasRestantes: 999 };
+    }
+    return { label: "Inadimplente", color: "text-orange-400", icon: AlertTriangle, urgente: false, diasRestantes: 999 };
+  }
   if (isPagamentoUnico(comissao)) {
     return { label: "Pago", color: "text-cyan-400", icon: CheckCircle, urgente: false, diasRestantes: 999 };
   }
@@ -27,6 +37,9 @@ function getStatusInfo(comissao) {
   const exp = parseISO(comissao.data_expiracao);
   if (!isValid(exp)) return { label: "—", color: "text-white/50", icon: Clock, urgente: false };
   const diasRestantes = differenceInDays(exp, hoje);
+  if (comissao.status === "cancelada") {
+    return { label: "Cancelada", color: "text-red-400", icon: AlertTriangle, urgente: false, diasRestantes };
+  }
   if (comissao.status === "expirada" || diasRestantes < 0) {
     return { label: "Expirada", color: "text-red-400", icon: AlertTriangle, urgente: true, diasRestantes };
   }
@@ -139,8 +152,10 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                   <TableCell className="text-xs">
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                       c.tipo_comissao === "Venda" ? "bg-emerald-500/20 text-emerald-300" :
-                      c.tipo_comissao === "Angariação" ? "bg-amber-500/20 text-amber-300" :
+                      c.tipo_comissao === "Angariação" ? "bg-blue-500/20 text-blue-300" :
                       c.tipo_comissao === "Bônus" ? "bg-purple-500/20 text-purple-300" :
+                      c.tipo_comissao === "Cancelamento" ? "bg-red-500/20 text-red-300" :
+                      c.tipo_comissao === "Inadimplência" ? "bg-orange-500/20 text-orange-300" :
                       "bg-white/10 text-white/60"
                     }`}>
                       {c.tipo_comissao || "Venda"}
@@ -152,12 +167,12 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                         className="compact-form h-7 bg-white/10 border-white/20 text-white text-xs w-20" />
                     ) : c.produto}
                   </TableCell>
-                  <TableCell className="text-emerald-400 text-xs font-black text-center">
+                  <TableCell className={`text-xs font-black text-center ${isNegativo(c) ? "text-red-400" : "text-emerald-400"}`}>
                     {editing ? (
                       <Input type="number" step="0.01" value={editData.valor_comissao}
                         onChange={e => setEditData(p => ({ ...p, valor_comissao: e.target.value }))}
                         className="compact-form h-7 bg-white/10 border-white/20 text-white text-xs w-24 text-center" />
-                    ) : fmtCurrency(c.valor_comissao)}
+                    ) : `${isNegativo(c) ? "- " : ""}${fmtCurrency(c.valor_comissao)}`}
                   </TableCell>
                   <TableCell className="text-white/70 text-xs text-center">
                     {editing ? (
@@ -174,7 +189,11 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                     ) : safeFmtDate(c.data_expiracao)}
                   </TableCell>
                   <TableCell className="text-white/70 text-xs text-center">
-                    {isPagamentoUnico(c) ? (
+                    {isNegativo(c) ? (
+                      <span className={`font-bold ${c.tipo_comissao === "Cancelamento" ? "text-red-400" : "text-orange-400"}`}>
+                        {c.tipo_comissao === "Inadimplência" && c.mes_inadimplencia ? c.mes_inadimplencia : "—"}
+                      </span>
+                    ) : isPagamentoUnico(c) ? (
                       <span className="text-cyan-400 font-bold">Único</span>
                     ) : (
                       <><span className="font-bold">{mesesPagos}</span>/12</>

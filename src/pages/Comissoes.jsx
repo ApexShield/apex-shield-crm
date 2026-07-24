@@ -90,6 +90,7 @@ export default function Comissoes() {
           open={showAddDialog}
           onClose={() => setShowAddDialog(false)}
           clientes={clientes}
+          comissoes={comissoes}
           onAdded={refresh}
         />
 

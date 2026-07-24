@@ -105,6 +105,8 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
   }, [comissoes]);
 
   const calcMesesToPaid = (comissao) => {
+    if (isNegativo(comissao) || isPagamentoUnico(comissao)) return 0;
+    if (!comissao.data_adesao || !comissao.data_expiracao) return 0;
     const adesao = parseISO(comissao.data_adesao);
     const exp = parseISO(comissao.data_expiracao);
     const hoje = new Date();

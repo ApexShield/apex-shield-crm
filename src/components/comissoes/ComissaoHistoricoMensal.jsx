@@ -26,14 +26,22 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
       let qtdAtivas = 0;
 
       comissoes.forEach(c => {
-        if (c.status === "expirada" && !c.historico_renovacoes?.length) {
-          // Check if it was active during this month
-        }
+        const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
         const adesao = parseISO(c.data_adesao);
+
+        if (isPagUnico) {
+          // Pagamento único: contabilizar apenas no mês de lançamento
+          if (isValid(adesao) && isWithinInterval(adesao, { start: inicioMes, end: fimMes })) {
+            totalMes += c.valor_comissao || 0;
+            qtdAtivas++;
+          }
+          return;
+        }
+
         const expiracao = parseISO(c.data_expiracao);
         if (!isValid(adesao) || !isValid(expiracao)) return;
 
-        // Comissão estava ativa nesse mês?
+        // Comissão recorrente estava ativa nesse mês?
         if (!isAfter(adesao, fimMes) && !isBefore(expiracao, inicioMes)) {
           totalMes += c.valor_comissao || 0;
           qtdAtivas++;
@@ -106,7 +114,11 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
     return Math.min(Math.max(meses, 0), 12);
   };
 
-  const totalFiltrado = comissoesFiltradas.reduce((acc, c) => acc + (c.valor_comissao || 0) * calcMesesPagos(c), 0);
+  const totalFiltrado = comissoesFiltradas.reduce((acc, c) => {
+    const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
+    if (isPagUnico) return acc + (c.valor_comissao || 0);
+    return acc + (c.valor_comissao || 0) * calcMesesPagos(c);
+  }, 0);
   const totalRenovacoes = comissoesFiltradas.reduce((acc, c) => acc + (c.historico_renovacoes?.length || 0), 0);
 
   const renderLabel = (props) => {
@@ -198,14 +210,18 @@ export default function ComissaoHistoricoMensal({ comissoes }) {
             {comissoesFiltradas.length === 0 ? (
               <p className="text-white/50 text-xs text-center py-4">Nenhuma comissão encontrada</p>
             ) : comissoesFiltradas.map(c => {
-              const mesesPagos = calcMesesPagos(c);
-              const totalCliente = (c.valor_comissao || 0) * mesesPagos;
+              const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
+              const mesesPagos = isPagUnico ? 1 : calcMesesPagos(c);
+              const totalCliente = isPagUnico ? (c.valor_comissao || 0) : (c.valor_comissao || 0) * mesesPagos;
               return (
                 <div key={c.id} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-xs font-bold truncate">{c.cliente_nome}</p>
                     <p className="text-white/50 text-[10px]">
-                      {c.produto} • {fmtCurrency(c.valor_comissao)}/mês • {mesesPagos} meses pagos
+                      {isPagUnico
+                        ? `${c.tipo_comissao} • ${fmtCurrency(c.valor_comissao)} • Pagamento único`
+                        : `${c.produto} • ${fmtCurrency(c.valor_comissao)}/mês • ${mesesPagos} meses pagos`
+                      }
                       {(c.historico_renovacoes?.length || 0) > 0 && (
                         <span className="text-amber-400 ml-1">• {c.historico_renovacoes.length}x renovada</span>
                       )}

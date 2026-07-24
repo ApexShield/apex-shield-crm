@@ -15,12 +15,26 @@ export default function ResumoMesAtual({ comissoes }) {
     let expirandoEsteMes = 0;
 
     comissoes.forEach(c => {
+      const isPagUnico = c.tipo_comissao === "Bônus" || c.tipo_comissao === "Angariação";
+
+      if (isPagUnico) {
+        // Pagamento único: contabilizar apenas no mês de lançamento
+        if (c.status === "pago" || c.status === "ativa") {
+          const adesao = parseISO(c.data_adesao);
+          if (isValid(adesao) && isWithinInterval(adesao, { start: inicioMes, end: fimMes })) {
+            totalMes += c.valor_comissao || 0;
+            ativas++;
+          }
+        }
+        return;
+      }
+
       if (c.status !== "ativa") return;
       const adesao = parseISO(c.data_adesao);
       const expiracao = parseISO(c.data_expiracao);
       if (!isValid(adesao) || !isValid(expiracao)) return;
 
-      // Verifica se a comissão está ativa no mês atual
+      // Verifica se a comissão recorrente está ativa no mês atual
       if (hoje >= adesao && hoje <= expiracao) {
         totalMes += c.valor_comissao || 0;
         ativas++;

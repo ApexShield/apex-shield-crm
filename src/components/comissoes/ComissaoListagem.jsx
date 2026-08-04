@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, RefreshCw, AlertTriangle, CheckCircle, Clock, Pencil, Check, X } from "lucide-react";
+import { Trash2, RefreshCw, AlertTriangle, CheckCircle, Clock, Pencil, Check, X, CheckSquare } from "lucide-react";
 import { format, parseISO, differenceInDays, isValid } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -27,6 +27,9 @@ function getStatusInfo(comissao) {
   if (isNegativo(comissao)) {
     if (comissao.tipo_comissao === "Cancelamento") {
       return { label: "Cancelada", color: "text-red-400", icon: AlertTriangle, urgente: false, diasRestantes: 999 };
+    }
+    if (comissao.status === "pago") {
+      return { label: "Baixa dada", color: "text-emerald-400", icon: CheckCircle, urgente: false, diasRestantes: 999 };
     }
     return { label: "Inadimplente", color: "text-orange-400", icon: AlertTriangle, urgente: false, diasRestantes: 999 };
   }
@@ -57,6 +60,12 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
   const handleDelete = async (id) => {
     await base44.entities.ComissaoCliente.delete(id);
     toast.success("Comissão removida");
+    onRefresh();
+  };
+
+  const handleBaixaInadimplencia = async (id) => {
+    await base44.entities.ComissaoCliente.update(id, { status: "pago" });
+    toast.success("Baixa na inadimplência registrada");
     onRefresh();
   };
 
@@ -230,6 +239,12 @@ export default function ComissaoListagem({ comissoes, onRefresh, onRenovar }) {
                             <Button size="icon" variant="ghost" onClick={() => onRenovar(c)}
                               className="text-amber-400 hover:text-amber-300 h-7 w-7" title="Renovar">
                               <RefreshCw className="w-3 h-3" />
+                            </Button>
+                          )}
+                          {c.tipo_comissao === "Inadimplência" && c.status !== "pago" && (
+                            <Button size="icon" variant="ghost" onClick={() => handleBaixaInadimplencia(c.id)}
+                              className="text-emerald-400 hover:text-emerald-300 h-7 w-7" title="Dar baixa">
+                              <CheckSquare className="w-3 h-3" />
                             </Button>
                           )}
                           <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}

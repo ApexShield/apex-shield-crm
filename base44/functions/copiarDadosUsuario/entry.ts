@@ -5,7 +5,9 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    // Admin check - temporarily relaxed for migration
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Acesso restrito a administradores' }, { status: 403 });
+    }
     console.log('User:', user?.email, 'Role:', user?.role);
 
     const { origem, destino, acao, limite } = await req.json();

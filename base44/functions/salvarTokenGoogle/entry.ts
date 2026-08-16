@@ -11,6 +11,9 @@ Deno.serve(async (req) => {
 
     const authData = await req.json();
 
+    // Force user_email to the authenticated user's email to prevent injection
+    authData.user_email = user.email;
+
     // Verificar se já existe autenticação para este usuário
     const existingAuth = await base44.entities.UserGoogleAuth.filter({
       user_email: user.email

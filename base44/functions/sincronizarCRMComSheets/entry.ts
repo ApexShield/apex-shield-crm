@@ -9,6 +9,9 @@ Deno.serve(async (req) => {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Acesso restrito a administradores' }, { status: 403 });
+    }
 
     // Obter parâmetros
     const { spreadsheetId } = await req.json();
@@ -16,8 +19,8 @@ Deno.serve(async (req) => {
     // Obter token do Google Sheets
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlesheets');
 
-    // Buscar todos os clientes
-    const clientes = await base44.asServiceRole.entities.Cliente.list();
+    // Buscar clientes do usuário (respeitando RLS)
+    const clientes = await base44.entities.Cliente.list('-created_date', 10000);
 
     // Preparar cabeçalhos
     const headers = [

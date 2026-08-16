@@ -22,6 +22,19 @@ Deno.serve(async (req) => {
       'https://www.googleapis.com/auth/userinfo.email'
     ];
 
+    // Generate a cryptographic nonce tied to the user
+    const nonce = crypto.randomUUID();
+    const statePayload = JSON.stringify({ email: user.email, nonce });
+    const stateEncoded = btoa(statePayload);
+
+    // Store the nonce temporarily so the callback can verify it
+    const existingAuth = await base44.asServiceRole.entities.UserGoogleAuth.filter({ user_email: user.email });
+    if (existingAuth.length > 0) {
+      await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuth[0].id, { oauth_nonce: nonce });
+    } else {
+      await base44.asServiceRole.entities.UserGoogleAuth.create({ user_email: user.email, google_email: '', access_token: '', oauth_nonce: nonce });
+    }
+
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${CLIENT_ID}&` +
       `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
@@ -29,7 +42,7 @@ Deno.serve(async (req) => {
       `scope=${encodeURIComponent(scopes.join(' '))}&` +
       `access_type=offline&` +
       `prompt=consent&` +
-      `state=${encodeURIComponent(user.email)}`;
+      `state=${encodeURIComponent(stateEncoded)}`;
 
     return Response.json({ authUrl });
 

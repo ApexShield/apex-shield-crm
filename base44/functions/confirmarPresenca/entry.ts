@@ -24,7 +24,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service role since the participant is not a logged-in user
+    // Validate that the compromisso exists and only allow confirm/refuse actions
+    const comp = await base44.asServiceRole.entities.Compromisso.get(compromisso_id);
+    if (!comp) {
+      return new Response(renderHTML('Erro', 'Compromisso não encontrado.', 'error'), {
+        status: 404,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
+    }
+
+    if (action !== 'confirmar' && action !== 'recusar') {
+      return new Response(renderHTML('Erro', 'Ação inválida.', 'error'), {
+        status: 400,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
+    }
+
     const confirmou = action === 'confirmar';
     const recusou = action === 'recusar';
     await base44.asServiceRole.entities.Compromisso.update(compromisso_id, {

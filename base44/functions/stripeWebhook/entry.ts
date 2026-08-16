@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
     let event;
-    if (webhookSecret && signature) {
-      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    } else {
-      event = JSON.parse(body);
+    if (!webhookSecret || !signature) {
+      console.error('Missing webhook secret or signature');
+      return Response.json({ error: 'Missing signature' }, { status: 400 });
     }
+    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
 
     console.log('Stripe webhook event:', event.type);
 

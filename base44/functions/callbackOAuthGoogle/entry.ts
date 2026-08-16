@@ -24,7 +24,18 @@ Deno.serve(async (req) => {
       return errorHtml("Parâmetros inválidos");
     }
 
-    const userEmail = stateParam;
+    // Decode and verify state parameter
+    let stateData;
+    try {
+      stateData = JSON.parse(atob(stateParam));
+    } catch (e) {
+      return errorHtml("Estado inválido. Inicie a autenticação novamente.");
+    }
+    const userEmail = stateData.email;
+    const stateNonce = stateData.nonce;
+    if (!userEmail || !stateNonce) {
+      return errorHtml("Parâmetros de estado inválidos.");
+    }
     const CLIENT_ID = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("google_oauth_client_secret");
     const BASE44_APP_ID = Deno.env.get("BASE44_APP_ID");
@@ -89,28 +100,30 @@ Deno.serve(async (req) => {
     try {
       const base44 = createClientFromRequest(req);
 
+      // Verify the nonce matches what was stored during iniciarOAuthGoogle
+      const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
+        user_email: userEmail
+      });
+
+      if (!existingAuths || existingAuths.length === 0 || existingAuths[0].oauth_nonce !== stateNonce) {
+        console.error("Nonce mismatch or no pending auth for:", userEmail);
+        return errorHtml("Sessão expirada ou inválida. Inicie a autenticação novamente.");
+      }
+
       const authData = {
         user_email: userEmail,
         google_email: googleUser.email,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token || "",
         token_expiry: new Date(Date.now() + ((tokens.expires_in || 3600) * 1000)).toISOString(),
-        scopes: tokens.scope ? tokens.scope.split(' ') : []
+        scopes: tokens.scope ? tokens.scope.split(' ') : [],
+        oauth_nonce: "" // Clear nonce after use
       };
 
       console.log("Salvando auth data para:", userEmail);
 
-      const existingAuths = await base44.asServiceRole.entities.UserGoogleAuth.filter({
-        user_email: userEmail
-      });
-
-      if (existingAuths && existingAuths.length > 0) {
-        await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
-        console.log("Auth atualizado:", existingAuths[0].id);
-      } else {
-        await base44.asServiceRole.entities.UserGoogleAuth.create(authData);
-        console.log("Auth criado");
-      }
+      await base44.asServiceRole.entities.UserGoogleAuth.update(existingAuths[0].id, authData);
+      console.log("Auth atualizado:", existingAuths[0].id);
     } catch (e) {
       console.error("Erro ao salvar no Base44:", e.message, e);
       // Mesmo que falhe salvar, mostrar sucesso parcial

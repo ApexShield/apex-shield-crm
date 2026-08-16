@@ -7,6 +7,9 @@ Deno.serve(async (req) => {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Acesso restrito a administradores' }, { status: 403 });
+    }
 
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
 

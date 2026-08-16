@@ -17,12 +17,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'ID do cliente não fornecido' }, { status: 400 });
     }
 
-    // Buscar dados do cliente
-    const cliente = await base44.asServiceRole.entities.Cliente.list();
-    const clienteData = cliente.find(c => c.id === clienteId);
+    // Buscar dados do cliente (usando RLS para respeitar ownership)
+    const clienteResults = await base44.entities.Cliente.filter({ id: clienteId });
+    const clienteData = clienteResults.length > 0 ? clienteResults[0] : null;
 
     if (!clienteData) {
-      return Response.json({ error: 'Cliente não encontrado' }, { status: 404 });
+      return Response.json({ error: 'Cliente não encontrado ou acesso negado' }, { status: 404 });
     }
 
     // Obter token do Google Docs

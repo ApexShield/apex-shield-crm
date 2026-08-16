@@ -37,6 +37,9 @@
     "access_token"
   ],
   "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
     "read": {
       "data.user_email": "{{user.email}}"
     },

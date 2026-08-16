@@ -379,6 +379,9 @@
     "nome"
   ],
   "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
     "read": {
       "$or": [
         {
@@ -388,18 +391,6 @@
         },
         {
           "created_by": "{{user.email}}"
-        },
-        {
-          "data.agencia_id": "{{user.data.agencia_id}}",
-          "user_condition": {
-            "data.tipo_hierarquia": "L\u00edder de Ag\u00eancia"
-          }
-        },
-        {
-          "data.unidade_id": "{{user.data.unidade_id}}",
-          "user_condition": {
-            "data.tipo_hierarquia": "L\u00edder de Unidade"
-          }
         }
       ]
     },
@@ -412,18 +403,6 @@
         },
         {
           "created_by": "{{user.email}}"
-        },
-        {
-          "data.agencia_id": "{{user.data.agencia_id}}",
-          "user_condition": {
-            "data.tipo_hierarquia": "L\u00edder de Ag\u00eancia"
-          }
-        },
-        {
-          "data.unidade_id": "{{user.data.unidade_id}}",
-          "user_condition": {
-            "data.tipo_hierarquia": "L\u00edder de Unidade"
-          }
         }
       ]
     },

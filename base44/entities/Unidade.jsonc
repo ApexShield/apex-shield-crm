@@ -55,12 +55,6 @@
         },
         {
           "data.lider_unidade_email": "{{user.email}}"
-        },
-        {
-          "data.agencia_id": "{{user.data.agencia_id}}",
-          "user_condition": {
-            "data.tipo_hierarquia": "L\u00edder de Ag\u00eancia"
-          }
         }
       ]
     },

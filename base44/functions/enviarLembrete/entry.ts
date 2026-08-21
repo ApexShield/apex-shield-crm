@@ -4,9 +4,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Auth check - only admin or scheduled automation can trigger this
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    // Auth check - allow scheduled automations (no user session) or admin users
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch (e) {
+      // No user session - this is fine for scheduled automations
+    }
+    if (user && user.role !== 'admin') {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -43,6 +43,12 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Email ou nome do lead não fornecido' }, { status: 400 });
     }
 
+    // Validate that the email belongs to a lead owned by this user
+    const matchingLeads = await base44.entities.Cliente.filter({ email: data.email });
+    if (matchingLeads.length === 0) {
+      return Response.json({ success: false, error: 'Email não pertence a nenhum lead cadastrado' }, { status: 403 });
+    }
+
     // Get USER'S OWN Google token (not shared connector)
     const userAuth = await getUserGoogleToken(base44, user.email);
     

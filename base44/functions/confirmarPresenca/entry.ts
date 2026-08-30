@@ -5,21 +5,36 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const url = new URL(req.url);
 
-    let compromisso_id, action;
+    let compromisso_id, action, token;
 
     // Support both GET (from email links) and POST
     if (req.method === 'GET') {
       compromisso_id = url.searchParams.get('id');
       action = url.searchParams.get('action');
+      token = url.searchParams.get('token');
     } else {
       const body = await req.json();
       compromisso_id = body.compromisso_id;
       action = body.action;
+      token = body.token;
     }
 
-    if (!compromisso_id || !action) {
+    if (!compromisso_id || !action || !token) {
       return new Response(renderHTML('Erro', 'Link inválido. Parâmetros ausentes.', 'error'), {
         status: 400,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
+    }
+
+    // Verify HMAC token to prevent IDOR
+    const secret = Deno.env.get('google_oauth_client_secret') || 'apex-shield-hmac-key';
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(compromisso_id));
+    const expectedToken = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+    if (token !== expectedToken) {
+      return new Response(renderHTML('Erro', 'Link inválido ou expirado.', 'error'), {
+        status: 403,
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
     }

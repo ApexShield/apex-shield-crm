@@ -1,18 +1,29 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { secrets } from 'base44:runtime';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Auth check - allow scheduled automations (no user session) or admin users
+    // Auth check: require admin user OR valid automation secret in payload
     let user = null;
     try {
       user = await base44.auth.me();
     } catch (e) {
-      // No user session - this is fine for scheduled automations
+      // No user session — expected for scheduled automations
     }
     if (user && user.role !== 'admin') {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!user) {
+      // No user session: validate automation secret from function_args
+      let payload = {};
+      try { payload = await req.clone().json(); } catch (e) {}
+      const automationKey = payload?.automation_key;
+      const expectedKey = secrets.get('google_oauth_client_secret');
+      if (!automationKey || !expectedKey || automationKey !== expectedKey) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
     const now = new Date();

@@ -18,6 +18,7 @@ import SimuladorReenquadramento from './pages/SimuladorReenquadramento';
 import PainelPrincipal from './pages/PainelPrincipal';
 import ClientesConvertidos from './pages/ClientesConvertidos';
 import Comissoes from './pages/Comissoes';
+import Corretora from './pages/Corretora';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -45,7 +46,7 @@ const AuthenticatedApp = () => {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
       // Allow public pages to render without login
-      const publicPaths = ['/', '/Home', '/PoliticaPrivacidade', '/TermosServico', '/Suporte', '/ExcluirConta', '/BoasVindas'];
+      const publicPaths = ['/', '/Home', '/PoliticaPrivacidade', '/TermosServico', '/Suporte', '/ExcluirConta', '/BoasVindas', '/Corretora'];
       const currentPath = window.location.pathname;
       if (!publicPaths.some(p => currentPath === p || currentPath.endsWith(p))) {
         navigateToLogin();
@@ -119,6 +120,7 @@ const AuthenticatedApp = () => {
           <Comissoes />
         </LayoutWrapper>
       } />
+      <Route path="/Corretora" element={<Corretora />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

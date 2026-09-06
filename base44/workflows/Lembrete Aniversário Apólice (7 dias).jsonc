@@ -1,0 +1,44 @@
+{
+  "name": "Lembrete Anivers\u00e1rio Ap\u00f3lice (7 dias)",
+  "description": "Verifica diariamente se alguma ap\u00f3lice far\u00e1 anivers\u00e1rio em 7 dias e envia email ao corretor",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 11 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "lembrete_anivers_rio_ap_lice_7_dias",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "verificarAniversarioApolice",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "verificarAniversarioApolice"
+  }
+}
